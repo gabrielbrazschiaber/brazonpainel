@@ -14,16 +14,267 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clientes: {
+        Row: {
+          asaas_customer_id: string | null
+          created_at: string
+          data_vencimento: string | null
+          id: string
+          mensagem_vendedor: string | null
+          plano_id: string | null
+          status: Database["public"]["Enums"]["cliente_status"]
+          updated_at: string
+          user_id: string
+          vendedor_id: string | null
+        }
+        Insert: {
+          asaas_customer_id?: string | null
+          created_at?: string
+          data_vencimento?: string | null
+          id?: string
+          mensagem_vendedor?: string | null
+          plano_id?: string | null
+          status?: Database["public"]["Enums"]["cliente_status"]
+          updated_at?: string
+          user_id: string
+          vendedor_id?: string | null
+        }
+        Update: {
+          asaas_customer_id?: string | null
+          created_at?: string
+          data_vencimento?: string | null
+          id?: string
+          mensagem_vendedor?: string | null
+          plano_id?: string | null
+          status?: Database["public"]["Enums"]["cliente_status"]
+          updated_at?: string
+          user_id?: string
+          vendedor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      configuracoes: {
+        Row: {
+          asaas_ambiente: Database["public"]["Enums"]["asaas_ambiente"]
+          asaas_api_key: string | null
+          asaas_webhook_url: string | null
+          created_at: string
+          dias_aviso_vencimento: number
+          dominio: string | null
+          id: string
+          nome_app: string
+          percentual_comissao_padrao: number
+          updated_at: string
+        }
+        Insert: {
+          asaas_ambiente?: Database["public"]["Enums"]["asaas_ambiente"]
+          asaas_api_key?: string | null
+          asaas_webhook_url?: string | null
+          created_at?: string
+          dias_aviso_vencimento?: number
+          dominio?: string | null
+          id?: string
+          nome_app?: string
+          percentual_comissao_padrao?: number
+          updated_at?: string
+        }
+        Update: {
+          asaas_ambiente?: Database["public"]["Enums"]["asaas_ambiente"]
+          asaas_api_key?: string | null
+          asaas_webhook_url?: string | null
+          created_at?: string
+          dias_aviso_vencimento?: number
+          dominio?: string | null
+          id?: string
+          nome_app?: string
+          percentual_comissao_padrao?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pagamentos: {
+        Row: {
+          asaas_payment_id: string | null
+          cliente_id: string
+          created_at: string
+          data_pagamento: string | null
+          id: string
+          status: Database["public"]["Enums"]["pagamento_status"]
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          cliente_id: string
+          created_at?: string
+          data_pagamento?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["pagamento_status"]
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          cliente_id?: string
+          created_at?: string
+          data_pagamento?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["pagamento_status"]
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planos: {
+        Row: {
+          asaas_subscription_id: string | null
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          asaas_subscription_id?: string | null
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          asaas_subscription_id?: string | null
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          nome?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vendedores: {
+        Row: {
+          ativo: boolean
+          codigo_indicacao: string
+          created_at: string
+          id: string
+          percentual_comissao: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo_indicacao: string
+          created_at?: string
+          id?: string
+          percentual_comissao?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo_indicacao?: string
+          created_at?: string
+          id?: string
+          percentual_comissao?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      current_vendedor_id: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "cliente" | "vendedor" | "admin"
+      asaas_ambiente: "producao" | "sandbox"
+      cliente_status: "ativo" | "vencido" | "inadimplente" | "cancelado"
+      pagamento_status: "pago" | "pendente" | "vencido"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +401,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["cliente", "vendedor", "admin"],
+      asaas_ambiente: ["producao", "sandbox"],
+      cliente_status: ["ativo", "vencido", "inadimplente", "cancelado"],
+      pagamento_status: ["pago", "pendente", "vencido"],
+    },
   },
 } as const
