@@ -1,31 +1,752 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RequireRole } from "@/components/RequireRole";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
+import { RequireRole } from "@/components/RequireRole";
+import { StatusBadge } from "@/components/StatusBadge";
+import { criarVendedor } from "@/lib/admin.functions";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { formatCurrency, formatDate } from "@/lib/format";
+import { toast } from "sonner";
+import {
+  Users,
+  Layers,
+  Wallet,
+  UserCog,
+  Plus,
+  LogOut,
+  Save,
+} from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Administração" }] }),
   component: () => (
     <RequireRole role="admin">
-      <AdminPlaceholder />
+      <AdminArea />
     </RequireRole>
   ),
 });
 
-function AdminPlaceholder() {
+interface Plano {
+  id: string;
+  nome: string;
+  valor: number;
+  descricao: string | null;
+  ativo: boolean;
+}
+
+interface VendedorRow {
+  id: string;
+  user_id: string;
+  codigo_indicacao: string;
+  percentual_comissao: number;
+  ativo: boolean;
+  nome?: string;
+  email?: string;
+  clientes_count?: number;
+}
+
+interface ClienteRow {
+  id: string;
+  user_id: string;
+  vendedor_id: string | null;
+  data_vencimento: string | null;
+  status: string;
+  planos: { nome: string; valor: number } | null;
+  nome?: string;
+  email?: string;
+}
+
+interface Config {
+  id?: string;
+  nome_app: string | null;
+  dominio: string | null;
+  dias_aviso_vencimento: number | null;
+  percentual_comissao_padrao: number | null;
+  asaas_api_key: string | null;
+  asaas_webhook_url: string | null;
+  asaas_ambiente: string | null;
+}
+
+function AdminArea() {
   const { profile, signOut } = useAuth();
+  const [planos, setPlanos] = useState<Plano[]>([]);
+  const [vendedores, setVendedores] = useState<VendedorRow[]>([]);
+  const [clientes, setClientes] = useState<ClienteRow[]>([]);
+  const [config, setConfig] = useState<Config | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [{ data: pls }, { data: vds }, { data: cls }, { data: cfg }] = await Promise.all([
+      supabase.from("planos").select("id,nome,valor,descricao,ativo").order("valor"),
+      supabase
+        .from("vendedores")
+        .select("id,user_id,codigo_indicacao,percentual_comissao,ativo")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("clientes")
+        .select("id,user_id,vendedor_id,data_vencimento,status,planos(nome,valor)")
+        .order("created_at", { ascending: false }),
+      supabase.from("configuracoes").select("*").maybeSingle(),
+    ]);
+
+    const vrows = (vds ?? []) as unknown as VendedorRow[];
+    const crows = (cls ?? []) as unknown as ClienteRow[];
+
+    const userIds = [
+      ...vrows.map((v) => v.user_id),
+      ...crows.map((c) => c.user_id),
+    ];
+    if (userIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id,nome,email")
+        .in("id", userIds);
+      const map = new Map((profs ?? []).map((p) => [p.id, p]));
+      vrows.forEach((v) => {
+        const p = map.get(v.user_id);
+        v.nome = p?.nome || undefined;
+        v.email = p?.email || undefined;
+        v.clientes_count = crows.filter((c) => c.vendedor_id === v.id).length;
+      });
+      crows.forEach((c) => {
+        const p = map.get(c.user_id);
+        c.nome = p?.nome || undefined;
+        c.email = p?.email || undefined;
+      });
+    }
+
+    setPlanos((pls ?? []) as Plano[]);
+    setVendedores(vrows);
+    setClientes(crows);
+    setConfig(
+      (cfg as Config | null) ?? {
+        nome_app: "",
+        dominio: "",
+        dias_aviso_vencimento: 5,
+        percentual_comissao_padrao: 10,
+        asaas_api_key: "",
+        asaas_webhook_url: "",
+        asaas_ambiente: "sandbox",
+      },
+    );
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const metrics = useMemo(() => {
+    const receita = clientes
+      .filter((c) => c.status === "ativo")
+      .reduce((s, c) => s + (c.planos?.valor ?? 0), 0);
+    return {
+      clientes: clientes.length,
+      vendedores: vendedores.length,
+      planos: planos.length,
+      receita,
+    };
+  }, [clientes, vendedores, planos]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="max-w-md p-8 text-center">
-        <h1 className="text-xl font-bold text-foreground">Administração</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Olá {profile?.nome || profile?.email}. Esta área será construída na próxima fase.
-        </p>
-        <Button variant="outline" className="mt-6" onClick={signOut}>
-          Sair
-        </Button>
-      </Card>
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Administração</p>
+            <h1 className="text-xl font-bold text-foreground">
+              {profile?.nome || profile?.email}
+            </h1>
+          </div>
+          <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </header>
+
+        <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <MetricCard icon={Users} label="Clientes" value={String(metrics.clientes)} />
+          <MetricCard icon={UserCog} label="Vendedores" value={String(metrics.vendedores)} tone="text-primary" />
+          <MetricCard icon={Layers} label="Planos" value={String(metrics.planos)} />
+          <MetricCard
+            icon={Wallet}
+            label="Receita ativa/mês"
+            value={formatCurrency(metrics.receita)}
+            tone="text-success"
+          />
+        </section>
+
+        <Tabs defaultValue="vendedores" className="mt-8">
+          <TabsList>
+            <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
+            <TabsTrigger value="planos">Planos</TabsTrigger>
+            <TabsTrigger value="clientes">Clientes</TabsTrigger>
+            <TabsTrigger value="config">Configurações</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="vendedores" className="mt-4">
+            <VendedoresTab vendedores={vendedores} onChanged={load} />
+          </TabsContent>
+          <TabsContent value="planos" className="mt-4">
+            <PlanosTab planos={planos} onChanged={load} />
+          </TabsContent>
+          <TabsContent value="clientes" className="mt-4">
+            <ClientesTab clientes={clientes} vendedores={vendedores} />
+          </TabsContent>
+          <TabsContent value="config" className="mt-4">
+            <ConfigTab config={config} onSaved={load} />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
+  );
+}
+
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  tone = "text-foreground",
+}: {
+  icon: typeof Users;
+  label: string;
+  value: string;
+  tone?: string;
+}) {
+  return (
+    <Card className="p-5">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Icon className="h-4 w-4" />
+        <span className="text-sm">{label}</span>
+      </div>
+      <p className={`mt-2 text-2xl font-bold ${tone}`}>{value}</p>
+    </Card>
+  );
+}
+
+/* ---------------- Vendedores ---------------- */
+function VendedoresTab({
+  vendedores,
+  onChanged,
+}: {
+  vendedores: VendedorRow[];
+  onChanged: () => void;
+}) {
+  const criar = useServerFn(criarVendedor);
+  const [open, setOpen] = useState(false);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [codigo, setCodigo] = useState("");
+  const [comissao, setComissao] = useState("10");
+  const [saving, setSaving] = useState(false);
+
+  function reset() {
+    setNome("");
+    setEmail("");
+    setCodigo("");
+    setComissao("10");
+  }
+
+  async function submit() {
+    if (nome.trim().length < 2 || !email.trim() || codigo.trim().length < 2) {
+      toast.error("Preencha nome, e-mail e código de indicação.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await criar({
+        data: {
+          nome: nome.trim(),
+          email: email.trim(),
+          codigo_indicacao: codigo.trim().toUpperCase(),
+          percentual_comissao: Number(comissao) || 0,
+        },
+      });
+      toast.success("Vendedor cadastrado!", {
+        description: `Senha de acesso inicial: ${res.senha}`,
+      });
+      reset();
+      setOpen(false);
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao cadastrar vendedor.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function toggleAtivo(v: VendedorRow) {
+    const { error } = await supabase
+      .from("vendedores")
+      .update({ ativo: !v.ativo })
+      .eq("id", v.id);
+    if (error) toast.error("Não foi possível atualizar.");
+    else {
+      toast.success(v.ativo ? "Vendedor desativado." : "Vendedor ativado.");
+      onChanged();
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex justify-end">
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo vendedor
+        </Button>
+      </div>
+      <Card className="mt-4 overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Vendedor</TableHead>
+              <TableHead>Código</TableHead>
+              <TableHead>Comissão</TableHead>
+              <TableHead>Clientes</TableHead>
+              <TableHead>Ativo</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {vendedores.map((v) => (
+              <TableRow key={v.id}>
+                <TableCell>
+                  <div className="font-medium text-foreground">{v.nome ?? "—"}</div>
+                  <div className="text-xs text-muted-foreground">{v.email ?? ""}</div>
+                </TableCell>
+                <TableCell className="font-mono text-sm">{v.codigo_indicacao}</TableCell>
+                <TableCell>{v.percentual_comissao}%</TableCell>
+                <TableCell>{v.clientes_count ?? 0}</TableCell>
+                <TableCell>
+                  <Switch checked={v.ativo} onCheckedChange={() => toggleAtivo(v)} />
+                </TableCell>
+              </TableRow>
+            ))}
+            {vendedores.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                  Nenhum vendedor cadastrado.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo vendedor</DialogTitle>
+            <DialogDescription>
+              O vendedor recebe uma senha padrão e poderá trocá-la depois.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="vnome">Nome</Label>
+              <Input id="vnome" value={nome} onChange={(e) => setNome(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="vemail">E-mail</Label>
+              <Input id="vemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="vcod">Código de indicação</Label>
+              <Input
+                id="vcod"
+                value={codigo}
+                onChange={(e) => setCodigo(e.target.value)}
+                placeholder="Ex: JOAO2026"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="vcom">Comissão (%)</Label>
+              <Input
+                id="vcom"
+                type="number"
+                min={0}
+                max={100}
+                value={comissao}
+                onChange={(e) => setComissao(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button onClick={submit} disabled={saving}>
+              {saving ? "Salvando..." : "Cadastrar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ---------------- Planos ---------------- */
+function PlanosTab({ planos, onChanged }: { planos: Plano[]; onChanged: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Plano | null>(null);
+  const [nome, setNome] = useState("");
+  const [valor, setValor] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [ativo, setAtivo] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  function openNew() {
+    setEditing(null);
+    setNome("");
+    setValor("");
+    setDescricao("");
+    setAtivo(true);
+    setOpen(true);
+  }
+
+  function openEdit(p: Plano) {
+    setEditing(p);
+    setNome(p.nome);
+    setValor(String(p.valor));
+    setDescricao(p.descricao ?? "");
+    setAtivo(p.ativo);
+    setOpen(true);
+  }
+
+  async function submit() {
+    if (nome.trim().length < 2 || !valor) {
+      toast.error("Informe nome e valor do plano.");
+      return;
+    }
+    setSaving(true);
+    const payload = {
+      nome: nome.trim(),
+      valor: Number(valor),
+      descricao: descricao.trim() || null,
+      ativo,
+    };
+    const { error } = editing
+      ? await supabase.from("planos").update(payload).eq("id", editing.id)
+      : await supabase.from("planos").insert(payload);
+    setSaving(false);
+    if (error) {
+      toast.error("Não foi possível salvar o plano.");
+      return;
+    }
+    toast.success(editing ? "Plano atualizado." : "Plano criado.");
+    setOpen(false);
+    onChanged();
+  }
+
+  return (
+    <div>
+      <div className="flex justify-end">
+        <Button onClick={openNew}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo plano
+        </Button>
+      </div>
+      <Card className="mt-4 overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Plano</TableHead>
+              <TableHead>Valor</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {planos.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell>
+                  <div className="font-medium text-foreground">{p.nome}</div>
+                  <div className="text-xs text-muted-foreground">{p.descricao ?? ""}</div>
+                </TableCell>
+                <TableCell>{formatCurrency(p.valor)}</TableCell>
+                <TableCell>
+                  <StatusBadge status={p.ativo ? "ativo" : "cancelado"} />
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button variant="outline" size="sm" onClick={() => openEdit(p)}>
+                    Editar
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+            {planos.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                  Nenhum plano cadastrado.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editing ? "Editar plano" : "Novo plano"}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="pnome">Nome</Label>
+              <Input id="pnome" value={nome} onChange={(e) => setNome(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="pvalor">Valor (R$)</Label>
+              <Input
+                id="pvalor"
+                type="number"
+                min={0}
+                step="0.01"
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="pdesc">Descrição</Label>
+              <Textarea
+                id="pdesc"
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="pativo" checked={ativo} onCheckedChange={setAtivo} />
+              <Label htmlFor="pativo">Plano ativo</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button onClick={submit} disabled={saving}>
+              {saving ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ---------------- Clientes ---------------- */
+function ClientesTab({
+  clientes,
+  vendedores,
+}: {
+  clientes: ClienteRow[];
+  vendedores: VendedorRow[];
+}) {
+  const vmap = useMemo(
+    () => new Map(vendedores.map((v) => [v.id, v.nome || v.codigo_indicacao])),
+    [vendedores],
+  );
+  return (
+    <Card className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Vendedor</TableHead>
+            <TableHead>Plano</TableHead>
+            <TableHead>Vencimento</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {clientes.map((c) => (
+            <TableRow key={c.id}>
+              <TableCell>
+                <div className="font-medium text-foreground">{c.nome ?? "—"}</div>
+                <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
+              </TableCell>
+              <TableCell>{c.vendedor_id ? vmap.get(c.vendedor_id) ?? "—" : "—"}</TableCell>
+              <TableCell>{c.planos?.nome ?? "—"}</TableCell>
+              <TableCell>{formatDate(c.data_vencimento)}</TableCell>
+              <TableCell>
+                <StatusBadge status={c.status} />
+              </TableCell>
+            </TableRow>
+          ))}
+          {clientes.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                Nenhum cliente cadastrado.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
+/* ---------------- Configurações ---------------- */
+function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => void }) {
+  const [form, setForm] = useState<Config>(
+    config ?? {
+      nome_app: "",
+      dominio: "",
+      dias_aviso_vencimento: 5,
+      percentual_comissao_padrao: 10,
+      asaas_api_key: "",
+      asaas_webhook_url: "",
+      asaas_ambiente: "sandbox",
+    },
+  );
+  const [saving, setSaving] = useState(false);
+
+  function set<K extends keyof Config>(key: K, value: Config[K]) {
+    setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function save() {
+    setSaving(true);
+    const payload = {
+      nome_app: form.nome_app,
+      dominio: form.dominio,
+      dias_aviso_vencimento: Number(form.dias_aviso_vencimento) || 0,
+      percentual_comissao_padrao: Number(form.percentual_comissao_padrao) || 0,
+      asaas_api_key: form.asaas_api_key,
+      asaas_webhook_url: form.asaas_webhook_url,
+      asaas_ambiente: form.asaas_ambiente,
+    };
+    const { error } = form.id
+      ? await supabase.from("configuracoes").update(payload).eq("id", form.id)
+      : await supabase.from("configuracoes").insert(payload).select("id").single();
+    setSaving(false);
+    if (error) {
+      toast.error("Não foi possível salvar as configurações.");
+      return;
+    }
+    toast.success("Configurações salvas.");
+    onSaved();
+  }
+
+  return (
+    <Card className="max-w-2xl p-6">
+      <div className="grid gap-4">
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <Label htmlFor="capp">Nome do app</Label>
+            <Input
+              id="capp"
+              value={form.nome_app ?? ""}
+              onChange={(e) => set("nome_app", e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="cdom">Domínio</Label>
+            <Input
+              id="cdom"
+              value={form.dominio ?? ""}
+              onChange={(e) => set("dominio", e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <Label htmlFor="cdias">Dias de aviso de vencimento</Label>
+            <Input
+              id="cdias"
+              type="number"
+              min={0}
+              value={form.dias_aviso_vencimento ?? 0}
+              onChange={(e) => set("dias_aviso_vencimento", Number(e.target.value))}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="ccom">Comissão padrão (%)</Label>
+            <Input
+              id="ccom"
+              type="number"
+              min={0}
+              max={100}
+              value={form.percentual_comissao_padrao ?? 0}
+              onChange={(e) => set("percentual_comissao_padrao", Number(e.target.value))}
+            />
+          </div>
+        </div>
+
+        <div className="mt-2 border-t border-border pt-4">
+          <h3 className="text-sm font-semibold text-foreground">Integração Asaas</h3>
+          <p className="text-xs text-muted-foreground">
+            Cobranças via PIX, boleto e cartão. Preencha quando tiver a chave da Asaas.
+          </p>
+          <div className="mt-3 grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="ckey">Chave de API Asaas</Label>
+              <Input
+                id="ckey"
+                type="password"
+                value={form.asaas_api_key ?? ""}
+                onChange={(e) => set("asaas_api_key", e.target.value)}
+                placeholder="$aact_..."
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="cwh">Webhook URL</Label>
+              <Input
+                id="cwh"
+                value={form.asaas_webhook_url ?? ""}
+                onChange={(e) => set("asaas_webhook_url", e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="cprod"
+                checked={form.asaas_ambiente === "producao"}
+                onCheckedChange={(v) => set("asaas_ambiente", v ? "producao" : "sandbox")}
+              />
+              <Label htmlFor="cprod">
+                Ambiente de produção {form.asaas_ambiente !== "producao" && "(sandbox)"}
+              </Label>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button onClick={save} disabled={saving}>
+            <Save className="mr-2 h-4 w-4" />
+            {saving ? "Salvando..." : "Salvar configurações"}
+          </Button>
+        </div>
+      </div>
+    </Card>
   );
 }
