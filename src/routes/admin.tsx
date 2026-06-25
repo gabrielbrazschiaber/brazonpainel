@@ -638,8 +638,8 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
   async function save() {
     setSaving(true);
     const payload = {
-      nome_app: form.nome_app,
-      dominio: form.dominio,
+      nome_app: form.nome_app ?? undefined,
+      dominio: form.dominio ?? undefined,
       dias_aviso_vencimento: Number(form.dias_aviso_vencimento) || 0,
       percentual_comissao_padrao: Number(form.percentual_comissao_padrao) || 0,
       asaas_api_key: form.asaas_api_key,
