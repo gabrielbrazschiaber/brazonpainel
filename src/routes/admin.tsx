@@ -88,7 +88,7 @@ interface Config {
   percentual_comissao_padrao: number | null;
   asaas_api_key: string | null;
   asaas_webhook_url: string | null;
-  asaas_ambiente: string | null;
+  asaas_ambiente: "producao" | "sandbox" | null;
 }
 
 function AdminArea() {
