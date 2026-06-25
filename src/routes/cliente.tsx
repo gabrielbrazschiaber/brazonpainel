@@ -120,6 +120,7 @@ function ClienteArea() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8">
+        <BrazonLogo className="mb-6" />
         {/* Header */}
         <header className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">

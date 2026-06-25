@@ -184,6 +184,7 @@ function AdminArea() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-4 py-8">
+        <BrazonLogo className="mb-6" />
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Administração</p>
