@@ -12,7 +12,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Entrar — Gestão de Assinaturas" },
+      { title: "Entrar — Brazon" },
       { name: "description", content: "Acesse sua conta para gerenciar assinaturas." },
     ],
   }),
