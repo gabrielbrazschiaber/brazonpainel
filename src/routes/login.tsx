@@ -47,9 +47,7 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md p-8">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold">
-            S
-          </div>
+          <BrazonLogo className="mb-4 justify-center" symbolClassName="h-10 w-10" textClassName="text-2xl" />
           <h1 className="text-2xl font-bold text-foreground">Entrar</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Acesse o painel da sua conta
