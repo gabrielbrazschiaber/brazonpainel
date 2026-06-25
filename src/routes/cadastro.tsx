@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { cadastroPublico } from "@/lib/vendedor.functions";
 import { Card } from "@/components/ui/card";
+import { BrazonLogo } from "@/components/BrazonLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -119,6 +120,7 @@ function CadastroPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <Card className="w-full max-w-md p-8">
+        <BrazonLogo className="mb-5" />
         <h1 className="text-xl font-bold text-foreground">Crie sua conta</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {ref ? "Você foi indicado por um vendedor." : "Link de indicação não informado."}

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
+import { BrazonLogo } from "@/components/BrazonLogo";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -120,6 +121,7 @@ function ClienteArea() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8">
+        <BrazonLogo className="mb-6" />
         {/* Header */}
         <header className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">

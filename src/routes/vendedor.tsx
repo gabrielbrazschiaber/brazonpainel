@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
+import { BrazonLogo } from "@/components/BrazonLogo";
 import { criarCliente } from "@/lib/vendedor.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -167,6 +168,7 @@ function VendedorArea() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-4 py-8">
+        <BrazonLogo className="mb-6" />
         {/* Header */}
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
