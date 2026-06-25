@@ -644,7 +644,7 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
       percentual_comissao_padrao: Number(form.percentual_comissao_padrao) || 0,
       asaas_api_key: form.asaas_api_key,
       asaas_webhook_url: form.asaas_webhook_url,
-      asaas_ambiente: form.asaas_ambiente,
+      asaas_ambiente: form.asaas_ambiente ?? "sandbox",
     };
     const { error } = form.id
       ? await supabase.from("configuracoes").update(payload).eq("id", form.id)
