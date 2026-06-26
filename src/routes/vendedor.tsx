@@ -95,6 +95,7 @@ function VendedorArea() {
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [msgCliente, setMsgCliente] = useState<ClienteRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
