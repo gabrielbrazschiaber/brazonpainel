@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
-import { criarCliente } from "@/lib/vendedor.functions";
+import { criarCliente, atualizarMensagemCliente } from "@/lib/vendedor.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,7 @@ import {
   Copy,
   UserPlus,
   LogOut,
+  MessageSquare,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
@@ -94,6 +95,7 @@ function VendedorArea() {
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [msgCliente, setMsgCliente] = useState<ClienteRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -247,6 +249,7 @@ function VendedorArea() {
                   <TableHead>Plano</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Mensagem</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -261,11 +264,21 @@ function VendedorArea() {
                     <TableCell>
                       <StatusBadge status={c.status} />
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMsgCliente(c)}
+                      >
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {clientes.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
                       Nenhum cliente cadastrado ainda.
                     </TableCell>
                   </TableRow>
@@ -282,6 +295,13 @@ function VendedorArea() {
         planos={planos}
         onCreated={load}
       />
+
+      <MensagemDialog
+        cliente={msgCliente}
+        onOpenChange={(v) => !v && setMsgCliente(null)}
+        onSaved={load}
+      />
+
     </div>
   );
 }
@@ -427,6 +447,75 @@ function CadastrarClienteDialog({
           </Button>
           <Button onClick={submit} disabled={saving}>
             {saving ? "Salvando..." : "Cadastrar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MensagemDialog({
+  cliente,
+  onOpenChange,
+  onSaved,
+}: {
+  cliente: ClienteRow | null;
+  onOpenChange: (v: boolean) => void;
+  onSaved: () => void;
+}) {
+  const salvar = useServerFn(atualizarMensagemCliente);
+  const [mensagem, setMensagem] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setMensagem(cliente?.mensagem_vendedor ?? "");
+  }, [cliente]);
+
+  async function submit() {
+    if (!cliente) return;
+    setSaving(true);
+    try {
+      await salvar({
+        data: {
+          cliente_id: cliente.id,
+          mensagem_vendedor: mensagem.trim() || null,
+        },
+      });
+      toast.success("Mensagem salva!");
+      onOpenChange(false);
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar a mensagem.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!cliente} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Mensagem para {cliente?.nome ?? "o cliente"}</DialogTitle>
+          <DialogDescription>
+            O aviso aparece no topo da área do cliente. Deixe em branco para remover.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-2">
+          <Label htmlFor="aviso">Mensagem / aviso</Label>
+          <Textarea
+            id="aviso"
+            value={mensagem}
+            onChange={(e) => setMensagem(e.target.value)}
+            placeholder="Ex: Seu plano vence em breve, renove para continuar ativo."
+            rows={4}
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button onClick={submit} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar mensagem"}
           </Button>
         </DialogFooter>
       </DialogContent>
