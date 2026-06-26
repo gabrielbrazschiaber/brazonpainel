@@ -99,7 +99,9 @@ function AdminArea() {
   const [vendedores, setVendedores] = useState<VendedorRow[]>([]);
   const [clientes, setClientes] = useState<ClienteRow[]>([]);
   const [config, setConfig] = useState<Config | null>(null);
+  const [admins, setAdmins] = useState<{ user_id: string; nome?: string; email?: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [contaOpen, setContaOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
