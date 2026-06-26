@@ -453,3 +453,72 @@ function CadastrarClienteDialog({
     </Dialog>
   );
 }
+
+function MensagemDialog({
+  cliente,
+  onOpenChange,
+  onSaved,
+}: {
+  cliente: ClienteRow | null;
+  onOpenChange: (v: boolean) => void;
+  onSaved: () => void;
+}) {
+  const salvar = useServerFn(atualizarMensagemCliente);
+  const [mensagem, setMensagem] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setMensagem(cliente?.mensagem_vendedor ?? "");
+  }, [cliente]);
+
+  async function submit() {
+    if (!cliente) return;
+    setSaving(true);
+    try {
+      await salvar({
+        data: {
+          cliente_id: cliente.id,
+          mensagem_vendedor: mensagem.trim() || null,
+        },
+      });
+      toast.success("Mensagem salva!");
+      onOpenChange(false);
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar a mensagem.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!cliente} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Mensagem para {cliente?.nome ?? "o cliente"}</DialogTitle>
+          <DialogDescription>
+            O aviso aparece no topo da área do cliente. Deixe em branco para remover.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-2">
+          <Label htmlFor="aviso">Mensagem / aviso</Label>
+          <Textarea
+            id="aviso"
+            value={mensagem}
+            onChange={(e) => setMensagem(e.target.value)}
+            placeholder="Ex: Seu plano vence em breve, renove para continuar ativo."
+            rows={4}
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button onClick={submit} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar mensagem"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
