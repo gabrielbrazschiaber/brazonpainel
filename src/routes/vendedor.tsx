@@ -273,7 +273,7 @@ function VendedorArea() {
                     <TableCell>
                       <StatusBadge status={c.status} />
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="hidden text-right sm:table-cell">
                       <Button
                         variant="outline"
                         size="sm"
