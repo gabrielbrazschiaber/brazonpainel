@@ -249,6 +249,7 @@ function VendedorArea() {
                   <TableHead>Plano</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Mensagem</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -263,11 +264,21 @@ function VendedorArea() {
                     <TableCell>
                       <StatusBadge status={c.status} />
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMsgCliente(c)}
+                      >
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {clientes.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
                       Nenhum cliente cadastrado ainda.
                     </TableCell>
                   </TableRow>
@@ -284,6 +295,13 @@ function VendedorArea() {
         planos={planos}
         onCreated={load}
       />
+
+      <MensagemDialog
+        cliente={msgCliente}
+        onOpenChange={(v) => !v && setMsgCliente(null)}
+        onSaved={load}
+      />
+
     </div>
   );
 }
