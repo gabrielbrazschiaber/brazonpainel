@@ -542,3 +542,96 @@ function MensagemDialog({
     </Dialog>
   );
 }
+
+function EditarClienteDialog({
+  cliente,
+  onOpenChange,
+  onSaved,
+}: {
+  cliente: ClienteRow | null;
+  onOpenChange: (v: boolean) => void;
+  onSaved: () => void;
+}) {
+  const salvar = useServerFn(atualizarCliente);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setNome(cliente?.nome ?? "");
+    setEmail(cliente?.email ?? "");
+    setSenha("");
+  }, [cliente]);
+
+  async function submit() {
+    if (!cliente) return;
+    if (nome.trim().length < 2 || !email.trim()) {
+      toast.error("Informe nome e e-mail válidos.");
+      return;
+    }
+    if (senha && senha.length < 6) {
+      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await salvar({
+        data: {
+          cliente_id: cliente.id,
+          nome: nome.trim(),
+          email: email.trim(),
+          senha: senha || "",
+        },
+      });
+      toast.success("Dados do cliente atualizados!");
+      onOpenChange(false);
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao atualizar o cliente.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!cliente} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar dados do cliente</DialogTitle>
+          <DialogDescription>
+            Atualize o nome, e-mail e senha de acesso do cliente.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="ecnome">Nome</Label>
+            <Input id="ecnome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="ecemail">E-mail</Label>
+            <Input id="ecemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="ecsenha">Nova senha (opcional)</Label>
+            <Input
+              id="ecsenha"
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="Deixe em branco para manter"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button onClick={submit} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
