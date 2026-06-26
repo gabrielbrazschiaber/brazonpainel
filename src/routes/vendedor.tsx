@@ -251,7 +251,7 @@ function VendedorArea() {
                   <TableHead>Plano</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="hidden text-right sm:table-cell">Mensagem</TableHead>
+                  <TableHead className="hidden text-right sm:table-cell">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -260,15 +260,16 @@ function VendedorArea() {
                      <TableCell>
                        <div className="font-medium text-foreground">{c.nome ?? "—"}</div>
                        <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
-                       <Button
-                         variant="outline"
-                         size="sm"
-                         className="mt-2 sm:hidden"
-                         onClick={() => setMsgCliente(c)}
-                       >
-                         <MessageSquare className="mr-2 h-4 w-4" />
-                         {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
-                       </Button>
+                       <div className="mt-2 flex flex-wrap gap-2 sm:hidden">
+                         <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
+                           <MessageSquare className="mr-2 h-4 w-4" />
+                           {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
+                         </Button>
+                         <Button variant="outline" size="sm" onClick={() => setEditCliente(c)}>
+                           <Pencil className="mr-2 h-4 w-4" />
+                           Editar dados
+                         </Button>
+                       </div>
                      </TableCell>
                     <TableCell>{c.planos?.nome ?? "—"}</TableCell>
                     <TableCell>{formatDate(c.data_vencimento)}</TableCell>
@@ -276,14 +277,16 @@ function VendedorArea() {
                       <StatusBadge status={c.status} />
                     </TableCell>
                     <TableCell className="hidden text-right sm:table-cell">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setMsgCliente(c)}
-                      >
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setEditCliente(c)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Editar dados
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
