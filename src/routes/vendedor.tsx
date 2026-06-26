@@ -316,6 +316,12 @@ function VendedorArea() {
         onSaved={load}
       />
 
+      <EditarClienteDialog
+        cliente={editCliente}
+        onOpenChange={(v) => !v && setEditCliente(null)}
+        onSaved={load}
+      />
+
     </div>
   );
 }
