@@ -255,10 +255,19 @@ function VendedorArea() {
               <TableBody>
                 {clientes.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell>
-                      <div className="font-medium text-foreground">{c.nome ?? "—"}</div>
-                      <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
-                    </TableCell>
+                     <TableCell>
+                       <div className="font-medium text-foreground">{c.nome ?? "—"}</div>
+                       <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         className="mt-2 sm:hidden"
+                         onClick={() => setMsgCliente(c)}
+                       >
+                         <MessageSquare className="mr-2 h-4 w-4" />
+                         {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
+                       </Button>
+                     </TableCell>
                     <TableCell>{c.planos?.nome ?? "—"}</TableCell>
                     <TableCell>{formatDate(c.data_vencimento)}</TableCell>
                     <TableCell>
