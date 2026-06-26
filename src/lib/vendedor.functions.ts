@@ -164,3 +164,62 @@ export const atualizarMensagemCliente = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+const editarClienteSchema = z.object({
+  cliente_id: z.string().uuid(),
+  nome: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(160),
+  senha: z.string().min(6).max(72).optional().or(z.literal("")),
+});
+
+// Vendedor logado edita nome, e-mail e (opcionalmente) senha de um cliente seu.
+export const atualizarCliente = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => editarClienteSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: isVendedor } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "vendedor",
+    });
+    if (!isVendedor) throw new Error("Apenas vendedores podem editar clientes.");
+
+    const { data: vend } = await supabase
+      .from("vendedores")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!vend) throw new Error("Cadastro de vendedor não encontrado.");
+
+    // Garante que o cliente pertence a este vendedor.
+    const { data: cli } = await supabase
+      .from("clientes")
+      .select("user_id")
+      .eq("id", data.cliente_id)
+      .eq("vendedor_id", vend.id)
+      .maybeSingle();
+    if (!cli) throw new Error("Cliente não encontrado ou não pertence a você.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const authUpdate: { email: string; user_metadata: { nome: string }; password?: string } = {
+      email: data.email,
+      user_metadata: { nome: data.nome },
+    };
+    if (data.senha && data.senha.length >= 6) authUpdate.password = data.senha;
+
+    const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(
+      cli.user_id,
+      authUpdate,
+    );
+    if (authErr) throw new Error(authErr.message ?? "Não foi possível atualizar o login do cliente.");
+
+    const { error: profErr } = await supabaseAdmin
+      .from("profiles")
+      .update({ nome: data.nome, email: data.email })
+      .eq("id", cli.user_id);
+    if (profErr) throw new Error("Falha ao atualizar os dados do cliente.");
+
+    return { ok: true };
+  });

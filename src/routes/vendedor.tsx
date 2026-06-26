@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
-import { criarCliente, atualizarMensagemCliente } from "@/lib/vendedor.functions";
+import { criarCliente, atualizarMensagemCliente, atualizarCliente } from "@/lib/vendedor.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,7 @@ import {
   UserPlus,
   LogOut,
   MessageSquare,
+  Pencil,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
@@ -96,6 +97,7 @@ function VendedorArea() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [msgCliente, setMsgCliente] = useState<ClienteRow | null>(null);
+  const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -249,7 +251,7 @@ function VendedorArea() {
                   <TableHead>Plano</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="hidden text-right sm:table-cell">Mensagem</TableHead>
+                  <TableHead className="hidden text-right sm:table-cell">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -258,15 +260,16 @@ function VendedorArea() {
                      <TableCell>
                        <div className="font-medium text-foreground">{c.nome ?? "—"}</div>
                        <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
-                       <Button
-                         variant="outline"
-                         size="sm"
-                         className="mt-2 sm:hidden"
-                         onClick={() => setMsgCliente(c)}
-                       >
-                         <MessageSquare className="mr-2 h-4 w-4" />
-                         {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
-                       </Button>
+                       <div className="mt-2 flex flex-wrap gap-2 sm:hidden">
+                         <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
+                           <MessageSquare className="mr-2 h-4 w-4" />
+                           {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
+                         </Button>
+                         <Button variant="outline" size="sm" onClick={() => setEditCliente(c)}>
+                           <Pencil className="mr-2 h-4 w-4" />
+                           Editar dados
+                         </Button>
+                       </div>
                      </TableCell>
                     <TableCell>{c.planos?.nome ?? "—"}</TableCell>
                     <TableCell>{formatDate(c.data_vencimento)}</TableCell>
@@ -274,14 +277,16 @@ function VendedorArea() {
                       <StatusBadge status={c.status} />
                     </TableCell>
                     <TableCell className="hidden text-right sm:table-cell">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setMsgCliente(c)}
-                      >
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setEditCliente(c)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Editar dados
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -308,6 +313,12 @@ function VendedorArea() {
       <MensagemDialog
         cliente={msgCliente}
         onOpenChange={(v) => !v && setMsgCliente(null)}
+        onSaved={load}
+      />
+
+      <EditarClienteDialog
+        cliente={editCliente}
+        onOpenChange={(v) => !v && setEditCliente(null)}
         onSaved={load}
       />
 
@@ -525,6 +536,99 @@ function MensagemDialog({
           </Button>
           <Button onClick={submit} disabled={saving}>
             {saving ? "Salvando..." : "Salvar mensagem"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditarClienteDialog({
+  cliente,
+  onOpenChange,
+  onSaved,
+}: {
+  cliente: ClienteRow | null;
+  onOpenChange: (v: boolean) => void;
+  onSaved: () => void;
+}) {
+  const salvar = useServerFn(atualizarCliente);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setNome(cliente?.nome ?? "");
+    setEmail(cliente?.email ?? "");
+    setSenha("");
+  }, [cliente]);
+
+  async function submit() {
+    if (!cliente) return;
+    if (nome.trim().length < 2 || !email.trim()) {
+      toast.error("Informe nome e e-mail válidos.");
+      return;
+    }
+    if (senha && senha.length < 6) {
+      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await salvar({
+        data: {
+          cliente_id: cliente.id,
+          nome: nome.trim(),
+          email: email.trim(),
+          senha: senha || "",
+        },
+      });
+      toast.success("Dados do cliente atualizados!");
+      onOpenChange(false);
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao atualizar o cliente.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!cliente} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar dados do cliente</DialogTitle>
+          <DialogDescription>
+            Atualize o nome, e-mail e senha de acesso do cliente.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="ecnome">Nome</Label>
+            <Input id="ecnome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="ecemail">E-mail</Label>
+            <Input id="ecemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="ecsenha">Nova senha (opcional)</Label>
+            <Input
+              id="ecsenha"
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="Deixe em branco para manter"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button onClick={submit} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
           </Button>
         </DialogFooter>
       </DialogContent>
