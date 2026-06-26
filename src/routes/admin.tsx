@@ -127,7 +127,9 @@ function AdminArea() {
     const userIds = [
       ...vrows.map((v) => v.user_id),
       ...crows.map((c) => c.user_id),
+      ...adminIds,
     ];
+    let adminRows: { user_id: string; nome?: string; email?: string }[] = [];
     if (userIds.length) {
       const { data: profs } = await supabase
         .from("profiles")
@@ -145,11 +147,16 @@ function AdminArea() {
         c.nome = p?.nome || undefined;
         c.email = p?.email || undefined;
       });
+      adminRows = adminIds.map((id) => {
+        const p = map.get(id);
+        return { user_id: id, nome: p?.nome || undefined, email: p?.email || undefined };
+      });
     }
 
     setPlanos((pls ?? []) as Plano[]);
     setVendedores(vrows);
     setClientes(crows);
+    setAdmins(adminRows);
     setConfig(
       (cfg as Config | null) ?? {
         nome_app: "",
