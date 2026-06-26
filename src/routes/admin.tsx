@@ -234,6 +234,7 @@ function AdminArea() {
         <Tabs defaultValue="vendedores" className="mt-8">
           <TabsList>
             <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
+            <TabsTrigger value="admins">Admins</TabsTrigger>
             <TabsTrigger value="planos">Planos</TabsTrigger>
             <TabsTrigger value="clientes">Clientes</TabsTrigger>
             <TabsTrigger value="config">Configurações</TabsTrigger>
@@ -241,6 +242,9 @@ function AdminArea() {
 
           <TabsContent value="vendedores" className="mt-4">
             <VendedoresTab vendedores={vendedores} onChanged={load} />
+          </TabsContent>
+          <TabsContent value="admins" className="mt-4">
+            <AdminsTab admins={admins} onChanged={load} />
           </TabsContent>
           <TabsContent value="planos" className="mt-4">
             <PlanosTab planos={planos} onChanged={load} />
