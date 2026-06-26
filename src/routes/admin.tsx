@@ -105,21 +105,24 @@ function AdminArea() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: pls }, { data: vds }, { data: cls }, { data: cfg }] = await Promise.all([
-      supabase.from("planos").select("id,nome,valor,descricao,ativo").order("valor"),
-      supabase
-        .from("vendedores")
-        .select("id,user_id,codigo_indicacao,percentual_comissao,ativo")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("clientes")
-        .select("id,user_id,vendedor_id,data_vencimento,status,planos(nome,valor)")
-        .order("created_at", { ascending: false }),
-      supabase.from("configuracoes").select("*").maybeSingle(),
-    ]);
+    const [{ data: pls }, { data: vds }, { data: cls }, { data: cfg }, { data: adminRoles }] =
+      await Promise.all([
+        supabase.from("planos").select("id,nome,valor,descricao,ativo").order("valor"),
+        supabase
+          .from("vendedores")
+          .select("id,user_id,codigo_indicacao,percentual_comissao,ativo")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("clientes")
+          .select("id,user_id,vendedor_id,data_vencimento,status,planos(nome,valor)")
+          .order("created_at", { ascending: false }),
+        supabase.from("configuracoes").select("*").maybeSingle(),
+        supabase.from("user_roles").select("user_id").eq("role", "admin"),
+      ]);
 
     const vrows = (vds ?? []) as unknown as VendedorRow[];
     const crows = (cls ?? []) as unknown as ClienteRow[];
+    const adminIds = (adminRoles ?? []).map((r) => r.user_id);
 
     const userIds = [
       ...vrows.map((v) => v.user_id),
