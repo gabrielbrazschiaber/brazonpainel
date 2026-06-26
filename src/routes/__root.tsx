@@ -86,6 +86,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "Brazon: plataforma de gestão de assinaturas com clientes, vendedores e administração." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Brazon — Gestão de Assinaturas" },
+      { name: "twitter:description", content: "Brazon: plataforma de gestão de assinaturas com clientes, vendedores e administração." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a7c47b51-a814-4015-8e43-816cb26a0eef/id-preview-f851db6e--09984e97-7ab6-4830-b5d3-51aa0ce0f064.lovable.app-1782476408548.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a7c47b51-a814-4015-8e43-816cb26a0eef/id-preview-f851db6e--09984e97-7ab6-4830-b5d3-51aa0ce0f064.lovable.app-1782476408548.png" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
