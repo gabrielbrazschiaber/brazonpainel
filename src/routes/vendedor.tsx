@@ -249,7 +249,7 @@ function VendedorArea() {
                   <TableHead>Plano</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Mensagem</TableHead>
+                  <TableHead className="hidden text-right sm:table-cell">Mensagem</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
