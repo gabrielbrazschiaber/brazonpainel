@@ -125,3 +125,42 @@ export const cadastroPublico = createServerFn({ method: "POST" })
 
     return { ok: true, senha: SENHA_PADRAO };
   });
+
+const mensagemSchema = z.object({
+  cliente_id: z.string().uuid(),
+  mensagem_vendedor: z.string().trim().max(500).nullable(),
+});
+
+// Vendedor logado atualiza a mensagem/aviso de um cliente seu, a qualquer momento.
+export const atualizarMensagemCliente = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => mensagemSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: isVendedor } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "vendedor",
+    });
+    if (!isVendedor) throw new Error("Apenas vendedores podem enviar mensagens.");
+
+    const { data: vend } = await supabase
+      .from("vendedores")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!vend) throw new Error("Cadastro de vendedor não encontrado.");
+
+    // Garante que o cliente pertence a este vendedor antes de atualizar.
+    const { data: updated, error: updErr } = await supabase
+      .from("clientes")
+      .update({ mensagem_vendedor: data.mensagem_vendedor })
+      .eq("id", data.cliente_id)
+      .eq("vendedor_id", vend.id)
+      .select("id")
+      .maybeSingle();
+    if (updErr) throw new Error("Falha ao salvar a mensagem.");
+    if (!updated) throw new Error("Cliente não encontrado ou não pertence a você.");
+
+    return { ok: true };
+  });
