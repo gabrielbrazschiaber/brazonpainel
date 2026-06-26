@@ -261,6 +261,218 @@ function AdminArea() {
   );
 }
 
+/* ---------------- Minha conta (admin) ---------------- */
+function MinhaContaDialog({
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSaved: () => void;
+}) {
+  const { profile, refresh } = useAuth();
+  const salvar = useServerFn(atualizarMeuPerfil);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setNome(profile?.nome ?? "");
+      setEmail(profile?.email ?? "");
+      setSenha("");
+    }
+  }, [open, profile]);
+
+  async function submit() {
+    if (nome.trim().length < 2 || !email.trim()) {
+      toast.error("Informe nome e e-mail válidos.");
+      return;
+    }
+    if (senha && senha.length < 6) {
+      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await salvar({
+        data: { nome: nome.trim(), email: email.trim(), senha: senha || "" },
+      });
+      toast.success("Suas informações foram atualizadas.");
+      await refresh();
+      onOpenChange(false);
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao atualizar.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Minha conta</DialogTitle>
+          <DialogDescription>Edite seu nome, e-mail e senha de acesso.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="mnome">Nome</Label>
+            <Input id="mnome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="memail">E-mail</Label>
+            <Input id="memail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="msenha">Nova senha (opcional)</Label>
+            <Input
+              id="msenha"
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="Deixe em branco para manter"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button onClick={submit} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ---------------- Admins ---------------- */
+function AdminsTab({
+  admins,
+  onChanged,
+}: {
+  admins: { user_id: string; nome?: string; email?: string }[];
+  onChanged: () => void;
+}) {
+  const criar = useServerFn(criarAdmin);
+  const [open, setOpen] = useState(false);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  function reset() {
+    setNome("");
+    setEmail("");
+    setSenha("");
+  }
+
+  async function submit() {
+    if (nome.trim().length < 2 || !email.trim() || senha.length < 6) {
+      toast.error("Preencha nome, e-mail e senha (mín. 6 caracteres).");
+      return;
+    }
+    setSaving(true);
+    try {
+      await criar({ data: { nome: nome.trim(), email: email.trim(), senha } });
+      toast.success("Administrador criado!");
+      reset();
+      setOpen(false);
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao criar administrador.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex justify-end">
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo administrador
+        </Button>
+      </div>
+      <Card className="mt-4 overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Administrador</TableHead>
+              <TableHead>E-mail</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {admins.map((a) => (
+              <TableRow key={a.user_id}>
+                <TableCell>
+                  <div className="flex items-center gap-2 font-medium text-foreground">
+                    <Shield className="h-4 w-4 text-primary" />
+                    {a.nome ?? "—"}
+                  </div>
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">{a.email ?? ""}</TableCell>
+              </TableRow>
+            ))}
+            {admins.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={2} className="text-center text-sm text-muted-foreground">
+                  Nenhum administrador.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo administrador</DialogTitle>
+            <DialogDescription>
+              Defina o nome, e-mail e senha de acesso do novo administrador.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="anome">Nome</Label>
+              <Input id="anome" value={nome} onChange={(e) => setNome(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="aemail">E-mail</Label>
+              <Input id="aemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="asenha">Senha</Label>
+              <Input
+                id="asenha"
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button onClick={submit} disabled={saving}>
+              {saving ? "Salvando..." : "Criar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+
 function MetricCard({
   icon: Icon,
   label,
