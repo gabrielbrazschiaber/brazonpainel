@@ -45,6 +45,7 @@ import {
   Copy,
   UserPlus,
   LogOut,
+  MessageSquare,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
