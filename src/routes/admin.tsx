@@ -250,7 +250,7 @@ function AdminArea() {
             <PlanosTab planos={planos} onChanged={load} />
           </TabsContent>
           <TabsContent value="clientes" className="mt-4">
-            <ClientesTab clientes={clientes} vendedores={vendedores} />
+            <ClientesTab clientes={clientes} vendedores={vendedores} onChanged={load} />
           </TabsContent>
           <TabsContent value="config" className="mt-4">
             <ConfigTab config={config} onSaved={load} />
