@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
-import { criarCliente, atualizarMensagemCliente, atualizarCliente } from "@/lib/vendedor.functions";
+import { criarCliente, atualizarMensagemCliente, atualizarCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,7 @@ import {
   LogOut,
   MessageSquare,
   Pencil,
+  UserCog,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
@@ -98,6 +99,7 @@ function VendedorArea() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [msgCliente, setMsgCliente] = useState<ClienteRow | null>(null);
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
+  const [contaOpen, setContaOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -196,11 +198,18 @@ function VendedorArea() {
               <UserPlus className="mr-2 h-4 w-4" />
               Cadastrar cliente
             </Button>
+            <Button variant="outline" onClick={() => setContaOpen(true)}>
+              <UserCog className="mr-2 h-4 w-4" />
+              Minha conta
+            </Button>
             <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </header>
+
+        <MinhaContaVendedorDialog open={contaOpen} onOpenChange={setContaOpen} />
+
 
         {/* Métricas */}
         <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -616,6 +625,90 @@ function EditarClienteDialog({
             <Label htmlFor="ecsenha">Nova senha (opcional)</Label>
             <Input
               id="ecsenha"
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="Deixe em branco para manter"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button onClick={submit} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MinhaContaVendedorDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const { profile, refresh } = useAuth();
+  const salvar = useServerFn(atualizarMeuPerfilVendedor);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setNome(profile?.nome ?? "");
+      setEmail(profile?.email ?? "");
+      setSenha("");
+    }
+  }, [open, profile]);
+
+  async function submit() {
+    if (nome.trim().length < 2 || !email.trim()) {
+      toast.error("Informe nome e e-mail válidos.");
+      return;
+    }
+    if (senha && senha.length < 6) {
+      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await salvar({ data: { nome: nome.trim(), email: email.trim(), senha: senha || "" } });
+      toast.success("Suas informações foram atualizadas.");
+      await refresh();
+      onOpenChange(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao atualizar.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Minha conta</DialogTitle>
+          <DialogDescription>Edite seu nome, e-mail e senha de acesso.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="vmcnome">Nome</Label>
+            <Input id="vmcnome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="vmcemail">E-mail</Label>
+            <Input id="vmcemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="vmcsenha">Nova senha (opcional)</Label>
+            <Input
+              id="vmcsenha"
               type="password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
