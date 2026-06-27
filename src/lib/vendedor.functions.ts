@@ -223,3 +223,42 @@ export const atualizarCliente = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+const meuPerfilVendedorSchema = z.object({
+  nome: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(160),
+  senha: z.string().min(6).max(72).optional().or(z.literal("")),
+});
+
+// Vendedor logado edita seu próprio nome, e-mail e (opcionalmente) senha.
+export const atualizarMeuPerfilVendedor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => meuPerfilVendedorSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: isVendedor } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "vendedor",
+    });
+    if (!isVendedor) throw new Error("Apenas vendedores podem editar este perfil.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const authUpdate: { email: string; user_metadata: { nome: string }; password?: string } = {
+      email: data.email,
+      user_metadata: { nome: data.nome },
+    };
+    if (data.senha && data.senha.length >= 6) authUpdate.password = data.senha;
+
+    const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(userId, authUpdate);
+    if (authErr) throw new Error(authErr.message ?? "Não foi possível atualizar o login.");
+
+    const { error: profErr } = await supabaseAdmin
+      .from("profiles")
+      .update({ nome: data.nome, email: data.email })
+      .eq("id", userId);
+    if (profErr) throw new Error("Falha ao atualizar o perfil.");
+
+    return { ok: true };
+  });
