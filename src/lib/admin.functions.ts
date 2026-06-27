@@ -17,6 +17,7 @@ const novoVendedorSchema = z.object({
   email: z.string().trim().email().max(160),
   codigo_indicacao: z.string().trim().min(2).max(60),
   percentual_comissao: z.number().min(0).max(100),
+  senha: z.string().min(6).max(72).optional().or(z.literal("")),
 });
 
 // Admin cria um vendedor (com login de acesso).
@@ -36,9 +37,11 @@ export const criarVendedor = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) throw new Error("Já existe um vendedor com esse código de indicação.");
 
+    const senhaFinal = data.senha && data.senha.length >= 6 ? data.senha : SENHA_PADRAO_VENDEDOR;
+
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
-      password: SENHA_PADRAO_VENDEDOR,
+      password: senhaFinal,
       email_confirm: true,
       user_metadata: { nome: data.nome },
     });
