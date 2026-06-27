@@ -143,3 +143,68 @@ export const atualizarMeuPerfil = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+const editarVendedorSchema = z.object({
+  vendedor_id: z.string().uuid(),
+  nome: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(160),
+  codigo_indicacao: z.string().trim().min(2).max(60),
+  percentual_comissao: z.number().min(0).max(100),
+  senha: z.string().min(6).max(72).optional().or(z.literal("")),
+});
+
+// Admin edita um vendedor: nome, e-mail, código, comissão e (opcionalmente) senha.
+export const atualizarVendedor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => editarVendedorSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: vend } = await supabaseAdmin
+      .from("vendedores")
+      .select("id, user_id")
+      .eq("id", data.vendedor_id)
+      .maybeSingle();
+    if (!vend) throw new Error("Vendedor não encontrado.");
+
+    // Garante código de indicação único (exceto o próprio).
+    const { data: dup } = await supabaseAdmin
+      .from("vendedores")
+      .select("id")
+      .eq("codigo_indicacao", data.codigo_indicacao)
+      .neq("id", data.vendedor_id)
+      .maybeSingle();
+    if (dup) throw new Error("Já existe um vendedor com esse código de indicação.");
+
+    const authUpdate: { email: string; user_metadata: { nome: string }; password?: string } = {
+      email: data.email,
+      user_metadata: { nome: data.nome },
+    };
+    if (data.senha && data.senha.length >= 6) authUpdate.password = data.senha;
+
+    const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(
+      vend.user_id,
+      authUpdate,
+    );
+    if (authErr) throw new Error(authErr.message ?? "Não foi possível atualizar o login do vendedor.");
+
+    const { error: profErr } = await supabaseAdmin
+      .from("profiles")
+      .update({ nome: data.nome, email: data.email })
+      .eq("id", vend.user_id);
+    if (profErr) throw new Error("Falha ao atualizar os dados do vendedor.");
+
+    const { error: vendErr } = await supabaseAdmin
+      .from("vendedores")
+      .update({
+        codigo_indicacao: data.codigo_indicacao,
+        percentual_comissao: data.percentual_comissao,
+      })
+      .eq("id", data.vendedor_id);
+    if (vendErr) throw new Error("Falha ao atualizar o vendedor.");
+
+    return { ok: true };
+  });
