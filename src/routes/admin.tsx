@@ -504,18 +504,34 @@ function VendedoresTab({
   onChanged: () => void;
 }) {
   const criar = useServerFn(criarVendedor);
+  const atualizar = useServerFn(atualizarVendedor);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<VendedorRow | null>(null);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [codigo, setCodigo] = useState("");
   const [comissao, setComissao] = useState("10");
+  const [senha, setSenha] = useState("");
   const [saving, setSaving] = useState(false);
 
-  function reset() {
+  function openNew() {
+    setEditing(null);
     setNome("");
     setEmail("");
     setCodigo("");
     setComissao("10");
+    setSenha("");
+    setOpen(true);
+  }
+
+  function openEdit(v: VendedorRow) {
+    setEditing(v);
+    setNome(v.nome ?? "");
+    setEmail(v.email ?? "");
+    setCodigo(v.codigo_indicacao);
+    setComissao(String(v.percentual_comissao));
+    setSenha("");
+    setOpen(true);
   }
 
   async function submit() {
