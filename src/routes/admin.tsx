@@ -595,7 +595,7 @@ function VendedoresTab({
   return (
     <div>
       <div className="flex justify-end">
-        <Button onClick={() => setOpen(true)}>
+        <Button onClick={openNew}>
           <Plus className="mr-2 h-4 w-4" />
           Novo vendedor
         </Button>
