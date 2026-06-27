@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
-import { criarVendedor, criarAdmin, atualizarMeuPerfil } from "@/lib/admin.functions";
+import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil } from "@/lib/admin.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -504,18 +504,34 @@ function VendedoresTab({
   onChanged: () => void;
 }) {
   const criar = useServerFn(criarVendedor);
+  const atualizar = useServerFn(atualizarVendedor);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<VendedorRow | null>(null);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [codigo, setCodigo] = useState("");
   const [comissao, setComissao] = useState("10");
+  const [senha, setSenha] = useState("");
   const [saving, setSaving] = useState(false);
 
-  function reset() {
+  function openNew() {
+    setEditing(null);
     setNome("");
     setEmail("");
     setCodigo("");
     setComissao("10");
+    setSenha("");
+    setOpen(true);
+  }
+
+  function openEdit(v: VendedorRow) {
+    setEditing(v);
+    setNome(v.nome ?? "");
+    setEmail(v.email ?? "");
+    setCodigo(v.codigo_indicacao);
+    setComissao(String(v.percentual_comissao));
+    setSenha("");
+    setOpen(true);
   }
 
   async function submit() {
@@ -523,24 +539,42 @@ function VendedoresTab({
       toast.error("Preencha nome, e-mail e código de indicação.");
       return;
     }
+    if (senha && senha.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
     setSaving(true);
     try {
-      const res = await criar({
-        data: {
-          nome: nome.trim(),
-          email: email.trim(),
-          codigo_indicacao: codigo.trim().toUpperCase(),
-          percentual_comissao: Number(comissao) || 0,
-        },
-      });
-      toast.success("Vendedor cadastrado!", {
-        description: `Senha de acesso inicial: ${res.senha}`,
-      });
-      reset();
+      if (editing) {
+        await atualizar({
+          data: {
+            vendedor_id: editing.id,
+            nome: nome.trim(),
+            email: email.trim(),
+            codigo_indicacao: codigo.trim().toUpperCase(),
+            percentual_comissao: Number(comissao) || 0,
+            senha: senha || "",
+          },
+        });
+        toast.success("Vendedor atualizado!");
+      } else {
+        const res = await criar({
+          data: {
+            nome: nome.trim(),
+            email: email.trim(),
+            codigo_indicacao: codigo.trim().toUpperCase(),
+            percentual_comissao: Number(comissao) || 0,
+            senha: senha || "",
+          },
+        });
+        toast.success("Vendedor cadastrado!", {
+          description: `Senha de acesso inicial: ${res.senha}`,
+        });
+      }
       setOpen(false);
       onChanged();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao cadastrar vendedor.");
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar vendedor.");
     } finally {
       setSaving(false);
     }
@@ -561,7 +595,7 @@ function VendedoresTab({
   return (
     <div>
       <div className="flex justify-end">
-        <Button onClick={() => setOpen(true)}>
+        <Button onClick={openNew}>
           <Plus className="mr-2 h-4 w-4" />
           Novo vendedor
         </Button>
@@ -575,6 +609,7 @@ function VendedoresTab({
               <TableHead>Comissão</TableHead>
               <TableHead>Clientes</TableHead>
               <TableHead>Ativo</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -590,11 +625,16 @@ function VendedoresTab({
                 <TableCell>
                   <Switch checked={v.ativo} onCheckedChange={() => toggleAtivo(v)} />
                 </TableCell>
+                <TableCell className="text-right">
+                  <Button variant="outline" size="sm" onClick={() => openEdit(v)}>
+                    Editar
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
             {vendedores.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
                   Nenhum vendedor cadastrado.
                 </TableCell>
               </TableRow>
@@ -606,9 +646,11 @@ function VendedoresTab({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Novo vendedor</DialogTitle>
+            <DialogTitle>{editing ? "Editar vendedor" : "Novo vendedor"}</DialogTitle>
             <DialogDescription>
-              O vendedor recebe uma senha padrão e poderá trocá-la depois.
+              {editing
+                ? "Atualize os dados do vendedor. Deixe a senha em branco para mantê-la."
+                : "Defina os dados do vendedor. Você pode escolher a senha de acesso."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
@@ -640,13 +682,25 @@ function VendedoresTab({
                 onChange={(e) => setComissao(e.target.value)}
               />
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="vsenha">
+                {editing ? "Nova senha (opcional)" : "Senha de acesso"}
+              </Label>
+              <Input
+                id="vsenha"
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                placeholder={editing ? "Deixe em branco para manter" : "Mín. 6 caracteres"}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
               Cancelar
             </Button>
             <Button onClick={submit} disabled={saving}>
-              {saving ? "Salvando..." : "Cadastrar"}
+              {saving ? "Salvando..." : editing ? "Salvar" : "Cadastrar"}
             </Button>
           </DialogFooter>
         </DialogContent>
