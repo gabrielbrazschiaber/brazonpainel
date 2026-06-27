@@ -682,13 +682,25 @@ function VendedoresTab({
                 onChange={(e) => setComissao(e.target.value)}
               />
             </div>
+            <div class="grid gap-2" className="grid gap-2">
+              <Label htmlFor="vsenha">
+                {editing ? "Nova senha (opcional)" : "Senha de acesso"}
+              </Label>
+              <Input
+                id="vsenha"
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                placeholder={editing ? "Deixe em branco para manter" : "Mín. 6 caracteres"}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
               Cancelar
             </Button>
             <Button onClick={submit} disabled={saving}>
-              {saving ? "Salvando..." : "Cadastrar"}
+              {saving ? "Salvando..." : editing ? "Salvar" : "Cadastrar"}
             </Button>
           </DialogFooter>
         </DialogContent>
