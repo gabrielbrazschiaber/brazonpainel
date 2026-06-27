@@ -609,6 +609,7 @@ function VendedoresTab({
               <TableHead>Comissão</TableHead>
               <TableHead>Clientes</TableHead>
               <TableHead>Ativo</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -624,11 +625,16 @@ function VendedoresTab({
                 <TableCell>
                   <Switch checked={v.ativo} onCheckedChange={() => toggleAtivo(v)} />
                 </TableCell>
+                <TableCell className="text-right">
+                  <Button variant="outline" size="sm" onClick={() => openEdit(v)}>
+                    Editar
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
             {vendedores.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
                   Nenhum vendedor cadastrado.
                 </TableCell>
               </TableRow>
