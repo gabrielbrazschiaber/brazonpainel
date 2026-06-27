@@ -70,7 +70,7 @@ export const criarVendedor = createServerFn({ method: "POST" })
       throw new Error("Falha ao cadastrar o vendedor.");
     }
 
-    return { ok: true, senha: SENHA_PADRAO_VENDEDOR };
+    return { ok: true, senha: senhaFinal };
   });
 
 const novoAdminSchema = z.object({
