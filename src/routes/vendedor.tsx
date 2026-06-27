@@ -644,3 +644,87 @@ function EditarClienteDialog({
     </Dialog>
   );
 }
+
+function MinhaContaVendedorDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const { profile, refresh } = useAuth();
+  const salvar = useServerFn(atualizarMeuPerfilVendedor);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setNome(profile?.nome ?? "");
+      setEmail(profile?.email ?? "");
+      setSenha("");
+    }
+  }, [open, profile]);
+
+  async function submit() {
+    if (nome.trim().length < 2 || !email.trim()) {
+      toast.error("Informe nome e e-mail válidos.");
+      return;
+    }
+    if (senha && senha.length < 6) {
+      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await salvar({ data: { nome: nome.trim(), email: email.trim(), senha: senha || "" } });
+      toast.success("Suas informações foram atualizadas.");
+      await refresh();
+      onOpenChange(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao atualizar.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Minha conta</DialogTitle>
+          <DialogDescription>Edite seu nome, e-mail e senha de acesso.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="vmcnome">Nome</Label>
+            <Input id="vmcnome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="vmcemail">E-mail</Label>
+            <Input id="vmcemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="vmcsenha">Nova senha (opcional)</Label>
+            <Input
+              id="vmcsenha"
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="Deixe em branco para manter"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button onClick={submit} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
