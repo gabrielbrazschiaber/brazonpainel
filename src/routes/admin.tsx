@@ -682,7 +682,7 @@ function VendedoresTab({
                 onChange={(e) => setComissao(e.target.value)}
               />
             </div>
-            <div class="grid gap-2" className="grid gap-2">
+            <div className="grid gap-2">
               <Label htmlFor="vsenha">
                 {editing ? "Nova senha (opcional)" : "Senha de acesso"}
               </Label>
