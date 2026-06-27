@@ -99,6 +99,7 @@ function VendedorArea() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [msgCliente, setMsgCliente] = useState<ClienteRow | null>(null);
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
+  const [contaOpen, setContaOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
