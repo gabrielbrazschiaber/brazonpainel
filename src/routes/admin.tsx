@@ -646,9 +646,11 @@ function VendedoresTab({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Novo vendedor</DialogTitle>
+            <DialogTitle>{editing ? "Editar vendedor" : "Novo vendedor"}</DialogTitle>
             <DialogDescription>
-              O vendedor recebe uma senha padrão e poderá trocá-la depois.
+              {editing
+                ? "Atualize os dados do vendedor. Deixe a senha em branco para mantê-la."
+                : "Defina os dados do vendedor. Você pode escolher a senha de acesso."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
