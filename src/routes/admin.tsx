@@ -861,14 +861,17 @@ function PlanosTab({ planos, onChanged }: { planos: Plano[]; onChanged: () => vo
 function ClientesTab({
   clientes,
   vendedores,
+  onChanged,
 }: {
   clientes: ClienteRow[];
   vendedores: VendedorRow[];
+  onChanged: () => void;
 }) {
   const vmap = useMemo(
     () => new Map(vendedores.map((v) => [v.id, v.nome || v.codigo_indicacao])),
     [vendedores],
   );
+  const [editing, setEditing] = useState<ClienteRow | null>(null);
   return (
     <Card className="overflow-x-auto">
       <Table>
@@ -879,6 +882,7 @@ function ClientesTab({
             <TableHead>Plano</TableHead>
             <TableHead>Vencimento</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -894,18 +898,116 @@ function ClientesTab({
               <TableCell>
                 <StatusBadge status={c.status} />
               </TableCell>
+              <TableCell className="text-right">
+                <Button variant="outline" size="sm" onClick={() => setEditing(c)}>
+                  Editar
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
           {clientes.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+              <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
                 Nenhum cliente cadastrado.
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
+      <EditarClienteAdminDialog
+        cliente={editing}
+        onOpenChange={(v) => !v && setEditing(null)}
+        onSaved={onChanged}
+      />
     </Card>
+  );
+}
+
+function EditarClienteAdminDialog({
+  cliente,
+  onOpenChange,
+  onSaved,
+}: {
+  cliente: ClienteRow | null;
+  onOpenChange: (v: boolean) => void;
+  onSaved: () => void;
+}) {
+  const salvar = useServerFn(atualizarClienteAdmin);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setNome(cliente?.nome ?? "");
+    setEmail(cliente?.email ?? "");
+    setSenha("");
+  }, [cliente]);
+
+  async function submit() {
+    if (!cliente) return;
+    if (nome.trim().length < 2 || !email.trim()) {
+      toast.error("Informe nome e e-mail válidos.");
+      return;
+    }
+    if (senha && senha.length < 6) {
+      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await salvar({
+        data: { cliente_id: cliente.id, nome: nome.trim(), email: email.trim(), senha: senha || "" },
+      });
+      toast.success("Dados do cliente atualizados!");
+      onOpenChange(false);
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao atualizar o cliente.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!cliente} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar dados do cliente</DialogTitle>
+          <DialogDescription>
+            Atualize o nome, e-mail e senha de acesso do cliente.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="acnome">Nome</Label>
+            <Input id="acnome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="acemail">E-mail</Label>
+            <Input id="acemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="acsenha">Nova senha (opcional)</Label>
+            <Input
+              id="acsenha"
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="Deixe em branco para manter"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button onClick={submit} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
