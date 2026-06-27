@@ -198,11 +198,18 @@ function VendedorArea() {
               <UserPlus className="mr-2 h-4 w-4" />
               Cadastrar cliente
             </Button>
+            <Button variant="outline" onClick={() => setContaOpen(true)}>
+              <UserCog className="mr-2 h-4 w-4" />
+              Minha conta
+            </Button>
             <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </header>
+
+        <MinhaContaVendedorDialog open={contaOpen} onOpenChange={setContaOpen} />
+
 
         {/* Métricas */}
         <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
