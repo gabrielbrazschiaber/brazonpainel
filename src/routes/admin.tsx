@@ -539,24 +539,42 @@ function VendedoresTab({
       toast.error("Preencha nome, e-mail e código de indicação.");
       return;
     }
+    if (senha && senha.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
     setSaving(true);
     try {
-      const res = await criar({
-        data: {
-          nome: nome.trim(),
-          email: email.trim(),
-          codigo_indicacao: codigo.trim().toUpperCase(),
-          percentual_comissao: Number(comissao) || 0,
-        },
-      });
-      toast.success("Vendedor cadastrado!", {
-        description: `Senha de acesso inicial: ${res.senha}`,
-      });
-      reset();
+      if (editing) {
+        await atualizar({
+          data: {
+            vendedor_id: editing.id,
+            nome: nome.trim(),
+            email: email.trim(),
+            codigo_indicacao: codigo.trim().toUpperCase(),
+            percentual_comissao: Number(comissao) || 0,
+            senha: senha || "",
+          },
+        });
+        toast.success("Vendedor atualizado!");
+      } else {
+        const res = await criar({
+          data: {
+            nome: nome.trim(),
+            email: email.trim(),
+            codigo_indicacao: codigo.trim().toUpperCase(),
+            percentual_comissao: Number(comissao) || 0,
+            senha: senha || "",
+          },
+        });
+        toast.success("Vendedor cadastrado!", {
+          description: `Senha de acesso inicial: ${res.senha}`,
+        });
+      }
       setOpen(false);
       onChanged();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao cadastrar vendedor.");
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar vendedor.");
     } finally {
       setSaving(false);
     }
