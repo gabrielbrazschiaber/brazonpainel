@@ -47,6 +47,7 @@ import {
   LogOut,
   MessageSquare,
   Pencil,
+  UserCog,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
