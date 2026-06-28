@@ -79,6 +79,8 @@ interface ClienteRow {
   status: string;
   mensagem_vendedor: string | null;
   plano_id: string | null;
+  servico_extra: string | null;
+  servico_extra_valor: number | null;
   planos: { nome: string; valor: number } | null;
   nome?: string;
   email?: string;
