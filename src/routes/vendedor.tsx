@@ -152,7 +152,7 @@ function VendedorArea() {
     const inadimplentes = clientes.filter((c) => c.status === "inadimplente").length;
     const receitaAtiva = clientes
       .filter((c) => c.status === "ativo")
-      .reduce((s, c) => s + (c.planos?.valor ?? 0), 0);
+      .reduce((s, c) => s + (c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0), 0);
     const comissao = receitaAtiva * ((vendedor?.percentual_comissao ?? 0) / 100);
     return { total, ativos, vencendo, inadimplentes, comissao };
   }, [clientes, vendedor]);
