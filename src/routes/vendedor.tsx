@@ -282,7 +282,19 @@ function VendedorArea() {
                          </Button>
                        </div>
                      </TableCell>
-                    <TableCell>{c.planos?.nome ?? "—"}</TableCell>
+                    <TableCell>
+                      <div>{c.planos?.nome ?? "—"}</div>
+                      {c.servico_extra && (
+                        <div className="text-xs text-muted-foreground">
+                          + {c.servico_extra} ({formatCurrency(c.servico_extra_valor ?? 0)})
+                        </div>
+                      )}
+                      {(c.planos?.valor || c.servico_extra_valor) && (
+                        <div className="text-xs font-semibold text-foreground">
+                          Total: {formatCurrency((c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0))}
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>{formatDate(c.data_vencimento)}</TableCell>
                     <TableCell>
                       <StatusBadge status={c.status} />
