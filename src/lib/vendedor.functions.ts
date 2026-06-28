@@ -10,6 +10,8 @@ const novoClienteSchema = z.object({
   plano_id: z.string().uuid().nullable().optional(),
   data_vencimento: z.string().min(10).max(10),
   mensagem_vendedor: z.string().trim().max(500).optional().nullable(),
+  servico_extra: z.string().trim().max(200).optional().nullable(),
+  servico_extra_valor: z.number().min(0).max(1000000).optional().nullable(),
 });
 
 // Vendedor logado cadastra um novo cliente (cria o login de acesso).
@@ -54,18 +56,30 @@ export const criarCliente = createServerFn({ method: "POST" })
       throw new Error("Falha ao definir o perfil do cliente.");
     }
 
-    const { error: cliErr } = await supabaseAdmin.from("clientes").insert({
+    const { data: novoCliente, error: cliErr } = await supabaseAdmin.from("clientes").insert({
       user_id: newUserId,
       vendedor_id: vend.id,
       plano_id: data.plano_id ?? null,
       data_vencimento: data.data_vencimento,
       mensagem_vendedor: data.mensagem_vendedor ?? null,
+      servico_extra: data.servico_extra ?? null,
+      servico_extra_valor: data.servico_extra_valor ?? 0,
       status: "ativo",
-    });
+    }).select("id").maybeSingle();
     if (cliErr) {
       await supabaseAdmin.auth.admin.deleteUser(newUserId);
       throw new Error("Falha ao cadastrar o cliente.");
     }
+
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      actorRole: "vendedor",
+      acao: "criar_cliente",
+      entidade: "cliente",
+      entidadeId: novoCliente?.id ?? null,
+      detalhes: { nome: data.nome, email: data.email, plano_id: data.plano_id ?? null, servico_extra: data.servico_extra ?? null, servico_extra_valor: data.servico_extra_valor ?? 0 },
+    });
 
     return { ok: true, senha: SENHA_PADRAO };
   });
@@ -162,6 +176,16 @@ export const atualizarMensagemCliente = createServerFn({ method: "POST" })
     if (updErr) throw new Error("Falha ao salvar a mensagem.");
     if (!updated) throw new Error("Cliente não encontrado ou não pertence a você.");
 
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      actorRole: "vendedor",
+      acao: "atualizar_mensagem",
+      entidade: "cliente",
+      entidadeId: data.cliente_id,
+      detalhes: { mensagem_vendedor: data.mensagem_vendedor },
+    });
+
     return { ok: true };
   });
 
@@ -170,9 +194,12 @@ const editarClienteSchema = z.object({
   nome: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(160),
   senha: z.string().min(6).max(72).optional().or(z.literal("")),
+  plano_id: z.string().uuid().nullable().optional(),
+  servico_extra: z.string().trim().max(200).optional().nullable(),
+  servico_extra_valor: z.number().min(0).max(1000000).optional().nullable(),
 });
 
-// Vendedor logado edita nome, e-mail e (opcionalmente) senha de um cliente seu.
+// Vendedor logado edita nome, e-mail, senha, plano e serviço extra de um cliente seu.
 export const atualizarCliente = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => editarClienteSchema.parse(data))
@@ -220,6 +247,35 @@ export const atualizarCliente = createServerFn({ method: "POST" })
       .update({ nome: data.nome, email: data.email })
       .eq("id", cli.user_id);
     if (profErr) throw new Error("Falha ao atualizar os dados do cliente.");
+
+    // Atualiza plano e serviço extra (escopo garantido pelo vendedor).
+    const { error: cliUpdErr } = await supabase
+      .from("clientes")
+      .update({
+        plano_id: data.plano_id ?? null,
+        servico_extra: data.servico_extra ?? null,
+        servico_extra_valor: data.servico_extra_valor ?? 0,
+      })
+      .eq("id", data.cliente_id)
+      .eq("vendedor_id", vend.id);
+    if (cliUpdErr) throw new Error("Falha ao atualizar plano/serviço do cliente.");
+
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      actorRole: "vendedor",
+      acao: "atualizar_cliente",
+      entidade: "cliente",
+      entidadeId: data.cliente_id,
+      detalhes: {
+        nome: data.nome,
+        email: data.email,
+        senha_alterada: !!(data.senha && data.senha.length >= 6),
+        plano_id: data.plano_id ?? null,
+        servico_extra: data.servico_extra ?? null,
+        servico_extra_valor: data.servico_extra_valor ?? 0,
+      },
+    });
 
     return { ok: true };
   });

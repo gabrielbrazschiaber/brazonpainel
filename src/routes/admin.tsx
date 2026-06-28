@@ -238,6 +238,7 @@ function AdminArea() {
             <TabsTrigger value="planos">Planos</TabsTrigger>
             <TabsTrigger value="clientes">Clientes</TabsTrigger>
             <TabsTrigger value="config">Configurações</TabsTrigger>
+            <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
           </TabsList>
 
           <TabsContent value="vendedores" className="mt-4">
@@ -254,6 +255,9 @@ function AdminArea() {
           </TabsContent>
           <TabsContent value="config" className="mt-4">
             <ConfigTab config={config} onSaved={load} />
+          </TabsContent>
+          <TabsContent value="auditoria" className="mt-4">
+            <AuditoriaTab />
           </TabsContent>
         </Tabs>
       </div>
@@ -1142,6 +1146,92 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
           </Button>
         </div>
       </div>
+    </Card>
+  );
+}
+
+interface AuditoriaRow {
+  id: string;
+  actor_email: string | null;
+  actor_role: string | null;
+  acao: string;
+  entidade: string | null;
+  entidade_id: string | null;
+  detalhes: Record<string, unknown> | null;
+  created_at: string;
+}
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString("pt-BR");
+}
+
+function AuditoriaTab() {
+  const [rows, setRows] = useState<AuditoriaRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("auditoria")
+      .select("id,actor_email,actor_role,acao,entidade,entidade_id,detalhes,created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    setRows((data ?? []) as unknown as AuditoriaRow[]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return (
+    <Card className="p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Auditoria de alterações</h2>
+          <p className="text-sm text-muted-foreground">
+            Registro das ações realizadas por vendedores e administradores.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+          {loading ? "Carregando..." : "Atualizar"}
+        </Button>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Data</TableHead>
+            <TableHead>Autor</TableHead>
+            <TableHead>Perfil</TableHead>
+            <TableHead>Ação</TableHead>
+            <TableHead>Entidade</TableHead>
+            <TableHead>Detalhes</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((r) => (
+            <TableRow key={r.id}>
+              <TableCell className="whitespace-nowrap">{formatDateTime(r.created_at)}</TableCell>
+              <TableCell>{r.actor_email ?? "—"}</TableCell>
+              <TableCell>{r.actor_role ?? "—"}</TableCell>
+              <TableCell>{r.acao}</TableCell>
+              <TableCell>{r.entidade ?? "—"}</TableCell>
+              <TableCell>
+                <code className="text-xs text-muted-foreground">
+                  {r.detalhes ? JSON.stringify(r.detalhes) : "—"}
+                </code>
+              </TableCell>
+            </TableRow>
+          ))}
+          {!loading && rows.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                Nenhum registro de auditoria ainda.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </Card>
   );
 }

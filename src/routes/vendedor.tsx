@@ -79,6 +79,8 @@ interface ClienteRow {
   status: string;
   mensagem_vendedor: string | null;
   plano_id: string | null;
+  servico_extra: string | null;
+  servico_extra_valor: number | null;
   planos: { nome: string; valor: number } | null;
   nome?: string;
   email?: string;
@@ -118,7 +120,7 @@ function VendedorArea() {
 
     const { data: cls } = await supabase
       .from("clientes")
-      .select("id,user_id,data_vencimento,status,mensagem_vendedor,plano_id,planos(nome,valor)")
+      .select("id,user_id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,planos(nome,valor)")
       .order("created_at", { ascending: false });
     const rows = (cls ?? []) as unknown as ClienteRow[];
 
@@ -150,7 +152,7 @@ function VendedorArea() {
     const inadimplentes = clientes.filter((c) => c.status === "inadimplente").length;
     const receitaAtiva = clientes
       .filter((c) => c.status === "ativo")
-      .reduce((s, c) => s + (c.planos?.valor ?? 0), 0);
+      .reduce((s, c) => s + (c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0), 0);
     const comissao = receitaAtiva * ((vendedor?.percentual_comissao ?? 0) / 100);
     return { total, ativos, vencendo, inadimplentes, comissao };
   }, [clientes, vendedor]);
@@ -280,7 +282,19 @@ function VendedorArea() {
                          </Button>
                        </div>
                      </TableCell>
-                    <TableCell>{c.planos?.nome ?? "—"}</TableCell>
+                    <TableCell>
+                      <div>{c.planos?.nome ?? "—"}</div>
+                      {c.servico_extra && (
+                        <div className="text-xs text-muted-foreground">
+                          + {c.servico_extra} ({formatCurrency(c.servico_extra_valor ?? 0)})
+                        </div>
+                      )}
+                      {(c.planos?.valor || c.servico_extra_valor) && (
+                        <div className="text-xs font-semibold text-foreground">
+                          Total: {formatCurrency((c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0))}
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>{formatDate(c.data_vencimento)}</TableCell>
                     <TableCell>
                       <StatusBadge status={c.status} />
@@ -327,6 +341,7 @@ function VendedorArea() {
 
       <EditarClienteDialog
         cliente={editCliente}
+        planos={planos}
         onOpenChange={(v) => !v && setEditCliente(null)}
         onSaved={load}
       />
@@ -374,6 +389,8 @@ function CadastrarClienteDialog({
   const [planoId, setPlanoId] = useState<string>("");
   const [vencimento, setVencimento] = useState(defaultVencimento());
   const [mensagem, setMensagem] = useState("");
+  const [servicoExtra, setServicoExtra] = useState("");
+  const [servicoValor, setServicoValor] = useState("");
   const [saving, setSaving] = useState(false);
 
   function reset() {
@@ -382,11 +399,18 @@ function CadastrarClienteDialog({
     setPlanoId("");
     setVencimento(defaultVencimento());
     setMensagem("");
+    setServicoExtra("");
+    setServicoValor("");
   }
 
   async function submit() {
     if (nome.trim().length < 2 || !email.trim()) {
       toast.error("Informe nome e e-mail válidos.");
+      return;
+    }
+    const valorExtra = servicoValor ? Number(servicoValor.replace(",", ".")) : 0;
+    if (servicoExtra.trim() && !(valorExtra > 0)) {
+      toast.error("Informe o valor do serviço extra.");
       return;
     }
     setSaving(true);
@@ -398,6 +422,8 @@ function CadastrarClienteDialog({
           plano_id: planoId || null,
           data_vencimento: vencimento,
           mensagem_vendedor: mensagem.trim() || null,
+          servico_extra: servicoExtra.trim() || null,
+          servico_extra_valor: valorExtra,
         },
       });
       toast.success("Cliente cadastrado!", {
@@ -450,6 +476,25 @@ function CadastrarClienteDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid gap-2 rounded-md border border-border p-3">
+            <Label htmlFor="serv">Serviço extra (opcional)</Label>
+            <Input
+              id="serv"
+              value={servicoExtra}
+              onChange={(e) => setServicoExtra(e.target.value)}
+              placeholder="Ex: Instalação, suporte premium..."
+            />
+            <Label htmlFor="servval" className="mt-1">Valor do serviço (R$)</Label>
+            <Input
+              id="servval"
+              type="text"
+              inputMode="decimal"
+              value={servicoValor}
+              onChange={(e) => setServicoValor(e.target.value)}
+              placeholder="0,00"
+            />
+            <p className="text-xs text-muted-foreground">Esse valor soma ao valor do plano.</p>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="venc">Vencimento</Label>
@@ -554,10 +599,12 @@ function MensagemDialog({
 
 function EditarClienteDialog({
   cliente,
+  planos,
   onOpenChange,
   onSaved,
 }: {
   cliente: ClienteRow | null;
+  planos: Plano[];
   onOpenChange: (v: boolean) => void;
   onSaved: () => void;
 }) {
@@ -565,12 +612,20 @@ function EditarClienteDialog({
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [planoId, setPlanoId] = useState<string>("");
+  const [servicoExtra, setServicoExtra] = useState("");
+  const [servicoValor, setServicoValor] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setNome(cliente?.nome ?? "");
     setEmail(cliente?.email ?? "");
     setSenha("");
+    setPlanoId(cliente?.plano_id ?? "");
+    setServicoExtra(cliente?.servico_extra ?? "");
+    setServicoValor(
+      cliente?.servico_extra_valor ? String(cliente.servico_extra_valor).replace(".", ",") : "",
+    );
   }, [cliente]);
 
   async function submit() {
@@ -583,6 +638,11 @@ function EditarClienteDialog({
       toast.error("A nova senha deve ter pelo menos 6 caracteres.");
       return;
     }
+    const valorExtra = servicoValor ? Number(servicoValor.replace(",", ".")) : 0;
+    if (servicoExtra.trim() && !(valorExtra > 0)) {
+      toast.error("Informe o valor do serviço extra.");
+      return;
+    }
     setSaving(true);
     try {
       await salvar({
@@ -591,6 +651,9 @@ function EditarClienteDialog({
           nome: nome.trim(),
           email: email.trim(),
           senha: senha || "",
+          plano_id: planoId || null,
+          servico_extra: servicoExtra.trim() || null,
+          servico_extra_valor: valorExtra,
         },
       });
       toast.success("Dados do cliente atualizados!");
@@ -609,7 +672,7 @@ function EditarClienteDialog({
         <DialogHeader>
           <DialogTitle>Editar dados do cliente</DialogTitle>
           <DialogDescription>
-            Atualize o nome, e-mail e senha de acesso do cliente.
+            Atualize nome, e-mail, senha, plano e serviço extra do cliente.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
@@ -630,6 +693,40 @@ function EditarClienteDialog({
               onChange={(e) => setSenha(e.target.value)}
               placeholder="Deixe em branco para manter"
             />
+          </div>
+          <div className="grid gap-2">
+            <Label>Plano</Label>
+            <Select value={planoId} onValueChange={setPlanoId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um plano" />
+              </SelectTrigger>
+              <SelectContent>
+                {planos.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.nome} — {formatCurrency(p.valor)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2 rounded-md border border-border p-3">
+            <Label htmlFor="ecserv">Serviço extra (opcional)</Label>
+            <Input
+              id="ecserv"
+              value={servicoExtra}
+              onChange={(e) => setServicoExtra(e.target.value)}
+              placeholder="Ex: Instalação, suporte premium..."
+            />
+            <Label htmlFor="ecservval" className="mt-1">Valor do serviço (R$)</Label>
+            <Input
+              id="ecservval"
+              type="text"
+              inputMode="decimal"
+              value={servicoValor}
+              onChange={(e) => setServicoValor(e.target.value)}
+              placeholder="0,00"
+            />
+            <p className="text-xs text-muted-foreground">Esse valor soma ao valor do plano.</p>
           </div>
         </div>
         <DialogFooter>
