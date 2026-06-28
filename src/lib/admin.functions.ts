@@ -1,13 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { randomBytes } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-/** Gera uma senha aleatória e segura de 12 caracteres. */
+/** Gera uma senha aleatória e segura de 12 caracteres usando Node.js crypto. */
 function gerarSenhaAleatoria(): string {
   const charset = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789@#!";
-  const array = new Uint8Array(12);
-  crypto.getRandomValues(array);
-  return Array.from(array)
+  const bytes = randomBytes(12);
+  return Array.from(bytes)
     .map((b) => charset[b % charset.length])
     .join("");
 }
