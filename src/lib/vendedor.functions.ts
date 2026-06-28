@@ -56,18 +56,30 @@ export const criarCliente = createServerFn({ method: "POST" })
       throw new Error("Falha ao definir o perfil do cliente.");
     }
 
-    const { error: cliErr } = await supabaseAdmin.from("clientes").insert({
+    const { data: novoCliente, error: cliErr } = await supabaseAdmin.from("clientes").insert({
       user_id: newUserId,
       vendedor_id: vend.id,
       plano_id: data.plano_id ?? null,
       data_vencimento: data.data_vencimento,
       mensagem_vendedor: data.mensagem_vendedor ?? null,
+      servico_extra: data.servico_extra ?? null,
+      servico_extra_valor: data.servico_extra_valor ?? 0,
       status: "ativo",
-    });
+    }).select("id").maybeSingle();
     if (cliErr) {
       await supabaseAdmin.auth.admin.deleteUser(newUserId);
       throw new Error("Falha ao cadastrar o cliente.");
     }
+
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      actorRole: "vendedor",
+      acao: "criar_cliente",
+      entidade: "cliente",
+      entidadeId: novoCliente?.id ?? null,
+      detalhes: { nome: data.nome, email: data.email, plano_id: data.plano_id ?? null, servico_extra: data.servico_extra ?? null, servico_extra_valor: data.servico_extra_valor ?? 0 },
+    });
 
     return { ok: true, senha: SENHA_PADRAO };
   });
