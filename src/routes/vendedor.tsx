@@ -599,10 +599,12 @@ function MensagemDialog({
 
 function EditarClienteDialog({
   cliente,
+  planos,
   onOpenChange,
   onSaved,
 }: {
   cliente: ClienteRow | null;
+  planos: Plano[];
   onOpenChange: (v: boolean) => void;
   onSaved: () => void;
 }) {
@@ -610,12 +612,20 @@ function EditarClienteDialog({
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [planoId, setPlanoId] = useState<string>("");
+  const [servicoExtra, setServicoExtra] = useState("");
+  const [servicoValor, setServicoValor] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setNome(cliente?.nome ?? "");
     setEmail(cliente?.email ?? "");
     setSenha("");
+    setPlanoId(cliente?.plano_id ?? "");
+    setServicoExtra(cliente?.servico_extra ?? "");
+    setServicoValor(
+      cliente?.servico_extra_valor ? String(cliente.servico_extra_valor).replace(".", ",") : "",
+    );
   }, [cliente]);
 
   async function submit() {
@@ -628,6 +638,11 @@ function EditarClienteDialog({
       toast.error("A nova senha deve ter pelo menos 6 caracteres.");
       return;
     }
+    const valorExtra = servicoValor ? Number(servicoValor.replace(",", ".")) : 0;
+    if (servicoExtra.trim() && !(valorExtra > 0)) {
+      toast.error("Informe o valor do serviço extra.");
+      return;
+    }
     setSaving(true);
     try {
       await salvar({
@@ -636,6 +651,9 @@ function EditarClienteDialog({
           nome: nome.trim(),
           email: email.trim(),
           senha: senha || "",
+          plano_id: planoId || null,
+          servico_extra: servicoExtra.trim() || null,
+          servico_extra_valor: valorExtra,
         },
       });
       toast.success("Dados do cliente atualizados!");
@@ -654,7 +672,7 @@ function EditarClienteDialog({
         <DialogHeader>
           <DialogTitle>Editar dados do cliente</DialogTitle>
           <DialogDescription>
-            Atualize o nome, e-mail e senha de acesso do cliente.
+            Atualize nome, e-mail, senha, plano e serviço extra do cliente.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
@@ -675,6 +693,40 @@ function EditarClienteDialog({
               onChange={(e) => setSenha(e.target.value)}
               placeholder="Deixe em branco para manter"
             />
+          </div>
+          <div className="grid gap-2">
+            <Label>Plano</Label>
+            <Select value={planoId} onValueChange={setPlanoId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um plano" />
+              </SelectTrigger>
+              <SelectContent>
+                {planos.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.nome} — {formatCurrency(p.valor)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2 rounded-md border border-border p-3">
+            <Label htmlFor="ecserv">Serviço extra (opcional)</Label>
+            <Input
+              id="ecserv"
+              value={servicoExtra}
+              onChange={(e) => setServicoExtra(e.target.value)}
+              placeholder="Ex: Instalação, suporte premium..."
+            />
+            <Label htmlFor="ecservval" className="mt-1">Valor do serviço (R$)</Label>
+            <Input
+              id="ecservval"
+              type="text"
+              inputMode="decimal"
+              value={servicoValor}
+              onChange={(e) => setServicoValor(e.target.value)}
+              placeholder="0,00"
+            />
+            <p className="text-xs text-muted-foreground">Esse valor soma ao valor do plano.</p>
           </div>
         </div>
         <DialogFooter>
