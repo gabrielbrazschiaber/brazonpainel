@@ -10,6 +10,8 @@ const novoClienteSchema = z.object({
   plano_id: z.string().uuid().nullable().optional(),
   data_vencimento: z.string().min(10).max(10),
   mensagem_vendedor: z.string().trim().max(500).optional().nullable(),
+  servico_extra: z.string().trim().max(200).optional().nullable(),
+  servico_extra_valor: z.number().min(0).max(1000000).optional().nullable(),
 });
 
 // Vendedor logado cadastra um novo cliente (cria o login de acesso).
