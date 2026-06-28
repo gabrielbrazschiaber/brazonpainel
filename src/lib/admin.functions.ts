@@ -206,6 +206,19 @@ export const atualizarVendedor = createServerFn({ method: "POST" })
       .eq("id", data.vendedor_id);
     if (vendErr) throw new Error("Falha ao atualizar o vendedor.");
 
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      actorRole: "admin",
+      acao: "atualizar_vendedor",
+      entidade: "vendedor",
+      entidadeId: data.vendedor_id,
+      detalhes: {
+        codigo_indicacao: data.codigo_indicacao,
+        percentual_comissao: data.percentual_comissao,
+      },
+    });
+
     return { ok: true };
   });
 
