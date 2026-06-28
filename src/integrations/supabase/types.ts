@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      auditoria: {
+        Row: {
+          acao: string
+          actor_email: string | null
+          actor_id: string | null
+          actor_role: string | null
+          created_at: string
+          detalhes: Json | null
+          entidade: string
+          entidade_id: string | null
+          id: string
+        }
+        Insert: {
+          acao: string
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          detalhes?: Json | null
+          entidade: string
+          entidade_id?: string | null
+          id?: string
+        }
+        Update: {
+          acao?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          detalhes?: Json | null
+          entidade?: string
+          entidade_id?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           asaas_customer_id: string | null
@@ -22,6 +58,8 @@ export type Database = {
           id: string
           mensagem_vendedor: string | null
           plano_id: string | null
+          servico_extra: string | null
+          servico_extra_valor: number
           status: Database["public"]["Enums"]["cliente_status"]
           updated_at: string
           user_id: string
@@ -34,6 +72,8 @@ export type Database = {
           id?: string
           mensagem_vendedor?: string | null
           plano_id?: string | null
+          servico_extra?: string | null
+          servico_extra_valor?: number
           status?: Database["public"]["Enums"]["cliente_status"]
           updated_at?: string
           user_id: string
@@ -46,6 +86,8 @@ export type Database = {
           id?: string
           mensagem_vendedor?: string | null
           plano_id?: string | null
+          servico_extra?: string | null
+          servico_extra_valor?: number
           status?: Database["public"]["Enums"]["cliente_status"]
           updated_at?: string
           user_id?: string
