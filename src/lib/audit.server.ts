@@ -24,7 +24,7 @@ export async function registrarAuditoria(registro: RegistroAuditoria): Promise<v
       acao: registro.acao,
       entidade: registro.entidade,
       entidade_id: registro.entidadeId ?? null,
-      detalhes: registro.detalhes ?? null,
+      detalhes: (registro.detalhes ?? null) as never,
     });
     if (error) console.error("[auditoria] falha ao registrar:", error.message);
   } catch (e) {
