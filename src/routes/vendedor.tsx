@@ -477,8 +477,26 @@ function CadastrarClienteDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="venc">Vencimento</Label>
+          <div className="grid gap-2 rounded-md border border-border p-3">
+            <Label htmlFor="serv">Serviço extra (opcional)</Label>
+            <Input
+              id="serv"
+              value={servicoExtra}
+              onChange={(e) => setServicoExtra(e.target.value)}
+              placeholder="Ex: Instalação, suporte premium..."
+            />
+            <Label htmlFor="servval" className="mt-1">Valor do serviço (R$)</Label>
+            <Input
+              id="servval"
+              type="text"
+              inputMode="decimal"
+              value={servicoValor}
+              onChange={(e) => setServicoValor(e.target.value)}
+              placeholder="0,00"
+            />
+            <p className="text-xs text-muted-foreground">Esse valor soma ao valor do plano.</p>
+          </div>
+
             <Input
               id="venc"
               type="date"
