@@ -496,7 +496,8 @@ function CadastrarClienteDialog({
             />
             <p className="text-xs text-muted-foreground">Esse valor soma ao valor do plano.</p>
           </div>
-
+          <div className="grid gap-2">
+            <Label htmlFor="venc">Vencimento</Label>
             <Input
               id="venc"
               type="date"
