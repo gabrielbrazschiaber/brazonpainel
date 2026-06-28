@@ -58,6 +58,13 @@ function CadastroPage() {
   const [planoId, setPlanoId] = useState("");
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<{ senha: string } | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   useEffect(() => {
     supabase
@@ -90,7 +97,8 @@ function CadastroPage() {
       });
       setDone({ senha: res.senha });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao concluir cadastro.");
+      toast.error("Não foi possível concluir o cadastro. Tente novamente.");
+      setCooldown(60);
     } finally {
       setSaving(false);
     }
@@ -160,8 +168,8 @@ function CadastroPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={submit} disabled={saving}>
-              {saving ? "Enviando..." : "Criar conta"}
+            <Button onClick={submit} disabled={saving || cooldown > 0}>
+              {saving ? "Enviando..." : cooldown > 0 ? `Aguarde ${cooldown}s...` : "Criar conta"}
             </Button>
           </div>
         )}

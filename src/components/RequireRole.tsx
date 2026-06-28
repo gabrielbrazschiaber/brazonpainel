@@ -21,12 +21,16 @@ export function RequireRole({
     }
   }, [loading, session, userRole, role, navigate]);
 
-  if (loading || !session || (userRole && userRole !== role)) {
+  // Enquanto carrega, sem sessão ou papel incorreto: mostra apenas spinner.
+  // NUNCA renderiza o conteúdo protegido antes da verificação ser concluída.
+  if (loading || !session || !userRole || userRole !== role) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
+
   return <>{children}</>;
 }
+

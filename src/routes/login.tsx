@@ -38,7 +38,7 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setSubmitting(false);
     if (error) {
-      toast.error("Não foi possível entrar", { description: error.message });
+      toast.error("E-mail ou senha incorretos.");
       return;
     }
     toast.success("Bem-vindo de volta!");

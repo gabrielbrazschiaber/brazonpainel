@@ -2,7 +2,15 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export const SENHA_PADRAO = "mudar123";
+/** Gera uma senha aleatória e segura de 12 caracteres. */
+function gerarSenhaAleatoria(): string {
+  const charset = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789@#!";
+  const array = new Uint8Array(12);
+  crypto.getRandomValues(array);
+  return Array.from(array)
+    .map((b) => charset[b % charset.length])
+    .join("");
+}
 
 const novoClienteSchema = z.object({
   nome: z.string().trim().min(2).max(120),
@@ -36,9 +44,11 @@ export const criarCliente = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const senhaGerada = gerarSenhaAleatoria();
+
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
-      password: SENHA_PADRAO,
+      password: senhaGerada,
       email_confirm: true,
       user_metadata: { nome: data.nome },
     });
@@ -81,7 +91,7 @@ export const criarCliente = createServerFn({ method: "POST" })
       detalhes: { nome: data.nome, email: data.email, plano_id: data.plano_id ?? null, servico_extra: data.servico_extra ?? null, servico_extra_valor: data.servico_extra_valor ?? 0 },
     });
 
-    return { ok: true, senha: SENHA_PADRAO };
+    return { ok: true, senha: senhaGerada };
   });
 
 const cadastroPublicoSchema = novoClienteSchema
@@ -105,9 +115,11 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       throw new Error("Link de indicação inválido ou inativo.");
     }
 
+    const senhaGerada = gerarSenhaAleatoria();
+
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
-      password: SENHA_PADRAO,
+      password: senhaGerada,
       email_confirm: true,
       user_metadata: { nome: data.nome },
     });
@@ -137,7 +149,7 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       throw new Error("Falha ao concluir o cadastro.");
     }
 
-    return { ok: true, senha: SENHA_PADRAO };
+    return { ok: true, senha: senhaGerada };
   });
 
 const mensagemSchema = z.object({

@@ -2,7 +2,15 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export const SENHA_PADRAO_VENDEDOR = "mudar123";
+/** Gera uma senha aleatória e segura de 12 caracteres. */
+function gerarSenhaAleatoria(): string {
+  const charset = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789@#!";
+  const array = new Uint8Array(12);
+  crypto.getRandomValues(array);
+  return Array.from(array)
+    .map((b) => charset[b % charset.length])
+    .join("");
+}
 
 async function ensureAdmin(supabase: any, userId: string) {
   const { data: isAdmin } = await supabase.rpc("has_role", {
@@ -37,7 +45,7 @@ export const criarVendedor = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) throw new Error("Já existe um vendedor com esse código de indicação.");
 
-    const senhaFinal = data.senha && data.senha.length >= 6 ? data.senha : SENHA_PADRAO_VENDEDOR;
+    const senhaFinal = data.senha && data.senha.length >= 6 ? data.senha : gerarSenhaAleatoria();
 
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
