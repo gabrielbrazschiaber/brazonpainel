@@ -389,6 +389,8 @@ function CadastrarClienteDialog({
   const [planoId, setPlanoId] = useState<string>("");
   const [vencimento, setVencimento] = useState(defaultVencimento());
   const [mensagem, setMensagem] = useState("");
+  const [servicoExtra, setServicoExtra] = useState("");
+  const [servicoValor, setServicoValor] = useState("");
   const [saving, setSaving] = useState(false);
 
   function reset() {
@@ -397,11 +399,18 @@ function CadastrarClienteDialog({
     setPlanoId("");
     setVencimento(defaultVencimento());
     setMensagem("");
+    setServicoExtra("");
+    setServicoValor("");
   }
 
   async function submit() {
     if (nome.trim().length < 2 || !email.trim()) {
       toast.error("Informe nome e e-mail válidos.");
+      return;
+    }
+    const valorExtra = servicoValor ? Number(servicoValor.replace(",", ".")) : 0;
+    if (servicoExtra.trim() && !(valorExtra > 0)) {
+      toast.error("Informe o valor do serviço extra.");
       return;
     }
     setSaving(true);
@@ -413,6 +422,8 @@ function CadastrarClienteDialog({
           plano_id: planoId || null,
           data_vencimento: vencimento,
           mensagem_vendedor: mensagem.trim() || null,
+          servico_extra: servicoExtra.trim() || null,
+          servico_extra_valor: valorExtra,
         },
       });
       toast.success("Cliente cadastrado!", {
