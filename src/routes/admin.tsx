@@ -256,6 +256,9 @@ function AdminArea() {
           <TabsContent value="config" className="mt-4">
             <ConfigTab config={config} onSaved={load} />
           </TabsContent>
+          <TabsContent value="auditoria" className="mt-4">
+            <AuditoriaTab />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
