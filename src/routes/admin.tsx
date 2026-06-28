@@ -238,6 +238,7 @@ function AdminArea() {
             <TabsTrigger value="planos">Planos</TabsTrigger>
             <TabsTrigger value="clientes">Clientes</TabsTrigger>
             <TabsTrigger value="config">Configurações</TabsTrigger>
+            <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
           </TabsList>
 
           <TabsContent value="vendedores" className="mt-4">
