@@ -189,6 +189,16 @@ function ClienteArea() {
             <p className="mt-1 text-sm text-muted-foreground">
               {cliente?.planos ? `${formatCurrency(cliente.planos.valor)}/mês` : "Sem plano"}
             </p>
+            {cliente?.servico_extra && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                + {cliente.servico_extra} ({formatCurrency(cliente.servico_extra_valor ?? 0)})
+              </p>
+            )}
+            {(cliente?.planos?.valor || cliente?.servico_extra_valor) && (
+              <p className="mt-2 text-sm font-semibold text-foreground">
+                Total: {formatCurrency((cliente?.planos?.valor ?? 0) + (cliente?.servico_extra_valor ?? 0))}/mês
+              </p>
+            )}
           </Card>
           <Card className="p-5">
             <div className="flex items-center gap-2 text-muted-foreground">
