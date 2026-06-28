@@ -341,6 +341,7 @@ function VendedorArea() {
 
       <EditarClienteDialog
         cliente={editCliente}
+        planos={planos}
         onOpenChange={(v) => !v && setEditCliente(null)}
         onSaved={load}
       />
