@@ -251,5 +251,19 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
       .eq("id", cli.user_id);
     if (profErr) throw new Error("Falha ao atualizar os dados do cliente.");
 
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      actorRole: "admin",
+      acao: "atualizar_cliente",
+      entidade: "cliente",
+      entidadeId: data.cliente_id,
+      detalhes: {
+        nome: data.nome,
+        email: data.email,
+        senha_alterada: !!(data.senha && data.senha.length >= 6),
+      },
+    });
+
     return { ok: true };
   });
