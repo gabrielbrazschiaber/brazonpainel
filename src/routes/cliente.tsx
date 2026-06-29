@@ -66,6 +66,8 @@ function ClienteArea() {
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
   const [loading, setLoading] = useState(true);
+  const [renovando, setRenovando] = useState<string | null>(null);
+  const gerarCobrancaFn = useServerFn(gerarCobranca);
 
   const load = useCallback(async () => {
     setLoading(true);
