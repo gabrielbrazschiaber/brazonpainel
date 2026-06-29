@@ -66,10 +66,10 @@ async function obterOuCriarClienteAsaas(
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[Asaas] Falha ao criar cliente:', errorText);
-    throw new Error(`Erro Asaas (Criar Cliente): ${errorText}`);
+    throw new Error(`Erro Asaas (Criar Cliente): ${errorText.slice(0, 300)}`);
   }
 
-  const data = await response.json();
+  const data = await lerJson(response, 'Criar Cliente');
   const asaasCustomerId = data.id;
 
   // Atualiza no banco de dados local
