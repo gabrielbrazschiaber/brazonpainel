@@ -20,6 +20,8 @@ import { formatCurrency, formatDate, daysUntil, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Bell, CalendarClock, CreditCard, BadgeCheck, LogOut } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { gerarCobranca } from "@/lib/asaas.functions";
 
 export const Route = createFileRoute("/cliente")({
   head: () => ({ meta: [{ title: "Minha assinatura" }] }),
@@ -64,6 +66,8 @@ function ClienteArea() {
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
   const [loading, setLoading] = useState(true);
+  const [renovando, setRenovando] = useState<string | null>(null);
+  const gerarCobrancaFn = useServerFn(gerarCobranca);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,12 +109,32 @@ function ClienteArea() {
     return cliente?.status ?? "ativo";
   }
 
-  function handleRenovar(plano: Plano) {
-    toast.info("Pagamento via Asaas", {
-      description:
-        "A cobrança será gerada assim que a integração com o Asaas for ativada nas configurações.",
-    });
+  async function handleRenovar(plano: Plano) {
+    setRenovando(plano.id);
+    try {
+      const res = await gerarCobrancaFn({
+        data: { plano_id: plano.id, tipoPagamento: "PIX" },
+      });
+      const url = res.invoiceUrl || res.bankSlipUrl;
+      if (url) {
+        toast.success("Cobrança gerada!", {
+          description: "Abrindo a página de pagamento do Asaas...",
+        });
+        window.open(url, "_blank", "noopener,noreferrer");
+      } else {
+        toast.success("Cobrança gerada com sucesso.");
+      }
+      await load();
+    } catch (err) {
+      toast.error("Não foi possível gerar a cobrança", {
+        description:
+          err instanceof Error ? err.message : "Verifique a configuração do Asaas.",
+      });
+    } finally {
+      setRenovando(null);
+    }
   }
+
 
   if (loading) {
     return (
@@ -241,8 +265,12 @@ function ClienteArea() {
                   {p.descricao && (
                     <p className="mt-2 flex-1 text-sm text-muted-foreground">{p.descricao}</p>
                   )}
-                  <Button className="mt-4 w-full" onClick={() => handleRenovar(p)}>
-                    Renovar via Asaas
+                  <Button
+                    className="mt-4 w-full"
+                    onClick={() => handleRenovar(p)}
+                    disabled={renovando !== null}
+                  >
+                    {renovando === p.id ? "Gerando cobrança..." : "Renovar via Asaas"}
                   </Button>
                 </Card>
               );
