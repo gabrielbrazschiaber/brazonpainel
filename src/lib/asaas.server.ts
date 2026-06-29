@@ -5,6 +5,19 @@ interface ConfigAsaas {
   baseUrl: string;
 }
 
+// Lê a resposta como JSON com mensagem clara caso o Asaas retorne HTML (URL/chave inválida)
+async function lerJson(response: Response, contexto: string) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error(`[Asaas] Resposta não-JSON (${contexto}):`, text.slice(0, 300));
+    throw new Error(
+      `Erro Asaas (${contexto}): resposta inesperada do servidor. Verifique a chave de API e o ambiente (sandbox/produção) nas Configurações.`
+    );
+  }
+}
+
 // Busca as configurações do Asaas (do env ou da tabela configuracoes)
 async function obterConfigAsaas(): Promise<ConfigAsaas> {
   // 1. Tenta obter do Environment do servidor
@@ -14,7 +27,7 @@ async function obterConfigAsaas(): Promise<ConfigAsaas> {
   if (envKey) {
     return {
       apiKey: envKey,
-      baseUrl: envAmbiente === 'producao' ? 'https://api.asaas.com/v3' : 'https://sandbox.asaas.com/v3'
+      baseUrl: envAmbiente === 'producao' ? 'https://api.asaas.com/v3' : 'https://api-sandbox.asaas.com/v3'
     };
   }
 
@@ -31,7 +44,7 @@ async function obterConfigAsaas(): Promise<ConfigAsaas> {
 
   return {
     apiKey: config.asaas_api_key,
-    baseUrl: config.asaas_ambiente === 'producao' ? 'https://api.asaas.com/v3' : 'https://sandbox.asaas.com/v3'
+    baseUrl: config.asaas_ambiente === 'producao' ? 'https://api.asaas.com/v3' : 'https://api-sandbox.asaas.com/v3'
   };
 }
 
@@ -66,10 +79,10 @@ async function obterOuCriarClienteAsaas(
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[Asaas] Falha ao criar cliente:', errorText);
-    throw new Error(`Erro Asaas (Criar Cliente): ${errorText}`);
+    throw new Error(`Erro Asaas (Criar Cliente): ${errorText.slice(0, 300)}`);
   }
 
-  const data = await response.json();
+  const data = await lerJson(response, 'Criar Cliente');
   const asaasCustomerId = data.id;
 
   // Atualiza no banco de dados local
@@ -150,10 +163,10 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[Asaas] Falha ao criar cobrança:', errorText);
-    throw new Error(`Erro Asaas (Criar Cobrança): ${errorText}`);
+    throw new Error(`Erro Asaas (Criar Cobrança): ${errorText.slice(0, 300)}`);
   }
 
-  const data = await response.json();
+  const data = await lerJson(response, 'Criar Cobrança');
 
   // 4. Registra o pagamento pendente localmente no banco
   const { data: novoPagamento, error: pagErr } = await supabaseAdmin
