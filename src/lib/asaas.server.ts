@@ -100,17 +100,24 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
   // 1. Busca os dados do cliente no banco
   const { data: cliente, error: cliErr } = await supabaseAdmin
     .from('clientes')
-    .select('id, asaas_customer_id, profiles(nome, email)')
+    .select('id, user_id, asaas_customer_id')
     .eq('id', params.clienteId)
-    .single();
+    .maybeSingle();
 
   if (cliErr || !cliente) {
     throw new Error(`Cliente não encontrado para cobrança: ${params.clienteId}`);
   }
 
-  const profile = cliente.profiles as unknown as { nome: string; email: string } | null;
+  // O perfil (nome/email) está ligado por user_id, não por uma FK direta de clientes.
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('nome, email')
+    .eq('id', cliente.user_id)
+    .maybeSingle();
+
   const nome = profile?.nome || 'Cliente Brazon';
   const email = profile?.email || '';
+
 
   // 2. Obtém ou cria o cliente no Asaas
   const asaasCustomerId = await obterOuCriarClienteAsaas(
