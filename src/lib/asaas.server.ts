@@ -163,10 +163,10 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[Asaas] Falha ao criar cobrança:', errorText);
-    throw new Error(`Erro Asaas (Criar Cobrança): ${errorText}`);
+    throw new Error(`Erro Asaas (Criar Cobrança): ${errorText.slice(0, 300)}`);
   }
 
-  const data = await response.json();
+  const data = await lerJson(response, 'Criar Cobrança');
 
   // 4. Registra o pagamento pendente localmente no banco
   const { data: novoPagamento, error: pagErr } = await supabaseAdmin
