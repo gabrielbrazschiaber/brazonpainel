@@ -14,7 +14,7 @@ async function obterConfigAsaas(): Promise<ConfigAsaas> {
   if (envKey) {
     return {
       apiKey: envKey,
-      baseUrl: envAmbiente === 'producao' ? 'https://api.asaas.com/v3' : 'https://sandbox.asaas.com/v3'
+      baseUrl: envAmbiente === 'producao' ? 'https://api.asaas.com/v3' : 'https://api-sandbox.asaas.com/v3'
     };
   }
 
