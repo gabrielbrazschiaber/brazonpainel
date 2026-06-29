@@ -31,7 +31,7 @@ async function obterConfigAsaas(): Promise<ConfigAsaas> {
 
   return {
     apiKey: config.asaas_api_key,
-    baseUrl: config.asaas_ambiente === 'producao' ? 'https://api.asaas.com/v3' : 'https://sandbox.asaas.com/v3'
+    baseUrl: config.asaas_ambiente === 'producao' ? 'https://api.asaas.com/v3' : 'https://api-sandbox.asaas.com/v3'
   };
 }
 
