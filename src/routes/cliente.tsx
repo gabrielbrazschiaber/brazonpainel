@@ -109,12 +109,32 @@ function ClienteArea() {
     return cliente?.status ?? "ativo";
   }
 
-  function handleRenovar(plano: Plano) {
-    toast.info("Pagamento via Asaas", {
-      description:
-        "A cobrança será gerada assim que a integração com o Asaas for ativada nas configurações.",
-    });
+  async function handleRenovar(plano: Plano) {
+    setRenovando(plano.id);
+    try {
+      const res = await gerarCobrancaFn({
+        data: { plano_id: plano.id, tipoPagamento: "PIX" },
+      });
+      const url = res.invoiceUrl || res.bankSlipUrl;
+      if (url) {
+        toast.success("Cobrança gerada!", {
+          description: "Abrindo a página de pagamento do Asaas...",
+        });
+        window.open(url, "_blank", "noopener,noreferrer");
+      } else {
+        toast.success("Cobrança gerada com sucesso.");
+      }
+      await load();
+    } catch (err) {
+      toast.error("Não foi possível gerar a cobrança", {
+        description:
+          err instanceof Error ? err.message : "Verifique a configuração do Asaas.",
+      });
+    } finally {
+      setRenovando(null);
+    }
   }
+
 
   if (loading) {
     return (
