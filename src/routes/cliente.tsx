@@ -265,8 +265,12 @@ function ClienteArea() {
                   {p.descricao && (
                     <p className="mt-2 flex-1 text-sm text-muted-foreground">{p.descricao}</p>
                   )}
-                  <Button className="mt-4 w-full" onClick={() => handleRenovar(p)}>
-                    Renovar via Asaas
+                  <Button
+                    className="mt-4 w-full"
+                    onClick={() => handleRenovar(p)}
+                    disabled={renovando !== null}
+                  >
+                    {renovando === p.id ? "Gerando cobrança..." : "Renovar via Asaas"}
                   </Button>
                 </Card>
               );
