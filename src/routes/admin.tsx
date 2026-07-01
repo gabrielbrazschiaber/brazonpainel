@@ -1030,6 +1030,23 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
     },
   );
   const [saving, setSaving] = useState(false);
+  const [testando, setTestando] = useState(false);
+  const testar = useServerFn(testarChaveAsaas);
+
+  async function testarChave() {
+    setTestando(true);
+    try {
+      const r = await testar({});
+      toast.success(
+        `Chave válida! Conta: ${r.nomeConta} — ambiente ${r.ambiente === "producao" ? "produção" : "sandbox"}.`,
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao testar a chave.");
+    } finally {
+      setTestando(false);
+    }
+  }
+
 
   function set<K extends keyof Config>(key: K, value: Config[K]) {
     setForm((f) => ({ ...f, [key]: value }));
