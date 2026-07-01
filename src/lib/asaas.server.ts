@@ -21,6 +21,16 @@ async function lerJson(response: Response, contexto: string) {
 const URL_PRODUCAO = 'https://api.asaas.com/v3';
 const URL_SANDBOX = 'https://api-sandbox.asaas.com/v3';
 
+// O Asaas exige um cabeçalho User-Agent em todas as requisições.
+function asaasHeaders(apiKey: string, comBody = false): Record<string, string> {
+  const headers: Record<string, string> = {
+    'access_token': apiKey,
+    'User-Agent': 'BrazonPainel/1.0'
+  };
+  if (comBody) headers['Content-Type'] = 'application/json';
+  return headers;
+}
+
 // Descobre em qual ambiente a chave é válida, testando um endpoint leve.
 // Isso evita o erro "invalid_environment" quando o toggle sandbox/produção
 // não corresponde à chave informada.
