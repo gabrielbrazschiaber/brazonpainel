@@ -235,3 +235,25 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
     status: data.status
   };
 }
+
+// Testa a chave/ambiente do Asaas consultando os dados da conta.
+export async function testarConexaoAsaas() {
+  const config = await obterConfigAsaas();
+  const response = await fetch(`${config.baseUrl}/myAccount`, {
+    headers: asaasHeaders(config.apiKey)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Erro Asaas (Testar Chave): ${errorText.slice(0, 300)}`);
+  }
+
+  const data = await lerJson(response, 'Testar Chave');
+  const ambiente = config.baseUrl === URL_PRODUCAO ? 'producao' : 'sandbox';
+  return {
+    ok: true,
+    ambiente,
+    nomeConta: data.name || data.email || 'Conta Asaas',
+    email: data.email || null
+  };
+}
