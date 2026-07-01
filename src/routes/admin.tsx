@@ -7,6 +7,7 @@ import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, atualizarClienteAdmin } from "@/lib/admin.functions";
+import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1029,6 +1030,23 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
     },
   );
   const [saving, setSaving] = useState(false);
+  const [testando, setTestando] = useState(false);
+  const testar = useServerFn(testarChaveAsaas);
+
+  async function testarChave() {
+    setTestando(true);
+    try {
+      const r = await testar({});
+      toast.success(
+        `Chave válida! Conta: ${r.nomeConta} — ambiente ${r.ambiente === "producao" ? "produção" : "sandbox"}.`,
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao testar a chave.");
+    } finally {
+      setTestando(false);
+    }
+  }
+
 
   function set<K extends keyof Config>(key: K, value: Config[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -1135,6 +1153,14 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
               <Label htmlFor="cprod">
                 Ambiente de produção {form.asaas_ambiente !== "producao" && "(sandbox)"}
               </Label>
+            </div>
+            <div>
+              <Button type="button" variant="outline" onClick={testarChave} disabled={testando}>
+                {testando ? "Testando..." : "Testar chave Asaas"}
+              </Button>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Salve a chave antes de testar. O ambiente correto é detectado automaticamente.
+              </p>
             </div>
           </div>
         </div>

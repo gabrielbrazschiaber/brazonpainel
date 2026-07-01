@@ -21,6 +21,16 @@ async function lerJson(response: Response, contexto: string) {
 const URL_PRODUCAO = 'https://api.asaas.com/v3';
 const URL_SANDBOX = 'https://api-sandbox.asaas.com/v3';
 
+// O Asaas exige um cabeçalho User-Agent em todas as requisições.
+function asaasHeaders(apiKey: string, comBody = false): Record<string, string> {
+  const headers: Record<string, string> = {
+    'access_token': apiKey,
+    'User-Agent': 'BrazonPainel/1.0'
+  };
+  if (comBody) headers['Content-Type'] = 'application/json';
+  return headers;
+}
+
 // Descobre em qual ambiente a chave é válida, testando um endpoint leve.
 // Isso evita o erro "invalid_environment" quando o toggle sandbox/produção
 // não corresponde à chave informada.
@@ -33,7 +43,7 @@ async function resolverBaseUrl(apiKey: string, preferido: string): Promise<strin
   for (const base of ordem) {
     try {
       const resp = await fetch(`${base}/myAccount`, {
-        headers: { 'access_token': apiKey }
+        headers: asaasHeaders(apiKey)
       });
       if (resp.ok) {
         return base;
@@ -101,10 +111,7 @@ async function obterOuCriarClienteAsaas(
 
   const response = await fetch(`${config.baseUrl}/customers`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'access_token': config.apiKey
-    },
+    headers: asaasHeaders(config.apiKey, true),
     body: JSON.stringify({
       name: nome,
       email: email,
@@ -183,10 +190,7 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
 
   const response = await fetch(`${config.baseUrl}/payments`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'access_token': config.apiKey
-    },
+    headers: asaasHeaders(config.apiKey, true),
     body: JSON.stringify({
       customer: asaasCustomerId,
       billingType: params.tipoPagamento,
@@ -229,5 +233,27 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
     bankSlipUrl: data.bankSlipUrl || null, // Se boleto, link do PDF
     pixCopyPaste: data.pixCopyPaste || null, // Se Pix, código copia e cola
     status: data.status
+  };
+}
+
+// Testa a chave/ambiente do Asaas consultando os dados da conta.
+export async function testarConexaoAsaas() {
+  const config = await obterConfigAsaas();
+  const response = await fetch(`${config.baseUrl}/myAccount`, {
+    headers: asaasHeaders(config.apiKey)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Erro Asaas (Testar Chave): ${errorText.slice(0, 300)}`);
+  }
+
+  const data = await lerJson(response, 'Testar Chave');
+  const ambiente = config.baseUrl === URL_PRODUCAO ? 'producao' : 'sandbox';
+  return {
+    ok: true,
+    ambiente,
+    nomeConta: data.name || data.email || 'Conta Asaas',
+    email: data.email || null
   };
 }
