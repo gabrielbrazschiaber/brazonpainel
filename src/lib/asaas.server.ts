@@ -111,10 +111,7 @@ async function obterOuCriarClienteAsaas(
 
   const response = await fetch(`${config.baseUrl}/customers`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'access_token': config.apiKey
-    },
+    headers: asaasHeaders(config.apiKey, true),
     body: JSON.stringify({
       name: nome,
       email: email,
