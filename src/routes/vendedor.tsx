@@ -120,7 +120,7 @@ function VendedorArea() {
 
     const { data: cls } = await supabase
       .from("clientes")
-      .select("id,user_id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,cpf_cnpj,telefone,planos(nome,valor)")
+      .select("id,user_id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,planos(nome,valor)")
       .order("created_at", { ascending: false });
     const rows = (cls ?? []) as unknown as ClienteRow[];
 
@@ -386,8 +386,6 @@ function CadastrarClienteDialog({
   const criar = useServerFn(criarCliente);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
-  const [cpfCnpj, setCpfCnpj] = useState("");
-  const [telefone, setTelefone] = useState("");
   const [planoId, setPlanoId] = useState<string>("");
   const [vencimento, setVencimento] = useState(defaultVencimento());
   const [mensagem, setMensagem] = useState("");
@@ -398,8 +396,6 @@ function CadastrarClienteDialog({
   function reset() {
     setNome("");
     setEmail("");
-    setCpfCnpj("");
-    setTelefone("");
     setPlanoId("");
     setVencimento(defaultVencimento());
     setMensagem("");
@@ -410,11 +406,6 @@ function CadastrarClienteDialog({
   async function submit() {
     if (nome.trim().length < 2 || !email.trim()) {
       toast.error("Informe nome e e-mail válidos.");
-      return;
-    }
-    const cpfLimpo = cpfCnpj.replace(/\D/g, "");
-    if (cpfLimpo.length !== 11 && cpfLimpo.length !== 14) {
-      toast.error("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.");
       return;
     }
     const valorExtra = servicoValor ? Number(servicoValor.replace(",", ".")) : 0;
@@ -428,8 +419,6 @@ function CadastrarClienteDialog({
         data: {
           nome: nome.trim(),
           email: email.trim(),
-          cpf_cnpj: cpfCnpj.trim(),
-          telefone: telefone.trim() || null,
           plano_id: planoId || null,
           data_vencimento: vencimento,
           mensagem_vendedor: mensagem.trim() || null,
@@ -471,26 +460,6 @@ function CadastrarClienteDialog({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="cpfcnpj">CPF ou CNPJ *</Label>
-            <Input
-              id="cpfcnpj"
-              value={cpfCnpj}
-              onChange={(e) => setCpfCnpj(e.target.value)}
-              placeholder="000.000.000-00 ou 00.000.000/0001-00"
-              maxLength={18}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="telefone">Telefone / Celular</Label>
-            <Input
-              id="telefone"
-              value={telefone}
-              onChange={(e) => setTelefone(e.target.value)}
-              placeholder="(00) 00000-0000"
-              maxLength={20}
             />
           </div>
           <div className="grid gap-2">
@@ -642,8 +611,6 @@ function EditarClienteDialog({
   const salvar = useServerFn(atualizarCliente);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
-  const [editCpfCnpj, setEditCpfCnpj] = useState("");
-  const [editTelefone, setEditTelefone] = useState("");
   const [senha, setSenha] = useState("");
   const [planoId, setPlanoId] = useState<string>("");
   const [servicoExtra, setServicoExtra] = useState("");
@@ -653,8 +620,6 @@ function EditarClienteDialog({
   useEffect(() => {
     setNome(cliente?.nome ?? "");
     setEmail(cliente?.email ?? "");
-    setEditCpfCnpj((cliente as unknown as Record<string, string>)?.cpf_cnpj ?? "");
-    setEditTelefone((cliente as unknown as Record<string, string>)?.telefone ?? "");
     setSenha("");
     setPlanoId(cliente?.plano_id ?? "");
     setServicoExtra(cliente?.servico_extra ?? "");
@@ -667,11 +632,6 @@ function EditarClienteDialog({
     if (!cliente) return;
     if (nome.trim().length < 2 || !email.trim()) {
       toast.error("Informe nome e e-mail válidos.");
-      return;
-    }
-    const cpfLimpo = editCpfCnpj.replace(/\D/g, "");
-    if (cpfLimpo.length !== 11 && cpfLimpo.length !== 14) {
-      toast.error("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.");
       return;
     }
     if (senha && senha.length < 6) {
@@ -690,8 +650,6 @@ function EditarClienteDialog({
           cliente_id: cliente.id,
           nome: nome.trim(),
           email: email.trim(),
-          cpf_cnpj: editCpfCnpj.trim(),
-          telefone: editTelefone.trim() || null,
           senha: senha || "",
           plano_id: planoId || null,
           servico_extra: servicoExtra.trim() || null,
@@ -725,26 +683,6 @@ function EditarClienteDialog({
           <div className="grid gap-2">
             <Label htmlFor="ecemail">E-mail</Label>
             <Input id="ecemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="eccpf">CPF ou CNPJ *</Label>
-            <Input
-              id="eccpf"
-              value={editCpfCnpj}
-              onChange={(e) => setEditCpfCnpj(e.target.value)}
-              placeholder="000.000.000-00 ou 00.000.000/0001-00"
-              maxLength={18}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="ectel">Telefone / Celular</Label>
-            <Input
-              id="ectel"
-              value={editTelefone}
-              onChange={(e) => setEditTelefone(e.target.value)}
-              placeholder="(00) 00000-0000"
-              maxLength={20}
-            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="ecsenha">Nova senha (opcional)</Label>

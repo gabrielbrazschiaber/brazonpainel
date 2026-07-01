@@ -100,8 +100,6 @@ async function obterOuCriarClienteAsaas(
   clienteId: string,
   nome: string,
   email: string,
-  cpfCnpj: string | null,
-  telefone: string | null,
   asaasCustomerIdExistente: string | null,
   config: ConfigAsaas
 ): Promise<string> {
@@ -109,48 +107,22 @@ async function obterOuCriarClienteAsaas(
     return asaasCustomerIdExistente;
   }
 
-  // CPF/CNPJ é obrigatório para gerar cobranças no Asaas
-  if (!cpfCnpj || cpfCnpj.trim().length === 0) {
-    throw new Error(
-      'CPF ou CNPJ do cliente é obrigatório para gerar cobranças no Asaas. ' +
-      'Atualize o cadastro do cliente com o CPF/CNPJ antes de gerar uma cobrança.'
-    );
-  }
-
   console.log(`[Asaas] Criando cliente ${nome} (${email}) no painel do Asaas...`);
-
-  const customerBody: Record<string, unknown> = {
-    name: nome,
-    email: email || undefined,
-    cpfCnpj: cpfCnpj.replace(/\D/g, ''), // Remove formatação, envia só números
-    externalReference: clienteId,
-    notificationDisabled: true,
-  };
-  if (telefone) {
-    customerBody.mobilePhone = telefone.replace(/\D/g, '');
-  }
 
   const response = await fetch(`${config.baseUrl}/customers`, {
     method: 'POST',
     headers: asaasHeaders(config.apiKey, true),
-    body: JSON.stringify(customerBody)
+    body: JSON.stringify({
+      name: nome,
+      email: email,
+      externalReference: clienteId,
+      notificationDisabled: true
+    })
   });
 
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[Asaas] Falha ao criar cliente:', errorText);
-    // Tenta extrair mensagens de erro legíveis do Asaas
-    try {
-      const errJson = JSON.parse(errorText);
-      if (errJson.errors && Array.isArray(errJson.errors)) {
-        const msgs = errJson.errors.map((e: { description?: string; code?: string }) =>
-          e.description || e.code || 'Erro desconhecido'
-        ).join('; ');
-        throw new Error(`Erro Asaas ao criar cliente: ${msgs}`);
-      }
-    } catch (parseErr) {
-      if (parseErr instanceof Error && parseErr.message.startsWith('Erro Asaas')) throw parseErr;
-    }
     throw new Error(`Erro Asaas (Criar Cliente): ${errorText.slice(0, 300)}`);
   }
 
@@ -182,10 +154,10 @@ export interface CobrancaParams {
 export async function gerarCobrancaAsaas(params: CobrancaParams) {
   const config = await obterConfigAsaas();
 
-  // 1. Busca os dados do cliente no banco (incluindo cpf_cnpj e telefone para o Asaas)
+  // 1. Busca os dados do cliente no banco
   const { data: cliente, error: cliErr } = await supabaseAdmin
     .from('clientes')
-    .select('id, user_id, asaas_customer_id, cpf_cnpj, telefone')
+    .select('id, user_id, asaas_customer_id')
     .eq('id', params.clienteId)
     .maybeSingle();
 
@@ -209,8 +181,6 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
     cliente.id,
     nome,
     email,
-    cliente.cpf_cnpj,
-    cliente.telefone,
     cliente.asaas_customer_id,
     config
   );
@@ -234,18 +204,6 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[Asaas] Falha ao criar cobrança:', errorText);
-    // Tenta extrair mensagens de erro legíveis do Asaas
-    try {
-      const errJson = JSON.parse(errorText);
-      if (errJson.errors && Array.isArray(errJson.errors)) {
-        const msgs = errJson.errors.map((e: { description?: string; code?: string }) =>
-          e.description || e.code || 'Erro desconhecido'
-        ).join('; ');
-        throw new Error(`Erro Asaas ao criar cobrança: ${msgs}`);
-      }
-    } catch (parseErr) {
-      if (parseErr instanceof Error && parseErr.message.startsWith('Erro Asaas')) throw parseErr;
-    }
     throw new Error(`Erro Asaas (Criar Cobrança): ${errorText.slice(0, 300)}`);
   }
 
