@@ -16,6 +16,8 @@ function gerarSenhaAleatoria(): string {
 const novoClienteSchema = z.object({
   nome: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(160),
+  cpf_cnpj: z.string().trim().min(11).max(18), // CPF (11 dígitos) ou CNPJ (14 dígitos), com ou sem formatação
+  telefone: z.string().trim().max(20).optional().nullable(),
   plano_id: z.string().uuid().nullable().optional(),
   data_vencimento: z.string().min(10).max(10),
   mensagem_vendedor: z.string().trim().max(500).optional().nullable(),
@@ -75,6 +77,8 @@ export const criarCliente = createServerFn({ method: "POST" })
       mensagem_vendedor: data.mensagem_vendedor ?? null,
       servico_extra: data.servico_extra ?? null,
       servico_extra_valor: data.servico_extra_valor ?? 0,
+      cpf_cnpj: data.cpf_cnpj,
+      telefone: data.telefone ?? null,
       status: "ativo",
     }).select("id").maybeSingle();
     if (cliErr) {
@@ -89,7 +93,7 @@ export const criarCliente = createServerFn({ method: "POST" })
       acao: "criar_cliente",
       entidade: "cliente",
       entidadeId: novoCliente?.id ?? null,
-      detalhes: { nome: data.nome, email: data.email, plano_id: data.plano_id ?? null, servico_extra: data.servico_extra ?? null, servico_extra_valor: data.servico_extra_valor ?? 0 },
+      detalhes: { nome: data.nome, email: data.email, cpf_cnpj: data.cpf_cnpj, plano_id: data.plano_id ?? null, servico_extra: data.servico_extra ?? null, servico_extra_valor: data.servico_extra_valor ?? 0 },
     });
 
     return { ok: true, senha: senhaGerada };
@@ -100,6 +104,7 @@ const cadastroPublicoSchema = novoClienteSchema
   .extend({
     ref: z.string().trim().min(1).max(60),
   });
+
 
 // Cadastro público via link de indicação (/cadastro?ref=CODIGO).
 export const cadastroPublico = createServerFn({ method: "POST" })
@@ -143,6 +148,8 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       vendedor_id: vend.id,
       plano_id: data.plano_id ?? null,
       data_vencimento: data.data_vencimento,
+      cpf_cnpj: data.cpf_cnpj,
+      telefone: data.telefone ?? null,
       status: "ativo",
     });
     if (cliErr) {
@@ -206,6 +213,8 @@ const editarClienteSchema = z.object({
   cliente_id: z.string().uuid(),
   nome: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(160),
+  cpf_cnpj: z.string().trim().min(11).max(18),
+  telefone: z.string().trim().max(20).optional().nullable(),
   senha: z.string().min(6).max(72).optional().or(z.literal("")),
   plano_id: z.string().uuid().nullable().optional(),
   servico_extra: z.string().trim().max(200).optional().nullable(),
@@ -266,8 +275,11 @@ export const atualizarCliente = createServerFn({ method: "POST" })
       .from("clientes")
       .update({
         plano_id: data.plano_id ?? null,
+        cpf_cnpj: data.cpf_cnpj,
+        telefone: data.telefone ?? null,
         servico_extra: data.servico_extra ?? null,
         servico_extra_valor: data.servico_extra_valor ?? 0,
+        asaas_customer_id: null, // Reseta para recriar no Asaas com os novos dados
       })
       .eq("id", data.cliente_id)
       .eq("vendedor_id", vend.id);
