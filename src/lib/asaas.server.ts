@@ -18,6 +18,41 @@ async function lerJson(response: Response, contexto: string) {
   }
 }
 
+const URL_PRODUCAO = 'https://api.asaas.com/v3';
+const URL_SANDBOX = 'https://api-sandbox.asaas.com/v3';
+
+// Descobre em qual ambiente a chave é válida, testando um endpoint leve.
+// Isso evita o erro "invalid_environment" quando o toggle sandbox/produção
+// não corresponde à chave informada.
+async function resolverBaseUrl(apiKey: string, preferido: string): Promise<string> {
+  const ordem = preferido === URL_PRODUCAO
+    ? [URL_PRODUCAO, URL_SANDBOX]
+    : [URL_SANDBOX, URL_PRODUCAO];
+
+  let ultimoErro = '';
+  for (const base of ordem) {
+    try {
+      const resp = await fetch(`${base}/myAccount`, {
+        headers: { 'access_token': apiKey }
+      });
+      if (resp.ok) {
+        return base;
+      }
+      const txt = await resp.text();
+      ultimoErro = txt.slice(0, 200);
+      // 401/invalid_environment => chave não é deste ambiente; tenta o outro
+      if (resp.status === 401 || txt.includes('invalid_environment')) {
+        continue;
+      }
+    } catch (e) {
+      ultimoErro = e instanceof Error ? e.message : String(e);
+    }
+  }
+  throw new Error(
+    `Chave de API do Asaas inválida ou não reconhecida em nenhum ambiente (sandbox/produção). Verifique a chave nas Configurações. Detalhe: ${ultimoErro}`
+  );
+}
+
 // Busca as configurações do Asaas (do env ou da tabela configuracoes)
 async function obterConfigAsaas(): Promise<ConfigAsaas> {
   // 1. Tenta obter do Environment do servidor
@@ -25,9 +60,10 @@ async function obterConfigAsaas(): Promise<ConfigAsaas> {
   const envAmbiente = process.env.ASAAS_AMBIENTE || 'sandbox';
 
   if (envKey) {
+    const preferido = envAmbiente === 'producao' ? URL_PRODUCAO : URL_SANDBOX;
     return {
       apiKey: envKey,
-      baseUrl: envAmbiente === 'producao' ? 'https://api.asaas.com/v3' : 'https://api-sandbox.asaas.com/v3'
+      baseUrl: await resolverBaseUrl(envKey, preferido)
     };
   }
 
@@ -42,9 +78,10 @@ async function obterConfigAsaas(): Promise<ConfigAsaas> {
     throw new Error('Configuração do Asaas (API Key) não encontrada no servidor ou banco de dados.');
   }
 
+  const preferido = config.asaas_ambiente === 'producao' ? URL_PRODUCAO : URL_SANDBOX;
   return {
     apiKey: config.asaas_api_key,
-    baseUrl: config.asaas_ambiente === 'producao' ? 'https://api.asaas.com/v3' : 'https://api-sandbox.asaas.com/v3'
+    baseUrl: await resolverBaseUrl(config.asaas_api_key, preferido)
   };
 }
 
