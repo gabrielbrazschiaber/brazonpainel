@@ -190,10 +190,7 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
 
   const response = await fetch(`${config.baseUrl}/payments`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'access_token': config.apiKey
-    },
+    headers: asaasHeaders(config.apiKey, true),
     body: JSON.stringify({
       customer: asaasCustomerId,
       billingType: params.tipoPagamento,
