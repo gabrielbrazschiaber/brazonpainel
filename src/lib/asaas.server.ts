@@ -43,7 +43,7 @@ async function resolverBaseUrl(apiKey: string, preferido: string): Promise<strin
   for (const base of ordem) {
     try {
       const resp = await fetch(`${base}/myAccount`, {
-        headers: { 'access_token': apiKey }
+        headers: asaasHeaders(apiKey)
       });
       if (resp.ok) {
         return base;
