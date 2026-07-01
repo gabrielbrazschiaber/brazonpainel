@@ -1154,6 +1154,14 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
                 Ambiente de produção {form.asaas_ambiente !== "producao" && "(sandbox)"}
               </Label>
             </div>
+            <div>
+              <Button type="button" variant="outline" onClick={testarChave} disabled={testando}>
+                {testando ? "Testando..." : "Testar chave Asaas"}
+              </Button>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Salve a chave antes de testar. O ambiente correto é detectado automaticamente.
+              </p>
+            </div>
           </div>
         </div>
 
