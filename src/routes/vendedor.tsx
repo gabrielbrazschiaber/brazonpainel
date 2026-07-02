@@ -430,6 +430,8 @@ function CadastrarClienteDialog({
           mensagem_vendedor: mensagem.trim() || null,
           servico_extra: servicoExtra.trim() || null,
           servico_extra_valor: valorExtra,
+          cpf_cnpj: cpfCnpj.trim() || null,
+          telefone: telefone.trim() || null,
         },
       });
       toast.success("Cliente cadastrado!", {
