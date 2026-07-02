@@ -161,12 +161,19 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
   // 1. Busca os dados do cliente no banco
   const { data: cliente, error: cliErr } = await supabaseAdmin
     .from('clientes')
-    .select('id, user_id, asaas_customer_id')
+    .select('id, user_id, asaas_customer_id, cpf_cnpj, telefone')
     .eq('id', params.clienteId)
     .maybeSingle();
 
   if (cliErr || !cliente) {
     throw new Error(`Cliente não encontrado para cobrança: ${params.clienteId}`);
+  }
+
+  const cpfCnpj = (cliente.cpf_cnpj || '').replace(/\D/g, '');
+  if (!cpfCnpj) {
+    throw new Error(
+      'É necessário cadastrar o CPF ou CNPJ do cliente antes de gerar a cobrança. Peça ao seu vendedor para preencher esse dado.'
+    );
   }
 
   // O perfil (nome/email) está ligado por user_id, não por uma FK direta de clientes.
@@ -178,6 +185,7 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
 
   const nome = profile?.nome || 'Cliente Brazon';
   const email = profile?.email || '';
+  const telefone = (cliente.telefone || '').replace(/\D/g, '') || null;
 
 
   // 2. Obtém ou cria o cliente no Asaas
@@ -185,6 +193,8 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
     cliente.id,
     nome,
     email,
+    cpfCnpj,
+    telefone,
     cliente.asaas_customer_id,
     config
   );
