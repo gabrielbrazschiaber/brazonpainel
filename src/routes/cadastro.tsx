@@ -56,6 +56,8 @@ function CadastroPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [planoId, setPlanoId] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<{ senha: string } | null>(null);
   const [cooldown, setCooldown] = useState(0);
@@ -84,6 +86,10 @@ function CadastroPage() {
       toast.error("Preencha nome, e-mail e selecione um plano.");
       return;
     }
+    if (!cpfCnpj.trim()) {
+      toast.error("Informe seu CPF ou CNPJ.");
+      return;
+    }
     setSaving(true);
     try {
       const res = await cadastrar({
@@ -93,6 +99,8 @@ function CadastroPage() {
           email: email.trim(),
           plano_id: planoId,
           data_vencimento: defaultVencimento(),
+          cpf_cnpj: cpfCnpj.trim(),
+          telefone: telefone.trim() || null,
         },
       });
       setDone({ senha: res.senha });
@@ -151,6 +159,24 @@ function CadastroPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="cpf">CPF ou CNPJ</Label>
+              <Input
+                id="cpf"
+                value={cpfCnpj}
+                onChange={(e) => setCpfCnpj(e.target.value)}
+                placeholder="Somente números"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="tel">Telefone (opcional)</Label>
+              <Input
+                id="tel"
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value)}
+                placeholder="(00) 00000-0000"
               />
             </div>
             <div className="grid gap-2">

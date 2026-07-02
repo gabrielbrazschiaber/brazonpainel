@@ -236,6 +236,8 @@ const editarClienteAdminSchema = z.object({
   nome: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(160),
   senha: z.string().min(6).max(72).optional().or(z.literal("")),
+  cpf_cnpj: z.string().trim().max(20).optional().nullable(),
+  telefone: z.string().trim().max(20).optional().nullable(),
 });
 
 // Admin edita nome, e-mail e (opcionalmente) senha de qualquer cliente.
@@ -272,6 +274,14 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
       .update({ nome: data.nome, email: data.email })
       .eq("id", cli.user_id);
     if (profErr) throw new Error("Falha ao atualizar os dados do cliente.");
+
+    const { error: cliUpdErr } = await supabaseAdmin
+      .from("clientes")
+      .update({ cpf_cnpj: data.cpf_cnpj ?? null, telefone: data.telefone ?? null })
+      .eq("id", data.cliente_id);
+    if (cliUpdErr) throw new Error("Falha ao atualizar CPF/telefone do cliente.");
+
+
 
     const { registrarAuditoria } = await import("@/lib/audit.server");
     await registrarAuditoria({

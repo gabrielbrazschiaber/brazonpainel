@@ -81,6 +81,8 @@ interface ClienteRow {
   plano_id: string | null;
   servico_extra: string | null;
   servico_extra_valor: number | null;
+  cpf_cnpj: string | null;
+  telefone: string | null;
   planos: { nome: string; valor: number } | null;
   nome?: string;
   email?: string;
@@ -120,7 +122,7 @@ function VendedorArea() {
 
     const { data: cls } = await supabase
       .from("clientes")
-      .select("id,user_id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,planos(nome,valor)")
+      .select("id,user_id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,cpf_cnpj,telefone,planos(nome,valor)")
       .order("created_at", { ascending: false });
     const rows = (cls ?? []) as unknown as ClienteRow[];
 
@@ -391,6 +393,8 @@ function CadastrarClienteDialog({
   const [mensagem, setMensagem] = useState("");
   const [servicoExtra, setServicoExtra] = useState("");
   const [servicoValor, setServicoValor] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [saving, setSaving] = useState(false);
 
   function reset() {
@@ -401,6 +405,8 @@ function CadastrarClienteDialog({
     setMensagem("");
     setServicoExtra("");
     setServicoValor("");
+    setCpfCnpj("");
+    setTelefone("");
   }
 
   async function submit() {
@@ -424,6 +430,8 @@ function CadastrarClienteDialog({
           mensagem_vendedor: mensagem.trim() || null,
           servico_extra: servicoExtra.trim() || null,
           servico_extra_valor: valorExtra,
+          cpf_cnpj: cpfCnpj.trim() || null,
+          telefone: telefone.trim() || null,
         },
       });
       toast.success("Cliente cadastrado!", {
@@ -460,6 +468,25 @@ function CadastrarClienteDialog({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="cpf">CPF ou CNPJ</Label>
+            <Input
+              id="cpf"
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(e.target.value)}
+              placeholder="Somente números"
+            />
+            <p className="text-xs text-muted-foreground">Obrigatório para gerar cobranças no Asaas.</p>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="tel">Telefone (opcional)</Label>
+            <Input
+              id="tel"
+              value={telefone}
+              onChange={(e) => setTelefone(e.target.value)}
+              placeholder="(00) 00000-0000"
             />
           </div>
           <div className="grid gap-2">
@@ -615,6 +642,8 @@ function EditarClienteDialog({
   const [planoId, setPlanoId] = useState<string>("");
   const [servicoExtra, setServicoExtra] = useState("");
   const [servicoValor, setServicoValor] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -626,6 +655,8 @@ function EditarClienteDialog({
     setServicoValor(
       cliente?.servico_extra_valor ? String(cliente.servico_extra_valor).replace(".", ",") : "",
     );
+    setCpfCnpj(cliente?.cpf_cnpj ?? "");
+    setTelefone(cliente?.telefone ?? "");
   }, [cliente]);
 
   async function submit() {
@@ -654,6 +685,8 @@ function EditarClienteDialog({
           plano_id: planoId || null,
           servico_extra: servicoExtra.trim() || null,
           servico_extra_valor: valorExtra,
+          cpf_cnpj: cpfCnpj.trim() || null,
+          telefone: telefone.trim() || null,
         },
       });
       toast.success("Dados do cliente atualizados!");
@@ -683,6 +716,25 @@ function EditarClienteDialog({
           <div className="grid gap-2">
             <Label htmlFor="ecemail">E-mail</Label>
             <Input id="ecemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="eccpf">CPF ou CNPJ</Label>
+            <Input
+              id="eccpf"
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(e.target.value)}
+              placeholder="Somente números"
+            />
+            <p className="text-xs text-muted-foreground">Obrigatório para gerar cobranças no Asaas.</p>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="ectel">Telefone (opcional)</Label>
+            <Input
+              id="ectel"
+              value={telefone}
+              onChange={(e) => setTelefone(e.target.value)}
+              placeholder="(00) 00000-0000"
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="ecsenha">Nova senha (opcional)</Label>

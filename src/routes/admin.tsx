@@ -78,6 +78,8 @@ interface ClienteRow {
   vendedor_id: string | null;
   data_vencimento: string | null;
   status: string;
+  cpf_cnpj: string | null;
+  telefone: string | null;
   planos: { nome: string; valor: number } | null;
   nome?: string;
   email?: string;
@@ -115,7 +117,7 @@ function AdminArea() {
           .order("created_at", { ascending: false }),
         supabase
           .from("clientes")
-          .select("id,user_id,vendedor_id,data_vencimento,status,planos(nome,valor)")
+          .select("id,user_id,vendedor_id,data_vencimento,status,cpf_cnpj,telefone,planos(nome,valor)")
           .order("created_at", { ascending: false }),
         supabase.from("configuracoes").select("*").maybeSingle(),
         supabase.from("user_roles").select("user_id").eq("role", "admin"),
@@ -941,12 +943,16 @@ function EditarClienteAdminDialog({
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setNome(cliente?.nome ?? "");
     setEmail(cliente?.email ?? "");
     setSenha("");
+    setCpfCnpj(cliente?.cpf_cnpj ?? "");
+    setTelefone(cliente?.telefone ?? "");
   }, [cliente]);
 
   async function submit() {
@@ -962,7 +968,7 @@ function EditarClienteAdminDialog({
     setSaving(true);
     try {
       await salvar({
-        data: { cliente_id: cliente.id, nome: nome.trim(), email: email.trim(), senha: senha || "" },
+        data: { cliente_id: cliente.id, nome: nome.trim(), email: email.trim(), senha: senha || "", cpf_cnpj: cpfCnpj.trim() || null, telefone: telefone.trim() || null },
       });
       toast.success("Dados do cliente atualizados!");
       onOpenChange(false);
@@ -991,6 +997,25 @@ function EditarClienteAdminDialog({
           <div className="grid gap-2">
             <Label htmlFor="acemail">E-mail</Label>
             <Input id="acemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="accpf">CPF ou CNPJ</Label>
+            <Input
+              id="accpf"
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(e.target.value)}
+              placeholder="Somente números"
+            />
+            <p className="text-xs text-muted-foreground">Obrigatório para gerar cobranças no Asaas.</p>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="actel">Telefone (opcional)</Label>
+            <Input
+              id="actel"
+              value={telefone}
+              onChange={(e) => setTelefone(e.target.value)}
+              placeholder="(00) 00000-0000"
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="acsenha">Nova senha (opcional)</Label>

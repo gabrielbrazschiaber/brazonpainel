@@ -21,6 +21,8 @@ const novoClienteSchema = z.object({
   mensagem_vendedor: z.string().trim().max(500).optional().nullable(),
   servico_extra: z.string().trim().max(200).optional().nullable(),
   servico_extra_valor: z.number().min(0).max(1000000).optional().nullable(),
+  cpf_cnpj: z.string().trim().max(20).optional().nullable(),
+  telefone: z.string().trim().max(20).optional().nullable(),
 });
 
 // Vendedor logado cadastra um novo cliente (cria o login de acesso).
@@ -75,6 +77,8 @@ export const criarCliente = createServerFn({ method: "POST" })
       mensagem_vendedor: data.mensagem_vendedor ?? null,
       servico_extra: data.servico_extra ?? null,
       servico_extra_valor: data.servico_extra_valor ?? 0,
+      cpf_cnpj: data.cpf_cnpj ?? null,
+      telefone: data.telefone ?? null,
       status: "ativo",
     }).select("id").maybeSingle();
     if (cliErr) {
@@ -143,6 +147,8 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       vendedor_id: vend.id,
       plano_id: data.plano_id ?? null,
       data_vencimento: data.data_vencimento,
+      cpf_cnpj: data.cpf_cnpj ?? null,
+      telefone: data.telefone ?? null,
       status: "ativo",
     });
     if (cliErr) {
@@ -210,6 +216,8 @@ const editarClienteSchema = z.object({
   plano_id: z.string().uuid().nullable().optional(),
   servico_extra: z.string().trim().max(200).optional().nullable(),
   servico_extra_valor: z.number().min(0).max(1000000).optional().nullable(),
+  cpf_cnpj: z.string().trim().max(20).optional().nullable(),
+  telefone: z.string().trim().max(20).optional().nullable(),
 });
 
 // Vendedor logado edita nome, e-mail, senha, plano e serviço extra de um cliente seu.
@@ -268,6 +276,8 @@ export const atualizarCliente = createServerFn({ method: "POST" })
         plano_id: data.plano_id ?? null,
         servico_extra: data.servico_extra ?? null,
         servico_extra_valor: data.servico_extra_valor ?? 0,
+        cpf_cnpj: data.cpf_cnpj ?? null,
+        telefone: data.telefone ?? null,
       })
       .eq("id", data.cliente_id)
       .eq("vendedor_id", vend.id);
