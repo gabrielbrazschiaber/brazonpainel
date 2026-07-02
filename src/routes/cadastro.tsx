@@ -86,6 +86,10 @@ function CadastroPage() {
       toast.error("Preencha nome, e-mail e selecione um plano.");
       return;
     }
+    if (!cpfCnpj.trim()) {
+      toast.error("Informe seu CPF ou CNPJ.");
+      return;
+    }
     setSaving(true);
     try {
       const res = await cadastrar({
@@ -95,6 +99,8 @@ function CadastroPage() {
           email: email.trim(),
           plano_id: planoId,
           data_vencimento: defaultVencimento(),
+          cpf_cnpj: cpfCnpj.trim(),
+          telefone: telefone.trim() || null,
         },
       });
       setDone({ senha: res.senha });
