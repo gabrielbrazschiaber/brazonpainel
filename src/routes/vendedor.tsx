@@ -393,6 +393,8 @@ function CadastrarClienteDialog({
   const [mensagem, setMensagem] = useState("");
   const [servicoExtra, setServicoExtra] = useState("");
   const [servicoValor, setServicoValor] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [saving, setSaving] = useState(false);
 
   function reset() {
