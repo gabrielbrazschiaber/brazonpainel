@@ -147,6 +147,8 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       vendedor_id: vend.id,
       plano_id: data.plano_id ?? null,
       data_vencimento: data.data_vencimento,
+      cpf_cnpj: data.cpf_cnpj ?? null,
+      telefone: data.telefone ?? null,
       status: "ativo",
     });
     if (cliErr) {
