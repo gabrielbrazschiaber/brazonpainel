@@ -999,6 +999,25 @@ function EditarClienteAdminDialog({
             <Input id="acemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="grid gap-2">
+            <Label htmlFor="accpf">CPF ou CNPJ</Label>
+            <Input
+              id="accpf"
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(e.target.value)}
+              placeholder="Somente números"
+            />
+            <p className="text-xs text-muted-foreground">Obrigatório para gerar cobranças no Asaas.</p>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="actel">Telefone (opcional)</Label>
+            <Input
+              id="actel"
+              value={telefone}
+              onChange={(e) => setTelefone(e.target.value)}
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+          <div className="grid gap-2">
             <Label htmlFor="acsenha">Nova senha (opcional)</Label>
             <Input
               id="acsenha"
