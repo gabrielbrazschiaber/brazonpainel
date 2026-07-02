@@ -77,6 +77,8 @@ export const criarCliente = createServerFn({ method: "POST" })
       mensagem_vendedor: data.mensagem_vendedor ?? null,
       servico_extra: data.servico_extra ?? null,
       servico_extra_valor: data.servico_extra_valor ?? 0,
+      cpf_cnpj: data.cpf_cnpj ?? null,
+      telefone: data.telefone ?? null,
       status: "ativo",
     }).select("id").maybeSingle();
     if (cliErr) {
