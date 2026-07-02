@@ -655,6 +655,8 @@ function EditarClienteDialog({
     setServicoValor(
       cliente?.servico_extra_valor ? String(cliente.servico_extra_valor).replace(".", ",") : "",
     );
+    setCpfCnpj(cliente?.cpf_cnpj ?? "");
+    setTelefone(cliente?.telefone ?? "");
   }, [cliente]);
 
   async function submit() {
