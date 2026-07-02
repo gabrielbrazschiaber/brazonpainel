@@ -100,6 +100,8 @@ async function obterOuCriarClienteAsaas(
   clienteId: string,
   nome: string,
   email: string,
+  cpfCnpj: string,
+  telefone: string | null,
   asaasCustomerIdExistente: string | null,
   config: ConfigAsaas
 ): Promise<string> {
@@ -115,6 +117,8 @@ async function obterOuCriarClienteAsaas(
     body: JSON.stringify({
       name: nome,
       email: email,
+      cpfCnpj: cpfCnpj,
+      ...(telefone ? { mobilePhone: telefone } : {}),
       externalReference: clienteId,
       notificationDisabled: true
     })
