@@ -117,7 +117,7 @@ function AdminArea() {
           .order("created_at", { ascending: false }),
         supabase
           .from("clientes")
-          .select("id,user_id,vendedor_id,data_vencimento,status,planos(nome,valor)")
+          .select("id,user_id,vendedor_id,data_vencimento,status,cpf_cnpj,telefone,planos(nome,valor)")
           .order("created_at", { ascending: false }),
         supabase.from("configuracoes").select("*").maybeSingle(),
         supabase.from("user_roles").select("user_id").eq("role", "admin"),
