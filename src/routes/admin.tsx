@@ -78,6 +78,8 @@ interface ClienteRow {
   vendedor_id: string | null;
   data_vencimento: string | null;
   status: string;
+  cpf_cnpj: string | null;
+  telefone: string | null;
   planos: { nome: string; valor: number } | null;
   nome?: string;
   email?: string;
