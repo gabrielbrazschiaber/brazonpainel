@@ -943,12 +943,16 @@ function EditarClienteAdminDialog({
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setNome(cliente?.nome ?? "");
     setEmail(cliente?.email ?? "");
     setSenha("");
+    setCpfCnpj(cliente?.cpf_cnpj ?? "");
+    setTelefone(cliente?.telefone ?? "");
   }, [cliente]);
 
   async function submit() {
