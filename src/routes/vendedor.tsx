@@ -718,6 +718,25 @@ function EditarClienteDialog({
             <Input id="ecemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="grid gap-2">
+            <Label htmlFor="eccpf">CPF ou CNPJ</Label>
+            <Input
+              id="eccpf"
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(e.target.value)}
+              placeholder="Somente números"
+            />
+            <p className="text-xs text-muted-foreground">Obrigatório para gerar cobranças no Asaas.</p>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="ectel">Telefone (opcional)</Label>
+            <Input
+              id="ectel"
+              value={telefone}
+              onChange={(e) => setTelefone(e.target.value)}
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+          <div className="grid gap-2">
             <Label htmlFor="ecsenha">Nova senha (opcional)</Label>
             <Input
               id="ecsenha"
