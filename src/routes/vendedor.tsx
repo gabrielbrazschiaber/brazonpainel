@@ -405,6 +405,8 @@ function CadastrarClienteDialog({
     setMensagem("");
     setServicoExtra("");
     setServicoValor("");
+    setCpfCnpj("");
+    setTelefone("");
   }
 
   async function submit() {
