@@ -471,6 +471,25 @@ function CadastrarClienteDialog({
             />
           </div>
           <div className="grid gap-2">
+            <Label htmlFor="cpf">CPF ou CNPJ</Label>
+            <Input
+              id="cpf"
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(e.target.value)}
+              placeholder="Somente números"
+            />
+            <p className="text-xs text-muted-foreground">Obrigatório para gerar cobranças no Asaas.</p>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="tel">Telefone (opcional)</Label>
+            <Input
+              id="tel"
+              value={telefone}
+              onChange={(e) => setTelefone(e.target.value)}
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+          <div className="grid gap-2">
             <Label>Plano</Label>
             <Select value={planoId} onValueChange={setPlanoId}>
               <SelectTrigger>
