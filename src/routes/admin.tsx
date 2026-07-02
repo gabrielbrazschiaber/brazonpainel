@@ -968,7 +968,7 @@ function EditarClienteAdminDialog({
     setSaving(true);
     try {
       await salvar({
-        data: { cliente_id: cliente.id, nome: nome.trim(), email: email.trim(), senha: senha || "" },
+        data: { cliente_id: cliente.id, nome: nome.trim(), email: email.trim(), senha: senha || "", cpf_cnpj: cpfCnpj.trim() || null, telefone: telefone.trim() || null },
       });
       toast.success("Dados do cliente atualizados!");
       onOpenChange(false);
