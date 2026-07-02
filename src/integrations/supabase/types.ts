@@ -53,6 +53,7 @@ export type Database = {
       clientes: {
         Row: {
           asaas_customer_id: string | null
+          cpf_cnpj: string | null
           created_at: string
           data_vencimento: string | null
           id: string
@@ -61,12 +62,14 @@ export type Database = {
           servico_extra: string | null
           servico_extra_valor: number
           status: Database["public"]["Enums"]["cliente_status"]
+          telefone: string | null
           updated_at: string
           user_id: string
           vendedor_id: string | null
         }
         Insert: {
           asaas_customer_id?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           data_vencimento?: string | null
           id?: string
@@ -75,12 +78,14 @@ export type Database = {
           servico_extra?: string | null
           servico_extra_valor?: number
           status?: Database["public"]["Enums"]["cliente_status"]
+          telefone?: string | null
           updated_at?: string
           user_id: string
           vendedor_id?: string | null
         }
         Update: {
           asaas_customer_id?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           data_vencimento?: string | null
           id?: string
@@ -89,6 +94,7 @@ export type Database = {
           servico_extra?: string | null
           servico_extra_valor?: number
           status?: Database["public"]["Enums"]["cliente_status"]
+          telefone?: string | null
           updated_at?: string
           user_id?: string
           vendedor_id?: string | null
