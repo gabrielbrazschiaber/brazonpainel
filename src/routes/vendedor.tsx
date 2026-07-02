@@ -685,6 +685,8 @@ function EditarClienteDialog({
           plano_id: planoId || null,
           servico_extra: servicoExtra.trim() || null,
           servico_extra_valor: valorExtra,
+          cpf_cnpj: cpfCnpj.trim() || null,
+          telefone: telefone.trim() || null,
         },
       });
       toast.success("Dados do cliente atualizados!");
