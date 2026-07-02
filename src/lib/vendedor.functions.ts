@@ -276,6 +276,8 @@ export const atualizarCliente = createServerFn({ method: "POST" })
         plano_id: data.plano_id ?? null,
         servico_extra: data.servico_extra ?? null,
         servico_extra_valor: data.servico_extra_valor ?? 0,
+        cpf_cnpj: data.cpf_cnpj ?? null,
+        telefone: data.telefone ?? null,
       })
       .eq("id", data.cliente_id)
       .eq("vendedor_id", vend.id);
