@@ -275,6 +275,14 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
       .eq("id", cli.user_id);
     if (profErr) throw new Error("Falha ao atualizar os dados do cliente.");
 
+    const { error: cliUpdErr } = await supabaseAdmin
+      .from("clientes")
+      .update({ cpf_cnpj: data.cpf_cnpj ?? null, telefone: data.telefone ?? null })
+      .eq("id", data.cliente_id);
+    if (cliUpdErr) throw new Error("Falha ao atualizar CPF/telefone do cliente.");
+
+
+
     const { registrarAuditoria } = await import("@/lib/audit.server");
     await registrarAuditoria({
       actorId: userId,
