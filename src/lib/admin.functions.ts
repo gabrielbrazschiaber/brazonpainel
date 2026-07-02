@@ -236,6 +236,8 @@ const editarClienteAdminSchema = z.object({
   nome: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(160),
   senha: z.string().min(6).max(72).optional().or(z.literal("")),
+  cpf_cnpj: z.string().trim().max(20).optional().nullable(),
+  telefone: z.string().trim().max(20).optional().nullable(),
 });
 
 // Admin edita nome, e-mail e (opcionalmente) senha de qualquer cliente.
