@@ -56,6 +56,8 @@ function CadastroPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [planoId, setPlanoId] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<{ senha: string } | null>(null);
   const [cooldown, setCooldown] = useState(0);
