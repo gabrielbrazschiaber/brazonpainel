@@ -81,6 +81,8 @@ interface ClienteRow {
   plano_id: string | null;
   servico_extra: string | null;
   servico_extra_valor: number | null;
+  cpf_cnpj: string | null;
+  telefone: string | null;
   planos: { nome: string; valor: number } | null;
   nome?: string;
   email?: string;
