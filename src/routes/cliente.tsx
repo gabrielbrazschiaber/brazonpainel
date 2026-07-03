@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, formatDate, daysUntil, initials } from "@/lib/format";
-import { cn } from "@/lib/utils";
+
 import { toast } from "sonner";
 import { Bell, CalendarClock, CreditCard, BadgeCheck, LogOut } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
