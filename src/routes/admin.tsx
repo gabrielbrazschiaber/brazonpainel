@@ -87,14 +87,15 @@ interface ClienteRow {
 }
 
 interface Config {
-  id?: string;
+  id?: string | null;
   nome_app: string | null;
   dominio: string | null;
   dias_aviso_vencimento: number | null;
   percentual_comissao_padrao: number | null;
-  asaas_api_key: string | null;
   asaas_webhook_url: string | null;
   asaas_ambiente: "producao" | "sandbox" | null;
+  asaas_api_key_mascara: string;
+  asaas_api_key_definida: boolean;
 }
 
 function AdminArea() {
