@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, atualizarClienteAdmin } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
+import { obterConfiguracoes, salvarConfiguracoes } from "@/lib/config.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,14 +87,15 @@ interface ClienteRow {
 }
 
 interface Config {
-  id?: string;
+  id?: string | null;
   nome_app: string | null;
   dominio: string | null;
   dias_aviso_vencimento: number | null;
   percentual_comissao_padrao: number | null;
-  asaas_api_key: string | null;
   asaas_webhook_url: string | null;
   asaas_ambiente: "producao" | "sandbox" | null;
+  asaas_api_key_mascara: string;
+  asaas_api_key_definida: boolean;
 }
 
 function AdminArea() {
@@ -105,10 +107,11 @@ function AdminArea() {
   const [admins, setAdmins] = useState<{ user_id: string; nome?: string; email?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [contaOpen, setContaOpen] = useState(false);
+  const obterConfig = useServerFn(obterConfiguracoes);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: pls }, { data: vds }, { data: cls }, { data: cfg }, { data: adminRoles }] =
+    const [{ data: pls }, { data: vds }, { data: cls }, cfg, { data: adminRoles }] =
       await Promise.all([
         supabase.from("planos").select("id,nome,valor,descricao,ativo").order("valor"),
         supabase
@@ -119,7 +122,7 @@ function AdminArea() {
           .from("clientes")
           .select("id,user_id,vendedor_id,data_vencimento,status,cpf_cnpj,telefone,planos(nome,valor)")
           .order("created_at", { ascending: false }),
-        supabase.from("configuracoes").select("*").maybeSingle(),
+        obterConfig({}).catch(() => null),
         supabase.from("user_roles").select("user_id").eq("role", "admin"),
       ]);
 
@@ -166,9 +169,10 @@ function AdminArea() {
         dominio: "",
         dias_aviso_vencimento: 5,
         percentual_comissao_padrao: 10,
-        asaas_api_key: "",
         asaas_webhook_url: "",
         asaas_ambiente: "sandbox",
+        asaas_api_key_mascara: "",
+        asaas_api_key_definida: false,
       },
     );
     setLoading(false);
@@ -1049,14 +1053,17 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
       dominio: "",
       dias_aviso_vencimento: 5,
       percentual_comissao_padrao: 10,
-      asaas_api_key: "",
       asaas_webhook_url: "",
       asaas_ambiente: "sandbox",
+      asaas_api_key_mascara: "",
+      asaas_api_key_definida: false,
     },
   );
+  const [novaChave, setNovaChave] = useState("");
   const [saving, setSaving] = useState(false);
   const [testando, setTestando] = useState(false);
   const testar = useServerFn(testarChaveAsaas);
+  const salvar = useServerFn(salvarConfiguracoes);
 
   async function testarChave() {
     setTestando(true);
@@ -1079,25 +1086,26 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
 
   async function save() {
     setSaving(true);
-    const payload = {
-      nome_app: form.nome_app ?? undefined,
-      dominio: form.dominio ?? undefined,
-      dias_aviso_vencimento: Number(form.dias_aviso_vencimento) || 0,
-      percentual_comissao_padrao: Number(form.percentual_comissao_padrao) || 0,
-      asaas_api_key: form.asaas_api_key,
-      asaas_webhook_url: form.asaas_webhook_url,
-      asaas_ambiente: form.asaas_ambiente ?? "sandbox",
-    };
-    const { error } = form.id
-      ? await supabase.from("configuracoes").update(payload).eq("id", form.id)
-      : await supabase.from("configuracoes").insert(payload).select("id").single();
-    setSaving(false);
-    if (error) {
-      toast.error("Não foi possível salvar as configurações.");
-      return;
+    try {
+      await salvar({
+        data: {
+          nome_app: form.nome_app ?? "",
+          dominio: form.dominio ?? "",
+          dias_aviso_vencimento: Number(form.dias_aviso_vencimento) || 0,
+          percentual_comissao_padrao: Number(form.percentual_comissao_padrao) || 0,
+          asaas_webhook_url: form.asaas_webhook_url ?? "",
+          asaas_ambiente: form.asaas_ambiente ?? "sandbox",
+          asaas_api_key: novaChave.trim() || null,
+        },
+      });
+      setNovaChave("");
+      toast.success("Configurações salvas.");
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível salvar as configurações.");
+    } finally {
+      setSaving(false);
     }
-    toast.success("Configurações salvas.");
-    onSaved();
   }
 
   return (
@@ -1156,10 +1164,19 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
               <Input
                 id="ckey"
                 type="password"
-                value={form.asaas_api_key ?? ""}
-                onChange={(e) => set("asaas_api_key", e.target.value)}
-                placeholder="$aact_..."
+                value={novaChave}
+                onChange={(e) => setNovaChave(e.target.value)}
+                placeholder={
+                  form.asaas_api_key_definida
+                    ? `Chave salva (${form.asaas_api_key_mascara}) — digite para substituir`
+                    : "$aact_..."
+                }
               />
+              <p className="text-xs text-muted-foreground">
+                {form.asaas_api_key_definida
+                  ? "Deixe em branco para manter a chave atual. A chave nunca é exibida por segurança."
+                  : "Cole a chave da API do Asaas. Ela fica guardada apenas no servidor."}
+              </p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="cwh">Webhook URL</Label>

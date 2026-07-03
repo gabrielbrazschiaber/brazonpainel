@@ -162,6 +162,7 @@ export type Database = {
           created_at: string
           data_pagamento: string | null
           id: string
+          invoice_url: string | null
           status: Database["public"]["Enums"]["pagamento_status"]
           updated_at: string
           valor: number
@@ -172,6 +173,7 @@ export type Database = {
           created_at?: string
           data_pagamento?: string | null
           id?: string
+          invoice_url?: string | null
           status?: Database["public"]["Enums"]["pagamento_status"]
           updated_at?: string
           valor?: number
@@ -182,6 +184,7 @@ export type Database = {
           created_at?: string
           data_pagamento?: string | null
           id?: string
+          invoice_url?: string | null
           status?: Database["public"]["Enums"]["pagamento_status"]
           updated_at?: string
           valor?: number

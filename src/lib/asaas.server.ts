@@ -230,7 +230,8 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
       cliente_id: cliente.id,
       valor: params.valor,
       status: 'pendente',
-      asaas_payment_id: data.id
+      asaas_payment_id: data.id,
+      invoice_url: data.invoiceUrl || data.bankSlipUrl || null
     })
     .select()
     .single();

@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, formatDate, daysUntil, initials } from "@/lib/format";
-import { cn } from "@/lib/utils";
+
 import { toast } from "sonner";
 import { Bell, CalendarClock, CreditCard, BadgeCheck, LogOut } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -57,6 +57,7 @@ interface Pagamento {
   status: string;
   data_pagamento: string | null;
   created_at: string;
+  invoice_url: string | null;
   planoNome?: string;
 }
 
@@ -87,7 +88,7 @@ function ClienteArea() {
     if (cli?.id) {
       const { data: pgs } = await supabase
         .from("pagamentos")
-        .select("id,valor,status,data_pagamento,created_at")
+        .select("id,valor,status,data_pagamento,created_at,invoice_url")
         .eq("cliente_id", cli.id)
         .order("created_at", { ascending: false });
       setPagamentos((pgs ?? []) as Pagamento[]);
@@ -239,24 +240,16 @@ function ClienteArea() {
         <section className="mt-10">
           <h2 className="text-lg font-bold text-foreground">Renovar assinatura</h2>
           <p className="text-sm text-muted-foreground">
-            Escolha um plano para renovar sua assinatura.
+            Renove a assinatura do seu plano atual.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {planos.map((p) => {
-              const atual = p.id === cliente?.plano_id;
-              return (
-                <Card
-                  key={p.id}
-                  className={cn(
-                    "flex flex-col p-5",
-                    atual && "border-2 border-primary",
-                  )}
-                >
-                  {atual && (
-                    <span className="mb-2 inline-flex w-fit rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                      Plano atual
-                    </span>
-                  )}
+            {planos
+              .filter((p) => p.id === cliente?.plano_id)
+              .map((p) => (
+                <Card key={p.id} className="flex flex-col p-5 border-2 border-primary">
+                  <span className="mb-2 inline-flex w-fit rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    Plano atual
+                  </span>
                   <h3 className="text-base font-semibold text-foreground">{p.nome}</h3>
                   <p className="mt-1 text-2xl font-bold text-foreground">
                     {formatCurrency(p.valor)}
@@ -273,10 +266,11 @@ function ClienteArea() {
                     {renovando === p.id ? "Gerando cobrança..." : "Renovar via Asaas"}
                   </Button>
                 </Card>
-              );
-            })}
-            {planos.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhum plano disponível.</p>
+              ))}
+            {!cliente?.plano_id && (
+              <p className="text-sm text-muted-foreground">
+                Nenhum plano associado à sua conta. Fale com seu vendedor.
+              </p>
             )}
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
@@ -295,6 +289,7 @@ function ClienteArea() {
                   <TableHead>Plano</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Fatura</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -306,11 +301,24 @@ function ClienteArea() {
                     <TableCell>
                       <StatusBadge status={pg.status} />
                     </TableCell>
+                    <TableCell className="text-right">
+                      {pg.status === "pendente" && pg.invoice_url ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(pg.invoice_url!, "_blank", "noopener")}
+                        >
+                          Abrir fatura
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {pagamentos.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
                       Nenhum pagamento registrado ainda.
                     </TableCell>
                   </TableRow>
