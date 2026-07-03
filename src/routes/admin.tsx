@@ -1053,14 +1053,17 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
       dominio: "",
       dias_aviso_vencimento: 5,
       percentual_comissao_padrao: 10,
-      asaas_api_key: "",
       asaas_webhook_url: "",
       asaas_ambiente: "sandbox",
+      asaas_api_key_mascara: "",
+      asaas_api_key_definida: false,
     },
   );
+  const [novaChave, setNovaChave] = useState("");
   const [saving, setSaving] = useState(false);
   const [testando, setTestando] = useState(false);
   const testar = useServerFn(testarChaveAsaas);
+  const salvar = useServerFn(salvarConfiguracoes);
 
   async function testarChave() {
     setTestando(true);
@@ -1083,25 +1086,26 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
 
   async function save() {
     setSaving(true);
-    const payload = {
-      nome_app: form.nome_app ?? undefined,
-      dominio: form.dominio ?? undefined,
-      dias_aviso_vencimento: Number(form.dias_aviso_vencimento) || 0,
-      percentual_comissao_padrao: Number(form.percentual_comissao_padrao) || 0,
-      asaas_api_key: form.asaas_api_key,
-      asaas_webhook_url: form.asaas_webhook_url,
-      asaas_ambiente: form.asaas_ambiente ?? "sandbox",
-    };
-    const { error } = form.id
-      ? await supabase.from("configuracoes").update(payload).eq("id", form.id)
-      : await supabase.from("configuracoes").insert(payload).select("id").single();
-    setSaving(false);
-    if (error) {
-      toast.error("Não foi possível salvar as configurações.");
-      return;
+    try {
+      await salvar({
+        data: {
+          nome_app: form.nome_app ?? "",
+          dominio: form.dominio ?? "",
+          dias_aviso_vencimento: Number(form.dias_aviso_vencimento) || 0,
+          percentual_comissao_padrao: Number(form.percentual_comissao_padrao) || 0,
+          asaas_webhook_url: form.asaas_webhook_url ?? "",
+          asaas_ambiente: form.asaas_ambiente ?? "sandbox",
+          asaas_api_key: novaChave.trim() || null,
+        },
+      });
+      setNovaChave("");
+      toast.success("Configurações salvas.");
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível salvar as configurações.");
+    } finally {
+      setSaving(false);
     }
-    toast.success("Configurações salvas.");
-    onSaved();
   }
 
   return (
