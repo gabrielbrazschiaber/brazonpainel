@@ -318,7 +318,7 @@ function ClienteArea() {
                 ))}
                 {pagamentos.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
                       Nenhum pagamento registrado ainda.
                     </TableCell>
                   </TableRow>
