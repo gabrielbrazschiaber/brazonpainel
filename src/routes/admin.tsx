@@ -169,9 +169,10 @@ function AdminArea() {
         dominio: "",
         dias_aviso_vencimento: 5,
         percentual_comissao_padrao: 10,
-        asaas_api_key: "",
         asaas_webhook_url: "",
         asaas_ambiente: "sandbox",
+        asaas_api_key_mascara: "",
+        asaas_api_key_definida: false,
       },
     );
     setLoading(false);
