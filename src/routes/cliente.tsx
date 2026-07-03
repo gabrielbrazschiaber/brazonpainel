@@ -289,6 +289,7 @@ function ClienteArea() {
                   <TableHead>Plano</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Fatura</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -299,6 +300,19 @@ function ClienteArea() {
                     <TableCell>{formatCurrency(pg.valor)}</TableCell>
                     <TableCell>
                       <StatusBadge status={pg.status} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {pg.status === "pendente" && pg.invoice_url ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(pg.invoice_url!, "_blank", "noopener")}
+                        >
+                          Abrir fatura
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
