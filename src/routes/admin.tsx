@@ -1164,10 +1164,19 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
               <Input
                 id="ckey"
                 type="password"
-                value={form.asaas_api_key ?? ""}
-                onChange={(e) => set("asaas_api_key", e.target.value)}
-                placeholder="$aact_..."
+                value={novaChave}
+                onChange={(e) => setNovaChave(e.target.value)}
+                placeholder={
+                  form.asaas_api_key_definida
+                    ? `Chave salva (${form.asaas_api_key_mascara}) — digite para substituir`
+                    : "$aact_..."
+                }
               />
+              <p className="text-xs text-muted-foreground">
+                {form.asaas_api_key_definida
+                  ? "Deixe em branco para manter a chave atual. A chave nunca é exibida por segurança."
+                  : "Cole a chave da API do Asaas. Ela fica guardada apenas no servidor."}
+              </p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="cwh">Webhook URL</Label>
