@@ -88,7 +88,7 @@ function ClienteArea() {
     if (cli?.id) {
       const { data: pgs } = await supabase
         .from("pagamentos")
-        .select("id,valor,status,data_pagamento,created_at")
+        .select("id,valor,status,data_pagamento,created_at,invoice_url")
         .eq("cliente_id", cli.id)
         .order("created_at", { ascending: false });
       setPagamentos((pgs ?? []) as Pagamento[]);
