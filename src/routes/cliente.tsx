@@ -57,6 +57,7 @@ interface Pagamento {
   status: string;
   data_pagamento: string | null;
   created_at: string;
+  invoice_url: string | null;
   planoNome?: string;
 }
 
