@@ -107,10 +107,11 @@ function AdminArea() {
   const [admins, setAdmins] = useState<{ user_id: string; nome?: string; email?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [contaOpen, setContaOpen] = useState(false);
+  const obterConfig = useServerFn(obterConfiguracoes);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: pls }, { data: vds }, { data: cls }, { data: cfg }, { data: adminRoles }] =
+    const [{ data: pls }, { data: vds }, { data: cls }, cfg, { data: adminRoles }] =
       await Promise.all([
         supabase.from("planos").select("id,nome,valor,descricao,ativo").order("valor"),
         supabase
@@ -121,7 +122,7 @@ function AdminArea() {
           .from("clientes")
           .select("id,user_id,vendedor_id,data_vencimento,status,cpf_cnpj,telefone,planos(nome,valor)")
           .order("created_at", { ascending: false }),
-        supabase.from("configuracoes").select("*").maybeSingle(),
+        obterConfig({}).catch(() => null),
         supabase.from("user_roles").select("user_id").eq("role", "admin"),
       ]);
 
