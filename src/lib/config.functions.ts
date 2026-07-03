@@ -107,7 +107,6 @@ export const salvarConfiguracoes = createServerFn({ method: "POST" })
 
     const { registrarAuditoria } = await import("@/lib/audit.server");
     await registrarAuditoria({
-      supabaseAdmin,
       actorId: userId,
       acao: "atualizar_configuracoes",
       entidade: "configuracoes",
