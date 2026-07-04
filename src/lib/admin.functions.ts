@@ -46,7 +46,8 @@ export const criarVendedor = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) throw new Error("Já existe um vendedor com esse código de indicação.");
 
-    const senhaFinal = data.senha && data.senha.length >= 6 ? data.senha : gerarSenhaAleatoria();
+    const senhaDefinidaPeloAdmin = !!(data.senha && data.senha.length >= 6);
+    const senhaFinal = senhaDefinidaPeloAdmin ? data.senha! : gerarSenhaAleatoria();
 
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
@@ -79,7 +80,7 @@ export const criarVendedor = createServerFn({ method: "POST" })
       throw new Error("Falha ao cadastrar o vendedor.");
     }
 
-    return { ok: true, senha: senhaFinal };
+    return { ok: true, senha_definida: senhaDefinidaPeloAdmin };
   });
 
 const novoAdminSchema = z.object({

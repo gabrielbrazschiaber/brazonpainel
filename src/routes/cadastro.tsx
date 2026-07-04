@@ -4,6 +4,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { cadastroPublico } from "@/lib/vendedor.functions";
+import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { Card } from "@/components/ui/card";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ function CadastroPage() {
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [telefone, setTelefone] = useState("");
   const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState<{ senha: string } | null>(null);
+  const [done, setDone] = useState<{ email: string; emailEnviado: boolean } | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
@@ -92,18 +93,20 @@ function CadastroPage() {
     }
     setSaving(true);
     try {
-      const res = await cadastrar({
+      const emailCliente = email.trim();
+      await cadastrar({
         data: {
           ref,
           nome: nome.trim(),
-          email: email.trim(),
+          email: emailCliente,
           plano_id: planoId,
           data_vencimento: defaultVencimento(),
           cpf_cnpj: cpfCnpj.trim(),
           telefone: telefone.trim() || null,
         },
       });
-      setDone({ senha: res.senha });
+      const { error: resetErr } = await enviarLinkDefinicaoSenha(emailCliente);
+      setDone({ email: emailCliente, emailEnviado: !resetErr });
     } catch (e) {
       toast.error("Não foi possível concluir o cadastro. Tente novamente.");
       setCooldown(60);
@@ -119,15 +122,23 @@ function CadastroPage() {
           <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
           <h1 className="mt-4 text-xl font-bold text-foreground">Cadastro concluído!</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Sua conta foi criada. Use seu e-mail e a senha inicial abaixo para entrar e trocar
-            sua senha.
-          </p>
-          <p className="mt-4 rounded-md bg-muted px-3 py-2 font-mono text-sm">
-            Senha: {done.senha}
+            {done.emailEnviado ? (
+              <>
+                Enviamos um e-mail para <strong>{done.email}</strong> com um link para você definir
+                sua senha de acesso. Verifique também a caixa de spam.
+              </>
+            ) : (
+              <>
+                Sua conta foi criada. Para definir sua senha, acesse a tela de login e clique em{" "}
+                <strong>"Esqueci minha senha"</strong> usando o e-mail{" "}
+                <strong>{done.email}</strong>.
+              </>
+            )}
           </p>
           <Button className="mt-6 w-full" onClick={() => navigate({ to: "/login" })}>
             Ir para o login
           </Button>
+
         </Card>
       </div>
     );

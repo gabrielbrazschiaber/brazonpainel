@@ -9,6 +9,7 @@ import { BrazonLogo } from "@/components/BrazonLogo";
 import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, atualizarClienteAdmin } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { obterConfiguracoes, salvarConfiguracoes } from "@/lib/config.functions";
+import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -578,9 +579,19 @@ function VendedoresTab({
             senha: senha || "",
           },
         });
-        toast.success("Vendedor cadastrado!", {
-          description: `Senha de acesso inicial: ${res.senha}`,
-        });
+        if (res.senha_definida) {
+          toast.success("Vendedor cadastrado!", {
+            description: "Ele pode entrar com o e-mail e a senha que você definiu.",
+          });
+        } else {
+          const emailVend = email.trim();
+          const { error: resetErr } = await enviarLinkDefinicaoSenha(emailVend);
+          toast.success("Vendedor cadastrado!", {
+            description: resetErr
+              ? `Peça para ${emailVend} usar "Esqueci minha senha" no login para definir a senha.`
+              : `Enviamos um e-mail para ${emailVend} definir a senha de acesso.`,
+          });
+        }
       }
       setOpen(false);
       onChanged();

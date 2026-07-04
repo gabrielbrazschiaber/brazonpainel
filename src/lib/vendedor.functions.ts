@@ -98,7 +98,7 @@ export const criarCliente = createServerFn({ method: "POST" })
       detalhes: { nome: data.nome, email: data.email, plano_id: data.plano_id ?? null, servico_extra: data.servico_extra ?? null, servico_extra_valor: data.servico_extra_valor ?? 0 },
     });
 
-    return { ok: true, senha: senhaGerada };
+    return { ok: true };
   });
 
 const cadastroPublicoSchema = novoClienteSchema
@@ -158,7 +158,7 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       throw new Error("Falha ao concluir o cadastro.");
     }
 
-    return { ok: true, senha: senhaGerada };
+    return { ok: true };
   });
 
 const mensagemSchema = z.object({
