@@ -546,7 +546,19 @@ function CadastrarClienteDialog({
               placeholder="Ex: Bem-vindo! Qualquer dúvida me chame."
             />
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="anot">Anotações sobre o cliente (opcional)</Label>
+            <Textarea
+              id="anot"
+              value={anotacoes}
+              onChange={(e) => setAnotacoes(e.target.value)}
+              placeholder="Observações internas. O cliente não vê este campo."
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">Visível apenas para você e a administração.</p>
+          </div>
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancelar
