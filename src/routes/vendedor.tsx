@@ -438,9 +438,17 @@ function CadastrarClienteDialog({
           anotacoes: anotacoes.trim() || null,
         },
       });
-      toast.success("Cliente cadastrado!", {
-        description: `Senha de acesso inicial: ${res.senha}`,
-      });
+      const emailCliente = email.trim();
+      const { error: resetErr } = await enviarLinkDefinicaoSenha(emailCliente);
+      if (resetErr) {
+        toast.success("Cliente cadastrado!", {
+          description: `Peça para ${emailCliente} usar "Esqueci minha senha" no login para definir a senha.`,
+        });
+      } else {
+        toast.success("Cliente cadastrado!", {
+          description: `Enviamos um e-mail para ${emailCliente} definir a senha de acesso.`,
+        });
+      }
       reset();
       onOpenChange(false);
       onCreated();
