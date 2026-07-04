@@ -220,6 +220,7 @@ const editarClienteSchema = z.object({
   servico_extra_valor: z.number().min(0).max(1000000).optional().nullable(),
   cpf_cnpj: z.string().trim().max(20).optional().nullable(),
   telefone: z.string().trim().max(20).optional().nullable(),
+  anotacoes: z.string().trim().max(1000).optional().nullable(),
 });
 
 // Vendedor logado edita nome, e-mail, senha, plano e serviço extra de um cliente seu.
