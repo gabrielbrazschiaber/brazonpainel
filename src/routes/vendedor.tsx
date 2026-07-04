@@ -424,7 +424,7 @@ function CadastrarClienteDialog({
     }
     setSaving(true);
     try {
-      const res = await criar({
+      await criar({
         data: {
           nome: nome.trim(),
           email: email.trim(),
