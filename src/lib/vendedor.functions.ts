@@ -158,7 +158,7 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       throw new Error("Falha ao concluir o cadastro.");
     }
 
-    return { ok: true, senha: senhaGerada };
+    return { ok: true };
   });
 
 const mensagemSchema = z.object({
