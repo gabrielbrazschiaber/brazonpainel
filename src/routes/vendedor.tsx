@@ -661,6 +661,7 @@ function EditarClienteDialog({
   const [servicoValor, setServicoValor] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [anotacoes, setAnotacoes] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
