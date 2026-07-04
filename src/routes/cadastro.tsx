@@ -4,6 +4,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { cadastroPublico } from "@/lib/vendedor.functions";
+import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { Card } from "@/components/ui/card";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { Button } from "@/components/ui/button";
