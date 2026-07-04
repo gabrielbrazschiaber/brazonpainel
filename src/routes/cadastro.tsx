@@ -59,7 +59,7 @@ function CadastroPage() {
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [telefone, setTelefone] = useState("");
   const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState<{ senha: string } | null>(null);
+  const [done, setDone] = useState<{ email: string; emailEnviado: boolean } | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
