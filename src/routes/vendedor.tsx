@@ -435,6 +435,7 @@ function CadastrarClienteDialog({
           servico_extra_valor: valorExtra,
           cpf_cnpj: cpfCnpj.trim() || null,
           telefone: telefone.trim() || null,
+          anotacoes: anotacoes.trim() || null,
         },
       });
       toast.success("Cliente cadastrado!", {
