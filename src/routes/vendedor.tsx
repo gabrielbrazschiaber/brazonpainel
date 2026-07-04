@@ -801,7 +801,19 @@ function EditarClienteDialog({
             />
             <p className="text-xs text-muted-foreground">Esse valor soma ao valor do plano.</p>
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="ecanot">Anotações sobre o cliente (opcional)</Label>
+            <Textarea
+              id="ecanot"
+              value={anotacoes}
+              onChange={(e) => setAnotacoes(e.target.value)}
+              placeholder="Observações internas. O cliente não vê este campo."
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">Visível apenas para você e a administração.</p>
+          </div>
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancelar
