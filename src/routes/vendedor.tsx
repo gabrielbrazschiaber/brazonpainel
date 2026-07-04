@@ -611,7 +611,7 @@ function MensagemDialog({
 
   return (
     <Dialog open={!!cliente} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Mensagem para {cliente?.nome ?? "o cliente"}</DialogTitle>
           <DialogDescription>
@@ -873,7 +873,7 @@ function MinhaContaVendedorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Minha conta</DialogTitle>
           <DialogDescription>Edite seu nome, e-mail e senha de acesso.</DialogDescription>
