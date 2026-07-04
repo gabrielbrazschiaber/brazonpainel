@@ -80,7 +80,7 @@ export const criarVendedor = createServerFn({ method: "POST" })
       throw new Error("Falha ao cadastrar o vendedor.");
     }
 
-    return { ok: true, senha: senhaFinal };
+    return { ok: true, senha_definida: senhaDefinidaPeloAdmin };
   });
 
 const novoAdminSchema = z.object({
