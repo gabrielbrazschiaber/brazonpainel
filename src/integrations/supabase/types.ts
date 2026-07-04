@@ -52,6 +52,7 @@ export type Database = {
       }
       clientes: {
         Row: {
+          anotacoes: string | null
           asaas_customer_id: string | null
           cpf_cnpj: string | null
           created_at: string
@@ -68,6 +69,7 @@ export type Database = {
           vendedor_id: string | null
         }
         Insert: {
+          anotacoes?: string | null
           asaas_customer_id?: string | null
           cpf_cnpj?: string | null
           created_at?: string
@@ -84,6 +86,7 @@ export type Database = {
           vendedor_id?: string | null
         }
         Update: {
+          anotacoes?: string | null
           asaas_customer_id?: string | null
           cpf_cnpj?: string | null
           created_at?: string

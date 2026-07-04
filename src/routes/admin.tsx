@@ -324,7 +324,7 @@ function MinhaContaDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Minha conta</DialogTitle>
           <DialogDescription>Edite seu nome, e-mail e senha de acesso.</DialogDescription>
@@ -442,7 +442,7 @@ function AdminsTab({
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo administrador</DialogTitle>
             <DialogDescription>
@@ -655,7 +655,7 @@ function VendedoresTab({
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar vendedor" : "Novo vendedor"}</DialogTitle>
             <DialogDescription>
@@ -821,7 +821,7 @@ function PlanosTab({ planos, onChanged }: { planos: Plano[]; onChanged: () => vo
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar plano" : "Novo plano"}</DialogTitle>
           </DialogHeader>
@@ -986,7 +986,7 @@ function EditarClienteAdminDialog({
 
   return (
     <Dialog open={!!cliente} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar dados do cliente</DialogTitle>
           <DialogDescription>

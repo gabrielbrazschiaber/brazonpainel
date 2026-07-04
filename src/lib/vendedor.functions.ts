@@ -19,6 +19,7 @@ const novoClienteSchema = z.object({
   plano_id: z.string().uuid().nullable().optional(),
   data_vencimento: z.string().min(10).max(10),
   mensagem_vendedor: z.string().trim().max(500).optional().nullable(),
+  anotacoes: z.string().trim().max(1000).optional().nullable(),
   servico_extra: z.string().trim().max(200).optional().nullable(),
   servico_extra_valor: z.number().min(0).max(1000000).optional().nullable(),
   cpf_cnpj: z.string().trim().max(20).optional().nullable(),
@@ -75,6 +76,7 @@ export const criarCliente = createServerFn({ method: "POST" })
       plano_id: data.plano_id ?? null,
       data_vencimento: data.data_vencimento,
       mensagem_vendedor: data.mensagem_vendedor ?? null,
+      anotacoes: data.anotacoes ?? null,
       servico_extra: data.servico_extra ?? null,
       servico_extra_valor: data.servico_extra_valor ?? 0,
       cpf_cnpj: data.cpf_cnpj ?? null,
@@ -100,7 +102,7 @@ export const criarCliente = createServerFn({ method: "POST" })
   });
 
 const cadastroPublicoSchema = novoClienteSchema
-  .omit({ mensagem_vendedor: true })
+  .omit({ mensagem_vendedor: true, anotacoes: true })
   .extend({
     ref: z.string().trim().min(1).max(60),
   });
@@ -218,6 +220,7 @@ const editarClienteSchema = z.object({
   servico_extra_valor: z.number().min(0).max(1000000).optional().nullable(),
   cpf_cnpj: z.string().trim().max(20).optional().nullable(),
   telefone: z.string().trim().max(20).optional().nullable(),
+  anotacoes: z.string().trim().max(1000).optional().nullable(),
 });
 
 // Vendedor logado edita nome, e-mail, senha, plano e serviço extra de um cliente seu.
@@ -278,6 +281,7 @@ export const atualizarCliente = createServerFn({ method: "POST" })
         servico_extra_valor: data.servico_extra_valor ?? 0,
         cpf_cnpj: data.cpf_cnpj ?? null,
         telefone: data.telefone ?? null,
+        anotacoes: data.anotacoes ?? null,
       })
       .eq("id", data.cliente_id)
       .eq("vendedor_id", vend.id);

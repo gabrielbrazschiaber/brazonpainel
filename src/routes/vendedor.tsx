@@ -83,6 +83,7 @@ interface ClienteRow {
   servico_extra_valor: number | null;
   cpf_cnpj: string | null;
   telefone: string | null;
+  anotacoes: string | null;
   planos: { nome: string; valor: number } | null;
   nome?: string;
   email?: string;
@@ -122,7 +123,7 @@ function VendedorArea() {
 
     const { data: cls } = await supabase
       .from("clientes")
-      .select("id,user_id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,cpf_cnpj,telefone,planos(nome,valor)")
+      .select("id,user_id,data_vencimento,status,mensagem_vendedor,anotacoes,plano_id,servico_extra,servico_extra_valor,cpf_cnpj,telefone,planos(nome,valor)")
       .order("created_at", { ascending: false });
     const rows = (cls ?? []) as unknown as ClienteRow[];
 
@@ -395,6 +396,7 @@ function CadastrarClienteDialog({
   const [servicoValor, setServicoValor] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [anotacoes, setAnotacoes] = useState("");
   const [saving, setSaving] = useState(false);
 
   function reset() {
@@ -407,6 +409,7 @@ function CadastrarClienteDialog({
     setServicoValor("");
     setCpfCnpj("");
     setTelefone("");
+    setAnotacoes("");
   }
 
   async function submit() {
@@ -432,6 +435,7 @@ function CadastrarClienteDialog({
           servico_extra_valor: valorExtra,
           cpf_cnpj: cpfCnpj.trim() || null,
           telefone: telefone.trim() || null,
+          anotacoes: anotacoes.trim() || null,
         },
       });
       toast.success("Cliente cadastrado!", {
@@ -449,7 +453,8 @@ function CadastrarClienteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
+
         <DialogHeader>
           <DialogTitle>Cadastrar cliente</DialogTitle>
           <DialogDescription>
@@ -541,7 +546,19 @@ function CadastrarClienteDialog({
               placeholder="Ex: Bem-vindo! Qualquer dúvida me chame."
             />
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="anot">Anotações sobre o cliente (opcional)</Label>
+            <Textarea
+              id="anot"
+              value={anotacoes}
+              onChange={(e) => setAnotacoes(e.target.value)}
+              placeholder="Observações internas. O cliente não vê este campo."
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">Visível apenas para você e a administração.</p>
+          </div>
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancelar
@@ -594,7 +611,7 @@ function MensagemDialog({
 
   return (
     <Dialog open={!!cliente} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Mensagem para {cliente?.nome ?? "o cliente"}</DialogTitle>
           <DialogDescription>
@@ -644,6 +661,7 @@ function EditarClienteDialog({
   const [servicoValor, setServicoValor] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [anotacoes, setAnotacoes] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -657,6 +675,7 @@ function EditarClienteDialog({
     );
     setCpfCnpj(cliente?.cpf_cnpj ?? "");
     setTelefone(cliente?.telefone ?? "");
+    setAnotacoes(cliente?.anotacoes ?? "");
   }, [cliente]);
 
   async function submit() {
@@ -687,6 +706,7 @@ function EditarClienteDialog({
           servico_extra_valor: valorExtra,
           cpf_cnpj: cpfCnpj.trim() || null,
           telefone: telefone.trim() || null,
+          anotacoes: anotacoes.trim() || null,
         },
       });
       toast.success("Dados do cliente atualizados!");
@@ -701,7 +721,8 @@ function EditarClienteDialog({
 
   return (
     <Dialog open={!!cliente} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
+
         <DialogHeader>
           <DialogTitle>Editar dados do cliente</DialogTitle>
           <DialogDescription>
@@ -780,7 +801,19 @@ function EditarClienteDialog({
             />
             <p className="text-xs text-muted-foreground">Esse valor soma ao valor do plano.</p>
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="ecanot">Anotações sobre o cliente (opcional)</Label>
+            <Textarea
+              id="ecanot"
+              value={anotacoes}
+              onChange={(e) => setAnotacoes(e.target.value)}
+              placeholder="Observações internas. O cliente não vê este campo."
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">Visível apenas para você e a administração.</p>
+          </div>
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancelar
@@ -840,7 +873,7 @@ function MinhaContaVendedorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Minha conta</DialogTitle>
           <DialogDescription>Edite seu nome, e-mail e senha de acesso.</DialogDescription>
