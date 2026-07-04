@@ -92,18 +92,20 @@ function CadastroPage() {
     }
     setSaving(true);
     try {
-      const res = await cadastrar({
+      const emailCliente = email.trim();
+      await cadastrar({
         data: {
           ref,
           nome: nome.trim(),
-          email: email.trim(),
+          email: emailCliente,
           plano_id: planoId,
           data_vencimento: defaultVencimento(),
           cpf_cnpj: cpfCnpj.trim(),
           telefone: telefone.trim() || null,
         },
       });
-      setDone({ senha: res.senha });
+      const { error: resetErr } = await enviarLinkDefinicaoSenha(emailCliente);
+      setDone({ email: emailCliente, emailEnviado: !resetErr });
     } catch (e) {
       toast.error("Não foi possível concluir o cadastro. Tente novamente.");
       setCooldown(60);
