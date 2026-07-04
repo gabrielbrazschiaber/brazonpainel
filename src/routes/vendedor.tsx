@@ -409,6 +409,7 @@ function CadastrarClienteDialog({
     setServicoValor("");
     setCpfCnpj("");
     setTelefone("");
+    setAnotacoes("");
   }
 
   async function submit() {
