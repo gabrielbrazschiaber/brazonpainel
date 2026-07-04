@@ -675,6 +675,7 @@ function EditarClienteDialog({
     );
     setCpfCnpj(cliente?.cpf_cnpj ?? "");
     setTelefone(cliente?.telefone ?? "");
+    setAnotacoes(cliente?.anotacoes ?? "");
   }, [cliente]);
 
   async function submit() {
