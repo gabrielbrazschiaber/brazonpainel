@@ -578,9 +578,19 @@ function VendedoresTab({
             senha: senha || "",
           },
         });
-        toast.success("Vendedor cadastrado!", {
-          description: `Senha de acesso inicial: ${res.senha}`,
-        });
+        if (res.senha_definida) {
+          toast.success("Vendedor cadastrado!", {
+            description: "Ele pode entrar com o e-mail e a senha que você definiu.",
+          });
+        } else {
+          const emailVend = email.trim();
+          const { error: resetErr } = await enviarLinkDefinicaoSenha(emailVend);
+          toast.success("Vendedor cadastrado!", {
+            description: resetErr
+              ? `Peça para ${emailVend} usar "Esqueci minha senha" no login para definir a senha.`
+              : `Enviamos um e-mail para ${emailVend} definir a senha de acesso.`,
+          });
+        }
       }
       setOpen(false);
       onChanged();
