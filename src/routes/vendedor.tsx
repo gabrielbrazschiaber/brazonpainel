@@ -706,6 +706,7 @@ function EditarClienteDialog({
           servico_extra_valor: valorExtra,
           cpf_cnpj: cpfCnpj.trim() || null,
           telefone: telefone.trim() || null,
+          anotacoes: anotacoes.trim() || null,
         },
       });
       toast.success("Dados do cliente atualizados!");
