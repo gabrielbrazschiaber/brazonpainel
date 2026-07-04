@@ -64,6 +64,66 @@ function LoginPage() {
   }
 
 
+  if (mode === "forgot") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-md p-8">
+          <div className="mb-6 text-center">
+            <BrazonLogo className="mb-4 justify-center" symbolClassName="h-10 w-10" textClassName="text-2xl" />
+            <h1 className="text-2xl font-bold text-foreground">Recuperar senha</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Enviaremos um link para você definir uma nova senha.
+            </p>
+          </div>
+          {resetSent ? (
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                Se existir uma conta com esse e-mail, você receberá um link para redefinir a senha.
+                Verifique também a caixa de spam.
+              </p>
+              <Button
+                className="mt-6 w-full"
+                variant="outline"
+                onClick={() => {
+                  setMode("login");
+                  setResetSent(false);
+                }}
+              >
+                Voltar ao login
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleForgot} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email-forgot">E-mail</Label>
+                <Input
+                  id="email-forgot"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="voce@email.com"
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting ? "Enviando..." : "Enviar link"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => setMode("login")}
+              >
+                Voltar
+              </Button>
+            </form>
+          )}
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md p-8">
@@ -88,7 +148,16 @@ function LoginPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Senha</Label>
+              <button
+                type="button"
+                onClick={() => setMode("forgot")}
+                className="text-xs text-primary underline-offset-2 hover:underline"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
             <Input
               id="password"
               type="password"
@@ -114,3 +183,4 @@ function LoginPage() {
     </div>
   );
 }
+
