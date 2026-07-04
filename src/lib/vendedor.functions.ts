@@ -102,7 +102,7 @@ export const criarCliente = createServerFn({ method: "POST" })
   });
 
 const cadastroPublicoSchema = novoClienteSchema
-  .omit({ mensagem_vendedor: true })
+  .omit({ mensagem_vendedor: true, anotacoes: true })
   .extend({
     ref: z.string().trim().min(1).max(60),
   });
