@@ -721,7 +721,8 @@ function EditarClienteDialog({
 
   return (
     <Dialog open={!!cliente} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
+
         <DialogHeader>
           <DialogTitle>Editar dados do cliente</DialogTitle>
           <DialogDescription>
