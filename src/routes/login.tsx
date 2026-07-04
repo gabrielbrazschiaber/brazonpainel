@@ -25,6 +25,8 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [mode, setMode] = useState<"login" | "forgot">("login");
+  const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
     if (!loading && session) {
@@ -43,6 +45,24 @@ function LoginPage() {
     }
     toast.success("Bem-vindo de volta!");
   }
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast.error("Informe seu e-mail.");
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await enviarLinkDefinicaoSenha(email);
+    setSubmitting(false);
+    if (error) {
+      toast.error("Não foi possível enviar o link. Tente novamente.");
+      return;
+    }
+    setResetSent(true);
+    toast.success("Link enviado! Verifique seu e-mail.");
+  }
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
