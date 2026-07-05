@@ -469,27 +469,6 @@ function AdminsTab({
 }
 
 
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  tone = "text-foreground",
-}: {
-  icon: typeof Users;
-  label: string;
-  value: string;
-  tone?: string;
-}) {
-  return (
-    <Card className="p-5">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon className="h-4 w-4" />
-        <span className="text-sm">{label}</span>
-      </div>
-      <p className={`mt-2 text-2xl font-bold ${tone}`}>{value}</p>
-    </Card>
-  );
-}
 
 /* ---------------- Vendedores ---------------- */
 function VendedoresTab({
