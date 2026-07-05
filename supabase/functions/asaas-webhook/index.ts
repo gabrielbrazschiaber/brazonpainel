@@ -4,6 +4,32 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.8'
 type PagamentoStatus = 'pago' | 'pendente' | 'vencido';
 type ClienteStatus = 'ativo' | 'vencido' | 'inadimplente' | 'cancelado';
 
+// deno-lint-ignore no-explicit-any
+async function logWebhook(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  event: string | null,
+  paymentId: string | null,
+  status: string | null,
+  payload: unknown,
+  processingResult: string,
+  errorMessage: string | null,
+) {
+  try {
+    await supabase.from('asaas_webhook_logs').insert({
+      event: event ?? null,
+      payment_id: paymentId ?? null,
+      status: status ?? null,
+      payload: payload ?? null,
+      processing_result: processingResult,
+      error_message: errorMessage,
+    })
+  } catch (e) {
+    console.warn('[Asaas Webhook] Falha ao gravar log do webhook:', e)
+  }
+}
+
+
 Deno.serve(async (req) => {
   // Apenas aceita requisições POST
   if (req.method !== 'POST') {
@@ -51,6 +77,9 @@ Deno.serve(async (req) => {
 
     console.log(`[Asaas Webhook] Pagamento ${asaasPaymentId}: Status Asaas: ${asaasStatus} -> Mapeado para: ${mappedPaymentStatus}`)
 
+    let processingResult = 'OK'
+    let errorMessage: string | null = null
+
     // 1. Atualizar a tabela de pagamentos local buscando pelo ID de pagamento do Asaas
     const { data: updatedPayments, error: paymentErr } = await supabase
       .from('pagamentos')
@@ -64,6 +93,9 @@ Deno.serve(async (req) => {
 
     if (paymentErr) {
       console.error('[Asaas Webhook] Erro ao atualizar tabela pagamentos:', paymentErr.message)
+      processingResult = 'ERROR'
+      errorMessage = paymentErr.message
+      await logWebhook(supabase, event, asaasPaymentId, asaasStatus, payload, processingResult, errorMessage)
       return new Response(JSON.stringify({ error: paymentErr.message }), { status: 500 })
     }
 
@@ -91,6 +123,8 @@ Deno.serve(async (req) => {
 
       if (clientErr) {
         console.error('[Asaas Webhook] Erro ao atualizar status do cliente:', clientErr.message)
+        processingResult = 'ERROR'
+        errorMessage = clientErr.message
       } else {
         console.log(`[Asaas Webhook] Status do cliente ${record.cliente_id} atualizado para ${clienteStatus}.`)
       }
@@ -116,7 +150,12 @@ Deno.serve(async (req) => {
       }
     } else {
       console.warn(`[Asaas Webhook] Nenhum pagamento local correspondente encontrado para o asaas_payment_id: ${asaasPaymentId}`)
+      processingResult = 'NOT_FOUND'
+      errorMessage = `Nenhum pagamento local encontrado para ${asaasPaymentId}`
     }
+
+    await logWebhook(supabase, event, asaasPaymentId, asaasStatus, payload, processingResult, errorMessage)
+
 
     return new Response(JSON.stringify({ success: true, processed: true }), {
       status: 200,
