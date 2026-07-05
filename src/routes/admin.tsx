@@ -184,17 +184,7 @@ function AdminArea() {
     load();
   }, [load]);
 
-  const metrics = useMemo(() => {
-    const receita = clientes
-      .filter((c) => c.status === "ativo")
-      .reduce((s, c) => s + (c.planos?.valor ?? 0), 0);
-    return {
-      clientes: clientes.length,
-      vendedores: vendedores.length,
-      planos: planos.length,
-      receita,
-    };
-  }, [clientes, vendedores, planos]);
+
 
   if (loading) {
     return (
