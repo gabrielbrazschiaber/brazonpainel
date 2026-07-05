@@ -174,7 +174,7 @@ function RedefinirSenhaPage() {
                 placeholder="Repita a nova senha"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={submitting || loading}>
+            <Button type="submit" className="w-full" disabled={submitting || loading || processandoLink}>
               {submitting ? "Salvando..." : "Salvar nova senha"}
             </Button>
           </form>
