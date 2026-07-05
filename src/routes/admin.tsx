@@ -37,9 +37,6 @@ import {
 import { formatCurrency, formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import {
-  Users,
-  Layers,
-  Wallet,
   UserCog,
   Plus,
   LogOut,
