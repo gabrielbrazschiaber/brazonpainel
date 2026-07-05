@@ -4,6 +4,32 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.8'
 type PagamentoStatus = 'pago' | 'pendente' | 'vencido';
 type ClienteStatus = 'ativo' | 'vencido' | 'inadimplente' | 'cancelado';
 
+// deno-lint-ignore no-explicit-any
+async function logWebhook(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  event: string | null,
+  paymentId: string | null,
+  status: string | null,
+  payload: unknown,
+  processingResult: string,
+  errorMessage: string | null,
+) {
+  try {
+    await supabase.from('asaas_webhook_logs').insert({
+      event: event ?? null,
+      payment_id: paymentId ?? null,
+      status: status ?? null,
+      payload: payload ?? null,
+      processing_result: processingResult,
+      error_message: errorMessage,
+    })
+  } catch (e) {
+    console.warn('[Asaas Webhook] Falha ao gravar log do webhook:', e)
+  }
+}
+
+
 Deno.serve(async (req) => {
   // Apenas aceita requisições POST
   if (req.method !== 'POST') {
