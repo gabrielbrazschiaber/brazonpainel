@@ -228,20 +228,9 @@ function AdminArea() {
 
         <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard icon={Users} label="Clientes" value={String(metrics.clientes)} />
-          <MetricCard icon={UserCog} label="Vendedores" value={String(metrics.vendedores)} tone="text-primary" />
-          <MetricCard icon={Layers} label="Planos" value={String(metrics.planos)} />
-          <MetricCard
-            icon={Wallet}
-            label="Receita ativa/mês"
-            value={formatCurrency(metrics.receita)}
-            tone="text-success"
-          />
-        </section>
-
-        <Tabs defaultValue="vendedores" className="mt-8">
-          <TabsList>
+        <Tabs defaultValue="dashboard" className="mt-6">
+          <TabsList className="flex-wrap">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
             <TabsTrigger value="admins">Admins</TabsTrigger>
             <TabsTrigger value="planos">Planos</TabsTrigger>
@@ -250,6 +239,9 @@ function AdminArea() {
             <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="dashboard" className="mt-4">
+            <AdminDashboard />
+          </TabsContent>
           <TabsContent value="vendedores" className="mt-4">
             <VendedoresTab vendedores={vendedores} onChanged={load} />
           </TabsContent>
@@ -270,6 +262,7 @@ function AdminArea() {
           </TabsContent>
         </Tabs>
       </div>
+
     </div>
   );
 }
