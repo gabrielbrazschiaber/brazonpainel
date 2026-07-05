@@ -27,9 +27,59 @@ function RedefinirSenhaPage() {
   const [confirma, setConfirma] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [processandoLink, setProcessandoLink] = useState(true);
+  const [temSessaoRecuperacao, setTemSessaoRecuperacao] = useState(false);
 
-  // Enquanto carrega, aguarda o Supabase detectar a sessão de recuperação da URL.
-  const semSessao = !loading && !session;
+  // Processa o token de recuperação presente na URL (hash implícito ou code PKCE).
+  useEffect(() => {
+    let ativo = true;
+    async function processarLink() {
+      try {
+        const url = new URL(window.location.href);
+        const hashParams = new URLSearchParams(
+          window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash,
+        );
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        const code = url.searchParams.get("code");
+        const errorDescription =
+          hashParams.get("error_description") || url.searchParams.get("error_description");
+
+        if (errorDescription) {
+          if (ativo) setTemSessaoRecuperacao(false);
+          return;
+        }
+
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (ativo) setTemSessaoRecuperacao(!error);
+          window.history.replaceState(null, "", url.pathname);
+        } else if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (ativo) setTemSessaoRecuperacao(!error);
+          window.history.replaceState(null, "", url.pathname);
+        } else {
+          // Sem token na URL: pode já haver uma sessão ativa (ex.: refresh da página).
+          const { data } = await supabase.auth.getSession();
+          if (ativo) setTemSessaoRecuperacao(!!data.session);
+        }
+      } catch {
+        if (ativo) setTemSessaoRecuperacao(false);
+      } finally {
+        if (ativo) setProcessandoLink(false);
+      }
+    }
+    processarLink();
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  // Enquanto processa o link ou carrega a sessão, não mostramos "link inválido".
+  const semSessao = !processandoLink && !loading && !session && !temSessaoRecuperacao;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,7 +95,14 @@ function RedefinirSenhaPage() {
     const { error } = await supabase.auth.updateUser({ password: senha });
     setSubmitting(false);
     if (error) {
-      toast.error("Não foi possível alterar a senha. Solicite um novo link.");
+      const msg = error.message?.toLowerCase() ?? "";
+      if (msg.includes("session") || msg.includes("jwt") || msg.includes("token")) {
+        toast.error("Sessão de recuperação expirada. Solicite um novo link de redefinição.");
+      } else if (msg.includes("different") || msg.includes("should be")) {
+        toast.error("Escolha uma senha diferente da anterior.");
+      } else {
+        toast.error(error.message || "Não foi possível alterar a senha. Solicite um novo link.");
+      }
       return;
     }
     await refresh();
