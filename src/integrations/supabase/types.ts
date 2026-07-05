@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      asaas_webhook_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event: string | null
+          id: string
+          payload: Json | null
+          payment_id: string | null
+          processing_result: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event?: string | null
+          id?: string
+          payload?: Json | null
+          payment_id?: string | null
+          processing_result?: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event?: string | null
+          id?: string
+          payload?: Json | null
+          payment_id?: string | null
+          processing_result?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       auditoria: {
         Row: {
           acao: string
