@@ -1182,6 +1182,58 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
                 onChange={(e) => set("asaas_webhook_url", e.target.value)}
               />
             </div>
+
+            <div className="grid gap-2 rounded-lg border border-border bg-muted/30 p-3">
+              <div className="flex items-center gap-2">
+                <KeyRound className="h-4 w-4 text-primary" />
+                <Label htmlFor="ctoken" className="font-semibold">
+                  Token de autenticação do webhook
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Este token protege seu webhook: o painel só aceita notificações do Asaas que
+                enviem exatamente este valor. Copie e cole no Asaas.
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  id="ctoken"
+                  readOnly
+                  value={webhookToken || "Carregando..."}
+                  className="font-mono text-xs"
+                  onFocus={(e) => e.currentTarget.select()}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  disabled={!webhookToken}
+                  onClick={() => copiar(webhookToken, "token")}
+                  aria-label="Copiar token"
+                >
+                  {copiado === "token" ? (
+                    <Check className="h-4 w-4 text-success" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <div className="mt-1 rounded-md bg-background p-3 text-xs text-muted-foreground">
+                <p className="mb-1 font-medium text-foreground">Como configurar no Asaas:</p>
+                <ol className="list-decimal space-y-1 pl-4">
+                  <li>
+                    No painel do Asaas, acesse <strong>Integrações → Webhooks</strong> (ou
+                    Configurações → Integrações).
+                  </li>
+                  <li>
+                    Em <strong>URL</strong>, cole o endereço do webhook (campo acima).
+                  </li>
+                  <li>
+                    No campo <strong>Token de autenticação</strong>, cole o token acima.
+                  </li>
+                  <li>Ative os eventos de cobrança (PAYMENT_RECEIVED, PAYMENT_OVERDUE etc.) e salve.</li>
+                </ol>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <Switch
                 id="cprod"
