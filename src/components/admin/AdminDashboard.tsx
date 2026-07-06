@@ -383,9 +383,14 @@ export function AdminDashboard() {
       {/* Alertas + Ranking */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="p-5">
-          <div className="mb-3 flex items-center gap-2">
-            <Bell className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold">Alertas e ações urgentes</h3>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold">Alertas e ações urgentes</h3>
+            </div>
+            {alertas.length > 0 && (
+              <span className="text-xs text-muted-foreground">{alertas.length} no total</span>
+            )}
           </div>
           {alertas.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center text-sm text-muted-foreground">
@@ -393,27 +398,56 @@ export function AdminDashboard() {
               Nenhum alerta no momento
             </div>
           ) : (
-            <ul className="space-y-2">
-              {alertas.map((a, i) => (
-                <li
-                  key={i}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{a.titulo}</p>
-                    <p className="text-xs text-muted-foreground">{a.sub}</p>
-                  </div>
-                  <span
-                    className={cn(
-                      "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
-                      a.badge.tone,
-                    )}
+            <>
+              <ul className="space-y-2">
+                {alertasPagina.map((a, i) => (
+                  <li
+                    key={alertaPagina * ALERTAS_POR_PAGINA + i}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2"
                   >
-                    {a.badge.label}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{a.titulo}</p>
+                      <p className="text-xs text-muted-foreground">{a.sub}</p>
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
+                        a.badge.tone,
+                      )}
+                    >
+                      {a.badge.label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {totalAlertaPaginas > 1 && (
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={alertaPagina === 0}
+                    onClick={() => setAlertaPagina((p) => Math.max(0, p - 1))}
+                  >
+                    <ArrowLeft className="mr-1 h-3.5 w-3.5" />
+                    Anterior
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {alertaPagina + 1} / {totalAlertaPaginas}
                   </span>
-                </li>
-              ))}
-            </ul>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={alertaPagina >= totalAlertaPaginas - 1}
+                    onClick={() =>
+                      setAlertaPagina((p) => Math.min(totalAlertaPaginas - 1, p + 1))
+                    }
+                  >
+                    Próximo
+                    <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </Card>
 
@@ -428,15 +462,20 @@ export function AdminDashboard() {
             <ul className="space-y-3">
               {ranking.map((r, i) => (
                 <li key={r.id}>
-                  <div className="flex items-center justify-between gap-2 text-sm">
-                    <span className="min-w-0 truncate font-medium">
-                      {i + 1}. {r.nome}
-                    </span>
-                    <span className="shrink-0 text-muted-foreground">
-                      {r.clientes} cli · {formatCurrency(r.receita)}
-                    </span>
-                  </div>
-                  <Progress value={(r.clientes / maxClientes) * 100} className="mt-1.5 h-1.5" />
+                  <button
+                    onClick={() => setRankingDetail(r)}
+                    className="w-full rounded-lg px-1 py-0.5 text-left transition-colors hover:bg-muted/40"
+                  >
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="min-w-0 truncate font-medium">
+                        {i + 1}. {r.nome}
+                      </span>
+                      <span className="shrink-0 text-muted-foreground">
+                        {r.clientes} cli · {formatCurrency(r.receita)}
+                      </span>
+                    </div>
+                    <Progress value={(r.clientes / maxClientes) * 100} className="mt-1.5 h-1.5" />
+                  </button>
                 </li>
               ))}
             </ul>
