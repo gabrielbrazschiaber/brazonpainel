@@ -25,6 +25,8 @@ import {
   Clock,
   ArrowUp,
   ArrowDown,
+  ArrowLeft,
+  ArrowRight,
   RefreshCw,
 } from "lucide-react";
 import {
