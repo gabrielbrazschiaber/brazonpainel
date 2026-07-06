@@ -1036,8 +1036,30 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
   const [novaChave, setNovaChave] = useState("");
   const [saving, setSaving] = useState(false);
   const [testando, setTestando] = useState(false);
+  const [webhookToken, setWebhookToken] = useState("");
+  const [copiado, setCopiado] = useState<"token" | "url" | null>(null);
   const testar = useServerFn(testarChaveAsaas);
   const salvar = useServerFn(salvarConfiguracoes);
+  const carregarToken = useServerFn(obterWebhookToken);
+
+  useEffect(() => {
+    carregarToken({})
+      .then((r) => setWebhookToken(r.token))
+      .catch(() => setWebhookToken(""));
+  }, [carregarToken]);
+
+  async function copiar(texto: string, qual: "token" | "url") {
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiado(qual);
+      toast.success("Copiado!");
+      setTimeout(() => setCopiado(null), 2000);
+    } catch {
+      toast.error("Não foi possível copiar. Copie manualmente.");
+    }
+  }
+
+
 
   async function testarChave() {
     setTestando(true);
