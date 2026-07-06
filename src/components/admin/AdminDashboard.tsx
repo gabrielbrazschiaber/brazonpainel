@@ -309,12 +309,26 @@ export function AdminDashboard() {
         (s, c) => s + (c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0),
         0,
       );
-      return { id: v.id, nome: v.nome || "Vendedor", clientes: meus.length, receita };
+      const ativos = meus.filter((c) => c.status === "ativo").length;
+      const inadimplentes = meus.filter(
+        (c) => c.status === "vencido" || c.status === "inadimplente",
+      ).length;
+      return {
+        id: v.id,
+        nome: v.nome || "Vendedor",
+        clientes: meus.length,
+        receita,
+        ativos,
+        inadimplentes,
+        lista: meus,
+      };
     });
     rows.sort((a, b) => b.clientes - a.clientes);
     return rows.slice(0, 5);
   }, [vendedores, clientes]);
   const maxClientes = ranking[0]?.clientes || 1;
+  type RankingRow = (typeof ranking)[number];
+  const [rankingDetail, setRankingDetail] = useState<RankingRow | null>(null);
 
   const ultimosPagamentos = useMemo(() => pagamentos.slice(0, 8), [pagamentos]);
 
