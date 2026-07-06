@@ -42,6 +42,9 @@ import {
   LogOut,
   Save,
   Shield,
+  Copy,
+  Check,
+  KeyRound,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
