@@ -36,9 +36,24 @@ Deno.serve(async (req) => {
     return new Response('Método não permitido', { status: 405 })
   }
 
+  // Autenticação do webhook: o Asaas envia o token configurado no cabeçalho
+  // "asaas-access-token". Rejeitamos qualquer requisição sem o token correto.
+  const expectedToken = Deno.env.get('ASAAS_WEBHOOK_TOKEN')
+  if (!expectedToken) {
+    console.error('[Asaas Webhook] ASAAS_WEBHOOK_TOKEN ausente no ambiente.')
+    return new Response('Erro interno de configuração', { status: 500 })
+  }
+  const receivedToken =
+    req.headers.get('asaas-access-token') ?? req.headers.get('asaas-webhook-token')
+  if (!receivedToken || receivedToken !== expectedToken) {
+    console.warn('[Asaas Webhook] Token de autenticação inválido ou ausente.')
+    return new Response('Não autorizado', { status: 401 })
+  }
+
   try {
     const payload = await req.json()
     console.log('[Asaas Webhook] Evento recebido:', payload.event)
+
 
     const event = payload.event
     const payment = payload.payment
