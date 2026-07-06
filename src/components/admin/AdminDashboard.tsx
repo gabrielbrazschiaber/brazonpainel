@@ -664,6 +664,65 @@ export function AdminDashboard() {
           </pre>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!rankingDetail} onOpenChange={(o) => !o && setRankingDetail(null)}>
+        <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{rankingDetail?.nome}</DialogTitle>
+            <DialogDescription>Desempenho e carteira de clientes</DialogDescription>
+          </DialogHeader>
+          {rankingDetail && (
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">Clientes</p>
+                  <p className="text-lg font-bold">{rankingDetail.clientes}</p>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">Ativos</p>
+                  <p className="text-lg font-bold text-success">{rankingDetail.ativos}</p>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">Inadimplentes</p>
+                  <p className="text-lg font-bold text-destructive">
+                    {rankingDetail.inadimplentes}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">Receita</p>
+                  <p className="text-lg font-bold">{formatCurrency(rankingDetail.receita)}</p>
+                </div>
+              </div>
+              <div className="mt-2">
+                <h4 className="mb-2 text-sm font-semibold">Clientes</h4>
+                {rankingDetail.lista.length === 0 ? (
+                  <p className="py-4 text-center text-sm text-muted-foreground">
+                    Nenhum cliente vinculado.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {rankingDetail.lista.map((c) => (
+                      <li
+                        key={c.id}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{c.nome || "Cliente"}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {c.planos?.nome || "Sem plano"} ·{" "}
+                            {formatCurrency((c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0))}
+                          </p>
+                        </div>
+                        <StatusBadge status={c.status} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
