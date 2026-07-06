@@ -251,8 +251,20 @@ export function AdminDashboard() {
         });
       });
 
-    return items.sort((a, b) => a.prioridade - b.prioridade).slice(0, 8);
+    return items.sort((a, b) => a.prioridade - b.prioridade);
   }, [clientes, webhookLogs]);
+
+  /* ---------- Paginação de alertas ---------- */
+  const ALERTAS_POR_PAGINA = 6;
+  const [alertaPagina, setAlertaPagina] = useState(0);
+  const totalAlertaPaginas = Math.max(1, Math.ceil(alertas.length / ALERTAS_POR_PAGINA));
+  useEffect(() => {
+    if (alertaPagina > totalAlertaPaginas - 1) setAlertaPagina(0);
+  }, [alertaPagina, totalAlertaPaginas]);
+  const alertasPagina = alertas.slice(
+    alertaPagina * ALERTAS_POR_PAGINA,
+    alertaPagina * ALERTAS_POR_PAGINA + ALERTAS_POR_PAGINA,
+  );
 
   /* ---------- MRR chart ---------- */
   const mrrChart = useMemo(() => {
