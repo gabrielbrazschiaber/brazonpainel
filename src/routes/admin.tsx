@@ -9,7 +9,7 @@ import { BrazonLogo } from "@/components/BrazonLogo";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, atualizarClienteAdmin } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
-import { obterConfiguracoes, salvarConfiguracoes } from "@/lib/config.functions";
+import { obterConfiguracoes, salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
