@@ -10,6 +10,21 @@ async function ensureAdmin(supabase: any, userId: string) {
   if (!isAdmin) throw new Error("Apenas administradores podem executar esta ação.");
 }
 
+/**
+ * Admin lê o token de autenticação do webhook do Asaas (ASAAS_WEBHOOK_TOKEN).
+ * O token é necessário para configurar o webhook no painel do Asaas. Como só é
+ * acessível ao servidor, esta função (restrita a admins) o devolve para exibição.
+ */
+export const obterWebhookToken = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+    const token = process.env.ASAAS_WEBHOOK_TOKEN ?? "";
+    return { token, definido: !!token };
+  });
+
+
 /** Mascara a chave da API, revelando apenas os últimos 4 caracteres. */
 function mascararChave(chave: string | null | undefined): string {
   if (!chave) return "";
