@@ -25,6 +25,8 @@ import {
   Clock,
   ArrowUp,
   ArrowDown,
+  ArrowLeft,
+  ArrowRight,
   RefreshCw,
 } from "lucide-react";
 import {
@@ -251,8 +253,20 @@ export function AdminDashboard() {
         });
       });
 
-    return items.sort((a, b) => a.prioridade - b.prioridade).slice(0, 8);
+    return items.sort((a, b) => a.prioridade - b.prioridade);
   }, [clientes, webhookLogs]);
+
+  /* ---------- Paginação de alertas ---------- */
+  const ALERTAS_POR_PAGINA = 6;
+  const [alertaPagina, setAlertaPagina] = useState(0);
+  const totalAlertaPaginas = Math.max(1, Math.ceil(alertas.length / ALERTAS_POR_PAGINA));
+  useEffect(() => {
+    if (alertaPagina > totalAlertaPaginas - 1) setAlertaPagina(0);
+  }, [alertaPagina, totalAlertaPaginas]);
+  const alertasPagina = alertas.slice(
+    alertaPagina * ALERTAS_POR_PAGINA,
+    alertaPagina * ALERTAS_POR_PAGINA + ALERTAS_POR_PAGINA,
+  );
 
   /* ---------- MRR chart ---------- */
   const mrrChart = useMemo(() => {
@@ -297,12 +311,26 @@ export function AdminDashboard() {
         (s, c) => s + (c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0),
         0,
       );
-      return { id: v.id, nome: v.nome || "Vendedor", clientes: meus.length, receita };
+      const ativos = meus.filter((c) => c.status === "ativo").length;
+      const inadimplentes = meus.filter(
+        (c) => c.status === "vencido" || c.status === "inadimplente",
+      ).length;
+      return {
+        id: v.id,
+        nome: v.nome || "Vendedor",
+        clientes: meus.length,
+        receita,
+        ativos,
+        inadimplentes,
+        lista: meus,
+      };
     });
     rows.sort((a, b) => b.clientes - a.clientes);
     return rows.slice(0, 5);
   }, [vendedores, clientes]);
   const maxClientes = ranking[0]?.clientes || 1;
+  type RankingRow = (typeof ranking)[number];
+  const [rankingDetail, setRankingDetail] = useState<RankingRow | null>(null);
 
   const ultimosPagamentos = useMemo(() => pagamentos.slice(0, 8), [pagamentos]);
 
@@ -357,9 +385,14 @@ export function AdminDashboard() {
       {/* Alertas + Ranking */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="p-5">
-          <div className="mb-3 flex items-center gap-2">
-            <Bell className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold">Alertas e ações urgentes</h3>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold">Alertas e ações urgentes</h3>
+            </div>
+            {alertas.length > 0 && (
+              <span className="text-xs text-muted-foreground">{alertas.length} no total</span>
+            )}
           </div>
           {alertas.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center text-sm text-muted-foreground">
@@ -367,27 +400,56 @@ export function AdminDashboard() {
               Nenhum alerta no momento
             </div>
           ) : (
-            <ul className="space-y-2">
-              {alertas.map((a, i) => (
-                <li
-                  key={i}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{a.titulo}</p>
-                    <p className="text-xs text-muted-foreground">{a.sub}</p>
-                  </div>
-                  <span
-                    className={cn(
-                      "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
-                      a.badge.tone,
-                    )}
+            <>
+              <ul className="space-y-2">
+                {alertasPagina.map((a, i) => (
+                  <li
+                    key={alertaPagina * ALERTAS_POR_PAGINA + i}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2"
                   >
-                    {a.badge.label}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{a.titulo}</p>
+                      <p className="text-xs text-muted-foreground">{a.sub}</p>
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
+                        a.badge.tone,
+                      )}
+                    >
+                      {a.badge.label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {totalAlertaPaginas > 1 && (
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={alertaPagina === 0}
+                    onClick={() => setAlertaPagina((p) => Math.max(0, p - 1))}
+                  >
+                    <ArrowLeft className="mr-1 h-3.5 w-3.5" />
+                    Anterior
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {alertaPagina + 1} / {totalAlertaPaginas}
                   </span>
-                </li>
-              ))}
-            </ul>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={alertaPagina >= totalAlertaPaginas - 1}
+                    onClick={() =>
+                      setAlertaPagina((p) => Math.min(totalAlertaPaginas - 1, p + 1))
+                    }
+                  >
+                    Próximo
+                    <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </Card>
 
@@ -402,15 +464,20 @@ export function AdminDashboard() {
             <ul className="space-y-3">
               {ranking.map((r, i) => (
                 <li key={r.id}>
-                  <div className="flex items-center justify-between gap-2 text-sm">
-                    <span className="min-w-0 truncate font-medium">
-                      {i + 1}. {r.nome}
-                    </span>
-                    <span className="shrink-0 text-muted-foreground">
-                      {r.clientes} cli · {formatCurrency(r.receita)}
-                    </span>
-                  </div>
-                  <Progress value={(r.clientes / maxClientes) * 100} className="mt-1.5 h-1.5" />
+                  <button
+                    onClick={() => setRankingDetail(r)}
+                    className="w-full rounded-lg px-1 py-0.5 text-left transition-colors hover:bg-muted/40"
+                  >
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="min-w-0 truncate font-medium">
+                        {i + 1}. {r.nome}
+                      </span>
+                      <span className="shrink-0 text-muted-foreground">
+                        {r.clientes} cli · {formatCurrency(r.receita)}
+                      </span>
+                    </div>
+                    <Progress value={(r.clientes / maxClientes) * 100} className="mt-1.5 h-1.5" />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -595,6 +662,65 @@ export function AdminDashboard() {
           <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs">
             {JSON.stringify(logDetail?.payload ?? {}, null, 2)}
           </pre>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!rankingDetail} onOpenChange={(o) => !o && setRankingDetail(null)}>
+        <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{rankingDetail?.nome}</DialogTitle>
+            <DialogDescription>Desempenho e carteira de clientes</DialogDescription>
+          </DialogHeader>
+          {rankingDetail && (
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">Clientes</p>
+                  <p className="text-lg font-bold">{rankingDetail.clientes}</p>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">Ativos</p>
+                  <p className="text-lg font-bold text-success">{rankingDetail.ativos}</p>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">Inadimplentes</p>
+                  <p className="text-lg font-bold text-destructive">
+                    {rankingDetail.inadimplentes}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs text-muted-foreground">Receita</p>
+                  <p className="text-lg font-bold">{formatCurrency(rankingDetail.receita)}</p>
+                </div>
+              </div>
+              <div className="mt-2">
+                <h4 className="mb-2 text-sm font-semibold">Clientes</h4>
+                {rankingDetail.lista.length === 0 ? (
+                  <p className="py-4 text-center text-sm text-muted-foreground">
+                    Nenhum cliente vinculado.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {rankingDetail.lista.map((c) => (
+                      <li
+                        key={c.id}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{c.nome || "Cliente"}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {c.planos?.nome || "Sem plano"} ·{" "}
+                            {formatCurrency((c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0))}
+                          </p>
+                        </div>
+                        <StatusBadge status={c.status} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
