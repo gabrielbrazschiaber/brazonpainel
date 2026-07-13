@@ -67,8 +67,9 @@ function LoginPage() {
 
   if (mode === "forgot") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <Card className="w-full max-w-md p-8">
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
+        <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+        <Card className="relative w-full max-w-md rounded-2xl p-8 shadow-lg">
           <div className="mb-6 text-center">
             <BrazonLogo className="mb-4 justify-center" symbolClassName="h-10 w-10" textClassName="text-2xl" />
             <h1 className="text-2xl font-bold text-foreground">Recuperar senha</h1>
@@ -126,8 +127,9 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md p-8">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+      <Card className="relative w-full max-w-md rounded-2xl p-8 shadow-lg">
         <div className="mb-6 text-center">
           <BrazonLogo className="mb-4 justify-center" symbolClassName="h-10 w-10" textClassName="text-2xl" />
           <h1 className="text-2xl font-bold text-foreground">Entrar</h1>

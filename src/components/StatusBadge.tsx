@@ -10,6 +10,14 @@ const toneClasses: Record<Tone, string> = {
   primary: "bg-primary/10 text-primary border-primary/30",
 };
 
+const dotClasses: Record<Tone, string> = {
+  success: "bg-success",
+  warning: "bg-warning",
+  danger: "bg-destructive",
+  muted: "bg-muted-foreground",
+  primary: "bg-primary",
+};
+
 const statusMap: Record<string, { label: string; tone: Tone }> = {
   ativo: { label: "Ativo", tone: "success" },
   pago: { label: "Pago", tone: "success" },
@@ -31,11 +39,12 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize",
         toneClasses[cfg.tone],
         className,
       )}
     >
+      <span className={cn("h-1.5 w-1.5 rounded-full", dotClasses[cfg.tone])} />
       {cfg.label}
     </span>
   );
