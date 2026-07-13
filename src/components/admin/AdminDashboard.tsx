@@ -759,12 +759,14 @@ function KpiCard({
       ? ArrowDown
       : null;
   return (
-    <Card className="p-5">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon className="h-4 w-4" />
-        <span className="text-sm">{label}</span>
+    <Card className="card-interactive p-5">
+      <div className="flex items-center gap-2.5 text-muted-foreground">
+        <span className={cn("grid h-9 w-9 place-items-center rounded-lg bg-primary/10", valueTone)}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className="text-sm font-medium">{label}</span>
       </div>
-      <p className={cn("mt-2 text-2xl font-bold", valueTone)}>{value}</p>
+      <p className={cn("mt-3 text-2xl font-bold", valueTone)}>{value}</p>
       {delta && (
         <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", deltaTone)}>
           {Trend && <Trend className="h-3 w-3" />}
