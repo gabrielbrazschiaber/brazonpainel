@@ -179,38 +179,45 @@ function VendedorArea() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Barra superior fixa */}
+      <header className="glass-header sticky top-0 z-30 border-b border-border/60">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+          <BrazonLogo />
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setDialogOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Cadastrar cliente</span>
+              <span className="sm:hidden">Cadastrar</span>
+            </Button>
+            <Button variant="outline" onClick={() => setContaOpen(true)}>
+              <UserCog className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Minha conta</span>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" title="Sair">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
       <div className="mx-auto max-w-6xl px-4 py-8">
-        <BrazonLogo className="mb-6" />
-        {/* Header */}
+        {/* Cabeçalho */}
         <header className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <p className="text-sm text-muted-foreground">Painel do vendedor</p>
-            <h1 className="text-xl font-bold text-foreground">
+            <h1 className="truncate text-xl font-bold text-foreground sm:text-2xl">
               {profile?.nome || profile?.email}
             </h1>
             <div className="mt-2 flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Código de afiliado:</span>
               <button
                 onClick={() => copiar(vendedor?.codigo_indicacao ?? "", "Código copiado!")}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-sm font-bold text-primary"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
               >
                 {vendedor?.codigo_indicacao}
                 <Copy className="h-3.5 w-3.5" />
               </button>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setDialogOpen(true)}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Cadastrar cliente
-            </Button>
-            <Button variant="outline" onClick={() => setContaOpen(true)}>
-              <UserCog className="mr-2 h-4 w-4" />
-              Minha conta
-            </Button>
-            <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
-              <LogOut className="h-4 w-4" />
-            </Button>
           </div>
         </header>
 
@@ -366,12 +373,14 @@ function MetricCard({
   tone?: string;
 }) {
   return (
-    <Card className="p-5">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon className="h-4 w-4" />
-        <span className="text-sm">{label}</span>
+    <Card className="card-interactive p-5">
+      <div className="flex items-center gap-2.5 text-muted-foreground">
+        <span className={`grid h-9 w-9 place-items-center rounded-lg bg-primary/10 ${tone}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className="text-sm font-medium">{label}</span>
       </div>
-      <p className={`mt-2 text-2xl font-bold ${tone}`}>{value}</p>
+      <p className={`mt-3 text-2xl font-bold ${tone}`}>{value}</p>
     </Card>
   );
 }

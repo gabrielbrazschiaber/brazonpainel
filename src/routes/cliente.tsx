@@ -147,30 +147,34 @@ function ClienteArea() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <BrazonLogo className="mb-6" />
-        {/* Header */}
-        <header className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12">
-              <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                {initials(profile?.nome || profile?.email)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm text-muted-foreground">Bem-vindo,</p>
-              <h1 className="text-xl font-bold text-foreground">
-                {profile?.nome || profile?.email}
-              </h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
+      {/* Barra superior fixa */}
+      <header className="glass-header sticky top-0 z-30 border-b border-border/60">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
+          <BrazonLogo />
+          <div className="flex items-center gap-2 sm:gap-3">
             <StatusBadge status={headerTone()} />
-            <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
+            <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" title="Sair">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
-        </header>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-5xl px-4 py-8">
+        {/* Boas-vindas */}
+        <div className="flex items-center gap-3">
+          <Avatar className="h-12 w-12 shrink-0 ring-2 ring-primary/15">
+            <AvatarFallback className="bg-primary font-semibold text-primary-foreground">
+              {initials(profile?.nome || profile?.email)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="text-sm text-muted-foreground">Bem-vindo,</p>
+            <h1 className="truncate text-xl font-bold text-foreground sm:text-2xl">
+              {profile?.nome || profile?.email}
+            </h1>
+          </div>
+        </div>
 
         {/* Mensagem do vendedor */}
         {cliente?.mensagem_vendedor && (
@@ -189,12 +193,14 @@ function ClienteArea() {
 
         {/* Cards de resumo */}
         <section className="mt-6 grid gap-4 sm:grid-cols-3">
-          <Card className="p-5">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <CalendarClock className="h-4 w-4" />
-              <span className="text-sm">Vencimento</span>
+          <Card className="card-interactive p-5">
+            <div className="flex items-center gap-2.5 text-muted-foreground">
+              <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+                <CalendarClock className="h-4 w-4" />
+              </span>
+              <span className="text-sm font-medium">Vencimento</span>
             </div>
-            <p className="mt-2 text-2xl font-bold text-foreground">{formatDate(venc)}</p>
+            <p className="mt-3 text-2xl font-bold text-foreground">{formatDate(venc)}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {dias == null
                 ? "Sem data definida"
@@ -203,12 +209,14 @@ function ClienteArea() {
                   : `${dias} dia(s) restantes`}
             </p>
           </Card>
-          <Card className="p-5">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <CreditCard className="h-4 w-4" />
-              <span className="text-sm">Plano atual</span>
+          <Card className="card-interactive p-5">
+            <div className="flex items-center gap-2.5 text-muted-foreground">
+              <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+                <CreditCard className="h-4 w-4" />
+              </span>
+              <span className="text-sm font-medium">Plano atual</span>
             </div>
-            <p className="mt-2 text-2xl font-bold text-foreground">
+            <p className="mt-3 text-2xl font-bold text-foreground">
               {cliente?.planos?.nome ?? "—"}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -225,10 +233,12 @@ function ClienteArea() {
               </p>
             )}
           </Card>
-          <Card className="p-5">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <BadgeCheck className="h-4 w-4" />
-              <span className="text-sm">Status</span>
+          <Card className="card-interactive p-5">
+            <div className="flex items-center gap-2.5 text-muted-foreground">
+              <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+                <BadgeCheck className="h-4 w-4" />
+              </span>
+              <span className="text-sm font-medium">Status</span>
             </div>
             <div className="mt-3">
               <StatusBadge status={cliente?.status ?? "ativo"} className="text-sm" />
