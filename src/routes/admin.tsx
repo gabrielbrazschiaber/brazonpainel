@@ -196,24 +196,28 @@ function AdminArea() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <BrazonLogo className="mb-6" />
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Administração</p>
-            <h1 className="text-xl font-bold text-foreground">
-              {profile?.nome || profile?.email}
-            </h1>
-          </div>
+      {/* Barra superior fixa */}
+      <header className="glass-header sticky top-0 z-30 border-b border-border/60">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+          <BrazonLogo />
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => setContaOpen(true)}>
-              <UserCog className="mr-2 h-4 w-4" />
-              Minha conta
+              <UserCog className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Minha conta</span>
             </Button>
-            <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
+            <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" title="Sair">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        <header className="min-w-0">
+          <p className="text-sm text-muted-foreground">Administração</p>
+          <h1 className="truncate text-xl font-bold text-foreground sm:text-2xl">
+            {profile?.nome || profile?.email}
+          </h1>
         </header>
 
         <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
