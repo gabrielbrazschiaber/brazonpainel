@@ -223,15 +223,17 @@ function AdminArea() {
         <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
 
         <Tabs defaultValue="dashboard" className="mt-6">
-          <TabsList className="flex-wrap">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
-            <TabsTrigger value="admins">Admins</TabsTrigger>
-            <TabsTrigger value="planos">Planos</TabsTrigger>
-            <TabsTrigger value="clientes">Clientes</TabsTrigger>
-            <TabsTrigger value="config">Configurações</TabsTrigger>
-            <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
-          </TabsList>
+          <div className="-mx-4 overflow-x-auto px-4 pb-1">
+            <TabsList className="w-max min-w-full justify-start">
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
+              <TabsTrigger value="admins">Admins</TabsTrigger>
+              <TabsTrigger value="planos">Planos</TabsTrigger>
+              <TabsTrigger value="clientes">Clientes</TabsTrigger>
+              <TabsTrigger value="config">Configurações</TabsTrigger>
+              <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="dashboard" className="mt-4">
             <AdminDashboard />
