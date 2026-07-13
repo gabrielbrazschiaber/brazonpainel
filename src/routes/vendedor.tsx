@@ -373,12 +373,14 @@ function MetricCard({
   tone?: string;
 }) {
   return (
-    <Card className="p-5">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon className="h-4 w-4" />
-        <span className="text-sm">{label}</span>
+    <Card className="card-interactive p-5">
+      <div className="flex items-center gap-2.5 text-muted-foreground">
+        <span className={`grid h-9 w-9 place-items-center rounded-lg bg-primary/10 ${tone}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className="text-sm font-medium">{label}</span>
       </div>
-      <p className={`mt-2 text-2xl font-bold ${tone}`}>{value}</p>
+      <p className={`mt-3 text-2xl font-bold ${tone}`}>{value}</p>
     </Card>
   );
 }
