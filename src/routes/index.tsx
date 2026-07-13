@@ -5,10 +5,10 @@ import { useAuth, roleHome } from "@/lib/auth";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Brazon — Gestão de Assinaturas SaaS" },
-      { name: "description", content: "Brazon: plataforma de gestão de assinaturas com clientes, vendedores e administração." },
-      { property: "og:title", content: "Brazon — Gestão de Assinaturas SaaS" },
-      { property: "og:description", content: "Brazon: plataforma de gestão de assinaturas com clientes, vendedores e administração." },
+      { title: "Brazon — Gestão de Assinaturas" },
+      { name: "description", content: "- Brazon is a SaaS subscription management web application for clients, sellers, and administrators." },
+      { property: "og:title", content: "Brazon — Gestão de Assinaturas" },
+      { property: "og:description", content: "- Brazon is a SaaS subscription management web application for clients, sellers, and administrators." },
     ],
   }),
   component: Index,
