@@ -45,7 +45,27 @@ import {
   Copy,
   Check,
   KeyRound,
+  LayoutDashboard,
+  Users,
+  Package,
+  UserCircle,
+  Settings,
+  ScrollText,
 } from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Administração" }] }),
@@ -109,6 +129,7 @@ function AdminArea() {
   const [admins, setAdmins] = useState<{ user_id: string; nome?: string; email?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [contaOpen, setContaOpen] = useState(false);
+  const [tab, setTab] = useState("dashboard");
   const obterConfig = useServerFn(obterConfiguracoes);
 
   const load = useCallback(async () => {
@@ -194,72 +215,111 @@ function AdminArea() {
     );
   }
 
+  const navItems = [
+    { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { value: "vendedores", label: "Vendedores", icon: Users },
+    { value: "admins", label: "Admins", icon: Shield },
+    { value: "planos", label: "Planos", icon: Package },
+    { value: "clientes", label: "Clientes", icon: UserCircle },
+    { value: "config", label: "Configurações", icon: Settings },
+    { value: "auditoria", label: "Auditoria", icon: ScrollText },
+  ] as const;
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Barra superior fixa */}
-      <header className="glass-header sticky top-0 z-30 border-b border-border/60">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <BrazonLogo />
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setContaOpen(true)}>
-              <UserCog className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Minha conta</span>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" title="Sair">
-              <LogOut className="h-4 w-4" />
-            </Button>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <Sidebar collapsible="icon">
+          <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
+            <BrazonLogo />
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Navegação</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navItems.map((item) => (
+                    <SidebarMenuItem key={item.value}>
+                      <SidebarMenuButton
+                        isActive={tab === item.value}
+                        onClick={() => setTab(item.value)}
+                        tooltip={item.label}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+          <SidebarFooter className="border-t border-sidebar-border p-2">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => setContaOpen(true)} tooltip="Minha conta">
+                  <UserCog className="h-4 w-4" />
+                  <span>Minha conta</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={signOut} tooltip="Sair">
+                  <LogOut className="h-4 w-4" />
+                  <span>Sair</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        </Sidebar>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="glass-header sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border/60 px-4">
+            <SidebarTrigger />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground">Administração</p>
+              <h1 className="truncate text-sm font-semibold text-foreground sm:text-base">
+                {profile?.nome || profile?.email}
+              </h1>
+            </div>
+          </header>
+
+          <div className="mx-auto w-full max-w-6xl px-4 py-6">
+            <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
+
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList className="sr-only">
+                {navItems.map((item) => (
+                  <TabsTrigger key={item.value} value={item.value}>
+                    {item.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              <TabsContent value="dashboard" className="mt-0">
+                <AdminDashboard />
+              </TabsContent>
+              <TabsContent value="vendedores" className="mt-0">
+                <VendedoresTab vendedores={vendedores} onChanged={load} />
+              </TabsContent>
+              <TabsContent value="admins" className="mt-0">
+                <AdminsTab admins={admins} onChanged={load} />
+              </TabsContent>
+              <TabsContent value="planos" className="mt-0">
+                <PlanosTab planos={planos} onChanged={load} />
+              </TabsContent>
+              <TabsContent value="clientes" className="mt-0">
+                <ClientesTab clientes={clientes} vendedores={vendedores} onChanged={load} />
+              </TabsContent>
+              <TabsContent value="config" className="mt-0">
+                <ConfigTab config={config} onSaved={load} />
+              </TabsContent>
+              <TabsContent value="auditoria" className="mt-0">
+                <AuditoriaTab />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
-      </header>
-
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <header className="min-w-0">
-          <p className="text-sm text-muted-foreground">Administração</p>
-          <h1 className="truncate text-xl font-bold text-foreground sm:text-2xl">
-            {profile?.nome || profile?.email}
-          </h1>
-        </header>
-
-        <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
-
-        <Tabs defaultValue="dashboard" className="mt-6">
-          <div className="-mx-4 overflow-x-auto px-4 pb-1">
-            <TabsList className="w-max min-w-full justify-start">
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="vendedores">Vendedores</TabsTrigger>
-              <TabsTrigger value="admins">Admins</TabsTrigger>
-              <TabsTrigger value="planos">Planos</TabsTrigger>
-              <TabsTrigger value="clientes">Clientes</TabsTrigger>
-              <TabsTrigger value="config">Configurações</TabsTrigger>
-              <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="dashboard" className="mt-4">
-            <AdminDashboard />
-          </TabsContent>
-          <TabsContent value="vendedores" className="mt-4">
-            <VendedoresTab vendedores={vendedores} onChanged={load} />
-          </TabsContent>
-          <TabsContent value="admins" className="mt-4">
-            <AdminsTab admins={admins} onChanged={load} />
-          </TabsContent>
-          <TabsContent value="planos" className="mt-4">
-            <PlanosTab planos={planos} onChanged={load} />
-          </TabsContent>
-          <TabsContent value="clientes" className="mt-4">
-            <ClientesTab clientes={clientes} vendedores={vendedores} onChanged={load} />
-          </TabsContent>
-          <TabsContent value="config" className="mt-4">
-            <ConfigTab config={config} onSaved={load} />
-          </TabsContent>
-          <TabsContent value="auditoria" className="mt-4">
-            <AuditoriaTab />
-          </TabsContent>
-        </Tabs>
       </div>
-
-    </div>
+    </SidebarProvider>
   );
 }
 
