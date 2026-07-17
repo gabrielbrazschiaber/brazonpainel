@@ -129,6 +129,7 @@ function AdminArea() {
   const [admins, setAdmins] = useState<{ user_id: string; nome?: string; email?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [contaOpen, setContaOpen] = useState(false);
+  const [tab, setTab] = useState("dashboard");
   const obterConfig = useServerFn(obterConfiguracoes);
 
   const load = useCallback(async () => {
