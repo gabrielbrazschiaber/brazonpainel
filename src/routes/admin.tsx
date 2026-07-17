@@ -45,7 +45,27 @@ import {
   Copy,
   Check,
   KeyRound,
+  LayoutDashboard,
+  Users,
+  Package,
+  UserCircle,
+  Settings,
+  ScrollText,
 } from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Administração" }] }),
