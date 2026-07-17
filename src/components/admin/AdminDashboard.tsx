@@ -595,8 +595,8 @@ export function AdminDashboard() {
                       {relativeDate(p.data_pagamento || p.created_at)}
                     </p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="text-sm font-medium">{formatCurrency(p.valor)}</span>
+                  <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
+                    <span className="text-sm font-medium tabular-nums">{formatCurrency(p.valor)}</span>
                     <StatusBadge status={p.status} />
                   </div>
                 </li>
@@ -624,15 +624,15 @@ export function AdminDashboard() {
                 <li key={w.id}>
                   <button
                     onClick={() => setLogDetail(w)}
-                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-left hover:bg-muted/40"
+                    className="flex w-full items-start justify-between gap-2 rounded-lg border border-border px-3 py-2 text-left hover:bg-muted/40 sm:items-center"
                   >
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate font-mono text-xs">{w.event ?? "—"}</p>
                       <p className="text-xs text-muted-foreground">{relativeDate(w.created_at)}</p>
                     </div>
                     <span
                       className={cn(
-                        "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
+                        "shrink-0 self-end rounded-full border px-2 py-0.5 text-xs font-medium sm:self-auto",
                         resultTone(w.processing_result),
                       )}
                     >
