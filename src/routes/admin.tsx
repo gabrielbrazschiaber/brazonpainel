@@ -462,7 +462,7 @@ function AdminsTab({
         </Button>
       </div>
       <Card className="mt-4 overflow-x-auto">
-        <Table>
+        <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow>
               <TableHead>Administrador</TableHead>
@@ -652,7 +652,7 @@ function VendedoresTab({
         </Button>
       </div>
       <Card className="mt-4 overflow-x-auto">
-        <Table>
+        <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow>
               <TableHead>Vendedor</TableHead>
@@ -822,7 +822,7 @@ function PlanosTab({ planos, onChanged }: { planos: Plano[]; onChanged: () => vo
         </Button>
       </div>
       <Card className="mt-4 overflow-x-auto">
-        <Table>
+        <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow>
               <TableHead>Plano</TableHead>
@@ -925,7 +925,7 @@ function ClientesTab({
   const [editing, setEditing] = useState<ClienteRow | null>(null);
   return (
     <Card className="overflow-x-auto">
-      <Table>
+      <Table className="min-w-[600px]">
         <TableHeader>
           <TableRow>
             <TableHead>Cliente</TableHead>
@@ -1379,7 +1379,7 @@ function AuditoriaTab() {
           {loading ? "Carregando..." : "Atualizar"}
         </Button>
       </div>
-      <Table>
+      <Table className="min-w-[600px]">
         <TableHeader>
           <TableRow>
             <TableHead>Data</TableHead>
