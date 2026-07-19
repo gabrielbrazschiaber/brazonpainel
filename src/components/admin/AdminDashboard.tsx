@@ -405,15 +405,15 @@ export function AdminDashboard() {
                 {alertasPagina.map((a, i) => (
                   <li
                     key={alertaPagina * ALERTAS_POR_PAGINA + i}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2"
+                    className="flex items-start justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 sm:items-center"
                   >
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{a.titulo}</p>
                       <p className="text-xs text-muted-foreground">{a.sub}</p>
                     </div>
                     <span
                       className={cn(
-                        "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
+                        "shrink-0 self-end whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium sm:self-auto",
                         a.badge.tone,
                       )}
                     >
@@ -468,11 +468,11 @@ export function AdminDashboard() {
                     onClick={() => setRankingDetail(r)}
                     className="w-full rounded-lg px-1 py-0.5 text-left transition-colors hover:bg-muted/40"
                   >
-                    <div className="flex items-center justify-between gap-2 text-sm">
-                      <span className="min-w-0 truncate font-medium">
+                    <div className="flex items-start justify-between gap-2 text-sm sm:items-center">
+                      <span className="min-w-0 flex-1 truncate font-medium">
                         {i + 1}. {r.nome}
                       </span>
-                      <span className="shrink-0 text-muted-foreground">
+                      <span className="shrink-0 whitespace-nowrap text-right text-xs text-muted-foreground tabular-nums sm:text-sm">
                         {r.clientes} cli · {formatCurrency(r.receita)}
                       </span>
                     </div>
@@ -704,16 +704,16 @@ export function AdminDashboard() {
                     {rankingDetail.lista.map((c) => (
                       <li
                         key={c.id}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
+                        className="flex items-start justify-between gap-2 rounded-lg border border-border px-3 py-2 sm:items-center"
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{c.nome || "Cliente"}</p>
                           <p className="text-xs text-muted-foreground">
                             {c.planos?.nome || "Sem plano"} ·{" "}
                             {formatCurrency((c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0))}
                           </p>
                         </div>
-                        <StatusBadge status={c.status} />
+                        <StatusBadge status={c.status} className="shrink-0 self-end sm:self-auto" />
                       </li>
                     ))}
                   </ul>
