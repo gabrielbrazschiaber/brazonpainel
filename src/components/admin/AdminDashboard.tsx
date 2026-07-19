@@ -468,11 +468,11 @@ export function AdminDashboard() {
                     onClick={() => setRankingDetail(r)}
                     className="w-full rounded-lg px-1 py-0.5 text-left transition-colors hover:bg-muted/40"
                   >
-                    <div className="flex items-center justify-between gap-2 text-sm">
-                      <span className="min-w-0 truncate font-medium">
+                    <div className="flex items-start justify-between gap-2 text-sm sm:items-center">
+                      <span className="min-w-0 flex-1 truncate font-medium">
                         {i + 1}. {r.nome}
                       </span>
-                      <span className="shrink-0 text-muted-foreground">
+                      <span className="shrink-0 whitespace-nowrap text-right text-xs text-muted-foreground tabular-nums sm:text-sm">
                         {r.clientes} cli · {formatCurrency(r.receita)}
                       </span>
                     </div>
