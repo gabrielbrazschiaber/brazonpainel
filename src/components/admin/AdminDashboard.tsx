@@ -405,15 +405,15 @@ export function AdminDashboard() {
                 {alertasPagina.map((a, i) => (
                   <li
                     key={alertaPagina * ALERTAS_POR_PAGINA + i}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2"
+                    className="flex items-start justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 sm:items-center"
                   >
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{a.titulo}</p>
                       <p className="text-xs text-muted-foreground">{a.sub}</p>
                     </div>
                     <span
                       className={cn(
-                        "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
+                        "shrink-0 self-end whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium sm:self-auto",
                         a.badge.tone,
                       )}
                     >
