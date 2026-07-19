@@ -704,16 +704,16 @@ export function AdminDashboard() {
                     {rankingDetail.lista.map((c) => (
                       <li
                         key={c.id}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
+                        className="flex items-start justify-between gap-2 rounded-lg border border-border px-3 py-2 sm:items-center"
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{c.nome || "Cliente"}</p>
                           <p className="text-xs text-muted-foreground">
                             {c.planos?.nome || "Sem plano"} ·{" "}
                             {formatCurrency((c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0))}
                           </p>
                         </div>
-                        <StatusBadge status={c.status} />
+                        <StatusBadge status={c.status} className="shrink-0 self-end sm:self-auto" />
                       </li>
                     ))}
                   </ul>
