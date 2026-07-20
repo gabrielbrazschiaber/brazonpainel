@@ -191,6 +191,54 @@ export type Database = {
         }
         Relationships: []
       }
+      novidades: {
+        Row: {
+          conteudo: string
+          created_at: string
+          criado_por_id: string | null
+          data_publicacao: string | null
+          id: string
+          publicado: boolean
+          publico_admin: boolean
+          publico_cliente: boolean
+          publico_vendedor: boolean
+          tipo: string
+          titulo: string
+          updated_at: string
+          versao: string | null
+        }
+        Insert: {
+          conteudo: string
+          created_at?: string
+          criado_por_id?: string | null
+          data_publicacao?: string | null
+          id?: string
+          publicado?: boolean
+          publico_admin?: boolean
+          publico_cliente?: boolean
+          publico_vendedor?: boolean
+          tipo?: string
+          titulo: string
+          updated_at?: string
+          versao?: string | null
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string
+          criado_por_id?: string | null
+          data_publicacao?: string | null
+          id?: string
+          publicado?: boolean
+          publico_admin?: boolean
+          publico_cliente?: boolean
+          publico_vendedor?: boolean
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          versao?: string | null
+        }
+        Relationships: []
+      }
       pagamentos: {
         Row: {
           asaas_payment_id: string | null
@@ -274,6 +322,7 @@ export type Database = {
           email: string
           id: string
           nome: string
+          novidades_vistas_em: string | null
           updated_at: string
         }
         Insert: {
@@ -281,6 +330,7 @@ export type Database = {
           email: string
           id: string
           nome?: string
+          novidades_vistas_em?: string | null
           updated_at?: string
         }
         Update: {
@@ -288,6 +338,7 @@ export type Database = {
           email?: string
           id?: string
           nome?: string
+          novidades_vistas_em?: string | null
           updated_at?: string
         }
         Relationships: []
