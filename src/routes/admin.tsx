@@ -7,6 +7,9 @@ import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { NovidadesTab } from "@/components/admin/NovidadesTab";
+import { NovidadesSino } from "@/components/NovidadesSino";
+
 import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, atualizarClienteAdmin } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { obterConfiguracoes, salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
@@ -51,6 +54,8 @@ import {
   UserCircle,
   Settings,
   ScrollText,
+  Megaphone,
+
 } from "lucide-react";
 import {
   Sidebar,
