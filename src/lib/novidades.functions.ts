@@ -91,7 +91,7 @@ export const atualizarNovidade = createServerFn({ method: "POST" })
 
     const virandoPublicado = !existing.publicado && data.publicado;
 
-    const update: Record<string, unknown> = {
+    const update = {
       titulo: data.titulo,
       conteudo: data.conteudo,
       versao: data.versao || null,
@@ -100,9 +100,9 @@ export const atualizarNovidade = createServerFn({ method: "POST" })
       publico_vendedor: data.publico_vendedor,
       publico_admin: data.publico_admin,
       publicado: data.publicado,
+      ...(virandoPublicado ? { data_publicacao: new Date().toISOString() } : {}),
     };
-    if (virandoPublicado) update.data_publicacao = new Date().toISOString();
-    // Se despublicar, mantemos data_publicacao anterior — histórico
+
 
     const { error } = await supabaseAdmin.from("novidades").update(update).eq("id", data.id);
     if (error) throw new Error(error.message);
