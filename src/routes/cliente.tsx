@@ -5,6 +5,8 @@ import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
+import { NovidadesSino } from "@/components/NovidadesSino";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -153,10 +155,12 @@ function ClienteArea() {
           <BrazonLogo />
           <div className="flex items-center gap-2 sm:gap-3">
             <StatusBadge status={headerTone()} />
+            <NovidadesSino />
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" title="Sair">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
+
         </div>
       </header>
 
