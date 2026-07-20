@@ -7,6 +7,9 @@ import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { NovidadesTab } from "@/components/admin/NovidadesTab";
+import { NovidadesSino } from "@/components/NovidadesSino";
+
 import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, atualizarClienteAdmin } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { obterConfiguracoes, salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
@@ -51,6 +54,8 @@ import {
   UserCircle,
   Settings,
   ScrollText,
+  Megaphone,
+
 } from "lucide-react";
 import {
   Sidebar,
@@ -221,9 +226,11 @@ function AdminArea() {
     { value: "admins", label: "Admins", icon: Shield },
     { value: "planos", label: "Planos", icon: Package },
     { value: "clientes", label: "Clientes", icon: UserCircle },
+    { value: "novidades", label: "Novidades", icon: Megaphone },
     { value: "config", label: "Configurações", icon: Settings },
     { value: "auditoria", label: "Auditoria", icon: ScrollText },
   ] as const;
+
 
   return (
     <SidebarProvider>
@@ -280,7 +287,9 @@ function AdminArea() {
                 {profile?.nome || profile?.email}
               </h1>
             </div>
+            <NovidadesSino />
           </header>
+
 
           <div className="mx-auto w-full max-w-6xl px-4 py-6">
             <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
@@ -309,6 +318,10 @@ function AdminArea() {
               <TabsContent value="clientes" className="mt-0">
                 <ClientesTab clientes={clientes} vendedores={vendedores} onChanged={load} />
               </TabsContent>
+              <TabsContent value="novidades" className="mt-0">
+                <NovidadesTab />
+              </TabsContent>
+
               <TabsContent value="config" className="mt-0">
                 <ConfigTab config={config} onSaved={load} />
               </TabsContent>

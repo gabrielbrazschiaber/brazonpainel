@@ -6,6 +6,8 @@ import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
+import { NovidadesSino } from "@/components/NovidadesSino";
+
 import { criarCliente, atualizarMensagemCliente, atualizarCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { Card } from "@/components/ui/card";
@@ -193,9 +195,11 @@ function VendedorArea() {
               <UserCog className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Minha conta</span>
             </Button>
+            <NovidadesSino />
             <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" title="Sair">
               <LogOut className="h-4 w-4" />
             </Button>
+
           </div>
         </div>
       </header>
