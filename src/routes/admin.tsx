@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
-import { BrazonLogo } from "@/components/BrazonLogo";
+import { BrazonSymbol } from "@/components/BrazonLogo";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { NovidadesTab } from "@/components/admin/NovidadesTab";
 import { NovidadesSino } from "@/components/NovidadesSino";
@@ -236,8 +236,10 @@ function AdminArea() {
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar collapsible="icon">
-          <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
-            <BrazonLogo />
+          <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
+            <div className="flex items-center justify-center">
+              <BrazonSymbol className="h-8 w-8" />
+            </div>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
