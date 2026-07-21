@@ -628,6 +628,7 @@ function VendedoresTab({
 }) {
   const criar = useServerFn(criarVendedor);
   const atualizar = useServerFn(atualizarVendedor);
+  const excluir = useServerFn(excluirVendedor);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<VendedorRow | null>(null);
   const [nome, setNome] = useState("");
@@ -636,6 +637,8 @@ function VendedoresTab({
   const [comissao, setComissao] = useState("10");
   const [senha, setSenha] = useState("");
   const [saving, setSaving] = useState(false);
+  const [aExcluir, setAExcluir] = useState<VendedorRow | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   function openNew() {
     setEditing(null);
