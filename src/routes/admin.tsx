@@ -65,7 +65,7 @@ import {
   Settings,
   ScrollText,
   Megaphone,
-
+  Trash2,
 } from "lucide-react";
 import {
   Sidebar,
