@@ -446,10 +446,10 @@ export const atualizarStatusPagamento = createServerFn({ method: "POST" })
     if (!pag) throw new Error("Pagamento não encontrado.");
 
     const hoje = new Date().toISOString().slice(0, 10);
-    const update: { status: string; data_pagamento: string | null } = {
+    const update = {
       status: data.novo_status,
       data_pagamento: data.novo_status === "pago" ? hoje : null,
-    };
+    } as const;
 
     const { error: upErr } = await supabaseAdmin
       .from("pagamentos")
