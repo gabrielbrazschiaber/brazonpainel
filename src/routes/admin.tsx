@@ -10,7 +10,7 @@ import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { NovidadesTab } from "@/components/admin/NovidadesTab";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
-import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, atualizarClienteAdmin } from "@/lib/admin.functions";
+import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, atualizarClienteAdmin, excluirVendedor, excluirAdmin, excluirCliente } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { obterConfiguracoes, salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
@@ -37,6 +37,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import {
@@ -55,7 +65,7 @@ import {
   Settings,
   ScrollText,
   Megaphone,
-
+  Trash2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -436,12 +446,16 @@ function AdminsTab({
   admins: { user_id: string; nome?: string; email?: string }[];
   onChanged: () => void;
 }) {
+  const { profile } = useAuth();
   const criar = useServerFn(criarAdmin);
+  const excluir = useServerFn(excluirAdmin);
   const [open, setOpen] = useState(false);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [saving, setSaving] = useState(false);
+  const [aExcluir, setAExcluir] = useState<{ user_id: string; nome?: string } | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   function reset() {
     setNome("");
@@ -468,6 +482,21 @@ function AdminsTab({
     }
   }
 
+  async function confirmarExclusao() {
+    if (!aExcluir) return;
+    setExcluindo(true);
+    try {
+      await excluir({ data: { user_id: aExcluir.user_id } });
+      toast.success("Administrador excluído.");
+      setAExcluir(null);
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao excluir administrador.");
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
   return (
     <div>
       <div className="flex justify-end">
@@ -482,6 +511,7 @@ function AdminsTab({
             <TableRow>
               <TableHead>Administrador</TableHead>
               <TableHead>E-mail</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -491,14 +521,29 @@ function AdminsTab({
                   <div className="flex items-center gap-2 font-medium text-foreground">
                     <Shield className="h-4 w-4 text-primary" />
                     {a.nome ?? "—"}
+                    {a.user_id === profile?.id && (
+                      <span className="text-xs text-muted-foreground">(você)</span>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">{a.email ?? ""}</TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    disabled={a.user_id === profile?.id}
+                    onClick={() => setAExcluir({ user_id: a.user_id, nome: a.nome })}
+                    aria-label="Excluir administrador"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
             {admins.length === 0 && (
               <TableRow>
-                <TableCell colSpan={2} className="text-center text-sm text-muted-foreground">
+                <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
                   Nenhum administrador.
                 </TableCell>
               </TableRow>
@@ -545,6 +590,28 @@ function AdminsTab({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!aExcluir} onOpenChange={(o) => !o && setAExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir administrador?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O acesso de <strong>{aExcluir?.nome || "este administrador"}</strong> será removido
+              permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarExclusao}
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -561,6 +628,7 @@ function VendedoresTab({
 }) {
   const criar = useServerFn(criarVendedor);
   const atualizar = useServerFn(atualizarVendedor);
+  const excluir = useServerFn(excluirVendedor);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<VendedorRow | null>(null);
   const [nome, setNome] = useState("");
@@ -569,6 +637,8 @@ function VendedoresTab({
   const [comissao, setComissao] = useState("10");
   const [senha, setSenha] = useState("");
   const [saving, setSaving] = useState(false);
+  const [aExcluir, setAExcluir] = useState<VendedorRow | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   function openNew() {
     setEditing(null);
@@ -658,6 +728,21 @@ function VendedoresTab({
     }
   }
 
+  async function confirmarExclusao() {
+    if (!aExcluir) return;
+    setExcluindo(true);
+    try {
+      await excluir({ data: { vendedor_id: aExcluir.id } });
+      toast.success("Vendedor excluído.");
+      setAExcluir(null);
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao excluir vendedor.");
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
   return (
     <div>
       <div className="flex justify-end">
@@ -692,9 +777,20 @@ function VendedoresTab({
                   <Switch checked={v.ativo} onCheckedChange={() => toggleAtivo(v)} />
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="outline" size="sm" onClick={() => openEdit(v)}>
-                    Editar
-                  </Button>
+                  <div className="flex justify-end gap-1">
+                    <Button variant="outline" size="sm" onClick={() => openEdit(v)}>
+                      Editar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setAExcluir(v)}
+                      aria-label="Excluir vendedor"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -771,6 +867,29 @@ function VendedoresTab({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!aExcluir} onOpenChange={(o) => !o && setAExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir vendedor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O acesso de <strong>{aExcluir?.nome || "este vendedor"}</strong> será removido
+              permanentemente. Se ele tiver clientes vinculados, a exclusão será bloqueada — reatribua
+              ou exclua os clientes antes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarExclusao}
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -937,7 +1056,26 @@ function ClientesTab({
     () => new Map(vendedores.map((v) => [v.id, v.nome || v.codigo_indicacao])),
     [vendedores],
   );
+  const excluir = useServerFn(excluirCliente);
   const [editing, setEditing] = useState<ClienteRow | null>(null);
+  const [aExcluir, setAExcluir] = useState<ClienteRow | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+
+  async function confirmarExclusao() {
+    if (!aExcluir) return;
+    setExcluindo(true);
+    try {
+      await excluir({ data: { cliente_id: aExcluir.id } });
+      toast.success("Cliente excluído.");
+      setAExcluir(null);
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao excluir cliente.");
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
   return (
     <Card className="overflow-x-auto">
       <Table className="min-w-[600px]">
@@ -965,9 +1103,20 @@ function ClientesTab({
                 <StatusBadge status={c.status} />
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="outline" size="sm" onClick={() => setEditing(c)}>
-                  Editar
-                </Button>
+                <div className="flex justify-end gap-1">
+                  <Button variant="outline" size="sm" onClick={() => setEditing(c)}>
+                    Editar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setAExcluir(c)}
+                    aria-label="Excluir cliente"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
@@ -985,6 +1134,27 @@ function ClientesTab({
         onOpenChange={(v) => !v && setEditing(null)}
         onSaved={onChanged}
       />
+      <AlertDialog open={!!aExcluir} onOpenChange={(o) => !o && setAExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O acesso e todos os pagamentos de <strong>{aExcluir?.nome || "este cliente"}</strong>{" "}
+              serão removidos permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarExclusao}
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

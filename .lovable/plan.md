@@ -1,48 +1,45 @@
-## Objetivo
+# Exclusões e gestão de status de pagamento
 
-Deixar a sidebar do `/admin` mais clara, integrada ao fundo do painel, e trocar o logo por apenas o símbolo Z da marca — mais discreto e elegante.
+## 1. Exclusão de registros (somente admin)
 
-## Mudanças
+Novas server functions em `src/lib/admin.functions.ts`, todas protegidas por `ensureAdmin` e com `registrarAuditoria`:
 
-### 1. Tokens da sidebar (`src/styles.css`)
+- `excluirVendedor({ vendedorId })` — apaga linha em `vendedores`, remove role `vendedor` de `user_roles` e deleta o `auth.user`. Bloqueia se o vendedor tiver clientes vinculados (mostra mensagem pedindo para reatribuir/excluir os clientes antes).
+- `excluirAdmin({ userId })` — remove role `admin` e deleta o `auth.user`. Bloqueia auto-exclusão (`userId === context.userId`) e exclusão do último admin restante.
+- `excluirCliente({ clienteId })` — apaga o cliente. Pagamentos são removidos em cascata (já existe FK) — se não houver, adicionar `ON DELETE CASCADE` via migration. Também deleta o `auth.user` associado.
 
-Reescrever as variáveis `--sidebar-*` (hoje em roxo escuro) para o esquema claro:
+Na UI (`src/routes/admin.tsx`), adicionar botão de lixeira em cada linha das tabelas de Vendedores, Admins e Clientes, abrindo `AlertDialog` de confirmação (digitação de "EXCLUIR" para admins/vendedores com clientes, confirmação simples para cliente). Feedback via `toast` e refresh da lista.
 
-- `--sidebar`: mesmo valor de `--background` (cinza-claro do painel) — funde com o conteúdo, sem "bloco" roxo.
-- `--sidebar-foreground`: `--foreground` (texto escuro padrão).
-- `--sidebar-accent`: hover/ativo em lavanda bem sutil (ex.: `oklch(0.955 0.02 287)`).
-- `--sidebar-accent-foreground`: `--primary` (roxo da marca) — item ativo ganha texto roxo + fundo lavanda claro.
-- `--sidebar-border`: `--border` (mesma borda do resto).
-- `--sidebar-ring`: `--ring`.
+## 2. Status de pagamento com modo "Simulação"
 
-Fazer o mesmo ajuste no bloco `.dark` para manter coerência quando o tema escuro entrar em uso.
+### Banco
+Migration para ampliar o enum/valores aceitos em `pagamentos.status`:
+- Valores válidos passam a ser: `pendente`, `pago`, `vencido`, `simulacao`.
+- Ajustar CHECK constraint (ou enum) para incluir `simulacao`.
+- Adicionar índice parcial `WHERE status <> 'simulacao'` opcional para consultas de dashboard.
 
-### 2. Logo no topo da sidebar (`src/routes/admin.tsx`)
+### Server function
+`atualizarStatusPagamento({ pagamentoId, novoStatus })` em `src/lib/admin.functions.ts`:
+- Aceita `pago | pendente | simulacao`.
+- Quando muda para `pago`, preenche `data_pagamento = now()`; quando volta para `pendente`/`simulacao`, limpa `data_pagamento`.
+- Registra auditoria com valores antigo/novo.
 
-No `SidebarHeader`, substituir o `<BrazonLogo />` por apenas `<BrazonSymbol />`:
+### UI Admin
+Em `AdminDashboard.tsx` (lista "Últimos pagamentos") e numa nova aba/seção "Pagamentos" com filtro por status:
+- Cada item ganha um `DropdownMenu` com opções: **Marcar como pago**, **Marcar como pendente**, **Marcar como simulação**.
+- Badge visual para `simulacao` (cinza tracejado com rótulo "Simulação").
 
-- Estado expandido: símbolo Z centralizado, ~32px, com pequeno padding vertical.
-- Estado colapsado (`collapsible="icon"`): mesmo símbolo, centralizado, sem quebrar layout.
-- Remover o wordmark "BRAZON" do header da sidebar (aparece no login e outros locais, aqui fica só o símbolo).
+### Exclusão de simulações dos indicadores financeiros
+Em `AdminDashboard.tsx` filtrar `pagamentos.filter(p => p.status !== 'simulacao')` antes de calcular:
+- MRR / Receita do mês / Receita mês passado
+- Ranking de vendedores (comissão)
+- Gráfico de evolução MRR
+- Contadores de inadimplência
 
-### 3. Ajustes de contraste
-
-Como o fundo da sidebar agora é igual ao do painel, adicionar uma borda direita sutil (`border-r`) para separar visualmente a sidebar do conteúdo — o componente `Sidebar` do shadcn já faz isso via `--sidebar-border`, então basta garantir que o token esteja definido.
-
-Manter o item ativo bem visível com combinação **fundo lavanda + texto/ícone roxo primário + peso semibold**, para não perder legibilidade agora que sumiu o contraste forte do fundo escuro.
-
-### Densidade
-
-Mantida como está (confortável) — nenhuma mudança nos espaçamentos dos itens.
-
-## Fora de escopo
-
-- Não altera navegação, itens do menu, comportamento de collapse/drawer mobile.
-- Não altera o logo em outras telas (login, headers dos painéis cliente/vendedor).
-- Não muda tipografia nem cores gerais do painel.
+Pagamentos em simulação continuam aparecendo na listagem "Últimos pagamentos" (com badge distinto) para o admin acompanhar, mas nunca entram em somatórios financeiros. Também são ignorados no painel do cliente (`/cliente`) e nas comissões do vendedor.
 
 ## Detalhes técnicos
-
-- Arquivos tocados: `src/styles.css` (tokens `--sidebar-*` em `:root` e `.dark`), `src/routes/admin.tsx` (import e uso de `BrazonSymbol` no `SidebarHeader`).
-- `BrazonSymbol` já existe em `src/components/BrazonLogo.tsx` — reuso direto.
-- Nenhuma migração de banco, nenhum server fn afetado.
+- Todas as ações críticas passam por `registrarAuditoria` (tabela `auditoria`).
+- Confirmações usam `AlertDialog` do shadcn.
+- Após cada ação, recarregar dados via `router.invalidate()` ou refetch local existente.
+- Tipagem: atualizar tipos derivados (`PagamentoRow`) para incluir `"simulacao"`.

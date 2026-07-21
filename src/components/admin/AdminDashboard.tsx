@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { atualizarStatusPagamento } from "@/lib/admin.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -11,6 +13,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import { formatCurrency, daysUntil } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
@@ -28,6 +39,7 @@ import {
   ArrowLeft,
   ArrowRight,
   RefreshCw,
+  MoreVertical,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -112,6 +124,8 @@ export function AdminDashboard() {
   const [webhookLogs, setWebhookLogs] = useState<WebhookLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [logDetail, setLogDetail] = useState<WebhookLog | null>(null);
+  const mudarStatus = useServerFn(atualizarStatusPagamento);
+  const [alterandoId, setAlterandoId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -598,6 +612,43 @@ export function AdminDashboard() {
                   <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
                     <span className="text-sm font-medium tabular-nums">{formatCurrency(p.valor)}</span>
                     <StatusBadge status={p.status} />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={alterandoId === p.id}
+                          aria-label="Alterar status"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Alterar status</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {(["pago", "pendente", "simulacao"] as const).map((s) => (
+                          <DropdownMenuItem
+                            key={s}
+                            disabled={p.status === s}
+                            onClick={async () => {
+                              setAlterandoId(p.id);
+                              try {
+                                await mudarStatus({ data: { pagamento_id: p.id, novo_status: s } });
+                                toast.success("Status atualizado.");
+                                await load();
+                              } catch (e) {
+                                toast.error(e instanceof Error ? e.message : "Falha ao atualizar.");
+                              } finally {
+                                setAlterandoId(null);
+                              }
+                            }}
+                          >
+                            {s === "pago" ? "Marcar como pago" : s === "pendente" ? "Marcar como pendente" : "Marcar como simulação"}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </li>
               ))}

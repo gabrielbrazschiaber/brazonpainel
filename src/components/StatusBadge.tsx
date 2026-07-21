@@ -26,6 +26,7 @@ const statusMap: Record<string, { label: string; tone: Tone }> = {
   vencido: { label: "Vencido", tone: "danger" },
   inadimplente: { label: "Inadimplente", tone: "danger" },
   cancelado: { label: "Cancelado", tone: "muted" },
+  simulacao: { label: "Simulação", tone: "primary" },
 };
 
 export function StatusBadge({
