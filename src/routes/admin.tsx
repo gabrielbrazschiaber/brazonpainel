@@ -236,8 +236,10 @@ function AdminArea() {
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar collapsible="icon">
-          <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
-            <BrazonLogo />
+          <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
+            <div className="flex items-center justify-center">
+              <BrazonSymbol className="h-8 w-8" />
+            </div>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
