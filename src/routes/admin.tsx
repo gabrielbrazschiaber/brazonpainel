@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
-import { BrazonLogo } from "@/components/BrazonLogo";
+import { BrazonSymbol } from "@/components/BrazonLogo";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { NovidadesTab } from "@/components/admin/NovidadesTab";
 import { NovidadesSino } from "@/components/NovidadesSino";
