@@ -1056,7 +1056,26 @@ function ClientesTab({
     () => new Map(vendedores.map((v) => [v.id, v.nome || v.codigo_indicacao])),
     [vendedores],
   );
+  const excluir = useServerFn(excluirCliente);
   const [editing, setEditing] = useState<ClienteRow | null>(null);
+  const [aExcluir, setAExcluir] = useState<ClienteRow | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+
+  async function confirmarExclusao() {
+    if (!aExcluir) return;
+    setExcluindo(true);
+    try {
+      await excluir({ data: { cliente_id: aExcluir.id } });
+      toast.success("Cliente excluído.");
+      setAExcluir(null);
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao excluir cliente.");
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
   return (
     <Card className="overflow-x-auto">
       <Table className="min-w-[600px]">
@@ -1084,9 +1103,20 @@ function ClientesTab({
                 <StatusBadge status={c.status} />
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="outline" size="sm" onClick={() => setEditing(c)}>
-                  Editar
-                </Button>
+                <div className="flex justify-end gap-1">
+                  <Button variant="outline" size="sm" onClick={() => setEditing(c)}>
+                    Editar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setAExcluir(c)}
+                    aria-label="Excluir cliente"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
@@ -1104,6 +1134,27 @@ function ClientesTab({
         onOpenChange={(v) => !v && setEditing(null)}
         onSaved={onChanged}
       />
+      <AlertDialog open={!!aExcluir} onOpenChange={(o) => !o && setAExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O acesso e todos os pagamentos de <strong>{aExcluir?.nome || "este cliente"}</strong>{" "}
+              serão removidos permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarExclusao}
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
