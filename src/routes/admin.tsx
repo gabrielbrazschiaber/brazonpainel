@@ -867,6 +867,29 @@ function VendedoresTab({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!aExcluir} onOpenChange={(o) => !o && setAExcluir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir vendedor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O acesso de <strong>{aExcluir?.nome || "este vendedor"}</strong> será removido
+              permanentemente. Se ele tiver clientes vinculados, a exclusão será bloqueada — reatribua
+              ou exclua os clientes antes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarExclusao}
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
