@@ -412,7 +412,7 @@ export type Database = {
       app_role: "cliente" | "vendedor" | "admin"
       asaas_ambiente: "producao" | "sandbox"
       cliente_status: "ativo" | "vencido" | "inadimplente" | "cancelado"
-      pagamento_status: "pago" | "pendente" | "vencido"
+      pagamento_status: "pago" | "pendente" | "vencido" | "simulacao"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -543,7 +543,7 @@ export const Constants = {
       app_role: ["cliente", "vendedor", "admin"],
       asaas_ambiente: ["producao", "sandbox"],
       cliente_status: ["ativo", "vencido", "inadimplente", "cancelado"],
-      pagamento_status: ["pago", "pendente", "vencido"],
+      pagamento_status: ["pago", "pendente", "vencido", "simulacao"],
     },
   },
 } as const
