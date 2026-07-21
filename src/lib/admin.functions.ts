@@ -299,3 +299,173 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/* ---------------- Exclusões ---------------- */
+
+const excluirVendedorSchema = z.object({ vendedor_id: z.string().uuid() });
+
+// Admin exclui um vendedor. Bloqueia se ele tiver clientes vinculados.
+export const excluirVendedor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => excluirVendedorSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: vend } = await supabaseAdmin
+      .from("vendedores")
+      .select("id, user_id")
+      .eq("id", data.vendedor_id)
+      .maybeSingle();
+    if (!vend) throw new Error("Vendedor não encontrado.");
+
+    const { count } = await supabaseAdmin
+      .from("clientes")
+      .select("id", { count: "exact", head: true })
+      .eq("vendedor_id", data.vendedor_id);
+    if ((count ?? 0) > 0) {
+      throw new Error(
+        `Este vendedor possui ${count} cliente(s) vinculado(s). Exclua ou reatribua os clientes antes de remover o vendedor.`,
+      );
+    }
+
+    // Deletar o auth.user cascateia vendedores + user_roles.
+    const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(vend.user_id);
+    if (delErr) throw new Error(delErr.message ?? "Não foi possível excluir o vendedor.");
+
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      actorRole: "admin",
+      acao: "excluir_vendedor",
+      entidade: "vendedor",
+      entidadeId: data.vendedor_id,
+    });
+
+    return { ok: true };
+  });
+
+const excluirAdminSchema = z.object({ user_id: z.string().uuid() });
+
+// Admin exclui outro administrador. Bloqueia auto-exclusão e o último admin.
+export const excluirAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => excluirAdminSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    if (data.user_id === userId) {
+      throw new Error("Você não pode excluir a si mesmo.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { count } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id", { count: "exact", head: true })
+      .eq("role", "admin");
+    if ((count ?? 0) <= 1) {
+      throw new Error("Não é possível excluir o último administrador.");
+    }
+
+    const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
+    if (delErr) throw new Error(delErr.message ?? "Não foi possível excluir o administrador.");
+
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      actorRole: "admin",
+      acao: "excluir_admin",
+      entidade: "admin",
+      entidadeId: data.user_id,
+    });
+
+    return { ok: true };
+  });
+
+const excluirClienteSchema = z.object({ cliente_id: z.string().uuid() });
+
+// Admin exclui um cliente (remove login, cliente e pagamentos em cascata).
+export const excluirCliente = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => excluirClienteSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: cli } = await supabaseAdmin
+      .from("clientes")
+      .select("id, user_id")
+      .eq("id", data.cliente_id)
+      .maybeSingle();
+    if (!cli) throw new Error("Cliente não encontrado.");
+
+    const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(cli.user_id);
+    if (delErr) throw new Error(delErr.message ?? "Não foi possível excluir o cliente.");
+
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      actorRole: "admin",
+      acao: "excluir_cliente",
+      entidade: "cliente",
+      entidadeId: data.cliente_id,
+    });
+
+    return { ok: true };
+  });
+
+/* ---------------- Status de pagamento ---------------- */
+
+const statusPagamentoSchema = z.object({
+  pagamento_id: z.string().uuid(),
+  novo_status: z.enum(["pago", "pendente", "simulacao"]),
+});
+
+// Admin altera manualmente o status de um pagamento.
+// "simulacao" não entra em somatórios financeiros do painel.
+export const atualizarStatusPagamento = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => statusPagamentoSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: pag } = await supabaseAdmin
+      .from("pagamentos")
+      .select("id, status")
+      .eq("id", data.pagamento_id)
+      .maybeSingle();
+    if (!pag) throw new Error("Pagamento não encontrado.");
+
+    const hoje = new Date().toISOString().slice(0, 10);
+    const update: { status: string; data_pagamento: string | null } = {
+      status: data.novo_status,
+      data_pagamento: data.novo_status === "pago" ? hoje : null,
+    };
+
+    const { error: upErr } = await supabaseAdmin
+      .from("pagamentos")
+      .update(update)
+      .eq("id", data.pagamento_id);
+    if (upErr) throw new Error("Não foi possível atualizar o status do pagamento.");
+
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      actorRole: "admin",
+      acao: "atualizar_status_pagamento",
+      entidade: "pagamento",
+      entidadeId: data.pagamento_id,
+      detalhes: { de: pag.status, para: data.novo_status },
+    });
+
+    return { ok: true };
+  });
