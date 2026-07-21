@@ -124,6 +124,8 @@ export function AdminDashboard() {
   const [webhookLogs, setWebhookLogs] = useState<WebhookLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [logDetail, setLogDetail] = useState<WebhookLog | null>(null);
+  const mudarStatus = useServerFn(atualizarStatusPagamento);
+  const [alterandoId, setAlterandoId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
