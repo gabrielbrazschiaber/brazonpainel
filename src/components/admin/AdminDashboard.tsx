@@ -612,6 +612,43 @@ export function AdminDashboard() {
                   <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
                     <span className="text-sm font-medium tabular-nums">{formatCurrency(p.valor)}</span>
                     <StatusBadge status={p.status} />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={alterandoId === p.id}
+                          aria-label="Alterar status"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Alterar status</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {(["pago", "pendente", "simulacao"] as const).map((s) => (
+                          <DropdownMenuItem
+                            key={s}
+                            disabled={p.status === s}
+                            onClick={async () => {
+                              setAlterandoId(p.id);
+                              try {
+                                await mudarStatus({ data: { pagamento_id: p.id, novo_status: s } });
+                                toast.success("Status atualizado.");
+                                await load();
+                              } catch (e) {
+                                toast.error(e instanceof Error ? e.message : "Falha ao atualizar.");
+                              } finally {
+                                setAlterandoId(null);
+                              }
+                            }}
+                          >
+                            {s === "pago" ? "Marcar como pago" : s === "pendente" ? "Marcar como pendente" : "Marcar como simulação"}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </li>
               ))}
