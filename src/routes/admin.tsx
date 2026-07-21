@@ -777,9 +777,20 @@ function VendedoresTab({
                   <Switch checked={v.ativo} onCheckedChange={() => toggleAtivo(v)} />
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="outline" size="sm" onClick={() => openEdit(v)}>
-                    Editar
-                  </Button>
+                  <div className="flex justify-end gap-1">
+                    <Button variant="outline" size="sm" onClick={() => openEdit(v)}>
+                      Editar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setAExcluir(v)}
+                      aria-label="Excluir vendedor"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
