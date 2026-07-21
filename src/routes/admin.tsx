@@ -728,6 +728,21 @@ function VendedoresTab({
     }
   }
 
+  async function confirmarExclusao() {
+    if (!aExcluir) return;
+    setExcluindo(true);
+    try {
+      await excluir({ data: { vendedor_id: aExcluir.id } });
+      toast.success("Vendedor excluído.");
+      setAExcluir(null);
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao excluir vendedor.");
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
   return (
     <div>
       <div className="flex justify-end">
