@@ -1,45 +1,38 @@
-# Exclusões e gestão de status de pagamento
 
-## 1. Exclusão de registros (somente admin)
+## Objetivo
 
-Novas server functions em `src/lib/admin.functions.ts`, todas protegidas por `ensureAdmin` e com `registrarAuditoria`:
+Adicionar busca global e filtros na aba **Clientes** do painel admin (`/admin`), para localizar clientes rapidamente por nome/e-mail/CPF/telefone e refinar por status, vendedor e plano.
 
-- `excluirVendedor({ vendedorId })` — apaga linha em `vendedores`, remove role `vendedor` de `user_roles` e deleta o `auth.user`. Bloqueia se o vendedor tiver clientes vinculados (mostra mensagem pedindo para reatribuir/excluir os clientes antes).
-- `excluirAdmin({ userId })` — remove role `admin` e deleta o `auth.user`. Bloqueia auto-exclusão (`userId === context.userId`) e exclusão do último admin restante.
-- `excluirCliente({ clienteId })` — apaga o cliente. Pagamentos são removidos em cascata (já existe FK) — se não houver, adicionar `ON DELETE CASCADE` via migration. Também deleta o `auth.user` associado.
+## O que muda (só front-end)
 
-Na UI (`src/routes/admin.tsx`), adicionar botão de lixeira em cada linha das tabelas de Vendedores, Admins e Clientes, abrindo `AlertDialog` de confirmação (digitação de "EXCLUIR" para admins/vendedores com clientes, confirmação simples para cliente). Feedback via `toast` e refresh da lista.
+Arquivo: `src/routes/admin.tsx`, seção da aba **Clientes**.
 
-## 2. Status de pagamento com modo "Simulação"
+1. **Campo de busca** no topo da aba
+   - Input com ícone de lupa, placeholder "Buscar por nome, e-mail, CPF/CNPJ ou telefone…".
+   - Filtra em memória a lista já carregada (case-insensitive, ignora máscara em CPF/telefone).
 
-### Banco
-Migration para ampliar o enum/valores aceitos em `pagamentos.status`:
-- Valores válidos passam a ser: `pendente`, `pago`, `vencido`, `simulacao`.
-- Ajustar CHECK constraint (ou enum) para incluir `simulacao`.
-- Adicionar índice parcial `WHERE status <> 'simulacao'` opcional para consultas de dashboard.
+2. **Três selects de filtro** ao lado da busca
+   - **Status**: Todos / Ativo / Vencendo (≤7 dias) / Vencido / Inadimplente.
+   - **Vendedor**: Todos + lista de vendedores existentes.
+   - **Plano**: Todos + lista de planos existentes.
 
-### Server function
-`atualizarStatusPagamento({ pagamentoId, novoStatus })` em `src/lib/admin.functions.ts`:
-- Aceita `pago | pendente | simulacao`.
-- Quando muda para `pago`, preenche `data_pagamento = now()`; quando volta para `pendente`/`simulacao`, limpa `data_pagamento`.
-- Registra auditoria com valores antigo/novo.
+3. **Botão "Limpar filtros"** aparece quando algum filtro está ativo.
 
-### UI Admin
-Em `AdminDashboard.tsx` (lista "Últimos pagamentos") e numa nova aba/seção "Pagamentos" com filtro por status:
-- Cada item ganha um `DropdownMenu` com opções: **Marcar como pago**, **Marcar como pendente**, **Marcar como simulação**.
-- Badge visual para `simulacao` (cinza tracejado com rótulo "Simulação").
+4. **Contador de resultados** — "Mostrando X de Y clientes".
 
-### Exclusão de simulações dos indicadores financeiros
-Em `AdminDashboard.tsx` filtrar `pagamentos.filter(p => p.status !== 'simulacao')` antes de calcular:
-- MRR / Receita do mês / Receita mês passado
-- Ranking de vendedores (comissão)
-- Gráfico de evolução MRR
-- Contadores de inadimplência
+5. **Estado vazio** — mensagem "Nenhum cliente encontrado com esses filtros" quando o resultado é vazio.
 
-Pagamentos em simulação continuam aparecendo na listagem "Últimos pagamentos" (com badge distinto) para o admin acompanhar, mas nunca entram em somatórios financeiros. Também são ignorados no painel do cliente (`/cliente`) e nas comissões do vendedor.
+6. **Responsivo** — no mobile os filtros ficam empilhados (grid 1 col < 640px, 2 col < 1024px, 4 col ≥ 1024px), mantendo o padrão já usado no admin.
+
+## Fora de escopo
+
+- Sem alterações no banco, RLS ou server functions (dados já vêm carregados).
+- Sem paginação nova nem persistência dos filtros na URL.
+- Não mexe em outras abas do admin.
 
 ## Detalhes técnicos
-- Todas as ações críticas passam por `registrarAuditoria` (tabela `auditoria`).
-- Confirmações usam `AlertDialog` do shadcn.
-- Após cada ação, recarregar dados via `router.invalidate()` ou refetch local existente.
-- Tipagem: atualizar tipos derivados (`PagamentoRow`) para incluir `"simulacao"`.
+
+- Filtragem client-side com `useMemo` sobre a lista de clientes já carregada.
+- Status derivado da mesma lógica de badge já existente (dias até vencimento, `status_pagamento`).
+- Normalização: `.toLowerCase()` para texto e `.replace(/\D/g, "")` para comparar CPF/CNPJ e telefone.
+- Componentes: `Input` + `Select` do shadcn e `Search`/`X` do `lucide-react` (já usados no projeto).
