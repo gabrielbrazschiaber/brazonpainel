@@ -381,26 +381,59 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-4">
+      {/* Seletor de período */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-lg font-semibold">Visão geral</h2>
+          <p className="text-xs text-muted-foreground">
+            KPIs e ranking recalculados pelos últimos {periodo} dias
+          </p>
+        </div>
+        <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5">
+          {([7, 30, 90] as const).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPeriodo(p)}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                periodo === p
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {p} dias
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           icon={Users}
           label="Clientes ativos"
           value={String(kpi.totalClientes)}
-          delta={kpi.novosMes > 0 ? `+${kpi.novosMes} este mês` : "Nenhum novo este mês"}
-          deltaTone={kpi.novosMes > 0 ? "text-success" : "text-muted-foreground"}
+          delta={
+            kpi.novosPeriodo > 0
+              ? `+${kpi.novosPeriodo} nos últimos ${periodo}d`
+              : `Nenhum novo em ${periodo}d`
+          }
+          deltaTone={kpi.novosPeriodo > 0 ? "text-success" : "text-muted-foreground"}
         />
         <KpiCard
           icon={Wallet}
-          label="MRR (receita/mês)"
-          value={formatCurrency(kpi.mrr)}
+          label={`Receita (${periodo}d)`}
+          value={formatCurrency(kpi.pagosPeriodo)}
           valueTone="text-success"
           delta={
-            kpi.pagosMesPassado > 0
-              ? `${kpi.mrr >= kpi.pagosMesPassado ? "▲" : "▼"} vs ${formatCurrency(kpi.pagosMesPassado)} mês anterior`
-              : "sem base do mês anterior"
+            kpi.pagosPeriodoAnterior > 0
+              ? `${kpi.pagosPeriodo >= kpi.pagosPeriodoAnterior ? "▲" : "▼"} vs ${formatCurrency(kpi.pagosPeriodoAnterior)} período anterior`
+              : "sem base do período anterior"
           }
-          deltaTone={kpi.mrr >= kpi.pagosMesPassado ? "text-success" : "text-destructive"}
+          deltaTone={
+            kpi.pagosPeriodo >= kpi.pagosPeriodoAnterior ? "text-success" : "text-destructive"
+          }
         />
         <KpiCard
           icon={AlertTriangle}
@@ -412,12 +445,13 @@ export function AdminDashboard() {
         />
         <KpiCard
           icon={Clock}
-          label="Cobranças pendentes"
+          label={`Cobranças pendentes (${periodo}d)`}
           value={`${kpi.pendentesCount} cobrança(s)`}
           delta={`${formatCurrency(kpi.totalPendente)} a receber`}
           deltaTone="text-warning-foreground"
         />
       </div>
+
 
       {/* Alertas + Ranking */}
       <div className="grid gap-4 sm:grid-cols-2">
