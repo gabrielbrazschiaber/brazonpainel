@@ -126,6 +126,19 @@ export function AdminDashboard() {
   const [logDetail, setLogDetail] = useState<WebhookLog | null>(null);
   const mudarStatus = useServerFn(atualizarStatusPagamento);
   const [alterandoId, setAlterandoId] = useState<string | null>(null);
+  const [periodo, setPeriodo] = useState<7 | 30 | 90>(30);
+  const periodoInicio = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - periodo);
+    return d;
+  }, [periodo]);
+  const periodoAnteriorInicio = useMemo(() => {
+    const d = new Date(periodoInicio);
+    d.setDate(d.getDate() - periodo);
+    return d;
+  }, [periodoInicio, periodo]);
+
 
   const load = useCallback(async () => {
     setLoading(true);
