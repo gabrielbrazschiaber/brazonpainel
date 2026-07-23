@@ -193,23 +193,29 @@ export function AdminDashboard() {
     loadWebhooks();
   }, [load, loadWebhooks]);
 
-  /* ---------- KPIs ---------- */
+  /* ---------- KPIs (recalculados pelo período) ---------- */
   const kpi = useMemo(() => {
-    const now = new Date();
-    const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1);
-    const inicioMesPassado = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-
-    const novosMes = clientes.filter((c) => new Date(c.created_at) >= inicioMes).length;
+    const novosPeriodo = clientes.filter(
+      (c) => new Date(c.created_at) >= periodoInicio,
+    ).length;
 
     const mrr = clientes
       .filter((c) => c.status === "ativo")
       .reduce((s, c) => s + (c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0), 0);
 
-    const pagosMesPassado = pagamentos
+    const pagosPeriodo = pagamentos
       .filter((p) => {
         if (p.status !== "pago" || !p.data_pagamento) return false;
         const d = new Date(p.data_pagamento + "T00:00:00");
-        return d >= inicioMesPassado && d < inicioMes;
+        return d >= periodoInicio;
+      })
+      .reduce((s, p) => s + (p.valor ?? 0), 0);
+
+    const pagosPeriodoAnterior = pagamentos
+      .filter((p) => {
+        if (p.status !== "pago" || !p.data_pagamento) return false;
+        const d = new Date(p.data_pagamento + "T00:00:00");
+        return d >= periodoAnteriorInicio && d < periodoInicio;
       })
       .reduce((s, p) => s + (p.valor ?? 0), 0);
 
@@ -218,20 +224,24 @@ export function AdminDashboard() {
     ).length;
     const taxaInad = clientes.length ? (inadimplentes / clientes.length) * 100 : 0;
 
-    const pendentes = pagamentos.filter((p) => p.status === "pendente");
+    const pendentes = pagamentos.filter(
+      (p) => p.status === "pendente" && new Date(p.created_at) >= periodoInicio,
+    );
     const totalPendente = pendentes.reduce((s, p) => s + (p.valor ?? 0), 0);
 
     return {
       totalClientes: clientes.length,
-      novosMes,
+      novosPeriodo,
       mrr,
-      pagosMesPassado,
+      pagosPeriodo,
+      pagosPeriodoAnterior,
       inadimplentes,
       taxaInad,
       pendentesCount: pendentes.length,
       totalPendente,
     };
-  }, [clientes, pagamentos]);
+  }, [clientes, pagamentos, periodoInicio, periodoAnteriorInicio]);
+
 
   /* ---------- Alertas ---------- */
   const alertas = useMemo(() => {
