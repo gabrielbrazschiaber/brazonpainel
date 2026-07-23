@@ -126,6 +126,19 @@ export function AdminDashboard() {
   const [logDetail, setLogDetail] = useState<WebhookLog | null>(null);
   const mudarStatus = useServerFn(atualizarStatusPagamento);
   const [alterandoId, setAlterandoId] = useState<string | null>(null);
+  const [periodo, setPeriodo] = useState<7 | 30 | 90>(30);
+  const periodoInicio = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - periodo);
+    return d;
+  }, [periodo]);
+  const periodoAnteriorInicio = useMemo(() => {
+    const d = new Date(periodoInicio);
+    d.setDate(d.getDate() - periodo);
+    return d;
+  }, [periodoInicio, periodo]);
+
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -180,23 +193,29 @@ export function AdminDashboard() {
     loadWebhooks();
   }, [load, loadWebhooks]);
 
-  /* ---------- KPIs ---------- */
+  /* ---------- KPIs (recalculados pelo período) ---------- */
   const kpi = useMemo(() => {
-    const now = new Date();
-    const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1);
-    const inicioMesPassado = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-
-    const novosMes = clientes.filter((c) => new Date(c.created_at) >= inicioMes).length;
+    const novosPeriodo = clientes.filter(
+      (c) => new Date(c.created_at) >= periodoInicio,
+    ).length;
 
     const mrr = clientes
       .filter((c) => c.status === "ativo")
       .reduce((s, c) => s + (c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0), 0);
 
-    const pagosMesPassado = pagamentos
+    const pagosPeriodo = pagamentos
       .filter((p) => {
         if (p.status !== "pago" || !p.data_pagamento) return false;
         const d = new Date(p.data_pagamento + "T00:00:00");
-        return d >= inicioMesPassado && d < inicioMes;
+        return d >= periodoInicio;
+      })
+      .reduce((s, p) => s + (p.valor ?? 0), 0);
+
+    const pagosPeriodoAnterior = pagamentos
+      .filter((p) => {
+        if (p.status !== "pago" || !p.data_pagamento) return false;
+        const d = new Date(p.data_pagamento + "T00:00:00");
+        return d >= periodoAnteriorInicio && d < periodoInicio;
       })
       .reduce((s, p) => s + (p.valor ?? 0), 0);
 
@@ -205,20 +224,24 @@ export function AdminDashboard() {
     ).length;
     const taxaInad = clientes.length ? (inadimplentes / clientes.length) * 100 : 0;
 
-    const pendentes = pagamentos.filter((p) => p.status === "pendente");
+    const pendentes = pagamentos.filter(
+      (p) => p.status === "pendente" && new Date(p.created_at) >= periodoInicio,
+    );
     const totalPendente = pendentes.reduce((s, p) => s + (p.valor ?? 0), 0);
 
     return {
       totalClientes: clientes.length,
-      novosMes,
+      novosPeriodo,
       mrr,
-      pagosMesPassado,
+      pagosPeriodo,
+      pagosPeriodoAnterior,
       inadimplentes,
       taxaInad,
       pendentesCount: pendentes.length,
       totalPendente,
     };
-  }, [clientes, pagamentos]);
+  }, [clientes, pagamentos, periodoInicio, periodoAnteriorInicio]);
+
 
   /* ---------- Alertas ---------- */
   const alertas = useMemo(() => {
@@ -317,16 +340,22 @@ export function AdminDashboard() {
       .filter((c) => c.value > 0);
   }, [clientes]);
 
-  /* ---------- Ranking ---------- */
+  /* ---------- Ranking (filtrado pelo período) ---------- */
   const ranking = useMemo(() => {
     const rows = vendedores.map((v) => {
-      const meus = clientes.filter((c) => c.vendedor_id === v.id);
-      const receita = meus.reduce(
-        (s, c) => s + (c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0),
-        0,
-      );
-      const ativos = meus.filter((c) => c.status === "ativo").length;
-      const inadimplentes = meus.filter(
+      const carteira = clientes.filter((c) => c.vendedor_id === v.id);
+      const meus = carteira.filter((c) => new Date(c.created_at) >= periodoInicio);
+      const idsCarteira = new Set(carteira.map((c) => c.id));
+      const receita = pagamentos
+        .filter((p) => {
+          if (p.status !== "pago" || !p.data_pagamento) return false;
+          if (!idsCarteira.has(p.cliente_id)) return false;
+          const d = new Date(p.data_pagamento + "T00:00:00");
+          return d >= periodoInicio;
+        })
+        .reduce((s, p) => s + (p.valor ?? 0), 0);
+      const ativos = carteira.filter((c) => c.status === "ativo").length;
+      const inadimplentes = carteira.filter(
         (c) => c.status === "vencido" || c.status === "inadimplente",
       ).length;
       return {
@@ -339,9 +368,10 @@ export function AdminDashboard() {
         lista: meus,
       };
     });
-    rows.sort((a, b) => b.clientes - a.clientes);
+    rows.sort((a, b) => b.clientes - a.clientes || b.receita - a.receita);
     return rows.slice(0, 5);
-  }, [vendedores, clientes]);
+  }, [vendedores, clientes, pagamentos, periodoInicio]);
+
   const maxClientes = ranking[0]?.clientes || 1;
   type RankingRow = (typeof ranking)[number];
   const [rankingDetail, setRankingDetail] = useState<RankingRow | null>(null);
@@ -358,26 +388,59 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-4">
+      {/* Seletor de período */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-lg font-semibold">Visão geral</h2>
+          <p className="text-xs text-muted-foreground">
+            KPIs e ranking recalculados pelos últimos {periodo} dias
+          </p>
+        </div>
+        <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5">
+          {([7, 30, 90] as const).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPeriodo(p)}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                periodo === p
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {p} dias
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           icon={Users}
           label="Clientes ativos"
           value={String(kpi.totalClientes)}
-          delta={kpi.novosMes > 0 ? `+${kpi.novosMes} este mês` : "Nenhum novo este mês"}
-          deltaTone={kpi.novosMes > 0 ? "text-success" : "text-muted-foreground"}
+          delta={
+            kpi.novosPeriodo > 0
+              ? `+${kpi.novosPeriodo} nos últimos ${periodo}d`
+              : `Nenhum novo em ${periodo}d`
+          }
+          deltaTone={kpi.novosPeriodo > 0 ? "text-success" : "text-muted-foreground"}
         />
         <KpiCard
           icon={Wallet}
-          label="MRR (receita/mês)"
-          value={formatCurrency(kpi.mrr)}
+          label={`Receita (${periodo}d)`}
+          value={formatCurrency(kpi.pagosPeriodo)}
           valueTone="text-success"
           delta={
-            kpi.pagosMesPassado > 0
-              ? `${kpi.mrr >= kpi.pagosMesPassado ? "▲" : "▼"} vs ${formatCurrency(kpi.pagosMesPassado)} mês anterior`
-              : "sem base do mês anterior"
+            kpi.pagosPeriodoAnterior > 0
+              ? `${kpi.pagosPeriodo >= kpi.pagosPeriodoAnterior ? "▲" : "▼"} vs ${formatCurrency(kpi.pagosPeriodoAnterior)} período anterior`
+              : "sem base do período anterior"
           }
-          deltaTone={kpi.mrr >= kpi.pagosMesPassado ? "text-success" : "text-destructive"}
+          deltaTone={
+            kpi.pagosPeriodo >= kpi.pagosPeriodoAnterior ? "text-success" : "text-destructive"
+          }
         />
         <KpiCard
           icon={AlertTriangle}
@@ -389,12 +452,13 @@ export function AdminDashboard() {
         />
         <KpiCard
           icon={Clock}
-          label="Cobranças pendentes"
+          label={`Cobranças pendentes (${periodo}d)`}
           value={`${kpi.pendentesCount} cobrança(s)`}
           delta={`${formatCurrency(kpi.totalPendente)} a receber`}
           deltaTone="text-warning-foreground"
         />
       </div>
+
 
       {/* Alertas + Ranking */}
       <div className="grid gap-4 sm:grid-cols-2">
