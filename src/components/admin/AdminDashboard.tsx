@@ -340,16 +340,22 @@ export function AdminDashboard() {
       .filter((c) => c.value > 0);
   }, [clientes]);
 
-  /* ---------- Ranking ---------- */
+  /* ---------- Ranking (filtrado pelo período) ---------- */
   const ranking = useMemo(() => {
     const rows = vendedores.map((v) => {
-      const meus = clientes.filter((c) => c.vendedor_id === v.id);
-      const receita = meus.reduce(
-        (s, c) => s + (c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0),
-        0,
-      );
-      const ativos = meus.filter((c) => c.status === "ativo").length;
-      const inadimplentes = meus.filter(
+      const carteira = clientes.filter((c) => c.vendedor_id === v.id);
+      const meus = carteira.filter((c) => new Date(c.created_at) >= periodoInicio);
+      const idsCarteira = new Set(carteira.map((c) => c.id));
+      const receita = pagamentos
+        .filter((p) => {
+          if (p.status !== "pago" || !p.data_pagamento) return false;
+          if (!idsCarteira.has(p.cliente_id)) return false;
+          const d = new Date(p.data_pagamento + "T00:00:00");
+          return d >= periodoInicio;
+        })
+        .reduce((s, p) => s + (p.valor ?? 0), 0);
+      const ativos = carteira.filter((c) => c.status === "ativo").length;
+      const inadimplentes = carteira.filter(
         (c) => c.status === "vencido" || c.status === "inadimplente",
       ).length;
       return {
@@ -362,9 +368,10 @@ export function AdminDashboard() {
         lista: meus,
       };
     });
-    rows.sort((a, b) => b.clientes - a.clientes);
+    rows.sort((a, b) => b.clientes - a.clientes || b.receita - a.receita);
     return rows.slice(0, 5);
-  }, [vendedores, clientes]);
+  }, [vendedores, clientes, pagamentos, periodoInicio]);
+
   const maxClientes = ranking[0]?.clientes || 1;
   type RankingRow = (typeof ranking)[number];
   const [rankingDetail, setRankingDetail] = useState<RankingRow | null>(null);
