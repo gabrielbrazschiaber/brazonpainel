@@ -171,16 +171,25 @@ function VendedorArea() {
     <div className="min-h-screen bg-background">
       {/* Barra superior fixa */}
       <header className="glass-header sticky top-0 z-30 border-b border-border/60">
-        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-3 sm:flex sm:justify-between sm:gap-4 sm:px-4">
+        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:flex sm:justify-between sm:gap-4 sm:px-4 sm:py-3">
           <div className="min-w-0"><BrazonLogo /></div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
 
-            <Button onClick={() => setDialogOpen(true)}>
-              <UserPlus className="mr-2 h-4 w-4" />
+            <Button
+              onClick={() => setDialogOpen(true)}
+              className="h-10 px-2.5 sm:h-9 sm:px-4"
+              aria-label="Cadastrar cliente"
+            >
+              <UserPlus className="h-4 w-4 min-[420px]:mr-2" />
+              <span className="hidden min-[420px]:inline sm:hidden">Cadastrar</span>
               <span className="hidden sm:inline">Cadastrar cliente</span>
-              <span className="sm:hidden">Cadastrar</span>
             </Button>
-            <Button variant="outline" onClick={() => setContaOpen(true)}>
+            <Button
+              variant="outline"
+              onClick={() => setContaOpen(true)}
+              className="h-10 w-10 shrink-0 p-0 sm:h-9 sm:w-auto sm:px-4"
+              aria-label="Minha conta"
+            >
               <UserCog className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Minha conta</span>
             </Button>
