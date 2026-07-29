@@ -273,25 +273,8 @@ function CadastroPage() {
             : "Cadastro rápido: escolha o plano e ative sua assinatura na hora."}
         </p>
 
-        {destaque && (
-          <button
-            type="button"
-            onClick={() => aplicarCupom(destaque.codigo)}
-            className="mt-4 flex w-full items-start gap-3 rounded-lg border border-primary/40 bg-primary/5 p-3 text-left transition hover:bg-primary/10"
-          >
-            <TicketPercent className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-            <span className="text-sm">
-              <span className="block font-semibold text-foreground">
-                Cupom {destaque.codigo} — {formatCurrency(destaque.valor_desconto)} de desconto
-              </span>
-              <span className="block text-muted-foreground">
-                {destaque.apenas_primeira_mensalidade
-                  ? "Válido na primeira mensalidade. Toque para aplicar."
-                  : "Toque para aplicar."}
-              </span>
-            </span>
-          </button>
-        )}
+
+
 
         <div className="mt-6 grid gap-4">
           <div className="grid gap-2">
