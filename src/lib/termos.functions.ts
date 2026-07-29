@@ -74,3 +74,25 @@ export const registrarAceiteTermos = createServerFn({ method: "POST" })
 
     return { ok: true, versao: TERMOS_VERSAO, jaRegistrado: false };
   });
+
+// Histórico de aceites do próprio usuário (RLS já restringe a linhas dele).
+export const listarMeusAceites = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("termos_aceites")
+      .select("id,versao,texto,origem,aceito_em,email")
+      .eq("user_id", userId)
+      .order("aceito_em", { ascending: false });
+
+    if (error) {
+      console.error("[termos] falha ao listar aceites:", error.message);
+      throw new Error("Não foi possível carregar seu histórico de aceites.");
+    }
+
+    return {
+      versaoAtual: TERMOS_VERSAO,
+      aceites: data ?? [],
+    };
+  });

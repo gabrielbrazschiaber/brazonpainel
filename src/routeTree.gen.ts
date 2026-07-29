@@ -13,6 +13,7 @@ import { Route as VendedorRouteImport } from './routes/vendedor'
 import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
+import { Route as MeusAceitesRouteImport } from './routes/meus-aceites'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ClienteRouteImport } from './routes/cliente'
 import { Route as CadastroRouteImport } from './routes/cadastro'
@@ -38,6 +39,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
   id: '/redefinir-senha',
   path: '/redefinir-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeusAceitesRoute = MeusAceitesRouteImport.update({
+  id: '/meus-aceites',
+  path: '/meus-aceites',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/cadastro': typeof CadastroRoute
   '/cliente': typeof ClienteRoute
   '/login': typeof LoginRoute
+  '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/cadastro': typeof CadastroRoute
   '/cliente': typeof ClienteRoute
   '/login': typeof LoginRoute
+  '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/cadastro': typeof CadastroRoute
   '/cliente': typeof ClienteRoute
   '/login': typeof LoginRoute
+  '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/cliente'
     | '/login'
+    | '/meus-aceites'
     | '/redefinir-senha'
     | '/sitemap.xml'
     | '/termos-de-uso'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/cliente'
     | '/login'
+    | '/meus-aceites'
     | '/redefinir-senha'
     | '/sitemap.xml'
     | '/termos-de-uso'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/cliente'
     | '/login'
+    | '/meus-aceites'
     | '/redefinir-senha'
     | '/sitemap.xml'
     | '/termos-de-uso'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   CadastroRoute: typeof CadastroRoute
   ClienteRoute: typeof ClienteRoute
   LoginRoute: typeof LoginRoute
+  MeusAceitesRoute: typeof MeusAceitesRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermosDeUsoRoute: typeof TermosDeUsoRoute
@@ -189,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/redefinir-senha'
       fullPath: '/redefinir-senha'
       preLoaderRoute: typeof RedefinirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meus-aceites': {
+      id: '/meus-aceites'
+      path: '/meus-aceites'
+      fullPath: '/meus-aceites'
+      preLoaderRoute: typeof MeusAceitesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -242,6 +262,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroRoute: CadastroRoute,
   ClienteRoute: ClienteRoute,
   LoginRoute: LoginRoute,
+  MeusAceitesRoute: MeusAceitesRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermosDeUsoRoute: TermosDeUsoRoute,
