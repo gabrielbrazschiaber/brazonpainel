@@ -160,6 +160,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   body {
@@ -171,8 +178,22 @@
   h1, h2, h3, h4, h5 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+  }
+
+  /* Evita que URLs, e-mails e códigos longos estourem a largura no celular */
+  p, span, td, th, li, label {
+    overflow-wrap: break-word;
+  }
+
+  /* Alvos de toque confortáveis em telas pequenas */
+  @media (max-width: 480px) {
+    button, [role="button"], a {
+      touch-action: manipulation;
+    }
   }
 }
+
 
 /* Suave elevação e destaque em cards interativos */
 @utility card-interactive {
