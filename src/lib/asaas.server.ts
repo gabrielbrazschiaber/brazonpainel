@@ -746,7 +746,12 @@ export async function criarCobrancaInicialCadastro(
         valorDesconto: Number(resultado.descontoAplicado),
         pagamentoId: resultado.pagamentoIdLocal ?? null,
         asaasPaymentId: resultado.asaasPaymentId ?? null,
+        asaasSubscriptionId: (resultado.assinaturaId as string) ?? null,
+        codigo: cupomAplicado.codigo,
+        valorOriginal: valorTotal,
+        origem: "cadastro_publico",
       });
+
       if (registrado) descontoAplicado = Number(resultado.descontoAplicado);
     }
 
