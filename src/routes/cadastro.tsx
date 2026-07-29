@@ -18,6 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/format";
+import { TERMOS_VERSAO } from "@/lib/termos";
+import { Checkbox } from "@/components/ui/checkbox";
+
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 
