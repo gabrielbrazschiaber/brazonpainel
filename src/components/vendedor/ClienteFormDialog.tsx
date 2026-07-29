@@ -275,6 +275,16 @@ export function ClienteFormDialog({
 
   const p = editando ? "ec" : "nc";
 
+  /** Mensagem de erro do campo (padroniza espaçamento e cor). */
+  const Erro = ({ campo }: { campo: string }) =>
+    erros[campo] ? (
+      <p className="text-xs font-medium text-destructive" role="alert">
+        {erros[campo]}
+      </p>
+    ) : null;
+
+  const invalido = (campo: string) => (erros[campo] ? true : undefined);
+
   return (
     <Dialog open={aberto} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
@@ -283,80 +293,119 @@ export function ClienteFormDialog({
           <DialogDescription>
             {editando
               ? "Atualize nome, e-mail, senha, plano e serviço extra do cliente."
-              : "O cliente recebe um e-mail para definir a própria senha de acesso."}
+              : "Campos com * são obrigatórios. O cliente recebe um e-mail para definir a própria senha."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor={`${p}nome`}>Nome</Label>
-            <Input
-              id={`${p}nome`}
-              value={values.nome}
-              onChange={(e) => set("nome", e.target.value)}
-            />
-          </div>
+        {!editando && (
+          <details className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <summary className="cursor-pointer font-medium text-foreground">
+              Como cadastrar um cliente (passo a passo)
+            </summary>
+            <ol className="mt-2 list-decimal space-y-1 pl-4">
+              <li>Preencha nome, e-mail e CPF/CNPJ — o CPF/CNPJ é exigido pela plataforma de pagamento.</li>
+              <li>Escolha o plano; se houver, descreva o serviço extra e o valor, que soma à mensalidade.</li>
+              <li>Aplique o cupom de desconto, se tiver um.</li>
+              <li>Defina o primeiro vencimento (não pode ser uma data passada).</li>
+              <li>Ao salvar, o cliente é criado na plataforma de pagamento e recebe o e-mail para definir a senha.</li>
+            </ol>
+          </details>
+        )}
 
-          <div className="grid gap-2">
-            <Label htmlFor={`${p}email`}>E-mail</Label>
-            <Input
-              id={`${p}email`}
-              type="email"
-              value={values.email}
-              onChange={(e) => set("email", e.target.value)}
-            />
-          </div>
+        <div className="grid gap-5">
+          <fieldset className="grid gap-4">
+            <legend className="text-sm font-semibold text-foreground">Dados do cliente</legend>
 
-          <div className="grid gap-2">
-            <Label htmlFor={`${p}cpf`}>CPF ou CNPJ</Label>
-            <Input
-              id={`${p}cpf`}
-              value={values.cpfCnpj}
-              onChange={(e) => set("cpfCnpj", e.target.value)}
-              placeholder="Somente números"
-            />
-            <p className="text-xs text-muted-foreground">
-              Obrigatório para gerar cobranças no Asaas.
-            </p>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor={`${p}tel`}>Telefone (opcional)</Label>
-            <Input
-              id={`${p}tel`}
-              value={values.telefone}
-              onChange={(e) => set("telefone", e.target.value)}
-              placeholder="(00) 00000-0000"
-            />
-          </div>
-
-          {editando && (
             <div className="grid gap-2">
-              <Label htmlFor={`${p}senha`}>Nova senha (opcional)</Label>
-              <PasswordInput
-                id={`${p}senha`}
-                value={values.senha}
-                onChange={(e) => set("senha", e.target.value)}
-                placeholder="Deixe em branco para manter"
+              <Label htmlFor={`${p}nome`}>Nome completo *</Label>
+              <Input
+                id={`${p}nome`}
+                value={values.nome}
+                aria-invalid={invalido("nome")}
+                onChange={(e) => set("nome", e.target.value)}
+                placeholder="Ex: Maria Souza"
               />
+              <Erro campo="nome" />
             </div>
-          )}
 
-          <div className="grid gap-2">
-            <Label>Plano</Label>
-            <Select value={values.planoId} onValueChange={(v) => set("planoId", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um plano" />
-              </SelectTrigger>
-              <SelectContent>
-                {planos.map((pl) => (
-                  <SelectItem key={pl.id} value={pl.id}>
-                    {pl.nome} — {formatCurrency(pl.valor)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`${p}email`}>E-mail de acesso *</Label>
+              <Input
+                id={`${p}email`}
+                type="email"
+                value={values.email}
+                aria-invalid={invalido("email")}
+                onChange={(e) => set("email", e.target.value)}
+                placeholder="cliente@email.com"
+              />
+              <p className="text-xs text-muted-foreground">
+                É o login do cliente e o destino do e-mail de senha.
+              </p>
+              <Erro campo="email" />
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor={`${p}cpf`}>CPF ou CNPJ *</Label>
+                <Input
+                  id={`${p}cpf`}
+                  inputMode="numeric"
+                  value={values.cpfCnpj}
+                  aria-invalid={invalido("cpfCnpj")}
+                  onChange={(e) => set("cpfCnpj", e.target.value)}
+                  placeholder="Somente números"
+                />
+                <Erro campo="cpfCnpj" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`${p}tel`}>Telefone (opcional)</Label>
+                <Input
+                  id={`${p}tel`}
+                  inputMode="tel"
+                  value={values.telefone}
+                  aria-invalid={invalido("telefone")}
+                  onChange={(e) => set("telefone", e.target.value)}
+                  placeholder="(00) 00000-0000"
+                />
+                <Erro campo="telefone" />
+              </div>
+            </div>
+
+            {editando && (
+              <div className="grid gap-2">
+                <Label htmlFor={`${p}senha`}>Nova senha (opcional)</Label>
+                <PasswordInput
+                  id={`${p}senha`}
+                  value={values.senha}
+                  aria-invalid={invalido("senha")}
+                  onChange={(e) => set("senha", e.target.value)}
+                  placeholder="Deixe em branco para manter"
+                />
+                <Erro campo="senha" />
+              </div>
+            )}
+          </fieldset>
+
+          <fieldset className="grid gap-4">
+            <legend className="text-sm font-semibold text-foreground">Plano e cobrança</legend>
+
+            <div className="grid gap-2">
+              <Label>Plano *</Label>
+              <Select value={values.planoId} onValueChange={(v) => set("planoId", v)}>
+                <SelectTrigger aria-invalid={invalido("planoId")}>
+                  <SelectValue placeholder="Selecione um plano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {planos.map((pl) => (
+                    <SelectItem key={pl.id} value={pl.id}>
+                      {pl.nome} — {formatCurrency(pl.valor)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Erro campo="planoId" />
+            </div>
+
 
           <div className="grid gap-2 rounded-md border border-border p-3">
             <Label htmlFor={`${p}serv`}>Serviço extra (opcional)</Label>
