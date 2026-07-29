@@ -11,7 +11,7 @@ import { NovidadesTab } from "@/components/admin/NovidadesTab";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
-import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, atualizarClienteAdmin, excluirVendedor, excluirAdmin, excluirCliente } from "@/lib/admin.functions";
+import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, excluirVendedor, excluirAdmin, excluirCliente } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { obterConfiguracoes, salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
