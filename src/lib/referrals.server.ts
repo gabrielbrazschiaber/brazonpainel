@@ -5,37 +5,59 @@ type SB = { from: (t: string) => any };
 export interface ReferralMetrics {
   visitantes: number;
   leads: number;
+  pendentes: number;
   conversoes: number;
+}
+
+/** Converte um período em dias na data-limite ISO (null = todo o histórico). */
+export function inicioPeriodo(dias?: number | null): string | null {
+  if (!dias || dias <= 0) return null;
+  const d = new Date();
+  d.setDate(d.getDate() - dias);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+async function vendedorDoUsuario(supabase: SB, userId: string) {
+  const { data } = await supabase
+    .from("vendedores")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return (data?.id as string | undefined) ?? null;
 }
 
 /**
  * Visitantes  = sessões distintas que abriram o link de indicação.
  * Leads       = clientes que se cadastraram pelo link.
- * Conversões  = desses leads, quantos já tiveram um pagamento confirmado.
+ * Pendentes   = leads que ainda não tiveram pagamento confirmado.
+ * Conversões  = leads que já tiveram um pagamento confirmado.
  */
 export async function calcularReferrals(
   supabase: SB,
   userId: string,
+  dias?: number | null,
 ): Promise<ReferralMetrics> {
-  const { data: vend } = await supabase
-    .from("vendedores")
-    .select("id")
-    .eq("user_id", userId)
-    .maybeSingle();
+  const vendedorId = await vendedorDoUsuario(supabase, userId);
+  const vazio = { visitantes: 0, leads: 0, pendentes: 0, conversoes: 0 };
+  if (!vendedorId) return vazio;
 
-  if (!vend) return { visitantes: 0, leads: 0, conversoes: 0 };
-  const vendedorId = vend.id as string;
+  const desde = inicioPeriodo(dias);
 
-  const { count: visitantes } = await supabaseAdmin
+  let qVisitas = supabaseAdmin
     .from("referral_visitas")
     .select("id", { count: "exact", head: true })
     .eq("vendedor_id", vendedorId);
+  if (desde) qVisitas = qVisitas.gte("created_at", desde);
+  const { count: visitantes } = await qVisitas;
 
-  const { data: leadsRows } = await supabaseAdmin
+  let qLeads = supabaseAdmin
     .from("clientes")
     .select("id")
     .eq("vendedor_id", vendedorId)
     .eq("via_link", true);
+  if (desde) qLeads = qLeads.gte("created_at", desde);
+  const { data: leadsRows } = await qLeads;
 
   const ids = (leadsRows ?? []).map((c: { id: string }) => c.id);
   let conversoes = 0;
@@ -48,8 +70,14 @@ export async function calcularReferrals(
     conversoes = new Set((pagos ?? []).map((p: { cliente_id: string }) => p.cliente_id)).size;
   }
 
-  return { visitantes: visitantes ?? 0, leads: ids.length, conversoes };
+  return {
+    visitantes: visitantes ?? 0,
+    leads: ids.length,
+    pendentes: ids.length - conversoes,
+    conversoes,
+  };
 }
+
 
 export interface ReferralLead {
   clienteId: string;
