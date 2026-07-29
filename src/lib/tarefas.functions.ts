@@ -263,7 +263,13 @@ export const atualizarTarefa = createServerFn({ method: "POST" })
     const { isAdmin, vendedorId } = await contexto(supabase, userId);
     if (!isAdmin && !vendedorId) throw new Error("Apenas a equipe pode atualizar tarefas.");
 
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      status?: TarefaStatus;
+      concluida_em?: string | null;
+      prioridade?: TarefaPrioridade;
+      responsavel_id?: string | null;
+      prazo?: string | null;
+    } = {};
     if (data.status) {
       patch.status = data.status;
       patch.concluida_em = data.status === "concluida" ? new Date().toISOString() : null;
