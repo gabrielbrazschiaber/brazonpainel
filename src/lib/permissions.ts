@@ -37,6 +37,7 @@ export const CATALOGO_PERMISSOES: GrupoPermissao[] = [
       { permissao: "planos.gerenciar", label: "Gerenciar planos", descricao: "Criar, editar e desativar planos." },
       { permissao: "pagamentos.ler", label: "Ver pagamentos", descricao: "Consultar cobranças e histórico." },
       { permissao: "pagamentos.editar_status", label: "Alterar status de pagamento", descricao: "Marcar como pago ou simulação." },
+      { permissao: "cupons.gerenciar", label: "Gerenciar cupons", descricao: "Criar, bloquear e acompanhar cupons de desconto." },
       { permissao: "asaas.sincronizar", label: "Sincronizar Asaas", descricao: "Gerar cobrança e reprocessar a fila." },
     ],
   },

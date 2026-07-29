@@ -11,6 +11,7 @@ import { BrazonSymbol } from "@/components/BrazonLogo";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { NovidadesTab } from "@/components/admin/NovidadesTab";
 import { PermissoesTab } from "@/components/admin/PermissoesTab";
+import { CuponsTab } from "@/components/admin/CuponsTab";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
@@ -76,6 +77,7 @@ import {
   Check,
   KeyRound,
   LayoutDashboard,
+  TicketPercent,
   Users,
   Package,
   UserCircle,
@@ -251,6 +253,7 @@ function AdminArea() {
     { value: "admins", label: "Admins", icon: Shield },
     { value: "planos", label: "Planos", icon: Package },
     { value: "clientes", label: "Clientes", icon: UserCircle },
+    { value: "cupons", label: "Cupons", icon: TicketPercent },
     { value: "novidades", label: "Novidades", icon: Megaphone },
     { value: "permissoes", label: "Permissões", icon: KeyRound },
     { value: "config", label: "Configurações", icon: Settings },
@@ -313,6 +316,9 @@ function AdminArea() {
                   planos={planos}
                   onChanged={load}
                 />
+              </TabsContent>
+              <TabsContent value="cupons" className="mt-0">
+                <CuponsTab />
               </TabsContent>
               <TabsContent value="novidades" className="mt-0">
                 <NovidadesTab />
