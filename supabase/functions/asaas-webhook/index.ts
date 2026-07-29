@@ -171,6 +171,16 @@ Deno.serve(async (req) => {
       const record = updatedPayments[0]
       console.log(`[Asaas Webhook] Pagamento local ${record.id} atualizado.`)
 
+      // Marca o uso do cupom como efetivamente pago (data/hora da confirmação).
+      if (mappedPaymentStatus === 'pago') {
+        await supabase
+          .from('cupom_usos')
+          .update({ pago_em: new Date().toISOString() })
+          .eq('asaas_payment_id', asaasPaymentId)
+          .is('pago_em', null)
+      }
+
+
       // Mapeamento do status do cliente com base no pagamento
       let clienteStatus: ClienteStatus = 'ativo'
       if (mappedPaymentStatus === 'pago') {
