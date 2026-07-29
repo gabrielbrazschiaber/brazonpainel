@@ -257,7 +257,7 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
 
     const { data: cli } = await supabaseAdmin
       .from("clientes")
-      .select("user_id")
+      .select("user_id, plano_id, servico_extra_valor, asaas_subscription_id")
       .eq("id", data.cliente_id)
       .maybeSingle();
     if (!cli) throw new Error("Cliente não encontrado.");
@@ -293,8 +293,16 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
       .eq("id", data.cliente_id);
     if (cliUpdErr) throw new Error("Falha ao atualizar os dados do cliente.");
 
+    // Se o plano ou o valor do serviço extra mudou, sincroniza a assinatura no Asaas.
+    const mudouCobranca =
+      (cli.plano_id ?? null) !== (data.plano_id ?? null) ||
+      Number(cli.servico_extra_valor ?? 0) !== Number(data.servico_extra_valor ?? 0);
 
-
+    let sincronizacaoAsaas: { sincronizado: boolean; motivo?: string; valor?: number } | null = null;
+    if (mudouCobranca && cli.asaas_subscription_id) {
+      const { sincronizarAssinaturaCliente } = await import("@/lib/asaas.server");
+      sincronizacaoAsaas = await sincronizarAssinaturaCliente(data.cliente_id);
+    }
 
     const { registrarAuditoria } = await import("@/lib/audit.server");
     await registrarAuditoria({
@@ -307,6 +315,10 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
         nome: data.nome,
         email: data.email,
         senha_alterada: !!(data.senha && data.senha.length >= 6),
+        plano_id: data.plano_id ?? null,
+        servico_extra_valor: data.servico_extra_valor ?? 0,
+        asaas_sincronizado: sincronizacaoAsaas?.sincronizado ?? null,
+        asaas_motivo: sincronizacaoAsaas?.motivo ?? null,
       },
     });
 
