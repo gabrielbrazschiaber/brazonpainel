@@ -179,6 +179,30 @@ async function buscarCobrancaAtualDaAssinatura(
   return abertos[0] ?? pagamentos[0] ?? null;
 }
 
+// O objeto de cobrança do Asaas não traz o código PIX copia-e-cola;
+// ele vem de um endpoint específico do QR Code.
+async function obterPixCopiaECola(
+  paymentId: string | null | undefined,
+  billingType: string,
+  config: ConfigAsaas
+): Promise<string | null> {
+  if (!paymentId || billingType !== 'PIX') return null;
+  try {
+    const resp = await fetch(`${config.baseUrl}/payments/${paymentId}/pixQrCode`, {
+      headers: asaasHeaders(config.apiKey),
+    });
+    if (!resp.ok) {
+      console.error('[Asaas] Falha ao obter QR Code PIX:', (await resp.text()).slice(0, 300));
+      return null;
+    }
+    const qr = await lerJson(resp, 'QR Code PIX');
+    return (qr?.payload as string) ?? null;
+  } catch (e) {
+    console.error('[Asaas] Erro ao obter QR Code PIX:', e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
 // Registra (ou atualiza) o pagamento localmente para não duplicar linhas.
 async function registrarPagamentoLocal(
   clienteId: string,
