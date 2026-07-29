@@ -8,6 +8,8 @@ import { BrazonLogo } from "@/components/BrazonLogo";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
 import { Card } from "@/components/ui/card";
+import { LembretesVencimento } from "@/components/cliente/LembretesVencimento";
+
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
