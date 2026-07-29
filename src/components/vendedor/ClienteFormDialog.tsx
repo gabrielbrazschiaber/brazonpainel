@@ -111,7 +111,9 @@ export function ClienteFormDialog({
   const aberto = editando ? !!cliente : !!open;
 
   const [values, setValues] = useState<ClienteFormValues>(() => valoresDoCliente(cliente));
+  const [erros, setErros] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
 
   const validarCupom = useServerFn(validarCupomPublico);
   const buscarDestaque = useServerFn(cupomEmDestaque);
