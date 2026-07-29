@@ -1378,6 +1378,9 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
   );
   const [novaChave, setNovaChave] = useState("");
   const [saving, setSaving] = useState(false);
+  const [gerandoLembretes, setGerandoLembretes] = useState(false);
+  const gerarLembretes = useServerFn(gerarLembretesAgora);
+
   const [testando, setTestando] = useState(false);
   const [tokenMascara, setTokenMascara] = useState("");
   const [tokenRevelado, setTokenRevelado] = useState<string | null>(null);
