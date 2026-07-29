@@ -344,6 +344,8 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
             bankSlipUrl: atual.bankSlipUrl ?? null,
             pixCopyPaste: await obterPixCopiaECola(atual.id, params.tipoPagamento, config),
             status: atual.status,
+            descontoAplicado: 0,
+
           };
         }
       }
