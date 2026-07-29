@@ -32,3 +32,10 @@ para manter comportamento, acessibilidade (`aria-label="Sair da conta"`) e visua
   também um botão de sair no header, garantindo acesso mesmo com o drawer fechado.
 - Vendedor: no modo paisagem/estreito os botões "Cadastrar" e "Minha conta" ficam
   apenas com ícone para preservar espaço do botão de sair.
+
+## Testes do drawer (admin)
+
+`src/components/admin/AdminSidebar.test.tsx` cobre abertura em retrato/paisagem,
+bloqueio de scroll do body, fechamento ao clicar fora/Esc, navegação, "Minha conta"
+e "Sair" (que fecham o drawer) e o modo desktop sem drawer.
+Rode com `bun run test`. O helper `setViewport` fica em `src/test/setup.ts`.
