@@ -23,7 +23,7 @@ import { TERMOS_VERSAO } from "@/lib/termos";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { toast } from "sonner";
-import { CheckCircle2, TicketPercent } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 const searchSchema = z.object({
   ref: z.string().optional(),
