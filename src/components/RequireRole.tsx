@@ -33,6 +33,6 @@ export function RequireRole({
     );
   }
 
-  return <>{children}</>;
+  return <TermosGate>{children}</TermosGate>;
 }
 
