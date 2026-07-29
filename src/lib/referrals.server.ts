@@ -50,3 +50,71 @@ export async function calcularReferrals(
 
   return { visitantes: visitantes ?? 0, leads: ids.length, conversoes };
 }
+
+export interface ReferralLead {
+  clienteId: string;
+  nome: string;
+  email: string;
+  cadastradoEm: string;
+  primeiroPagamentoEm: string | null;
+  status: "visita" | "cadastro" | "pago";
+}
+
+/** Detalhe da jornada de cada lead vindo do link do vendedor. */
+export async function listarLeadsReferral(
+  supabase: SB,
+  userId: string,
+): Promise<ReferralLead[]> {
+  const { data: vend } = await supabase
+    .from("vendedores")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!vend) return [];
+
+  const { data: leads } = await supabaseAdmin
+    .from("clientes")
+    .select("id, user_id, created_at")
+    .eq("vendedor_id", vend.id as string)
+    .eq("via_link", true)
+    .order("created_at", { ascending: false });
+
+  const rows = leads ?? [];
+  if (!rows.length) return [];
+
+  const userIds = rows.map((c: { user_id: string }) => c.user_id).filter(Boolean);
+  const clienteIds = rows.map((c: { id: string }) => c.id);
+
+  const [{ data: perfis }, { data: pagos }] = await Promise.all([
+    supabaseAdmin.from("profiles").select("id, nome, email").in("id", userIds),
+    supabaseAdmin
+      .from("pagamentos")
+      .select("cliente_id, data_pagamento, created_at")
+      .in("cliente_id", clienteIds)
+      .eq("status", "pago")
+      .order("created_at", { ascending: true }),
+  ]);
+
+  const perfilPorId = new Map(
+    (perfis ?? []).map((p: { id: string; nome: string; email: string }) => [p.id, p]),
+  );
+  const primeiroPagamento = new Map<string, string>();
+  for (const p of pagos ?? []) {
+    if (!primeiroPagamento.has(p.cliente_id)) {
+      primeiroPagamento.set(p.cliente_id, p.data_pagamento ?? p.created_at);
+    }
+  }
+
+  return rows.map((c: { id: string; user_id: string; created_at: string }) => {
+    const perfil = perfilPorId.get(c.user_id);
+    const pagoEm = primeiroPagamento.get(c.id) ?? null;
+    return {
+      clienteId: c.id,
+      nome: perfil?.nome || "—",
+      email: perfil?.email || "—",
+      cadastradoEm: c.created_at,
+      primeiroPagamentoEm: pagoEm,
+      status: pagoEm ? "pago" : "cadastro",
+    } as ReferralLead;
+  });
+}
