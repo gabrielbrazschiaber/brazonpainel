@@ -71,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       setProfile(null);
       setRole(null);
+      setPermissoes([]);
     }
   }
 
@@ -86,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
         setRole(null);
+        setPermissoes([]);
       }
     });
 
@@ -108,7 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setProfile(null);
     setRole(null);
+    setPermissoes([]);
     setSession(null);
+  }
+
+  function can(permissao: AppPermission) {
+    return permissoes.includes(permissao);
   }
 
   return (
@@ -118,6 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         profile,
         role,
+        permissoes,
+        can,
         loading,
         signOut,
         refresh,
