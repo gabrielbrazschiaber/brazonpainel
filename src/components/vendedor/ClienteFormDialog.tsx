@@ -14,6 +14,7 @@ import {
 import { formatCurrency } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -141,7 +142,6 @@ export function ClienteFormDialog({
                   ? "A assinatura no Asaas não está ativa. Gere uma nova cobrança."
                   : "Verifique a integração do Asaas nas Configurações.",
             });
-
           } else {
             toast.success("Dados do cliente atualizados!");
           }
@@ -240,9 +240,8 @@ export function ClienteFormDialog({
           {editando && (
             <div className="grid gap-2">
               <Label htmlFor={`${p}senha`}>Nova senha (opcional)</Label>
-              <Input
+              <PasswordInput
                 id={`${p}senha`}
-                type="password"
                 value={values.senha}
                 onChange={(e) => set("senha", e.target.value)}
                 placeholder="Deixe em branco para manter"

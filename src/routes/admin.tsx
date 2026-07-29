@@ -13,13 +13,23 @@ import { NovidadesTab } from "@/components/admin/NovidadesTab";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
-import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, excluirVendedor, excluirAdmin, excluirCliente, reprocessarSyncCliente } from "@/lib/admin.functions";
+import {
+  criarVendedor,
+  atualizarVendedor,
+  criarAdmin,
+  atualizarMeuPerfil,
+  excluirVendedor,
+  excluirAdmin,
+  excluirCliente,
+  reprocessarSyncCliente,
+} from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { obterConfiguracoes, salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -80,10 +90,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Administração" }] }),
@@ -178,11 +185,7 @@ function AdminArea() {
     const crows = (cls ?? []) as unknown as ClienteRow[];
     const adminIds = (adminRoles ?? []).map((r) => r.user_id);
 
-    const userIds = [
-      ...vrows.map((v) => v.user_id),
-      ...crows.map((c) => c.user_id),
-      ...adminIds,
-    ];
+    const userIds = [...vrows.map((v) => v.user_id), ...crows.map((c) => c.user_id), ...adminIds];
     let adminRows: { user_id: string; nome?: string; email?: string }[] = [];
     if (userIds.length) {
       const { data: profs } = await supabase
@@ -230,8 +233,6 @@ function AdminArea() {
     load();
   }, [load]);
 
-
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -250,7 +251,6 @@ function AdminArea() {
     { value: "config", label: "Configurações", icon: Settings },
     { value: "auditoria", label: "Auditoria", icon: ScrollText },
   ] as const;
-
 
   return (
     <SidebarProvider>
@@ -277,7 +277,6 @@ function AdminArea() {
             </div>
           </header>
 
-
           <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-4 sm:py-6">
             <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
 
@@ -303,7 +302,12 @@ function AdminArea() {
                 <PlanosTab planos={planos} onChanged={load} />
               </TabsContent>
               <TabsContent value="clientes" className="mt-0">
-                <ClientesTab clientes={clientes} vendedores={vendedores} planos={planos} onChanged={load} />
+                <ClientesTab
+                  clientes={clientes}
+                  vendedores={vendedores}
+                  planos={planos}
+                  onChanged={load}
+                />
               </TabsContent>
               <TabsContent value="novidades" className="mt-0">
                 <NovidadesTab />
@@ -387,13 +391,17 @@ function MinhaContaDialog({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="memail">E-mail</Label>
-            <Input id="memail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input
+              id="memail"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="msenha">Nova senha (opcional)</Label>
-            <Input
+            <PasswordInput
               id="msenha"
-              type="password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               placeholder="Deixe em branco para manter"
@@ -542,13 +550,17 @@ function AdminsTab({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="aemail">E-mail</Label>
-              <Input id="aemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                id="aemail"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="asenha">Senha</Label>
-              <Input
+              <PasswordInput
                 id="asenha"
-                type="password"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="Mínimo 6 caracteres"
@@ -590,8 +602,6 @@ function AdminsTab({
     </div>
   );
 }
-
-
 
 /* ---------------- Vendedores ---------------- */
 function VendedoresTab({
@@ -692,10 +702,7 @@ function VendedoresTab({
   }
 
   async function toggleAtivo(v: VendedorRow) {
-    const { error } = await supabase
-      .from("vendedores")
-      .update({ ativo: !v.ativo })
-      .eq("id", v.id);
+    const { error } = await supabase.from("vendedores").update({ ativo: !v.ativo }).eq("id", v.id);
     if (error) toast.error("Não foi possível atualizar.");
     else {
       toast.success(v.ativo ? "Vendedor desativado." : "Vendedor ativado.");
@@ -797,7 +804,12 @@ function VendedoresTab({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="vemail">E-mail</Label>
-              <Input id="vemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                id="vemail"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="vcod">Código de indicação</Label>
@@ -823,9 +835,8 @@ function VendedoresTab({
               <Label htmlFor="vsenha">
                 {editing ? "Nova senha (opcional)" : "Senha de acesso"}
               </Label>
-              <Input
+              <PasswordInput
                 id="vsenha"
-                type="password"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder={editing ? "Deixe em branco para manter" : "Mín. 6 caracteres"}
@@ -849,8 +860,8 @@ function VendedoresTab({
             <AlertDialogTitle>Excluir vendedor?</AlertDialogTitle>
             <AlertDialogDescription>
               O acesso de <strong>{aExcluir?.nome || "este vendedor"}</strong> será removido
-              permanentemente. Se ele tiver clientes vinculados, a exclusão será bloqueada — reatribua
-              ou exclua os clientes antes.
+              permanentemente. Se ele tiver clientes vinculados, a exclusão será bloqueada —
+              reatribua ou exclua os clientes antes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1091,7 +1102,8 @@ function ClientesTab({
     return clientes.filter((c) => {
       if (statusFiltro !== "todos" && c.status !== statusFiltro) return false;
       if (vendedorFiltro !== "todos") {
-        if (vendedorFiltro === "sem" ? !!c.vendedor_id : c.vendedor_id !== vendedorFiltro) return false;
+        if (vendedorFiltro === "sem" ? !!c.vendedor_id : c.vendedor_id !== vendedorFiltro)
+          return false;
       }
       if (planoFiltro !== "todos" && c.planos?.nome !== planoFiltro) return false;
       if (!termo) return true;
@@ -1217,7 +1229,7 @@ function ClientesTab({
                   <div className="font-medium text-foreground">{c.nome ?? "—"}</div>
                   <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
                 </TableCell>
-                <TableCell>{c.vendedor_id ? vmap.get(c.vendedor_id) ?? "—" : "—"}</TableCell>
+                <TableCell>{c.vendedor_id ? (vmap.get(c.vendedor_id) ?? "—") : "—"}</TableCell>
                 <TableCell>{c.planos?.nome ?? "—"}</TableCell>
                 <TableCell>{formatDate(c.data_vencimento)}</TableCell>
                 <TableCell>
@@ -1280,8 +1292,9 @@ function ClientesTab({
             <AlertDialogHeader>
               <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
               <AlertDialogDescription>
-                O acesso e todos os pagamentos de <strong>{aExcluir?.nome || "este cliente"}</strong>{" "}
-                serão removidos permanentemente. Esta ação não pode ser desfeita.
+                O acesso e todos os pagamentos de{" "}
+                <strong>{aExcluir?.nome || "este cliente"}</strong> serão removidos permanentemente.
+                Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -1375,9 +1388,6 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
     if (t) await copiar(t, "token");
   }
 
-
-
-
   async function testarChave() {
     setTestando(true);
     try {
@@ -1391,7 +1401,6 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
       setTestando(false);
     }
   }
-
 
   function set<K extends keyof Config>(key: K, value: Config[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -1474,9 +1483,8 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
           <div className="mt-3 grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="ckey">Chave de API Asaas</Label>
-              <Input
+              <PasswordInput
                 id="ckey"
-                type="password"
                 value={novaChave}
                 onChange={(e) => setNovaChave(e.target.value)}
                 placeholder={
@@ -1508,17 +1516,16 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
                 </Label>
               </div>
               <p className="text-xs text-muted-foreground">
-                Este token protege seu webhook: o painel só aceita notificações do Asaas que
-                enviem exatamente este valor. Por segurança ele fica oculto — use "Copiar" para
-                colar direto no Asaas, ou "Revelar" se precisar conferir.
+                Este token protege seu webhook: o painel só aceita notificações do Asaas que enviem
+                exatamente este valor. Por segurança ele fica oculto — use "Copiar" para colar
+                direto no Asaas, ou "Revelar" se precisar conferir.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Input
                   id="ctoken"
                   readOnly
                   value={
-                    tokenRevelado ??
-                    (tokenDefinido ? tokenMascara : "Nenhum token configurado")
+                    tokenRevelado ?? (tokenDefinido ? tokenMascara : "Nenhum token configurado")
                   }
                   className="min-w-0 flex-1 font-mono text-xs"
                   onFocus={(e) => e.currentTarget.select()}
@@ -1563,7 +1570,9 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
                   <li>
                     No campo <strong>Token de autenticação</strong>, cole o token acima.
                   </li>
-                  <li>Ative os eventos de cobrança (PAYMENT_RECEIVED, PAYMENT_OVERDUE etc.) e salve.</li>
+                  <li>
+                    Ative os eventos de cobrança (PAYMENT_RECEIVED, PAYMENT_OVERDUE etc.) e salve.
+                  </li>
                 </ol>
               </div>
             </div>

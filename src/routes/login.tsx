@@ -5,6 +5,7 @@ import { useAuth, roleHome } from "@/lib/auth";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { BrazonLogo } from "@/components/BrazonLogo";
@@ -64,14 +65,17 @@ function LoginPage() {
     toast.success("Link enviado! Verifique seu e-mail.");
   }
 
-
   if (mode === "forgot") {
     return (
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
         <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
         <Card className="relative w-full max-w-md rounded-2xl p-8 shadow-lg">
           <div className="mb-6 text-center">
-            <BrazonLogo className="mb-4 justify-center" symbolClassName="h-10 w-10" textClassName="text-2xl" />
+            <BrazonLogo
+              className="mb-4 justify-center"
+              symbolClassName="h-10 w-10"
+              textClassName="text-2xl"
+            />
             <h1 className="text-2xl font-bold text-foreground">Recuperar senha</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Enviaremos um link para você definir uma nova senha.
@@ -131,7 +135,11 @@ function LoginPage() {
       <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
       <Card className="relative w-full max-w-md rounded-2xl p-8 shadow-lg">
         <div className="mb-6 text-center">
-          <BrazonLogo className="mb-4 justify-center" symbolClassName="h-10 w-10" textClassName="text-2xl" />
+          <BrazonLogo
+            className="mb-4 justify-center"
+            symbolClassName="h-10 w-10"
+            textClassName="text-2xl"
+          />
           <h1 className="text-2xl font-bold text-foreground">Entrar</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Coloque seus dados para acessar o painel
@@ -161,9 +169,8 @@ function LoginPage() {
                 Esqueci minha senha
               </button>
             </div>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="current-password"
               required
               value={password}
@@ -193,4 +200,3 @@ function LoginPage() {
     </div>
   );
 }
-
