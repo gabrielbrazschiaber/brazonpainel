@@ -1,14 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-async function ensureAdmin(supabase: any, userId: string) {
-  const { data: isAdmin } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (!isAdmin) throw new Error("Apenas administradores podem executar esta ação.");
-}
+import { ensurePermission } from "@/lib/permissions.guard";
 
 /**
  * Admin consulta o token de autenticação do webhook do Asaas.
@@ -24,7 +17,7 @@ export const obterWebhookToken = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "configuracoes.gerenciar");
     const token = (process.env.ASAAS_WEBHOOK_TOKEN ?? "").trim();
     return {
       definido: !!token,
@@ -52,7 +45,7 @@ export const obterConfiguracoes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "configuracoes.gerenciar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
@@ -97,7 +90,7 @@ export const salvarConfiguracoes = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => salvarConfigSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "configuracoes.gerenciar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 

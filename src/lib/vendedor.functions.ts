@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { ensurePermission } from "@/lib/permissions.guard";
 import { TERMOS_TEXTO, TERMOS_VERSAO } from "@/lib/termos";
 
 
@@ -39,6 +40,7 @@ export const criarCliente = createServerFn({ method: "POST" })
       _role: "vendedor",
     });
     if (!isVendedor) throw new Error("Apenas vendedores podem cadastrar clientes.");
+    await ensurePermission(supabase, userId, "clientes.criar");
 
     const { data: vend } = await supabase
       .from("vendedores")
@@ -228,6 +230,7 @@ export const atualizarMensagemCliente = createServerFn({ method: "POST" })
       _role: "vendedor",
     });
     if (!isVendedor) throw new Error("Apenas vendedores podem enviar mensagens.");
+    await ensurePermission(supabase, userId, "clientes.editar");
 
     const { data: vend } = await supabase
       .from("vendedores")
@@ -285,6 +288,7 @@ export const atualizarCliente = createServerFn({ method: "POST" })
       _role: "vendedor",
     });
     if (!isVendedor) throw new Error("Apenas vendedores podem editar clientes.");
+    await ensurePermission(supabase, userId, "clientes.editar");
 
     const { data: vend } = await supabase
       .from("vendedores")

@@ -396,6 +396,30 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission?: Database["public"]["Enums"]["app_permission"]
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       termos_aceites: {
         Row: {
           aceito_em: string
@@ -486,6 +510,13 @@ export type Database = {
     }
     Functions: {
       current_vendedor_id: { Args: never; Returns: string }
+      has_permission: {
+        Args: {
+          _permission: Database["public"]["Enums"]["app_permission"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -495,6 +526,22 @@ export type Database = {
       }
     }
     Enums: {
+      app_permission:
+        | "clientes.ler"
+        | "clientes.criar"
+        | "clientes.editar"
+        | "clientes.excluir"
+        | "vendedores.ler"
+        | "vendedores.criar"
+        | "vendedores.editar"
+        | "vendedores.excluir"
+        | "planos.gerenciar"
+        | "pagamentos.ler"
+        | "pagamentos.editar_status"
+        | "configuracoes.gerenciar"
+        | "asaas.sincronizar"
+        | "novidades.gerenciar"
+        | "auditoria.ler"
       app_role: "cliente" | "vendedor" | "admin"
       asaas_ambiente: "producao" | "sandbox"
       cliente_status: "ativo" | "vencido" | "inadimplente" | "cancelado"
@@ -626,6 +673,23 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_permission: [
+        "clientes.ler",
+        "clientes.criar",
+        "clientes.editar",
+        "clientes.excluir",
+        "vendedores.ler",
+        "vendedores.criar",
+        "vendedores.editar",
+        "vendedores.excluir",
+        "planos.gerenciar",
+        "pagamentos.ler",
+        "pagamentos.editar_status",
+        "configuracoes.gerenciar",
+        "asaas.sincronizar",
+        "novidades.gerenciar",
+        "auditoria.ler",
+      ],
       app_role: ["cliente", "vendedor", "admin"],
       asaas_ambiente: ["producao", "sandbox"],
       cliente_status: ["ativo", "vencido", "inadimplente", "cancelado"],
