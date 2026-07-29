@@ -21,7 +21,7 @@ import {
 import { formatCurrency, formatDate, daysUntil, initials } from "@/lib/format";
 
 import { toast } from "sonner";
-import { Bell, CalendarClock, CreditCard, BadgeCheck, LogOut } from "lucide-react";
+import { Bell, CalendarClock, CreditCard, BadgeCheck, LogOut, RefreshCw } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { gerarCobranca } from "@/lib/asaas.functions";
 
@@ -50,6 +50,7 @@ interface Cliente {
   plano_id: string | null;
   servico_extra: string | null;
   servico_extra_valor: number | null;
+  asaas_subscription_id: string | null;
   planos: Plano | null;
 }
 
@@ -76,7 +77,7 @@ function ClienteArea() {
     setLoading(true);
     const { data: cli } = await supabase
       .from("clientes")
-      .select("id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,planos(id,nome,valor,descricao,ativo)")
+      .select("id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,asaas_subscription_id,planos(id,nome,valor,descricao,ativo)")
       .maybeSingle();
     setCliente(cli as unknown as Cliente);
 
@@ -104,6 +105,12 @@ function ClienteArea() {
 
   const dias = daysUntil(cliente?.data_vencimento);
   const venc = cliente?.data_vencimento;
+  const totalMensal =
+    (cliente?.planos?.valor ?? 0) + (cliente?.servico_extra_valor ?? 0);
+  const assinaturaAtiva = Boolean(cliente?.asaas_subscription_id);
+  const faturaPendente = pagamentos.find(
+    (p) => p.status === "pendente" && p.invoice_url,
+  );
 
   function headerTone() {
     if (cliente?.status === "ativo" && (dias == null || dias > 5)) return "ativo";
@@ -250,6 +257,54 @@ function ClienteArea() {
             </div>
           </Card>
         </section>
+
+        {/* Próxima cobrança recorrente */}
+        {cliente?.plano_id && (
+          <section className="mt-6">
+            <Card className="p-4 sm:p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <RefreshCw className="h-4 w-4" />
+                    </span>
+                    <span className="text-xs font-medium sm:text-sm">
+                      {assinaturaAtiva ? "Próxima cobrança automática" : "Próxima renovação"}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-xl font-bold text-foreground sm:text-2xl">
+                    {venc ? formatDate(venc) : "A definir"}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {totalMensal > 0 ? `${formatCurrency(totalMensal)}/mês` : "Valor a definir"}
+                    {dias != null &&
+                      (dias < 0
+                        ? ` · vencido há ${Math.abs(dias)} dia(s)`
+                        : ` · em ${dias} dia(s)`)}
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {assinaturaAtiva
+                      ? "Sua assinatura mensal está ativa: a cobrança é gerada automaticamente a cada ciclo e esta data é atualizada quando o pagamento é confirmado."
+                      : "Ative a assinatura mensal recorrente abaixo para que a cobrança seja gerada automaticamente todo mês."}
+                  </p>
+                </div>
+                {faturaPendente && (
+                  <Button
+                    variant="outline"
+                    className="w-full shrink-0 sm:w-auto"
+                    onClick={() =>
+                      window.open(faturaPendente.invoice_url!, "_blank", "noopener")
+                    }
+                  >
+                    Abrir fatura em aberto
+                  </Button>
+                )}
+              </div>
+            </Card>
+          </section>
+        )}
+
+
 
 
         {/* Renovar assinatura */}
