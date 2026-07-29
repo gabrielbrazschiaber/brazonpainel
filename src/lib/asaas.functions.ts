@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { ensurePermission } from "@/lib/permissions.guard";
 
 const gerarCobrancaSchema = z.object({
   plano_id: z.string().uuid(),
@@ -75,13 +76,7 @@ export const testarChaveAsaas = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    const { data: isAdmin } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "admin",
-    });
-    if (!isAdmin) {
-      throw new Error("Apenas administradores podem testar a chave do Asaas.");
-    }
+    await ensurePermission(supabase, userId, "configuracoes.gerenciar");
 
     const { testarConexaoAsaas } = await import("./asaas.server");
     return await testarConexaoAsaas();
