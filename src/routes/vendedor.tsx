@@ -14,6 +14,7 @@ import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -85,7 +86,6 @@ interface ClienteRow {
   email?: string;
 }
 
-
 function VendedorArea() {
   const { profile } = useAuth();
   const [vendedor, setVendedor] = useState<Vendedor | null>(null);
@@ -114,16 +114,15 @@ function VendedorArea() {
 
     const { data: cls } = await supabase
       .from("clientes")
-      .select("id,user_id,data_vencimento,status,mensagem_vendedor,anotacoes,plano_id,servico_extra,servico_extra_valor,cpf_cnpj,telefone,planos(nome,valor)")
+      .select(
+        "id,user_id,data_vencimento,status,mensagem_vendedor,anotacoes,plano_id,servico_extra,servico_extra_valor,cpf_cnpj,telefone,planos(nome,valor)",
+      )
       .order("created_at", { ascending: false });
     const rows = (cls ?? []) as unknown as ClienteRow[];
 
     const ids = rows.map((r) => r.user_id);
     if (ids.length) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id,nome,email")
-        .in("id", ids);
+      const { data: profs } = await supabase.from("profiles").select("id,nome,email").in("id", ids);
       const map = new Map((profs ?? []).map((p) => [p.id, p]));
       rows.forEach((r) => {
         const p = map.get(r.user_id);
@@ -172,9 +171,10 @@ function VendedorArea() {
       {/* Barra superior fixa */}
       <header className="glass-header sticky top-0 z-30 border-b border-border/60">
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:flex sm:justify-between sm:gap-4 sm:px-4 sm:py-3">
-          <div className="min-w-0"><BrazonLogo /></div>
+          <div className="min-w-0">
+            <BrazonLogo />
+          </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-
             <Button
               onClick={() => setDialogOpen(true)}
               className="h-10 px-2.5 sm:h-9 sm:px-4"
@@ -195,7 +195,6 @@ function VendedorArea() {
             </Button>
             <NovidadesSino />
             <SairButton variante="icone" />
-
           </div>
         </div>
       </header>
@@ -223,11 +222,15 @@ function VendedorArea() {
 
         <MinhaContaVendedorDialog open={contaOpen} onOpenChange={setContaOpen} />
 
-
         {/* Métricas */}
         <section className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <MetricCard icon={Users} label="Total de clientes" value={String(metrics.total)} />
-          <MetricCard icon={CheckCircle2} label="Ativos" value={String(metrics.ativos)} tone="text-success" />
+          <MetricCard
+            icon={CheckCircle2}
+            label="Ativos"
+            value={String(metrics.ativos)}
+            tone="text-success"
+          />
           <MetricCard
             icon={AlertTriangle}
             label="Vencidos / inadimplentes"
@@ -251,10 +254,7 @@ function VendedorArea() {
             </p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <Input readOnly value={linkIndicacao} className="font-mono text-xs" />
-              <Button
-                variant="outline"
-                onClick={() => copiar(linkIndicacao, "Link copiado!")}
-              >
+              <Button variant="outline" onClick={() => copiar(linkIndicacao, "Link copiado!")}>
                 <Copy className="mr-2 h-4 w-4" />
                 Copiar link
               </Button>
@@ -279,20 +279,20 @@ function VendedorArea() {
               <TableBody>
                 {clientes.map((c) => (
                   <TableRow key={c.id}>
-                     <TableCell>
-                       <div className="font-medium text-foreground">{c.nome ?? "—"}</div>
-                       <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
-                       <div className="mt-2 flex flex-wrap gap-2 sm:hidden">
-                         <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
-                           <MessageSquare className="mr-2 h-4 w-4" />
-                           {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
-                         </Button>
-                         <Button variant="outline" size="sm" onClick={() => setEditCliente(c)}>
-                           <Pencil className="mr-2 h-4 w-4" />
-                           Editar dados
-                         </Button>
-                       </div>
-                     </TableCell>
+                    <TableCell>
+                      <div className="font-medium text-foreground">{c.nome ?? "—"}</div>
+                      <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
+                      <div className="mt-2 flex flex-wrap gap-2 sm:hidden">
+                        <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setEditCliente(c)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Editar dados
+                        </Button>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div>{c.planos?.nome ?? "—"}</div>
                       {c.servico_extra && (
@@ -302,7 +302,8 @@ function VendedorArea() {
                       )}
                       {(c.planos?.valor || c.servico_extra_valor) && (
                         <div className="text-xs font-semibold text-foreground">
-                          Total: {formatCurrency((c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0))}
+                          Total:{" "}
+                          {formatCurrency((c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0))}
                         </div>
                       )}
                     </TableCell>
@@ -358,7 +359,6 @@ function VendedorArea() {
         onOpenChange={(v: boolean) => !v && setEditCliente(null)}
         onSaved={load}
       />
-
     </div>
   );
 }
@@ -377,19 +377,17 @@ function MetricCard({
   return (
     <Card className="card-interactive p-4 sm:p-5">
       <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
-        <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 sm:h-9 sm:w-9 ${tone}`}>
+        <span
+          className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 sm:h-9 sm:w-9 ${tone}`}
+        >
           <Icon className="h-4 w-4" />
         </span>
         <span className="min-w-0 text-xs font-medium leading-tight sm:text-sm">{label}</span>
       </div>
       <p className={`mt-3 text-xl font-bold sm:text-2xl ${tone}`}>{value}</p>
     </Card>
-
   );
 }
-
-
-
 
 function MensagemDialog({
   cliente,
@@ -460,9 +458,6 @@ function MensagemDialog({
   );
 }
 
-
-
-
 function MinhaContaVendedorDialog({
   open,
   onOpenChange,
@@ -521,13 +516,17 @@ function MinhaContaVendedorDialog({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="vmcemail">E-mail</Label>
-            <Input id="vmcemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input
+              id="vmcemail"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="vmcsenha">Nova senha (opcional)</Label>
-            <Input
+            <PasswordInput
               id="vmcsenha"
-              type="password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               placeholder="Deixe em branco para manter"

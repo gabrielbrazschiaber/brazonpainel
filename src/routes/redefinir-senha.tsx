@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { BrazonLogo } from "@/components/BrazonLogo";
@@ -37,7 +38,9 @@ function RedefinirSenhaPage() {
       try {
         const url = new URL(window.location.href);
         const hashParams = new URLSearchParams(
-          window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash,
+          window.location.hash.startsWith("#")
+            ? window.location.hash.slice(1)
+            : window.location.hash,
         );
         const accessToken = hashParams.get("access_token");
         const refreshToken = hashParams.get("refresh_token");
@@ -131,7 +134,11 @@ function RedefinirSenhaPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md p-8">
         <div className="mb-6 text-center">
-          <BrazonLogo className="mb-4 justify-center" symbolClassName="h-10 w-10" textClassName="text-2xl" />
+          <BrazonLogo
+            className="mb-4 justify-center"
+            symbolClassName="h-10 w-10"
+            textClassName="text-2xl"
+          />
           <h1 className="text-2xl font-bold text-foreground">Definir nova senha</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Escolha uma senha forte para proteger sua conta.
@@ -152,9 +159,9 @@ function RedefinirSenhaPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="senha">Nova senha</Label>
-              <Input
+              <PasswordInput
+                mostrarRegras
                 id="senha"
-                type="password"
                 autoComplete="new-password"
                 required
                 value={senha}
@@ -164,9 +171,9 @@ function RedefinirSenhaPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirma">Confirmar senha</Label>
-              <Input
+              <PasswordInput
+                mostrarRegras
                 id="confirma"
-                type="password"
                 autoComplete="new-password"
                 required
                 value={confirma}
@@ -174,7 +181,11 @@ function RedefinirSenhaPage() {
                 placeholder="Repita a nova senha"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={submitting || loading || processandoLink}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={submitting || loading || processandoLink}
+            >
               {submitting ? "Salvando..." : "Salvar nova senha"}
             </Button>
           </form>
