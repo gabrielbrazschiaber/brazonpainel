@@ -225,7 +225,11 @@ function ClienteArea() {
           </div>
         </div>
 
+        {/* Lembretes automáticos de vencimento */}
+        <LembretesVencimento />
+
         {/* Mensagem do vendedor */}
+
         {cliente?.mensagem_vendedor && (
           <div className="mt-6 flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/15 p-3 sm:p-4">
             <Bell className="mt-0.5 h-5 w-5 shrink-0 text-warning-foreground" />
