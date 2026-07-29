@@ -86,7 +86,10 @@ function CadastroPage() {
     emailEnviado: boolean;
     cupom: CupomAplicado | null;
     planoNome: string | null;
+    faturaUrl: string | null;
+    faturaValor: number | null;
   } | null>(null);
+
   const [cooldown, setCooldown] = useState(0);
   const [codigoCupom, setCodigoCupom] = useState(cupomUrl ?? "");
   const [cupomAplicado, setCupomAplicado] = useState<CupomAplicado | null>(null);
