@@ -158,14 +158,80 @@ export interface CobrancaParams {
   descricao?: string;
 }
 
-// Gera uma cobrança no Asaas e registra na tabela de pagamentos do banco
+// Busca a cobrança em aberto de uma assinatura (a próxima a ser paga).
+async function buscarCobrancaAtualDaAssinatura(
+  subscriptionId: string,
+  config: ConfigAsaas
+) {
+  const resp = await fetch(
+    `${config.baseUrl}/subscriptions/${subscriptionId}/payments?limit=20`,
+    { headers: asaasHeaders(config.apiKey) }
+  );
+  if (!resp.ok) {
+    console.error('[Asaas] Falha ao listar cobranças da assinatura:', (await resp.text()).slice(0, 300));
+    return null;
+  }
+  const lista = await lerJson(resp, 'Listar Cobranças da Assinatura');
+  const pagamentos: any[] = Array.isArray(lista?.data) ? lista.data : [];
+  const abertos = pagamentos
+    .filter((p) => ['PENDING', 'AWAITING_RISK_ANALYSIS', 'OVERDUE'].includes(p.status))
+    .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)));
+  return abertos[0] ?? pagamentos[0] ?? null;
+}
+
+// Registra (ou atualiza) o pagamento localmente para não duplicar linhas.
+async function registrarPagamentoLocal(
+  clienteId: string,
+  subscriptionId: string,
+  pagamentoAsaas: any
+) {
+  if (!pagamentoAsaas?.id) return null;
+
+  const invoiceUrl = pagamentoAsaas.invoiceUrl || pagamentoAsaas.bankSlipUrl || null;
+
+  const { data: existente } = await supabaseAdmin
+    .from('pagamentos')
+    .select('id')
+    .eq('asaas_payment_id', pagamentoAsaas.id)
+    .maybeSingle();
+
+  if (existente) {
+    await supabaseAdmin
+      .from('pagamentos')
+      .update({ invoice_url: invoiceUrl, asaas_subscription_id: subscriptionId })
+      .eq('id', existente.id);
+    return existente.id;
+  }
+
+  const { data: novo, error } = await supabaseAdmin
+    .from('pagamentos')
+    .insert({
+      cliente_id: clienteId,
+      valor: Number(pagamentoAsaas.value ?? 0),
+      status: 'pendente',
+      asaas_payment_id: pagamentoAsaas.id,
+      asaas_subscription_id: subscriptionId,
+      invoice_url: invoiceUrl,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('[Asaas] Erro ao registrar pagamento local:', error.message);
+    return null;
+  }
+  return novo.id;
+}
+
+// Cria (ou reaproveita) uma ASSINATURA MENSAL recorrente no Asaas e devolve
+// a cobrança em aberto do ciclo atual para o cliente pagar.
 export async function gerarCobrancaAsaas(params: CobrancaParams) {
   const config = await obterConfigAsaas();
 
   // 1. Busca os dados do cliente no banco
   const { data: cliente, error: cliErr } = await supabaseAdmin
     .from('clientes')
-    .select('id, user_id, asaas_customer_id, cpf_cnpj, telefone')
+    .select('id, user_id, asaas_customer_id, asaas_subscription_id, cpf_cnpj, telefone')
     .eq('id', params.clienteId)
     .maybeSingle();
 
@@ -191,7 +257,6 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
   const email = profile?.email || '';
   const telefone = (cliente.telefone || '').replace(/\D/g, '') || null;
 
-
   // 2. Obtém ou cria o cliente no Asaas
   const asaasCustomerId = await obterOuCriarClienteAsaas(
     cliente.id,
@@ -203,60 +268,120 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
     config
   );
 
-  // 3. Cria a cobrança no Asaas
-  console.log(`[Asaas] Gerando cobrança de ${params.valor} via ${params.tipoPagamento} para ${nome}...`);
+  const descricao = params.descricao || 'Assinatura mensal Brazon';
 
-  const response = await fetch(`${config.baseUrl}/payments`, {
+  // 3. Se já existe assinatura ativa, reaproveita (mantendo a recorrência)
+  //    e apenas garante que o valor/forma de pagamento estejam atualizados.
+  if (cliente.asaas_subscription_id) {
+    const respAssinatura = await fetch(
+      `${config.baseUrl}/subscriptions/${cliente.asaas_subscription_id}`,
+      { headers: asaasHeaders(config.apiKey) }
+    );
+
+    if (respAssinatura.ok) {
+      const assinatura = await lerJson(respAssinatura, 'Consultar Assinatura');
+
+      if (assinatura.status === 'ACTIVE' && !assinatura.deleted) {
+        // Mantém valor e forma de pagamento sincronizados com o plano atual.
+        if (
+          Number(assinatura.value) !== Number(params.valor) ||
+          assinatura.billingType !== params.tipoPagamento
+        ) {
+          const upd = await fetch(`${config.baseUrl}/subscriptions/${assinatura.id}`, {
+            method: 'POST',
+            headers: asaasHeaders(config.apiKey, true),
+            body: JSON.stringify({
+              value: params.valor,
+              billingType: params.tipoPagamento,
+              description: descricao,
+              updatePendingPayments: true,
+            }),
+          });
+          if (!upd.ok) {
+            console.error('[Asaas] Falha ao atualizar assinatura:', (await upd.text()).slice(0, 300));
+          }
+        }
+
+        const atual = await buscarCobrancaAtualDaAssinatura(assinatura.id, config);
+        if (atual) {
+          const pagamentoIdLocal = await registrarPagamentoLocal(cliente.id, assinatura.id, atual);
+          return {
+            pagamentoIdLocal,
+            assinaturaId: assinatura.id,
+            recorrente: true,
+            asaasPaymentId: atual.id,
+            invoiceUrl: atual.invoiceUrl ?? null,
+            bankSlipUrl: atual.bankSlipUrl ?? null,
+            pixCopyPaste: atual.pixCopyPaste ?? null,
+            status: atual.status,
+          };
+        }
+      }
+    } else {
+      console.error(
+        '[Asaas] Assinatura anterior inválida, criando uma nova:',
+        (await respAssinatura.text()).slice(0, 300)
+      );
+    }
+  }
+
+  // 4. Cria a ASSINATURA mensal recorrente no Asaas
+  console.log(
+    `[Asaas] Criando assinatura mensal de ${params.valor} via ${params.tipoPagamento} para ${nome}...`
+  );
+
+  const response = await fetch(`${config.baseUrl}/subscriptions`, {
     method: 'POST',
     headers: asaasHeaders(config.apiKey, true),
     body: JSON.stringify({
       customer: asaasCustomerId,
       billingType: params.tipoPagamento,
       value: params.valor,
-      dueDate: params.dataVencimento,
-      description: params.descricao || 'Mensalidade da assinatura Brazon',
-      externalReference: cliente.id
-    })
+      nextDueDate: params.dataVencimento,
+      cycle: 'MONTHLY',
+      description: descricao,
+      externalReference: cliente.id,
+    }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[Asaas] Falha ao criar cobrança:', errorText);
+    console.error('[Asaas] Falha ao criar assinatura:', errorText);
     // Detalhe do provedor fica apenas no log do servidor.
     throw new Error(
-      'Não foi possível gerar a cobrança no momento. Tente novamente em instantes ou fale com seu vendedor.'
+      'Não foi possível gerar a cobrança recorrente no momento. Tente novamente em instantes ou fale com seu vendedor.'
     );
   }
 
-  const data = await lerJson(response, 'Criar Cobrança');
+  const assinatura = await lerJson(response, 'Criar Assinatura');
 
-  // 4. Registra o pagamento pendente localmente no banco
-  const { data: novoPagamento, error: pagErr } = await supabaseAdmin
-    .from('pagamentos')
-    .insert({
-      cliente_id: cliente.id,
-      valor: params.valor,
-      status: 'pendente',
-      asaas_payment_id: data.id,
-      invoice_url: data.invoiceUrl || data.bankSlipUrl || null
-    })
-    .select()
-    .single();
-
-  if (pagErr) {
-    console.error('[Asaas] Erro ao registrar pagamento local:', pagErr.message);
+  // 5. Guarda a assinatura no cliente para os próximos ciclos
+  const { error: updErr } = await supabaseAdmin
+    .from('clientes')
+    .update({ asaas_subscription_id: assinatura.id })
+    .eq('id', cliente.id);
+  if (updErr) {
+    console.error('[Asaas] Erro ao salvar asaas_subscription_id:', updErr.message);
   }
 
-  // 5. Retorna as informações úteis (ex: link de checkout, código pix, etc.)
+  // 6. Busca a primeira cobrança gerada pela assinatura
+  const primeira = await buscarCobrancaAtualDaAssinatura(assinatura.id, config);
+  const pagamentoIdLocal = primeira
+    ? await registrarPagamentoLocal(cliente.id, assinatura.id, primeira)
+    : null;
+
   return {
-    pagamentoIdLocal: novoPagamento?.id || null,
-    asaasPaymentId: data.id,
-    invoiceUrl: data.invoiceUrl, // URL da fatura para o cliente pagar
-    bankSlipUrl: data.bankSlipUrl || null, // Se boleto, link do PDF
-    pixCopyPaste: data.pixCopyPaste || null, // Se Pix, código copia e cola
-    status: data.status
+    pagamentoIdLocal,
+    assinaturaId: assinatura.id,
+    recorrente: true,
+    asaasPaymentId: primeira?.id ?? null,
+    invoiceUrl: primeira?.invoiceUrl ?? null,
+    bankSlipUrl: primeira?.bankSlipUrl ?? null,
+    pixCopyPaste: primeira?.pixCopyPaste ?? null,
+    status: primeira?.status ?? assinatura.status,
   };
 }
+
 
 // Testa a chave/ambiente do Asaas consultando os dados da conta.
 export async function testarConexaoAsaas() {

@@ -120,12 +120,12 @@ function ClienteArea() {
       });
       const url = res.invoiceUrl || res.bankSlipUrl;
       if (url) {
-        toast.success("Cobrança gerada!", {
-          description: "Abrindo a página de pagamento do Asaas...",
+        toast.success("Assinatura mensal gerada!", {
+          description: "A cobrança se repete todo mês. Abrindo a página de pagamento...",
         });
         window.open(url, "_blank", "noopener,noreferrer");
       } else {
-        toast.success("Cobrança gerada com sucesso.");
+        toast.success("Assinatura mensal criada com sucesso.");
       }
       await load();
     } catch (err) {
@@ -256,7 +256,7 @@ function ClienteArea() {
         <section className="mt-10">
           <h2 className="text-lg font-bold text-foreground">Renovar assinatura</h2>
           <p className="text-sm text-muted-foreground">
-            Renove a assinatura do seu plano atual.
+            Ative a cobrança mensal recorrente do seu plano atual — o pagamento é gerado automaticamente todo mês.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {planos
@@ -279,7 +279,7 @@ function ClienteArea() {
                     onClick={() => handleRenovar(p)}
                     disabled={renovando !== null}
                   >
-                    {renovando === p.id ? "Gerando cobrança..." : "Renovar via Asaas"}
+                    {renovando === p.id ? "Gerando cobrança..." : "Assinar mensalmente (recorrente)"}
                   </Button>
                 </Card>
               ))}
@@ -290,7 +290,7 @@ function ClienteArea() {
             )}
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Pagamento processado com segurança pela Asaas.
+            Pagamento recorrente mensal processado com segurança pela Asaas. Você pode cancelar quando quiser falando com seu vendedor.
           </p>
         </section>
 

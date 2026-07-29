@@ -185,10 +185,61 @@ Deno.serve(async (req) => {
         console.warn('[Asaas Webhook] Erro ao registrar log de auditoria:', auditErr)
       }
     } else {
-      console.warn(`[Asaas Webhook] Nenhum pagamento local correspondente encontrado para o asaas_payment_id: ${asaasPaymentId}`)
-      processingResult = 'NOT_FOUND'
-      errorMessage = `Nenhum pagamento local encontrado para ${asaasPaymentId}`
+      // Cobranças de ciclos futuros são criadas pelo Asaas (assinatura recorrente)
+      // e ainda não existem localmente: registramos aqui.
+      const clienteRef = payment.externalReference ?? null
+      let clienteId: string | null = null
+
+      if (clienteRef) {
+        const { data: cli } = await supabase
+          .from('clientes')
+          .select('id')
+          .eq('id', clienteRef)
+          .maybeSingle()
+        clienteId = cli?.id ?? null
+      }
+
+      if (!clienteId && payment.subscription) {
+        const { data: cli } = await supabase
+          .from('clientes')
+          .select('id')
+          .eq('asaas_subscription_id', payment.subscription)
+          .maybeSingle()
+        clienteId = cli?.id ?? null
+      }
+
+      if (clienteId) {
+        const { error: insErr } = await supabase.from('pagamentos').insert({
+          cliente_id: clienteId,
+          valor: Number(payment.value ?? 0),
+          status: mappedPaymentStatus,
+          data_pagamento:
+            mappedPaymentStatus === 'pago' ? new Date().toISOString().split('T')[0] : null,
+          asaas_payment_id: asaasPaymentId,
+          asaas_subscription_id: payment.subscription ?? null,
+          invoice_url: payment.invoiceUrl ?? payment.bankSlipUrl ?? null,
+        })
+
+        if (insErr) {
+          console.error('[Asaas Webhook] Erro ao criar pagamento recorrente:', insErr.message)
+          processingResult = 'ERROR'
+          errorMessage = insErr.message
+        } else {
+          processingResult = 'CREATED'
+          const clienteStatus: ClienteStatus =
+            mappedPaymentStatus === 'vencido' ? 'vencido' : 'ativo'
+          await supabase
+            .from('clientes')
+            .update({ status: clienteStatus, updated_at: new Date().toISOString() })
+            .eq('id', clienteId)
+        }
+      } else {
+        console.warn(`[Asaas Webhook] Nenhum cliente correspondente para o pagamento ${asaasPaymentId}`)
+        processingResult = 'NOT_FOUND'
+        errorMessage = `Nenhum cliente local encontrado para ${asaasPaymentId}`
+      }
     }
+
 
     await logWebhook(supabase, event, asaasPaymentId, asaasStatus, payload, processingResult, errorMessage)
 
