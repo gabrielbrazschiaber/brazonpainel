@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VendedorRouteImport } from './routes/vendedor'
 import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
+import { Route as TarefasRouteImport } from './routes/tarefas'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as MeusAceitesRouteImport } from './routes/meus-aceites'
@@ -31,6 +32,11 @@ const VendedorRoute = VendedorRouteImport.update({
 const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
   id: '/termos-de-uso',
   path: '/termos-de-uso',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TarefasRoute = TarefasRouteImport.update({
+  id: '/tarefas',
+  path: '/tarefas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tarefas': typeof TarefasRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tarefas': typeof TarefasRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tarefas': typeof TarefasRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/meus-aceites'
     | '/redefinir-senha'
     | '/sitemap.xml'
+    | '/tarefas'
     | '/termos-de-uso'
     | '/vendedor'
     | '/api/public/ref-visita'
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/meus-aceites'
     | '/redefinir-senha'
     | '/sitemap.xml'
+    | '/tarefas'
     | '/termos-de-uso'
     | '/vendedor'
     | '/api/public/ref-visita'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/meus-aceites'
     | '/redefinir-senha'
     | '/sitemap.xml'
+    | '/tarefas'
     | '/termos-de-uso'
     | '/vendedor'
     | '/api/public/ref-visita'
@@ -194,6 +206,7 @@ export interface RootRouteChildren {
   MeusAceitesRoute: typeof MeusAceitesRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TarefasRoute: typeof TarefasRoute
   TermosDeUsoRoute: typeof TermosDeUsoRoute
   VendedorRoute: typeof VendedorRoute
   ApiPublicRefVisitaRoute: typeof ApiPublicRefVisitaRoute
@@ -215,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/termos-de-uso'
       fullPath: '/termos-de-uso'
       preLoaderRoute: typeof TermosDeUsoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tarefas': {
+      id: '/tarefas'
+      path: '/tarefas'
+      fullPath: '/tarefas'
+      preLoaderRoute: typeof TarefasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -306,6 +326,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeusAceitesRoute: MeusAceitesRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TarefasRoute: TarefasRoute,
   TermosDeUsoRoute: TermosDeUsoRoute,
   VendedorRoute: VendedorRoute,
   ApiPublicRefVisitaRoute: ApiPublicRefVisitaRoute,
