@@ -1240,9 +1240,24 @@ function ClientesTab({
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
+                    {c.asaas_subscription_id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={reprocessando === c.id}
+                        onClick={() => reprocessarCliente(c)}
+                        aria-label="Reprocessar sincronização com o Asaas"
+                        title="Reprocessar sincronização com o Asaas"
+                      >
+                        <RefreshCw
+                          className={`h-4 w-4 ${reprocessando === c.id ? "animate-spin" : ""}`}
+                        />
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" onClick={() => setEditing(c)}>
                       Editar
                     </Button>
+
                     <Button
                       variant="ghost"
                       size="icon"
