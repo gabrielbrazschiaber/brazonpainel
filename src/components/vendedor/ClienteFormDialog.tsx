@@ -129,6 +129,11 @@ export function ClienteFormDialog({
             toast.success("Dados atualizados!", {
               description: "A cobrança recorrente no Asaas foi ajustada para o novo valor.",
             });
+          } else if (sync && sync.enfileirado) {
+            toast.info("Dados atualizados. Sincronização do Asaas agendada.", {
+              description:
+                "O Asaas está indisponível no momento. A cobrança será ajustada automaticamente em instantes (novas tentativas com intervalo crescente).",
+            });
           } else if (sync && !sync.sincronizado) {
             toast.warning("Dados atualizados, mas a cobrança não foi sincronizada.", {
               description:
@@ -136,6 +141,7 @@ export function ClienteFormDialog({
                   ? "A assinatura no Asaas não está ativa. Gere uma nova cobrança."
                   : "Verifique a integração do Asaas nas Configurações.",
             });
+
           } else {
             toast.success("Dados do cliente atualizados!");
           }

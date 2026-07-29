@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      asaas_sync_queue: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          id: string
+          max_tentativas: number
+          proxima_tentativa_em: string
+          status: string
+          tentativas: number
+          tipo: string
+          ultimo_erro: string | null
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          id?: string
+          max_tentativas?: number
+          proxima_tentativa_em?: string
+          status?: string
+          tentativas?: number
+          tipo?: string
+          ultimo_erro?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          id?: string
+          max_tentativas?: number
+          proxima_tentativa_em?: string
+          status?: string
+          tentativas?: number
+          tipo?: string
+          ultimo_erro?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asaas_sync_queue_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asaas_webhook_logs: {
         Row: {
           created_at: string
