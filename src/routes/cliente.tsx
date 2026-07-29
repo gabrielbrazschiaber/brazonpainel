@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -23,7 +23,7 @@ import {
 import { formatCurrency, formatDate, daysUntil, initials } from "@/lib/format";
 
 import { toast } from "sonner";
-import { Bell, CalendarClock, CreditCard, BadgeCheck, RefreshCw } from "lucide-react";
+import { Bell, CalendarClock, CreditCard, BadgeCheck, RefreshCw, ClipboardList } from "lucide-react";
 import { SairButton } from "@/components/SairButton";
 import { useServerFn } from "@tanstack/react-start";
 import { gerarCobranca } from "@/lib/asaas.functions";

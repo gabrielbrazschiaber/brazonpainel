@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -47,6 +47,7 @@ import {
   MessageSquare,
   Pencil,
   UserCog,
+  ClipboardList,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
