@@ -1416,17 +1416,46 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
   const [novaChave, setNovaChave] = useState("");
   const [saving, setSaving] = useState(false);
   const [testando, setTestando] = useState(false);
-  const [webhookToken, setWebhookToken] = useState("");
+  const [tokenMascara, setTokenMascara] = useState("");
+  const [tokenRevelado, setTokenRevelado] = useState<string | null>(null);
+  const [tokenDefinido, setTokenDefinido] = useState(false);
+  const [carregandoToken, setCarregandoToken] = useState(false);
   const [copiado, setCopiado] = useState<"token" | "url" | null>(null);
   const testar = useServerFn(testarChaveAsaas);
   const salvar = useServerFn(salvarConfiguracoes);
   const carregarToken = useServerFn(obterWebhookToken);
 
   useEffect(() => {
-    carregarToken({})
-      .then((r) => setWebhookToken(r.token))
-      .catch(() => setWebhookToken(""));
+    carregarToken({ data: {} })
+      .then((r) => {
+        setTokenMascara(r.mascara);
+        setTokenDefinido(r.definido);
+      })
+      .catch(() => {
+        setTokenMascara("");
+        setTokenDefinido(false);
+      });
   }, [carregarToken]);
+
+  /** Busca o token completo sob demanda (não fica na página por padrão). */
+  async function obterTokenCompleto(): Promise<string | null> {
+    if (tokenRevelado) return tokenRevelado;
+    setCarregandoToken(true);
+    try {
+      const r = await carregarToken({ data: { revelar: true } });
+      if (!r.token) {
+        toast.error("Nenhum token configurado no servidor.");
+        return null;
+      }
+      setTokenRevelado(r.token);
+      return r.token;
+    } catch {
+      toast.error("Não foi possível ler o token.");
+      return null;
+    } finally {
+      setCarregandoToken(false);
+    }
+  }
 
   async function copiar(texto: string, qual: "token" | "url") {
     try {
@@ -1438,6 +1467,12 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
       toast.error("Não foi possível copiar. Copie manualmente.");
     }
   }
+
+  async function copiarToken() {
+    const t = await obterTokenCompleto();
+    if (t) await copiar(t, "token");
+  }
+
 
 
 
