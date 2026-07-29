@@ -87,6 +87,7 @@ export type Database = {
         Row: {
           anotacoes: string | null
           asaas_customer_id: string | null
+          asaas_subscription_id: string | null
           cpf_cnpj: string | null
           created_at: string
           data_vencimento: string | null
@@ -104,6 +105,7 @@ export type Database = {
         Insert: {
           anotacoes?: string | null
           asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           data_vencimento?: string | null
@@ -121,6 +123,7 @@ export type Database = {
         Update: {
           anotacoes?: string | null
           asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           data_vencimento?: string | null
@@ -242,6 +245,7 @@ export type Database = {
       pagamentos: {
         Row: {
           asaas_payment_id: string | null
+          asaas_subscription_id: string | null
           cliente_id: string
           created_at: string
           data_pagamento: string | null
@@ -253,6 +257,7 @@ export type Database = {
         }
         Insert: {
           asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
           cliente_id: string
           created_at?: string
           data_pagamento?: string | null
@@ -264,6 +269,7 @@ export type Database = {
         }
         Update: {
           asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
           cliente_id?: string
           created_at?: string
           data_pagamento?: string | null
