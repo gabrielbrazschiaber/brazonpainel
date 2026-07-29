@@ -25,8 +25,8 @@ import {
   criarCupomVendedor,
   listarMeusCupons,
   alternarMeuCupom,
-  VALOR_CUPOM_VENDEDOR,
 } from "@/lib/cupons.vendedor.functions";
+import { VALOR_CUPOM_VENDEDOR } from "@/lib/cupons.vendedor";
 import { formatCurrency } from "@/lib/format";
 
 interface CupomRow {
