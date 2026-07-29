@@ -121,13 +121,14 @@ function CadastroPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             {done.emailEnviado ? (
               <>
-                Enviamos um e-mail para <strong>{done.email}</strong> com um link para você definir
-                sua senha de acesso. Verifique também a caixa de spam.
+                Enviamos um e-mail para <strong>{done.email}</strong> com um link para você
+                confirmar o endereço e definir sua senha de acesso. A conta só é ativada depois
+                desse passo. Verifique também a caixa de spam.
               </>
             ) : (
               <>
-                Sua conta foi criada. Para definir sua senha, acesse a tela de login e clique em{" "}
-                <strong>"Esqueci minha senha"</strong> usando o e-mail{" "}
+                Sua conta foi criada. Para confirmar seu e-mail e definir a senha, acesse a tela de
+                login e clique em <strong>"Esqueci minha senha"</strong> usando o e-mail{" "}
                 <strong>{done.email}</strong>.
               </>
             )}
