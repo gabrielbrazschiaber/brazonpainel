@@ -500,3 +500,41 @@ export const atualizarStatusPagamento = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/* ---------------- Fila de sincronização Asaas ---------------- */
+
+/** Lista os itens da fila de sincronização com o Asaas (admin). */
+export const listarFilaAsaas = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("asaas_sync_queue")
+      .select("id, cliente_id, tipo, status, tentativas, max_tentativas, proxima_tentativa_em, ultimo_erro, updated_at, clientes(nome)")
+      .order("updated_at", { ascending: false })
+      .limit(50);
+
+    return { itens: data ?? [] };
+  });
+
+/** Força o processamento imediato da fila de sincronização (admin). */
+export const processarFilaAsaasAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Antecipa os agendamentos para que tudo pendente seja processado agora.
+    await supabaseAdmin
+      .from("asaas_sync_queue")
+      .update({ proxima_tentativa_em: new Date().toISOString() })
+      .eq("status", "pendente");
+
+    const { processarFilaAsaas } = await import("@/lib/asaas-queue.server");
+    const resumo = await processarFilaAsaas(50);
+    return { ok: true, ...resumo };
+  });
