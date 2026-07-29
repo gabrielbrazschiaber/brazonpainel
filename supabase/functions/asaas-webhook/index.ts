@@ -7,6 +7,19 @@ type ClienteStatus = 'ativo' | 'vencido' | 'inadimplente' | 'cancelado';
 // Guarda apenas os campos necessários para auditoria/diagnóstico.
 // O payload bruto do Asaas contém dados pessoais e financeiros do pagador
 // que não precisam ser persistidos.
+// Avança o vencimento do cliente em 1 mês a partir do vencimento da cobrança paga
+// (ciclo MONTHLY da assinatura). Se o Asaas não informar dueDate, usa a data de hoje.
+function proximoVencimento(dueDate?: string | null): string {
+  const base = dueDate ? new Date(`${dueDate}T12:00:00Z`) : new Date()
+  if (Number.isNaN(base.getTime())) return new Date().toISOString().split('T')[0]
+  const dia = base.getUTCDate()
+  const proximo = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 1, 12))
+  // Preserva o dia do mês sem "estourar" para o mês seguinte (ex.: 31 -> 28/29).
+  const ultimoDia = new Date(Date.UTC(proximo.getUTCFullYear(), proximo.getUTCMonth() + 1, 0, 12)).getUTCDate()
+  proximo.setUTCDate(Math.min(dia, ultimoDia))
+  return proximo.toISOString().split('T')[0]
+}
+
 // deno-lint-ignore no-explicit-any
 function resumirPayload(payload: any) {
   if (!payload || typeof payload !== 'object') return null
