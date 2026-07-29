@@ -12,6 +12,7 @@ import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { NovidadesTab } from "@/components/admin/NovidadesTab";
 import { PermissoesTab } from "@/components/admin/PermissoesTab";
 import { CuponsTab } from "@/components/admin/CuponsTab";
+import { ConfiguracoesPage, type SecaoConfiguracao } from "@/components/admin/ConfiguracoesPage";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
@@ -249,16 +250,62 @@ function AdminArea() {
 
   const navItems = [
     { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { value: "vendedores", label: "Vendedores", icon: Users },
-    { value: "admins", label: "Admins", icon: Shield },
-    { value: "planos", label: "Planos", icon: Package },
     { value: "clientes", label: "Clientes", icon: UserCircle },
-    { value: "cupons", label: "Cupons", icon: TicketPercent },
     { value: "novidades", label: "Novidades", icon: Megaphone },
-    { value: "permissoes", label: "Permissões", icon: KeyRound },
     { value: "config", label: "Configurações", icon: Settings },
     { value: "auditoria", label: "Auditoria", icon: ScrollText },
   ] as const;
+
+  const secoesConfig: SecaoConfiguracao[] = [
+    {
+      value: "cupons",
+      label: "Cupons",
+      descricao: "Descontos e histórico de uso",
+      icon: TicketPercent,
+      permissao: "cupons.gerenciar",
+      render: () => <CuponsTab />,
+    },
+    {
+      value: "planos",
+      label: "Planos",
+      descricao: "Valores e disponibilidade",
+      icon: Package,
+      permissao: "planos.gerenciar",
+      render: () => <PlanosTab planos={planos} onChanged={load} />,
+    },
+    {
+      value: "admins",
+      label: "Admins",
+      descricao: "Acessos administrativos",
+      icon: Shield,
+      permissao: "vendedores.ler",
+      render: () => <AdminsTab admins={admins} onChanged={load} />,
+    },
+    {
+      value: "vendedores",
+      label: "Vendedores",
+      descricao: "Equipe de vendas e comissões",
+      icon: Users,
+      permissao: "vendedores.ler",
+      render: () => <VendedoresTab vendedores={vendedores} onChanged={load} />,
+    },
+    {
+      value: "permissoes",
+      label: "Permissões",
+      descricao: "O que cada papel pode fazer",
+      icon: KeyRound,
+      permissao: "configuracoes.gerenciar",
+      render: () => <PermissoesTab />,
+    },
+    {
+      value: "geral",
+      label: "Geral e integrações",
+      descricao: "Dados do app, Asaas e webhook",
+      icon: Settings,
+      permissao: "configuracoes.gerenciar",
+      render: () => <ConfigTab config={config} onSaved={load} />,
+    },
+  ];
 
   return (
     <SidebarProvider>
@@ -300,15 +347,6 @@ function AdminArea() {
               <TabsContent value="dashboard" className="mt-0">
                 <AdminDashboard />
               </TabsContent>
-              <TabsContent value="vendedores" className="mt-0">
-                <VendedoresTab vendedores={vendedores} onChanged={load} />
-              </TabsContent>
-              <TabsContent value="admins" className="mt-0">
-                <AdminsTab admins={admins} onChanged={load} />
-              </TabsContent>
-              <TabsContent value="planos" className="mt-0">
-                <PlanosTab planos={planos} onChanged={load} />
-              </TabsContent>
               <TabsContent value="clientes" className="mt-0">
                 <ClientesTab
                   clientes={clientes}
@@ -317,18 +355,11 @@ function AdminArea() {
                   onChanged={load}
                 />
               </TabsContent>
-              <TabsContent value="cupons" className="mt-0">
-                <CuponsTab />
-              </TabsContent>
               <TabsContent value="novidades" className="mt-0">
                 <NovidadesTab />
               </TabsContent>
-
-              <TabsContent value="permissoes" className="mt-0">
-                <PermissoesTab />
-              </TabsContent>
               <TabsContent value="config" className="mt-0">
-                <ConfigTab config={config} onSaved={load} />
+                <ConfiguracoesPage secoes={secoesConfig} />
               </TabsContent>
               <TabsContent value="auditoria" className="mt-0">
                 <AuditoriaTab />
