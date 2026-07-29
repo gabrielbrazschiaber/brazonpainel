@@ -406,28 +406,36 @@ export function ClienteFormDialog({
               <Erro campo="planoId" />
             </div>
 
+            <div className="grid gap-2 rounded-md border border-border p-3">
+              <Label htmlFor={`${p}serv`}>Serviço extra (opcional)</Label>
+              <Input
+                id={`${p}serv`}
+                value={values.servicoExtra}
+                aria-invalid={invalido("servicoExtra")}
+                onChange={(e) => set("servicoExtra", e.target.value)}
+                placeholder="Ex: Instalação, suporte premium..."
+              />
+              <Erro campo="servicoExtra" />
+              <Label htmlFor={`${p}servval`} className="mt-1">
+                Valor do serviço (R$)
+              </Label>
+              <Input
+                id={`${p}servval`}
+                type="text"
+                inputMode="decimal"
+                value={values.servicoValor}
+                aria-invalid={invalido("servicoValor")}
+                onChange={(e) => set("servicoValor", e.target.value)}
+                placeholder="0,00"
+              />
+              <Erro campo="servicoValor" />
+              <p className="text-xs text-muted-foreground">
+                Esse valor soma ao valor do plano. Mensalidade atual:{" "}
+                <strong>{formatCurrency(mensalidade)}</strong>.
+              </p>
+            </div>
+          </fieldset>
 
-          <div className="grid gap-2 rounded-md border border-border p-3">
-            <Label htmlFor={`${p}serv`}>Serviço extra (opcional)</Label>
-            <Input
-              id={`${p}serv`}
-              value={values.servicoExtra}
-              onChange={(e) => set("servicoExtra", e.target.value)}
-              placeholder="Ex: Instalação, suporte premium..."
-            />
-            <Label htmlFor={`${p}servval`} className="mt-1">
-              Valor do serviço (R$)
-            </Label>
-            <Input
-              id={`${p}servval`}
-              type="text"
-              inputMode="decimal"
-              value={values.servicoValor}
-              onChange={(e) => set("servicoValor", e.target.value)}
-              placeholder="0,00"
-            />
-            <p className="text-xs text-muted-foreground">Esse valor soma ao valor do plano.</p>
-          </div>
 
           {!editando && (
             <>
