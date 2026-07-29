@@ -180,13 +180,13 @@ export function AdminDashboard() {
   }, []);
 
   const loadWebhooks = useCallback(async () => {
-    const { data } = await supabase
-      .from("asaas_webhook_logs")
-      .select("id,event,payment_id,status,payload,processing_result,error_message,created_at")
-      .order("created_at", { ascending: false })
-      .limit(10);
-    setWebhookLogs((data ?? []) as unknown as WebhookLog[]);
-  }, []);
+    try {
+      const { logs } = await carregarWebhookLogs({});
+      setWebhookLogs(logs as unknown as WebhookLog[]);
+    } catch {
+      setWebhookLogs([]);
+    }
+  }, [carregarWebhookLogs]);
 
   useEffect(() => {
     load();

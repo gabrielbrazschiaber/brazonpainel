@@ -622,6 +622,7 @@ function VendedoresTab({
   const criar = useServerFn(criarVendedor);
   const atualizar = useServerFn(atualizarVendedor);
   const excluir = useServerFn(excluirVendedor);
+  const alternarAtivo = useServerFn(alternarVendedorAtivo);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<VendedorRow | null>(null);
   const [nome, setNome] = useState("");
@@ -891,6 +892,7 @@ function VendedoresTab({
 
 /* ---------------- Planos ---------------- */
 function PlanosTab({ planos, onChanged }: { planos: Plano[]; onChanged: () => void }) {
+  const gravarPlano = useServerFn(salvarPlano);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Plano | null>(null);
   const [nome, setNome] = useState("");
