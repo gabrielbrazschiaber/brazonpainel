@@ -1,14 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-async function ensureAdmin(supabase: any, userId: string) {
-  const { data: isAdmin } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (!isAdmin) throw new Error("Apenas administradores podem executar esta ação.");
-}
+import { ensurePermission } from "@/lib/permissions.guard";
 
 const baseSchema = z.object({
   titulo: z.string().trim().min(3).max(160),
@@ -31,7 +24,7 @@ export const criarNovidade = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => criarSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "novidades.gerenciar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -78,7 +71,7 @@ export const atualizarNovidade = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => atualizarSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "novidades.gerenciar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -125,7 +118,7 @@ export const excluirNovidade = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "novidades.gerenciar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("novidades").delete().eq("id", data.id);

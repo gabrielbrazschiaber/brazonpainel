@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { ensurePermission } from "@/lib/permissions.guard";
 
 /** Gera uma senha aleatória e segura de 12 caracteres usando RNG criptográfico. */
 function gerarSenhaAleatoria(): string {
@@ -10,14 +11,6 @@ function gerarSenhaAleatoria(): string {
   return Array.from(bytes)
     .map((b) => charset[b % charset.length])
     .join("");
-}
-
-async function ensureAdmin(supabase: any, userId: string) {
-  const { data: isAdmin } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (!isAdmin) throw new Error("Apenas administradores podem executar esta ação.");
 }
 
 const novoVendedorSchema = z.object({
@@ -34,7 +27,7 @@ export const criarVendedor = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => novoVendedorSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "vendedores.criar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -94,7 +87,7 @@ export const criarAdmin = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => novoAdminSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "vendedores.criar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -131,7 +124,7 @@ export const atualizarMeuPerfil = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => meuPerfilSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "vendedores.editar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -168,7 +161,7 @@ export const atualizarVendedor = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => editarVendedorSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "vendedores.editar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -251,7 +244,7 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => editarClienteAdminSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "clientes.editar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -341,7 +334,7 @@ export const excluirVendedor = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => excluirVendedorSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "vendedores.excluir");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -386,7 +379,7 @@ export const excluirAdmin = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => excluirAdminSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "vendedores.excluir");
 
     if (data.user_id === userId) {
       throw new Error("Você não pode excluir a si mesmo.");
@@ -425,7 +418,7 @@ export const excluirCliente = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => excluirClienteSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "clientes.excluir");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -465,7 +458,7 @@ export const atualizarStatusPagamento = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => statusPagamentoSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "pagamentos.editar_status");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -508,7 +501,7 @@ export const listarFilaAsaas = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "asaas.sincronizar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
@@ -525,7 +518,7 @@ export const processarFilaAsaasAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "asaas.sincronizar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Antecipa os agendamentos para que tudo pendente seja processado agora.
@@ -550,7 +543,7 @@ export const reprocessarSyncCliente = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => reprocessarSyncSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await ensureAdmin(supabase, userId);
+    await ensurePermission(supabase, userId, "asaas.sincronizar");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: cli } = await supabaseAdmin
