@@ -27,6 +27,7 @@ export const clienteFormSchema = z
     mensagem: z.string().trim().max(1000).default(""),
     anotacoes: z.string().trim().max(2000).default(""),
     senha: z.string().default(""),
+    cupom: z.string().trim().max(40).default(""),
   })
   .superRefine((v, ctx) => {
     if (v.senha && v.senha.length < 6) {
@@ -68,6 +69,7 @@ export const clienteFormVazio: ClienteFormValues = {
   mensagem: "",
   anotacoes: "",
   senha: "",
+  cupom: "",
 };
 
 /** Campos comuns enviados ao servidor tanto na criação quanto na edição. */
