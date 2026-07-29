@@ -594,8 +594,22 @@ export async function sincronizarAssinaturaCliente(
  * também é criado sob demanda ao gerar a cobrança, caso este passo falhe.
  */
 export async function provisionarClienteAsaas(
-  clienteId: string
+  clienteId: string,
+  opcoes: { enfileirarSeFalhar?: boolean } = {}
 ): Promise<{ provisionado: boolean; motivo?: string; asaasCustomerId?: string }> {
+  const enfileirar = opcoes.enfileirarSeFalhar !== false;
+  const agendarRetry = async (motivo: string) => {
+    if (!enfileirar) return;
+    try {
+      const { enfileirarSincronizacao } = await import('@/lib/asaas-queue.server');
+      await enfileirarSincronizacao(clienteId, motivo, 'cliente');
+    } catch (e) {
+      console.error(
+        '[Asaas] Falha ao enfileirar provisionamento do cliente:',
+        e instanceof Error ? e.message : e
+      );
+    }
+  };
   try {
     const { data: cliente } = await supabaseAdmin
       .from('clientes')
