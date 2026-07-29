@@ -187,12 +187,14 @@ function CadastroPage() {
 
       });
     } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
       toast.error(
-        e instanceof Error && e.message.includes("upom")
-          ? e.message
+        msg && !msg.toLowerCase().includes("fetch") && !msg.startsWith("[")
+          ? msg
           : "Não foi possível concluir o cadastro. Tente novamente."
       );
       setCooldown(60);
+
     } finally {
       setSaving(false);
     }
