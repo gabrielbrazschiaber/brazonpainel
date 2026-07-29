@@ -231,11 +231,10 @@ function TarefasConteudo({ equipe, home }: { equipe: boolean; home: string }) {
     }
   }
 
-  async function alterar(id: string, patch: Parameters<typeof atualizarTarefa>[0] extends never ? never : {
-    status?: TarefaStatus;
-    prioridade?: TarefaPrioridade;
-    responsavel_id?: string | null;
-  }) {
+  async function alterar(
+    id: string,
+    patch: { status?: TarefaStatus; prioridade?: TarefaPrioridade; responsavel_id?: string | null },
+  ) {
     setAtualizandoId(id);
     try {
       await atualizar({ data: { id, ...patch } });
