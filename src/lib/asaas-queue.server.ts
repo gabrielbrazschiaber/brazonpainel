@@ -22,7 +22,13 @@ export function calcularBackoffMs(tentativas: number): number {
 
 /** Erros que valem retry (indisponibilidade temporária). */
 export function ehFalhaTransitoria(motivo?: string): boolean {
-  return motivo === "erro_rede" || motivo === "asaas_indisponivel" || motivo === "erro";
+  return (
+    motivo === "erro_rede" ||
+    motivo === "asaas_indisponivel" ||
+    motivo === "erro" ||
+    motivo === "falha_asaas" ||
+    motivo === "sem_email"
+  );
 }
 
 export function statusEhTransitorio(status: number): boolean {
