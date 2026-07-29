@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonSymbol } from "@/components/BrazonLogo";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { NovidadesTab } from "@/components/admin/NovidadesTab";
+import { PermissoesTab } from "@/components/admin/PermissoesTab";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
@@ -248,6 +249,7 @@ function AdminArea() {
     { value: "planos", label: "Planos", icon: Package },
     { value: "clientes", label: "Clientes", icon: UserCircle },
     { value: "novidades", label: "Novidades", icon: Megaphone },
+    { value: "permissoes", label: "Permissões", icon: KeyRound },
     { value: "config", label: "Configurações", icon: Settings },
     { value: "auditoria", label: "Auditoria", icon: ScrollText },
   ] as const;
@@ -313,6 +315,9 @@ function AdminArea() {
                 <NovidadesTab />
               </TabsContent>
 
+              <TabsContent value="permissoes" className="mt-0">
+                <PermissoesTab />
+              </TabsContent>
               <TabsContent value="config" className="mt-0">
                 <ConfigTab config={config} onSaved={load} />
               </TabsContent>
