@@ -204,6 +204,12 @@ function ClienteArea() {
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
 
             <StatusBadge status={headerTone()} />
+            <Button asChild variant="ghost" size="sm" className="h-10 w-10 shrink-0 p-0 sm:h-9 sm:w-auto sm:px-3" aria-label="Tarefas">
+              <Link to="/tarefas">
+                <ClipboardList className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Tarefas</span>
+              </Link>
+            </Button>
             <NovidadesSino />
             <SairButton variante="icone" />
           </div>
