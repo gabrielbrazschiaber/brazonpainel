@@ -226,11 +226,18 @@ export const cadastroPublico = createServerFn({ method: "POST" })
 
     // Cria o customer na plataforma de pagamento e guarda o identificador,
     // para que a cobrança possa ser iniciada depois. Falha aqui não bloqueia o cadastro.
-    const { provisionarClienteAsaas } = await import("./asaas.server");
+    const { provisionarClienteAsaas, criarCobrancaInicialCadastro } = await import("./asaas.server");
     const provisionamento = await provisionarClienteAsaas(clienteCriado.id);
 
-
-
+    // Com o customer provisionado e o plano escolhido, já cria a assinatura/cobrança
+    // inicial automaticamente. Falha aqui também não bloqueia o cadastro.
+    let cobranca: Awaited<ReturnType<typeof criarCobrancaInicialCadastro>> = {
+      criada: false,
+      motivo: "sem_provisionamento",
+    };
+    if (provisionamento.provisionado && planoId) {
+      cobranca = await criarCobrancaInicialCadastro(clienteCriado.id);
+    }
 
     // Registro do aceite do Termo de Uso: data/hora + texto integral aceito.
     // O texto vem sempre do servidor, nunca do cliente.
@@ -251,7 +258,14 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       termos_versao: TERMOS_VERSAO,
       cupom: cupomInfo,
       pagamento_pronto: provisionamento.provisionado,
+      cobranca: {
+        criada: cobranca.criada,
+        invoice_url: cobranca.invoiceUrl ?? null,
+        valor: cobranca.valor ?? null,
+        desconto_aplicado: cobranca.descontoAplicado ?? 0,
+      },
     };
+
 
 
 
