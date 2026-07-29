@@ -1,6 +1,8 @@
 import { useEffect, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth, roleHome, type AppRole } from "@/lib/auth";
+import { TermosGate } from "@/components/TermosGate";
+
 
 export function RequireRole({
   role,
@@ -31,6 +33,6 @@ export function RequireRole({
     );
   }
 
-  return <>{children}</>;
+  return <TermosGate>{children}</TermosGate>;
 }
 
