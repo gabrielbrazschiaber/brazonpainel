@@ -21,7 +21,8 @@ import {
 import { formatCurrency, formatDate, daysUntil, initials } from "@/lib/format";
 
 import { toast } from "sonner";
-import { Bell, CalendarClock, CreditCard, BadgeCheck, LogOut, RefreshCw } from "lucide-react";
+import { Bell, CalendarClock, CreditCard, BadgeCheck, RefreshCw } from "lucide-react";
+import { SairButton } from "@/components/SairButton";
 import { useServerFn } from "@tanstack/react-start";
 import { gerarCobranca } from "@/lib/asaas.functions";
 
@@ -65,7 +66,7 @@ interface Pagamento {
 }
 
 function ClienteArea() {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
@@ -164,9 +165,7 @@ function ClienteArea() {
 
             <StatusBadge status={headerTone()} />
             <NovidadesSino />
-            <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" title="Sair">
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <SairButton variante="icone" />
           </div>
 
         </div>

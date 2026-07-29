@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { Button } from "@/components/ui/button";
+import { SairButton } from "@/components/SairButton";
+import { useAuth, roleHome } from "@/lib/auth";
 import { ChevronLeft } from "lucide-react";
 import {
   TERMOS_ATUALIZADO_EM,
@@ -25,17 +27,23 @@ export const Route = createFileRoute("/termos-de-uso")({
 });
 
 function TermosDeUsoPage() {
+  const { session, role } = useAuth();
   return (
     <div className="min-h-screen bg-background px-4 py-8 md:py-12">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-6 flex items-center gap-4">
-          <Link to="/login">
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <Link to={session ? roleHome(role) : "/login"}>
             <Button variant="ghost" size="sm" className="gap-1 pl-2">
               <ChevronLeft className="h-4 w-4" />
               Voltar
             </Button>
           </Link>
           <BrazonLogo />
+          {session ? (
+            <div className="ml-auto">
+              <SairButton variante="texto" />
+            </div>
+          ) : null}
         </div>
 
         <Card className="p-6 md:p-10">

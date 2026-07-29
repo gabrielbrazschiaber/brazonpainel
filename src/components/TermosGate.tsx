@@ -8,6 +8,7 @@ import {
   TERMOS_SECOES,
   TERMOS_VERSAO,
 } from "@/lib/termos";
+import { useSair } from "@/lib/use-sair";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,7 +21,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
  * do Termo de Uso (por exemplo, após uma atualização de versão).
  */
 export function TermosGate({ children }: { children: ReactNode }) {
-  const { session, signOut } = useAuth();
+  const { session } = useAuth();
+  const { sair, saindo } = useSair();
   const verificar = useServerFn(statusAceiteTermos);
   const aceitar = useServerFn(registrarAceiteTermos);
 
@@ -120,7 +122,7 @@ export function TermosGate({ children }: { children: ReactNode }) {
               </Label>
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="ghost" onClick={() => signOut()} disabled={salvando}>
+              <Button variant="ghost" onClick={() => void sair()} disabled={salvando || saindo}>
                 Sair da conta
               </Button>
               <Button onClick={confirmar} disabled={!marcado || salvando}>
