@@ -1076,6 +1076,33 @@ function ClientesTab({
     [vendedores],
   );
   const excluir = useServerFn(excluirCliente);
+  const reprocessarSync = useServerFn(reprocessarSyncCliente);
+  const [reprocessando, setReprocessando] = useState<string | null>(null);
+
+  const reprocessarCliente = async (c: ClienteRow) => {
+    setReprocessando(c.id);
+    try {
+      const res = await reprocessarSync({ data: { cliente_id: c.id } });
+      if (res.ok) {
+        toast.success("Sincronização concluída!", {
+          description: `A cobrança de ${c.nome ?? "cliente"} foi atualizada no Asaas.`,
+        });
+      } else if (res.motivo === "sem_assinatura") {
+        toast.warning("Cliente sem assinatura ativa no Asaas.");
+      } else {
+        toast.info("Nova tentativa criada na fila.", {
+          description:
+            "Não foi possível sincronizar agora. A tentativa ficou agendada e será reprocessada automaticamente.",
+        });
+      }
+      onReload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao reprocessar a sincronização.");
+    } finally {
+      setReprocessando(null);
+    }
+  };
+
   const [editing, setEditing] = useState<ClienteRow | null>(null);
   const [aExcluir, setAExcluir] = useState<ClienteRow | null>(null);
   const [excluindo, setExcluindo] = useState(false);
