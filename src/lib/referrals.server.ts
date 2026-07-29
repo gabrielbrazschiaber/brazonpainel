@@ -92,20 +92,21 @@ export interface ReferralLead {
 export async function listarLeadsReferral(
   supabase: SB,
   userId: string,
+  dias?: number | null,
 ): Promise<ReferralLead[]> {
-  const { data: vend } = await supabase
-    .from("vendedores")
-    .select("id")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (!vend) return [];
+  const vendedorId = await vendedorDoUsuario(supabase, userId);
+  if (!vendedorId) return [];
 
-  const { data: leads } = await supabaseAdmin
+  const desde = inicioPeriodo(dias);
+  let qLeads = supabaseAdmin
     .from("clientes")
     .select("id, user_id, created_at")
-    .eq("vendedor_id", vend.id as string)
+    .eq("vendedor_id", vendedorId)
     .eq("via_link", true)
     .order("created_at", { ascending: false });
+  if (desde) qLeads = qLeads.gte("created_at", desde);
+  const { data: leads } = await qLeads;
+
 
   const rows = leads ?? [];
   if (!rows.length) return [];
