@@ -130,8 +130,9 @@ export function clientePayloadComum(v: ClienteFormValues) {
     plano_id: v.planoId || null,
     servico_extra: v.servicoExtra || null,
     servico_extra_valor: parseValorBR(v.servicoValor),
-    cpf_cnpj: v.cpfCnpj || null,
-    telefone: v.telefone || null,
+    cpf_cnpj: somenteDigitos(v.cpfCnpj) || null,
+    telefone: somenteDigitos(v.telefone) || null,
+
     anotacoes: v.anotacoes || null,
   };
 }
