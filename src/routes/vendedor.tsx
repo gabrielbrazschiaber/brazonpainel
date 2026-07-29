@@ -342,11 +342,12 @@ function VendedorArea() {
         </section>
       </div>
 
-      <CadastrarClienteDialog
+      <ClienteFormDialog
+        mode="criar"
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         planos={planos}
-        onCreated={load}
+        onSaved={load}
       />
 
       <MensagemDialog
@@ -355,10 +356,11 @@ function VendedorArea() {
         onSaved={load}
       />
 
-      <EditarClienteDialog
+      <ClienteFormDialog
+        mode="editar"
         cliente={editCliente}
         planos={planos}
-        onOpenChange={(v) => !v && setEditCliente(null)}
+        onOpenChange={(v: boolean) => !v && setEditCliente(null)}
         onSaved={load}
       />
 
