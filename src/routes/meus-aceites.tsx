@@ -5,6 +5,7 @@ import { ChevronLeft, FileCheck2 } from "lucide-react";
 import { listarMeusAceites } from "@/lib/termos.functions";
 import { useAuth, roleHome } from "@/lib/auth";
 import { BrazonLogo } from "@/components/BrazonLogo";
+import { SairButton } from "@/components/SairButton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -98,6 +99,9 @@ function MeusAceitesPage() {
             </Button>
           </Link>
           <BrazonLogo />
+          <div className="ml-auto">
+            <SairButton variante="texto" />
+          </div>
         </div>
 
         <Card className="p-6 md:p-8">

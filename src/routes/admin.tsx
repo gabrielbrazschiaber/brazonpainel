@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { useSair } from "@/lib/use-sair";
+import { SairButton } from "@/components/SairButton";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -320,6 +321,7 @@ function AdminArea() {
               </h1>
             </div>
             <NovidadesSino />
+            <SairButton variante="icone" />
           </header>
 
 
