@@ -183,9 +183,10 @@ function VendedorArea() {
     <div className="min-h-screen bg-background">
       {/* Barra superior fixa */}
       <header className="glass-header sticky top-0 z-30 border-b border-border/60">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <BrazonLogo />
-          <div className="flex items-center gap-2">
+        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-3 sm:flex sm:justify-between sm:gap-4 sm:px-4">
+          <div className="min-w-0"><BrazonLogo /></div>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+
             <Button onClick={() => setDialogOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Cadastrar cliente</span>
@@ -204,7 +205,7 @@ function VendedorArea() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-8">
         {/* Cabeçalho */}
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
@@ -229,7 +230,7 @@ function VendedorArea() {
 
 
         {/* Métricas */}
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <MetricCard icon={Users} label="Total de clientes" value={String(metrics.total)} />
           <MetricCard icon={CheckCircle2} label="Ativos" value={String(metrics.ativos)} tone="text-success" />
           <MetricCard
@@ -377,15 +378,16 @@ function MetricCard({
   tone?: string;
 }) {
   return (
-    <Card className="card-interactive p-5">
-      <div className="flex items-center gap-2.5 text-muted-foreground">
-        <span className={`grid h-9 w-9 place-items-center rounded-lg bg-primary/10 ${tone}`}>
+    <Card className="card-interactive p-4 sm:p-5">
+      <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
+        <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 sm:h-9 sm:w-9 ${tone}`}>
           <Icon className="h-4 w-4" />
         </span>
-        <span className="text-sm font-medium">{label}</span>
+        <span className="min-w-0 text-xs font-medium leading-tight sm:text-sm">{label}</span>
       </div>
-      <p className={`mt-3 text-2xl font-bold ${tone}`}>{value}</p>
+      <p className={`mt-3 text-xl font-bold sm:text-2xl ${tone}`}>{value}</p>
     </Card>
+
   );
 }
 

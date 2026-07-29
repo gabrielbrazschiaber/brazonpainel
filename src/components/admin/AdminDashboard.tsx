@@ -416,7 +416,7 @@ export function AdminDashboard() {
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <KpiCard
           icon={Users}
           label="Clientes ativos"
@@ -874,14 +874,15 @@ function KpiCard({
       ? ArrowDown
       : null;
   return (
-    <Card className="card-interactive p-5">
-      <div className="flex items-center gap-2.5 text-muted-foreground">
-        <span className={cn("grid h-9 w-9 place-items-center rounded-lg bg-primary/10", valueTone)}>
+    <Card className="card-interactive p-4 sm:p-5">
+      <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
+        <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 sm:h-9 sm:w-9", valueTone)}>
           <Icon className="h-4 w-4" />
         </span>
-        <span className="text-sm font-medium">{label}</span>
+        <span className="min-w-0 text-xs font-medium leading-tight sm:text-sm">{label}</span>
       </div>
-      <p className={cn("mt-3 text-2xl font-bold", valueTone)}>{value}</p>
+      <p className={cn("mt-3 text-xl font-bold sm:text-2xl", valueTone)}>{value}</p>
+
       {delta && (
         <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", deltaTone)}>
           {Trend && <Trend className="h-3 w-3" />}

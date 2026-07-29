@@ -312,7 +312,7 @@ function AdminArea() {
           </header>
 
 
-          <div className="mx-auto w-full max-w-6xl px-4 py-6">
+          <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-4 sm:py-6">
             <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
 
             <Tabs value={tab} onValueChange={setTab}>
