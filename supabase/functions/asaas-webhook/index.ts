@@ -148,11 +148,14 @@ Deno.serve(async (req) => {
         clienteStatus = 'vencido'
       }
 
-      // 2. Atualizar o status do cliente
+      // 2. Atualizar o status do cliente (e avançar o vencimento quando pago)
       const { error: clientErr } = await supabase
         .from('clientes')
         .update({
           status: clienteStatus,
+          ...(mappedPaymentStatus === 'pago'
+            ? { data_vencimento: proximoVencimento(payment.dueDate) }
+            : {}),
           updated_at: new Date().toISOString()
         })
         .eq('id', record.cliente_id)
