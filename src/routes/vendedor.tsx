@@ -11,6 +11,7 @@ import { NovidadesSino } from "@/components/NovidadesSino";
 
 import { atualizarMensagemCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
+import { CuponsVendedor } from "@/components/vendedor/CuponsVendedor";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
