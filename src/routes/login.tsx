@@ -182,6 +182,18 @@ function LoginPage() {
             {submitting ? "Entrando..." : "Entrar"}
           </Button>
         </form>
+        <div className="my-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">ou</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <Button asChild variant="outline" className="w-full">
+          <Link to="/cadastro">Criar minha conta e assinar</Link>
+        </Button>
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          Cadastro imediato, sem precisar de vendedor. Tem um link de indicação? Use-o para manter seu
+          vendedor vinculado.
+        </p>
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Ao continuar, você concorda com os{" "}
           <Link to="/termos-de-uso" className="text-primary underline-offset-2 hover:underline">
@@ -189,13 +201,7 @@ function LoginPage() {
           </Link>
           .
         </p>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          É cliente novo? Use o link de indicação do seu vendedor para se{" "}
-          <Link to="/" className="text-primary underline-offset-2 hover:underline">
-            cadastrar
-          </Link>
-          .
-        </p>
+
       </Card>
     </div>
   );
