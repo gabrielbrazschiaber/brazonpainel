@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { useSair } from "@/lib/use-sair";
 import { SairButton } from "@/components/SairButton";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -81,16 +81,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
@@ -155,7 +145,6 @@ interface Config {
 
 function AdminArea() {
   const { profile } = useAuth();
-  const { sair, saindo } = useSair();
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [vendedores, setVendedores] = useState<VendedorRow[]>([]);
   const [clientes, setClientes] = useState<ClienteRow[]>([]);
@@ -266,62 +255,26 @@ function AdminArea() {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
-        <Sidebar collapsible="icon">
-          <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
-            <div className="flex items-center justify-center">
-              <BrazonSymbol className="h-8 w-8" />
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Navegação</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {navItems.map((item) => (
-                    <SidebarMenuItem key={item.value}>
-                      <SidebarMenuButton
-                        isActive={tab === item.value}
-                        onClick={() => setTab(item.value)}
-                        tooltip={item.label}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-          <SidebarFooter className="border-t border-sidebar-border p-2">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setContaOpen(true)} tooltip="Minha conta">
-                  <UserCog className="h-4 w-4" />
-                  <span>Minha conta</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => void sair()} disabled={saindo} tooltip="Sair">
-                  <LogOut className="h-4 w-4" />
-                  <span>Sair</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarFooter>
-        </Sidebar>
+        <AdminSidebar
+          items={navItems}
+          tab={tab}
+          onTab={setTab}
+          onConta={() => setContaOpen(true)}
+        />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="glass-header sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border/60 px-4">
-            <SidebarTrigger />
+          <header className="glass-header sticky top-0 z-30 flex h-14 items-center gap-1 border-b border-border/60 px-2 pt-[env(safe-area-inset-top)] sm:gap-2 sm:px-4">
+            <SidebarTrigger className="h-10 w-10 shrink-0" aria-label="Abrir menu" />
             <div className="min-w-0 flex-1">
               <p className="text-xs text-muted-foreground">Administração</p>
               <h1 className="truncate text-sm font-semibold text-foreground sm:text-base">
                 {profile?.nome || profile?.email}
               </h1>
             </div>
-            <NovidadesSino />
-            <SairButton variante="icone" />
+            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+              <NovidadesSino />
+              <SairButton variante="icone" />
+            </div>
           </header>
 
 

@@ -40,7 +40,10 @@ export function SairButton({ variante = "icone", className }: SairButtonProps) {
         aria-label="Sair da conta"
         title="Sair"
         disabled={saindo}
-        className={className}
+        className={cn(
+          "h-10 w-10 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9",
+          className,
+        )}
       >
         <LogOut className="h-4 w-4" />
       </Button>
@@ -51,7 +54,7 @@ export function SairButton({ variante = "icone", className }: SairButtonProps) {
         aria-label="Sair da conta"
         disabled={saindo}
         className={cn(
-          "gap-2",
+          "h-10 gap-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:h-9",
           variante === "menu" && "w-full justify-start",
           className,
         )}

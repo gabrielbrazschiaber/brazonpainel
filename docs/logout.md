@@ -22,3 +22,13 @@
 ## Manutenção
 Novas telas autenticadas devem usar `<SairButton />` (nunca chamar `signOut()` direto),
 para manter comportamento, acessibilidade (`aria-label="Sair da conta"`) e visual consistentes.
+
+## Comportamento mobile
+- Botões de sair têm alvo de toque de 40px no mobile (`h-10`) e 36px no desktop.
+- Cabeçalhos respeitam `env(safe-area-inset-top)` (notch/landscape) e o botão de sair
+  fica sempre fixo à direita, com `shrink-0` para não ser cortado.
+- Admin: a sidebar vira drawer no mobile (`AdminSidebar`); navegar, abrir "Minha conta"
+  ou sair fecham o drawer automaticamente. O `SidebarTrigger` fica no header e há
+  também um botão de sair no header, garantindo acesso mesmo com o drawer fechado.
+- Vendedor: no modo paisagem/estreito os botões "Cadastrar" e "Minha conta" ficam
+  apenas com ícone para preservar espaço do botão de sair.
