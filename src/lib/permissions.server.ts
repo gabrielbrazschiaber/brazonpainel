@@ -5,9 +5,9 @@
 import type { AppPermission } from "@/lib/permissions";
 import { rotuloPermissao } from "@/lib/permissions";
 
-type SupabaseLike = {
-  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
-};
+// Tipo intencionalmente frouxo: aceita o cliente tipado do usuário.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupabaseLike = { rpc: any };
 
 /**
  * Lança se o usuário não possuir a permissão. Só depois de passar por aqui é
