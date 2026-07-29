@@ -12,7 +12,7 @@ const BACKOFF_BASE_MS = 60_000; // 1 minuto
 const BACKOFF_MAX_MS = 6 * 60 * 60 * 1000; // 6 horas
 const MAX_TENTATIVAS = 6;
 
-export type TipoSync = "assinatura";
+export type TipoSync = "assinatura" | "cliente";
 
 export function calcularBackoffMs(tentativas: number): number {
   const bruto = BACKOFF_BASE_MS * Math.pow(2, Math.max(0, tentativas - 1));
