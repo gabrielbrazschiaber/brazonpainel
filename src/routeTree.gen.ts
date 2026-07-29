@@ -20,6 +20,7 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicRefVisitaRouteImport } from './routes/api/public/ref-visita'
+import { Route as ApiPublicHooksLembretesVencimentoRouteImport } from './routes/api/public/hooks/lembretes-vencimento'
 import { Route as ApiPublicHooksAsaasSyncQueueRouteImport } from './routes/api/public/hooks/asaas-sync-queue'
 
 const VendedorRoute = VendedorRouteImport.update({
@@ -77,6 +78,12 @@ const ApiPublicRefVisitaRoute = ApiPublicRefVisitaRouteImport.update({
   path: '/api/public/ref-visita',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksLembretesVencimentoRoute =
+  ApiPublicHooksLembretesVencimentoRouteImport.update({
+    id: '/api/public/hooks/lembretes-vencimento',
+    path: '/api/public/hooks/lembretes-vencimento',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAsaasSyncQueueRoute =
   ApiPublicHooksAsaasSyncQueueRouteImport.update({
     id: '/api/public/hooks/asaas-sync-queue',
@@ -97,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
+  '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -111,6 +119,7 @@ export interface FileRoutesByTo {
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
+  '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -126,6 +135,7 @@ export interface FileRoutesById {
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
+  '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/vendedor'
     | '/api/public/ref-visita'
     | '/api/public/hooks/asaas-sync-queue'
+    | '/api/public/hooks/lembretes-vencimento'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/vendedor'
     | '/api/public/ref-visita'
     | '/api/public/hooks/asaas-sync-queue'
+    | '/api/public/hooks/lembretes-vencimento'
   id:
     | '__root__'
     | '/'
@@ -170,6 +182,7 @@ export interface FileRouteTypes {
     | '/vendedor'
     | '/api/public/ref-visita'
     | '/api/public/hooks/asaas-sync-queue'
+    | '/api/public/hooks/lembretes-vencimento'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -185,6 +198,7 @@ export interface RootRouteChildren {
   VendedorRoute: typeof VendedorRoute
   ApiPublicRefVisitaRoute: typeof ApiPublicRefVisitaRoute
   ApiPublicHooksAsaasSyncQueueRoute: typeof ApiPublicHooksAsaasSyncQueueRoute
+  ApiPublicHooksLembretesVencimentoRoute: typeof ApiPublicHooksLembretesVencimentoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -266,6 +280,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRefVisitaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/lembretes-vencimento': {
+      id: '/api/public/hooks/lembretes-vencimento'
+      path: '/api/public/hooks/lembretes-vencimento'
+      fullPath: '/api/public/hooks/lembretes-vencimento'
+      preLoaderRoute: typeof ApiPublicHooksLembretesVencimentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/asaas-sync-queue': {
       id: '/api/public/hooks/asaas-sync-queue'
       path: '/api/public/hooks/asaas-sync-queue'
@@ -289,6 +310,8 @@ const rootRouteChildren: RootRouteChildren = {
   VendedorRoute: VendedorRoute,
   ApiPublicRefVisitaRoute: ApiPublicRefVisitaRoute,
   ApiPublicHooksAsaasSyncQueueRoute: ApiPublicHooksAsaasSyncQueueRoute,
+  ApiPublicHooksLembretesVencimentoRoute:
+    ApiPublicHooksLembretesVencimentoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
