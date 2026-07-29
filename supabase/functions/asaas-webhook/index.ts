@@ -6,16 +6,34 @@ type ClienteStatus = 'ativo' | 'vencido' | 'inadimplente' | 'cancelado';
 
 // Avança o vencimento do cliente em 1 mês a partir do vencimento da cobrança paga
 // (ciclo MONTHLY da assinatura). Se o Asaas não informar dueDate, usa a data de hoje.
-function proximoVencimento(dueDate?: string | null): string {
+//
+// "anchorDay" é o dia original da assinatura (ex.: 31). Ele é preservado entre os
+// ciclos para que meses curtos não "encolham" o vencimento permanentemente:
+// 31/01 -> 28/02 -> 31/03 (e não 28/03).
+function proximoVencimento(dueDate?: string | null, anchorDay?: number | null): string {
   const base = dueDate ? new Date(`${dueDate}T12:00:00Z`) : new Date()
   if (Number.isNaN(base.getTime())) return new Date().toISOString().split('T')[0]
-  const dia = base.getUTCDate()
-  const proximo = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 1, 12))
-  // Preserva o dia do mês sem "estourar" para o mês seguinte (ex.: 31 -> 28/29).
-  const ultimoDia = new Date(Date.UTC(proximo.getUTCFullYear(), proximo.getUTCMonth() + 1, 0, 12)).getUTCDate()
-  proximo.setUTCDate(Math.min(dia, ultimoDia))
+
+  const diaBase = base.getUTCDate()
+  const ancora =
+    anchorDay && anchorDay >= 1 && anchorDay <= 31 ? Math.max(anchorDay, diaBase) : diaBase
+
+  const ano = base.getUTCFullYear()
+  const mes = base.getUTCMonth() + 1
+  // Último dia do mês de destino (trata anos bissextos automaticamente).
+  const ultimoDia = new Date(Date.UTC(ano, mes + 1, 0, 12)).getUTCDate()
+  const proximo = new Date(Date.UTC(ano, mes, Math.min(ancora, ultimoDia), 12))
   return proximo.toISOString().split('T')[0]
 }
+
+// Dia "âncora" da assinatura: o maior dia do mês já usado como vencimento.
+function diaAncora(dataVencimento?: string | null): number | null {
+  if (!dataVencimento) return null
+  const d = new Date(`${dataVencimento}T12:00:00Z`)
+  if (Number.isNaN(d.getTime())) return null
+  return d.getUTCDate()
+}
+
 
 // Guarda apenas os campos necessários para auditoria/diagnóstico.
 // O payload bruto do Asaas contém dados pessoais e financeiros do pagador
@@ -162,12 +180,22 @@ Deno.serve(async (req) => {
       }
 
       // 2. Atualizar o status do cliente (e avançar o vencimento quando pago)
+      let ancora: number | null = null
+      if (mappedPaymentStatus === 'pago') {
+        const { data: cliAtual } = await supabase
+          .from('clientes')
+          .select('data_vencimento')
+          .eq('id', record.cliente_id)
+          .maybeSingle()
+        ancora = diaAncora(cliAtual?.data_vencimento)
+      }
+
       const { error: clientErr } = await supabase
         .from('clientes')
         .update({
           status: clienteStatus,
           ...(mappedPaymentStatus === 'pago'
-            ? { data_vencimento: proximoVencimento(payment.dueDate) }
+            ? { data_vencimento: proximoVencimento(payment.dueDate, ancora) }
             : {}),
           updated_at: new Date().toISOString()
         })
@@ -244,12 +272,23 @@ Deno.serve(async (req) => {
           processingResult = 'CREATED'
           const clienteStatus: ClienteStatus =
             mappedPaymentStatus === 'vencido' ? 'vencido' : 'ativo'
+
+          let ancoraRec: number | null = null
+          if (mappedPaymentStatus === 'pago') {
+            const { data: cliAtual } = await supabase
+              .from('clientes')
+              .select('data_vencimento')
+              .eq('id', clienteId)
+              .maybeSingle()
+            ancoraRec = diaAncora(cliAtual?.data_vencimento)
+          }
+
           await supabase
             .from('clientes')
             .update({
               status: clienteStatus,
               ...(mappedPaymentStatus === 'pago'
-                ? { data_vencimento: proximoVencimento(payment.dueDate) }
+                ? { data_vencimento: proximoVencimento(payment.dueDate, ancoraRec) }
                 : {}),
               updated_at: new Date().toISOString(),
             })
