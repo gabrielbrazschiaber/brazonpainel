@@ -654,6 +654,85 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefas: {
+        Row: {
+          cliente_id: string | null
+          cliente_user_id: string | null
+          concluida_em: string | null
+          created_at: string
+          criado_por_id: string | null
+          descricao: string | null
+          id: string
+          origem: Database["public"]["Enums"]["tarefa_origem"]
+          plano_id: string | null
+          prazo: string | null
+          prioridade: Database["public"]["Enums"]["tarefa_prioridade"]
+          responsavel_id: string | null
+          status: Database["public"]["Enums"]["tarefa_status"]
+          titulo: string
+          updated_at: string
+          vendedor_id: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          cliente_user_id?: string | null
+          concluida_em?: string | null
+          created_at?: string
+          criado_por_id?: string | null
+          descricao?: string | null
+          id?: string
+          origem?: Database["public"]["Enums"]["tarefa_origem"]
+          plano_id?: string | null
+          prazo?: string | null
+          prioridade?: Database["public"]["Enums"]["tarefa_prioridade"]
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["tarefa_status"]
+          titulo: string
+          updated_at?: string
+          vendedor_id?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          cliente_user_id?: string | null
+          concluida_em?: string | null
+          created_at?: string
+          criado_por_id?: string | null
+          descricao?: string | null
+          id?: string
+          origem?: Database["public"]["Enums"]["tarefa_origem"]
+          plano_id?: string | null
+          prazo?: string | null
+          prioridade?: Database["public"]["Enums"]["tarefa_prioridade"]
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["tarefa_status"]
+          titulo?: string
+          updated_at?: string
+          vendedor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       termos_aceites: {
         Row: {
           aceito_em: string
@@ -781,6 +860,9 @@ export type Database = {
       asaas_ambiente: "producao" | "sandbox"
       cliente_status: "ativo" | "vencido" | "inadimplente" | "cancelado"
       pagamento_status: "pago" | "pendente" | "vencido" | "simulacao"
+      tarefa_origem: "plano" | "solicitacao_cliente" | "manual"
+      tarefa_prioridade: "baixa" | "media" | "alta"
+      tarefa_status: "aberta" | "em_andamento" | "concluida" | "cancelada"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -930,6 +1012,9 @@ export const Constants = {
       asaas_ambiente: ["producao", "sandbox"],
       cliente_status: ["ativo", "vencido", "inadimplente", "cancelado"],
       pagamento_status: ["pago", "pendente", "vencido", "simulacao"],
+      tarefa_origem: ["plano", "solicitacao_cliente", "manual"],
+      tarefa_prioridade: ["baixa", "media", "alta"],
+      tarefa_status: ["aberta", "em_andamento", "concluida", "cancelada"],
     },
   },
 } as const
