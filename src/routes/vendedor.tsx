@@ -8,8 +8,8 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
-import { criarCliente, atualizarMensagemCliente, atualizarCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
-import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
+import { atualizarMensagemCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
+import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,13 +23,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -92,11 +85,6 @@ interface ClienteRow {
   email?: string;
 }
 
-function defaultVencimento() {
-  const d = new Date();
-  d.setDate(d.getDate() + 30);
-  return d.toISOString().slice(0, 10);
-}
 
 function VendedorArea() {
   const { profile, signOut } = useAuth();
@@ -342,11 +330,12 @@ function VendedorArea() {
         </section>
       </div>
 
-      <CadastrarClienteDialog
+      <ClienteFormDialog
+        mode="criar"
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         planos={planos}
-        onCreated={load}
+        onSaved={load}
       />
 
       <MensagemDialog
@@ -355,10 +344,11 @@ function VendedorArea() {
         onSaved={load}
       />
 
-      <EditarClienteDialog
+      <ClienteFormDialog
+        mode="editar"
         cliente={editCliente}
         planos={planos}
-        onOpenChange={(v) => !v && setEditCliente(null)}
+        onOpenChange={(v: boolean) => !v && setEditCliente(null)}
         onSaved={load}
       />
 
@@ -391,210 +381,8 @@ function MetricCard({
   );
 }
 
-function CadastrarClienteDialog({
-  open,
-  onOpenChange,
-  planos,
-  onCreated,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  planos: Plano[];
-  onCreated: () => void;
-}) {
-  const criar = useServerFn(criarCliente);
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [planoId, setPlanoId] = useState<string>("");
-  const [vencimento, setVencimento] = useState(defaultVencimento());
-  const [mensagem, setMensagem] = useState("");
-  const [servicoExtra, setServicoExtra] = useState("");
-  const [servicoValor, setServicoValor] = useState("");
-  const [cpfCnpj, setCpfCnpj] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [anotacoes, setAnotacoes] = useState("");
-  const [saving, setSaving] = useState(false);
 
-  function reset() {
-    setNome("");
-    setEmail("");
-    setPlanoId("");
-    setVencimento(defaultVencimento());
-    setMensagem("");
-    setServicoExtra("");
-    setServicoValor("");
-    setCpfCnpj("");
-    setTelefone("");
-    setAnotacoes("");
-  }
 
-  async function submit() {
-    if (nome.trim().length < 2 || !email.trim()) {
-      toast.error("Informe nome e e-mail válidos.");
-      return;
-    }
-    const valorExtra = servicoValor ? Number(servicoValor.replace(",", ".")) : 0;
-    if (servicoExtra.trim() && !(valorExtra > 0)) {
-      toast.error("Informe o valor do serviço extra.");
-      return;
-    }
-    setSaving(true);
-    try {
-      await criar({
-        data: {
-          nome: nome.trim(),
-          email: email.trim(),
-          plano_id: planoId || null,
-          data_vencimento: vencimento,
-          mensagem_vendedor: mensagem.trim() || null,
-          servico_extra: servicoExtra.trim() || null,
-          servico_extra_valor: valorExtra,
-          cpf_cnpj: cpfCnpj.trim() || null,
-          telefone: telefone.trim() || null,
-          anotacoes: anotacoes.trim() || null,
-        },
-      });
-      const emailCliente = email.trim();
-      const { error: resetErr } = await enviarLinkDefinicaoSenha(emailCliente);
-      if (resetErr) {
-        toast.success("Cliente cadastrado!", {
-          description: `Peça para ${emailCliente} usar "Esqueci minha senha" no login para definir a senha.`,
-        });
-      } else {
-        toast.success("Cliente cadastrado!", {
-          description: `Enviamos um e-mail para ${emailCliente} definir a senha de acesso.`,
-        });
-      }
-      reset();
-      onOpenChange(false);
-      onCreated();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao cadastrar cliente.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
-
-        <DialogHeader>
-          <DialogTitle>Cadastrar cliente</DialogTitle>
-          <DialogDescription>
-            O cliente recebe uma senha padrão e poderá trocá-la depois.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="nome">Nome</Label>
-            <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="email">E-mail</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="cpf">CPF ou CNPJ</Label>
-            <Input
-              id="cpf"
-              value={cpfCnpj}
-              onChange={(e) => setCpfCnpj(e.target.value)}
-              placeholder="Somente números"
-            />
-            <p className="text-xs text-muted-foreground">Obrigatório para gerar cobranças no Asaas.</p>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="tel">Telefone (opcional)</Label>
-            <Input
-              id="tel"
-              value={telefone}
-              onChange={(e) => setTelefone(e.target.value)}
-              placeholder="(00) 00000-0000"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label>Plano</Label>
-            <Select value={planoId} onValueChange={setPlanoId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um plano" />
-              </SelectTrigger>
-              <SelectContent>
-                {planos.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.nome} — {formatCurrency(p.valor)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2 rounded-md border border-border p-3">
-            <Label htmlFor="serv">Serviço extra (opcional)</Label>
-            <Input
-              id="serv"
-              value={servicoExtra}
-              onChange={(e) => setServicoExtra(e.target.value)}
-              placeholder="Ex: Instalação, suporte premium..."
-            />
-            <Label htmlFor="servval" className="mt-1">Valor do serviço (R$)</Label>
-            <Input
-              id="servval"
-              type="text"
-              inputMode="decimal"
-              value={servicoValor}
-              onChange={(e) => setServicoValor(e.target.value)}
-              placeholder="0,00"
-            />
-            <p className="text-xs text-muted-foreground">Esse valor soma ao valor do plano.</p>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="venc">Vencimento</Label>
-            <Input
-              id="venc"
-              type="date"
-              value={vencimento}
-              onChange={(e) => setVencimento(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="msg">Mensagem ao cliente (opcional)</Label>
-            <Textarea
-              id="msg"
-              value={mensagem}
-              onChange={(e) => setMensagem(e.target.value)}
-              placeholder="Ex: Bem-vindo! Qualquer dúvida me chame."
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="anot">Anotações sobre o cliente (opcional)</Label>
-            <Textarea
-              id="anot"
-              value={anotacoes}
-              onChange={(e) => setAnotacoes(e.target.value)}
-              placeholder="Observações internas. O cliente não vê este campo."
-              rows={4}
-            />
-            <p className="text-xs text-muted-foreground">Visível apenas para você e a administração.</p>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button onClick={submit} disabled={saving}>
-            {saving ? "Salvando..." : "Cadastrar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 function MensagemDialog({
   cliente,
@@ -665,191 +453,8 @@ function MensagemDialog({
   );
 }
 
-function EditarClienteDialog({
-  cliente,
-  planos,
-  onOpenChange,
-  onSaved,
-}: {
-  cliente: ClienteRow | null;
-  planos: Plano[];
-  onOpenChange: (v: boolean) => void;
-  onSaved: () => void;
-}) {
-  const salvar = useServerFn(atualizarCliente);
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [planoId, setPlanoId] = useState<string>("");
-  const [servicoExtra, setServicoExtra] = useState("");
-  const [servicoValor, setServicoValor] = useState("");
-  const [cpfCnpj, setCpfCnpj] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [anotacoes, setAnotacoes] = useState("");
-  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    setNome(cliente?.nome ?? "");
-    setEmail(cliente?.email ?? "");
-    setSenha("");
-    setPlanoId(cliente?.plano_id ?? "");
-    setServicoExtra(cliente?.servico_extra ?? "");
-    setServicoValor(
-      cliente?.servico_extra_valor ? String(cliente.servico_extra_valor).replace(".", ",") : "",
-    );
-    setCpfCnpj(cliente?.cpf_cnpj ?? "");
-    setTelefone(cliente?.telefone ?? "");
-    setAnotacoes(cliente?.anotacoes ?? "");
-  }, [cliente]);
 
-  async function submit() {
-    if (!cliente) return;
-    if (nome.trim().length < 2 || !email.trim()) {
-      toast.error("Informe nome e e-mail válidos.");
-      return;
-    }
-    if (senha && senha.length < 6) {
-      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
-      return;
-    }
-    const valorExtra = servicoValor ? Number(servicoValor.replace(",", ".")) : 0;
-    if (servicoExtra.trim() && !(valorExtra > 0)) {
-      toast.error("Informe o valor do serviço extra.");
-      return;
-    }
-    setSaving(true);
-    try {
-      await salvar({
-        data: {
-          cliente_id: cliente.id,
-          nome: nome.trim(),
-          email: email.trim(),
-          senha: senha || "",
-          plano_id: planoId || null,
-          servico_extra: servicoExtra.trim() || null,
-          servico_extra_valor: valorExtra,
-          cpf_cnpj: cpfCnpj.trim() || null,
-          telefone: telefone.trim() || null,
-          anotacoes: anotacoes.trim() || null,
-        },
-      });
-      toast.success("Dados do cliente atualizados!");
-      onOpenChange(false);
-      onSaved();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao atualizar o cliente.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Dialog open={!!cliente} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
-
-        <DialogHeader>
-          <DialogTitle>Editar dados do cliente</DialogTitle>
-          <DialogDescription>
-            Atualize nome, e-mail, senha, plano e serviço extra do cliente.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="ecnome">Nome</Label>
-            <Input id="ecnome" value={nome} onChange={(e) => setNome(e.target.value)} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="ecemail">E-mail</Label>
-            <Input id="ecemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="eccpf">CPF ou CNPJ</Label>
-            <Input
-              id="eccpf"
-              value={cpfCnpj}
-              onChange={(e) => setCpfCnpj(e.target.value)}
-              placeholder="Somente números"
-            />
-            <p className="text-xs text-muted-foreground">Obrigatório para gerar cobranças no Asaas.</p>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="ectel">Telefone (opcional)</Label>
-            <Input
-              id="ectel"
-              value={telefone}
-              onChange={(e) => setTelefone(e.target.value)}
-              placeholder="(00) 00000-0000"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="ecsenha">Nova senha (opcional)</Label>
-            <Input
-              id="ecsenha"
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              placeholder="Deixe em branco para manter"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label>Plano</Label>
-            <Select value={planoId} onValueChange={setPlanoId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um plano" />
-              </SelectTrigger>
-              <SelectContent>
-                {planos.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.nome} — {formatCurrency(p.valor)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2 rounded-md border border-border p-3">
-            <Label htmlFor="ecserv">Serviço extra (opcional)</Label>
-            <Input
-              id="ecserv"
-              value={servicoExtra}
-              onChange={(e) => setServicoExtra(e.target.value)}
-              placeholder="Ex: Instalação, suporte premium..."
-            />
-            <Label htmlFor="ecservval" className="mt-1">Valor do serviço (R$)</Label>
-            <Input
-              id="ecservval"
-              type="text"
-              inputMode="decimal"
-              value={servicoValor}
-              onChange={(e) => setServicoValor(e.target.value)}
-              placeholder="0,00"
-            />
-            <p className="text-xs text-muted-foreground">Esse valor soma ao valor do plano.</p>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="ecanot">Anotações sobre o cliente (opcional)</Label>
-            <Textarea
-              id="ecanot"
-              value={anotacoes}
-              onChange={(e) => setAnotacoes(e.target.value)}
-              placeholder="Observações internas. O cliente não vê este campo."
-              rows={4}
-            />
-            <p className="text-xs text-muted-foreground">Visível apenas para você e a administração.</p>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button onClick={submit} disabled={saving}>
-            {saving ? "Salvando..." : "Salvar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 function MinhaContaVendedorDialog({
   open,
