@@ -4,7 +4,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { cadastroPublico } from "@/lib/vendedor.functions";
-import { validarCupomPublico, cupomEmDestaque } from "@/lib/cupons.functions";
+import { validarCupomPublico } from "@/lib/cupons.functions";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { Card } from "@/components/ui/card";
 import { BrazonLogo } from "@/components/BrazonLogo";
@@ -23,7 +23,7 @@ import { TERMOS_VERSAO } from "@/lib/termos";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { toast } from "sonner";
-import { CheckCircle2, TicketPercent } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 const searchSchema = z.object({
   ref: z.string().optional(),
@@ -72,7 +72,6 @@ function CadastroPage() {
   const navigate = useNavigate();
   const cadastrar = useServerFn(cadastroPublico);
   const validarCupom = useServerFn(validarCupomPublico);
-  const carregarDestaque = useServerFn(cupomEmDestaque);
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -94,7 +93,6 @@ function CadastroPage() {
   const [codigoCupom, setCodigoCupom] = useState(cupomUrl ?? "");
   const [cupomAplicado, setCupomAplicado] = useState<CupomAplicado | null>(null);
   const [validando, setValidando] = useState(false);
-  const [destaque, setDestaque] = useState<CupomAplicado | null>(null);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -110,12 +108,6 @@ function CadastroPage() {
       .order("valor")
       .then(({ data }) => setPlanos((data ?? []) as Plano[]));
   }, []);
-
-  useEffect(() => {
-    carregarDestaque({})
-      .then((c) => setDestaque(c as CupomAplicado | null))
-      .catch(() => setDestaque(null));
-  }, [carregarDestaque]);
 
   async function aplicarCupom(codigo?: string) {
     const cod = (codigo ?? codigoCupom).trim();
@@ -273,25 +265,8 @@ function CadastroPage() {
             : "Cadastro rápido: escolha o plano e ative sua assinatura na hora."}
         </p>
 
-        {destaque && (
-          <button
-            type="button"
-            onClick={() => aplicarCupom(destaque.codigo)}
-            className="mt-4 flex w-full items-start gap-3 rounded-lg border border-primary/40 bg-primary/5 p-3 text-left transition hover:bg-primary/10"
-          >
-            <TicketPercent className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-            <span className="text-sm">
-              <span className="block font-semibold text-foreground">
-                Cupom {destaque.codigo} — {formatCurrency(destaque.valor_desconto)} de desconto
-              </span>
-              <span className="block text-muted-foreground">
-                {destaque.apenas_primeira_mensalidade
-                  ? "Válido na primeira mensalidade. Toque para aplicar."
-                  : "Toque para aplicar."}
-              </span>
-            </span>
-          </button>
-        )}
+
+
 
         <div className="mt-6 grid gap-4">
           <div className="grid gap-2">
