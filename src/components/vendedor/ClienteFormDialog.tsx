@@ -181,16 +181,29 @@ export function ClienteFormDialog({
 
   function set<K extends keyof ClienteFormValues>(key: K, value: ClienteFormValues[K]) {
     setValues((v) => ({ ...v, [key]: value }));
+    setErros((e) => {
+      if (!e[key as string]) return e;
+      const { [key as string]: _, ...resto } = e;
+      return resto;
+    });
   }
 
   async function submit() {
     const parsed = clienteFormSchema.safeParse(values);
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Verifique os dados informados.");
+    const mapa = parsed.success ? {} : errosPorCampo(parsed.error.issues);
+    const extras = editando ? {} : validarCadastro(values);
+    const todos = { ...mapa, ...extras };
+    if (Object.keys(todos).length) {
+      setErros(todos);
+      toast.error("Revise os campos destacados", {
+        description: Object.values(todos)[0],
+      });
       return;
     }
-    const v = parsed.data;
+    setErros({});
+    const v = (parsed as { data: ClienteFormValues }).data;
     const comum = clientePayloadComum(v);
+
 
     setSaving(true);
     try {
