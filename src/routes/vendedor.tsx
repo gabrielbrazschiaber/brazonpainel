@@ -85,11 +85,6 @@ interface ClienteRow {
   email?: string;
 }
 
-function defaultVencimento() {
-  const d = new Date();
-  d.setDate(d.getDate() + 30);
-  return d.toISOString().slice(0, 10);
-}
 
 function VendedorArea() {
   const { profile, signOut } = useAuth();
