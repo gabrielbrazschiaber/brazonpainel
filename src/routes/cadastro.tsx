@@ -215,15 +215,30 @@ function CadastroPage() {
           {done.cupom && (
             <div className="mt-4 rounded-lg border border-success/40 bg-success/10 p-3 text-left text-sm">
               <p className="font-semibold text-foreground">
-                Cupom {done.cupom.codigo} reservado para você
+                Cupom {done.cupom.codigo} aplicado
               </p>
               <p className="mt-1 text-muted-foreground">
                 {formatCurrency(done.cupom.valor_desconto)} de desconto na primeira mensalidade
-                {done.planoNome ? ` do plano ${done.planoNome}` : ""}. O desconto entra
-                automaticamente na cobrança que você gerar na sua área do cliente.
+                {done.planoNome ? ` do plano ${done.planoNome}` : ""}.
               </p>
             </div>
           )}
+          {done.faturaUrl && (
+            <div className="mt-4 rounded-lg border border-primary/40 bg-primary/5 p-3 text-left text-sm">
+              <p className="font-semibold text-foreground">Sua primeira cobrança já foi gerada</p>
+              <p className="mt-1 text-muted-foreground">
+                Assinatura mensal{done.planoNome ? ` do plano ${done.planoNome}` : ""}
+                {done.faturaValor != null ? ` — ${formatCurrency(done.faturaValor)}/mês` : ""}. Você
+                pode pagar agora ou depois, pela sua área do cliente.
+              </p>
+              <Button asChild className="mt-3 w-full">
+                <a href={done.faturaUrl} target="_blank" rel="noopener noreferrer">
+                  Pagar agora
+                </a>
+              </Button>
+            </div>
+          )}
+
           <p className="mt-4 text-sm text-muted-foreground">
             {done.emailEnviado ? (
               <>
