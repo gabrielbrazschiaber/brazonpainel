@@ -174,7 +174,7 @@ function AdminArea() {
         supabase
           .from("clientes")
           .select(
-            "id,user_id,vendedor_id,data_vencimento,status,cpf_cnpj,telefone,plano_id,servico_extra,servico_extra_valor,anotacoes,planos(nome,valor)",
+            "id,user_id,vendedor_id,data_vencimento,status,cpf_cnpj,telefone,plano_id,servico_extra,servico_extra_valor,anotacoes,asaas_subscription_id,planos(nome,valor)",
           )
           .order("created_at", { ascending: false }),
         obterConfig({}).catch(() => null),
