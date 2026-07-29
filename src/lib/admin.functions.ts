@@ -538,3 +538,102 @@ export const processarFilaAsaasAdmin = createServerFn({ method: "POST" })
     const resumo = await processarFilaAsaas(50);
     return { ok: true, ...resumo };
   });
+
+const reprocessarSyncSchema = z.object({ cliente_id: z.string().uuid() });
+
+/**
+ * Cria uma nova tentativa na fila e reprocessa imediatamente a sincronização
+ * do Asaas para um cliente específico (admin).
+ */
+export const reprocessarSyncCliente = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => reprocessarSyncSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensureAdmin(supabase, userId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: cli } = await supabaseAdmin
+      .from("clientes")
+      .select("id, asaas_subscription_id")
+      .eq("id", data.cliente_id)
+      .maybeSingle();
+
+    if (!cli) throw new Error("Cliente não encontrado.");
+    if (!cli.asaas_subscription_id) {
+      return { ok: false as const, motivo: "sem_assinatura" };
+    }
+
+    // Registra/reabre um item na fila para este cliente, pronto para rodar agora.
+    const { data: existente } = await supabaseAdmin
+      .from("asaas_sync_queue")
+      .select("id")
+      .eq("cliente_id", data.cliente_id)
+      .eq("tipo", "assinatura")
+      .in("status", ["pendente", "processando"])
+      .maybeSingle();
+
+    const agora = new Date().toISOString();
+    if (existente) {
+      await supabaseAdmin
+        .from("asaas_sync_queue")
+        .update({ status: "pendente", proxima_tentativa_em: agora })
+        .eq("id", existente.id);
+    } else {
+      await supabaseAdmin.from("asaas_sync_queue").insert({
+        cliente_id: data.cliente_id,
+        tipo: "assinatura",
+        status: "pendente",
+        tentativas: 0,
+        proxima_tentativa_em: agora,
+        ultimo_erro: "reprocessamento_manual",
+      });
+    }
+
+    const { sincronizarAssinaturaCliente } = await import("@/lib/asaas.server");
+    const resultado = await sincronizarAssinaturaCliente(data.cliente_id, {
+      enfileirarSeFalhar: false,
+    });
+
+    const { ehFalhaTransitoria, calcularBackoffMs } = await import("@/lib/asaas-queue.server");
+
+    if (resultado.sincronizado) {
+      await supabaseAdmin
+        .from("asaas_sync_queue")
+        .update({ status: "concluido", ultimo_erro: null })
+        .eq("cliente_id", data.cliente_id)
+        .eq("tipo", "assinatura")
+        .in("status", ["pendente", "processando"]);
+    } else {
+      const transitorio = ehFalhaTransitoria(resultado.motivo);
+      await supabaseAdmin
+        .from("asaas_sync_queue")
+        .update({
+          status: transitorio ? "pendente" : "falhou",
+          ultimo_erro: resultado.motivo ?? "desconhecido",
+          proxima_tentativa_em: new Date(
+            Date.now() + (transitorio ? calcularBackoffMs(1) : 0)
+          ).toISOString(),
+        })
+        .eq("cliente_id", data.cliente_id)
+        .eq("tipo", "assinatura")
+        .in("status", ["pendente", "processando"]);
+    }
+
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      actorRole: "admin",
+      acao: "reprocessar_sync_asaas",
+      entidade: "cliente",
+      entidadeId: data.cliente_id,
+      detalhes: { sincronizado: resultado.sincronizado, motivo: resultado.motivo ?? null },
+    });
+
+    return {
+      ok: resultado.sincronizado,
+      motivo: resultado.motivo,
+      valor: resultado.valor,
+      reagendado: !resultado.sincronizado,
+    };
+  });
