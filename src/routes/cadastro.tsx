@@ -326,7 +326,6 @@ function CadastroPage() {
                   setCodigoCupom(e.target.value.toUpperCase());
                   setCupomAplicado(null);
                 }}
-                placeholder="Ex.: 100OFF"
                 className="uppercase"
               />
               <Button
