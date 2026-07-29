@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { TERMOS_TEXTO, TERMOS_VERSAO } from "@/lib/termos";
+
 
 /** Gera uma senha aleatória e segura de 12 caracteres usando RNG criptográfico. */
 function gerarSenhaAleatoria(): string {
