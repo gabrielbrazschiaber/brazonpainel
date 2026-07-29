@@ -50,6 +50,7 @@ interface Cliente {
   plano_id: string | null;
   servico_extra: string | null;
   servico_extra_valor: number | null;
+  asaas_subscription_id: string | null;
   planos: Plano | null;
 }
 
