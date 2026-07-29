@@ -31,6 +31,8 @@ import {
 } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { obterConfiguracoes, salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
+import { gerarLembretesAgora } from "@/lib/lembretes.functions";
+
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
