@@ -401,7 +401,7 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
     asaasPaymentId: primeira?.id ?? null,
     invoiceUrl: primeira?.invoiceUrl ?? null,
     bankSlipUrl: primeira?.bankSlipUrl ?? null,
-    pixCopyPaste: primeira?.pixCopyPaste ?? null,
+    pixCopyPaste: await obterPixCopiaECola(primeira?.id, params.tipoPagamento, config),
     status: primeira?.status ?? assinatura.status,
   };
 }
