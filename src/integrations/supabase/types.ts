@@ -208,6 +208,7 @@ export type Database = {
           asaas_api_key: string | null
           asaas_webhook_url: string | null
           created_at: string
+          cron_token: string
           dias_aviso_vencimento: number
           dominio: string | null
           id: string
@@ -220,6 +221,7 @@ export type Database = {
           asaas_api_key?: string | null
           asaas_webhook_url?: string | null
           created_at?: string
+          cron_token?: string
           dias_aviso_vencimento?: number
           dominio?: string | null
           id?: string
@@ -232,6 +234,7 @@ export type Database = {
           asaas_api_key?: string | null
           asaas_webhook_url?: string | null
           created_at?: string
+          cron_token?: string
           dias_aviso_vencimento?: number
           dominio?: string | null
           id?: string
