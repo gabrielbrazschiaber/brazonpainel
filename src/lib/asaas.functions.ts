@@ -41,7 +41,7 @@ export const gerarCobranca = createServerFn({ method: "POST" })
 
     const valorTotal = Number(plano.valor) + Number(cliente.servico_extra_valor ?? 0);
 
-    // 3. Vencimento padrão: 3 dias a partir de hoje (formato YYYY-MM-DD).
+    // 3. Primeiro vencimento: 3 dias a partir de hoje (os próximos ciclos são mensais) (formato YYYY-MM-DD).
     const venc = new Date();
     venc.setDate(venc.getDate() + 3);
     const dataVencimento = venc.toISOString().split("T")[0];
@@ -54,7 +54,7 @@ export const gerarCobranca = createServerFn({ method: "POST" })
       valor: valorTotal,
       tipoPagamento: data.tipoPagamento,
       dataVencimento,
-      descricao: `Renovação Brazon - ${plano.nome}`,
+      descricao: `Assinatura mensal Brazon - ${plano.nome}`,
     });
 
     return {
@@ -62,6 +62,8 @@ export const gerarCobranca = createServerFn({ method: "POST" })
       bankSlipUrl: resultado.bankSlipUrl as string | null,
       pixCopyPaste: resultado.pixCopyPaste as string | null,
       status: resultado.status as string,
+      recorrente: true as const,
+      assinaturaId: resultado.assinaturaId as string,
     };
   });
 
