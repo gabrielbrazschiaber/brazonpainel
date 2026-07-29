@@ -399,6 +399,50 @@ export type Database = {
           },
         ]
       }
+      lembretes_vencimento: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          dias_restantes: number
+          id: string
+          lido_em: string | null
+          mensagem: string
+          updated_at: string
+          user_id: string | null
+          vencimento: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          dias_restantes?: number
+          id?: string
+          lido_em?: string | null
+          mensagem?: string
+          updated_at?: string
+          user_id?: string | null
+          vencimento: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          dias_restantes?: number
+          id?: string
+          lido_em?: string | null
+          mensagem?: string
+          updated_at?: string
+          user_id?: string | null
+          vencimento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lembretes_vencimento_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       novidades: {
         Row: {
           conteudo: string
