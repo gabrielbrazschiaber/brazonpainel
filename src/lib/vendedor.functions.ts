@@ -185,10 +185,16 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       user_metadata: { nome: data.nome },
     });
     if (createErr || !created.user) {
-      // Mensagem genérica: não revelar se o e-mail já existe (enumeração de usuários).
       console.error("[cadastroPublico] Falha ao criar usuário:", createErr?.message);
+      const msg = (createErr?.message ?? "").toLowerCase();
+      if (msg.includes("already been registered") || msg.includes("already registered") || msg.includes("email_exists")) {
+        throw new Error(
+          "Este e-mail já possui uma conta. Faça login ou use \"Esqueci minha senha\" para acessar.",
+        );
+      }
       throw new Error("Não foi possível concluir o cadastro. Verifique os dados e tente novamente.");
     }
+
 
     const newUserId = created.user.id;
 
