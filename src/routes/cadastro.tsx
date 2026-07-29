@@ -100,6 +100,25 @@ function CadastroPage() {
     return () => clearTimeout(timer);
   }, [cooldown]);
 
+  // Registra (uma vez por navegador) a visita ao link de indicação, para o
+  // vendedor acompanhar visitantes x leads x conversões.
+  useEffect(() => {
+    if (!ref) return;
+    const chave = `ref-visita:${ref}`;
+    if (localStorage.getItem(chave)) return;
+    let sessao = localStorage.getItem("ref-sessao");
+    if (!sessao) {
+      sessao = crypto.randomUUID();
+      localStorage.setItem("ref-sessao", sessao);
+    }
+    localStorage.setItem(chave, "1");
+    void fetch("/api/public/ref-visita", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ codigo: ref, session: sessao }),
+    }).catch(() => {});
+  }, [ref]);
+
   useEffect(() => {
     supabase
       .from("planos")
