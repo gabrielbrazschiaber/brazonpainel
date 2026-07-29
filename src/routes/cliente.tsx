@@ -350,6 +350,59 @@ function ClienteArea() {
           <p className="text-sm text-muted-foreground">
             Ative a cobrança mensal recorrente do seu plano atual — o pagamento é gerado automaticamente todo mês.
           </p>
+          {/* Cupom de desconto */}
+          {cliente?.plano_id && !assinaturaAtiva && (
+            <div className="mt-4 rounded-lg border border-border bg-muted/40 p-4">
+              <label htmlFor="cupom" className="text-sm font-medium text-foreground">
+                Cupom de desconto
+              </label>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <input
+                  id="cupom"
+                  value={codigoCupom}
+                  onChange={(e) => {
+                    setCodigoCupom(e.target.value.toUpperCase());
+                    setCupomAplicado(null);
+                  }}
+                  placeholder="Ex.: 100OFF"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm uppercase outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-xs"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={aplicarCupom}
+                  disabled={validandoCupom}
+                  className="sm:w-32"
+                >
+                  {validandoCupom ? "Validando..." : cupomAplicado ? "Aplicado" : "Aplicar"}
+                </Button>
+              </div>
+              {cupomAplicado && (
+                <div className="mt-3 text-sm">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Mensalidade</span>
+                    <span>{formatCurrency(totalMensal)}</span>
+                  </div>
+                  <div className="flex justify-between text-success">
+                    <span>Cupom {cupomAplicado.codigo}</span>
+                    <span>
+                      -{formatCurrency(Math.min(cupomAplicado.valor_desconto, totalMensal))}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex justify-between border-t border-border pt-1 font-semibold text-foreground">
+                    <span>1ª mensalidade</span>
+                    <span>
+                      {formatCurrency(Math.max(totalMensal - cupomAplicado.valor_desconto, 0))}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    A partir do 2º mês: {formatCurrency(totalMensal)}/mês.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {planos
               .filter((p) => p.id === cliente?.plano_id)
