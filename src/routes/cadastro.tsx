@@ -249,7 +249,7 @@ function CadastroPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           {ref
             ? "Você foi indicado por um vendedor."
-            : "Cadastro自 rápido: escolha o plano e ative sua assinatura na hora."}
+            : "Cadastro rápido: escolha o plano e ative sua assinatura na hora."}
         </p>
 
         {destaque && (
