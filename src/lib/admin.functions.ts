@@ -238,7 +238,12 @@ const editarClienteAdminSchema = z.object({
   senha: z.string().min(6).max(72).optional().or(z.literal("")),
   cpf_cnpj: z.string().trim().max(20).optional().nullable(),
   telefone: z.string().trim().max(20).optional().nullable(),
+  plano_id: z.string().uuid().optional().nullable(),
+  servico_extra: z.string().trim().max(200).optional().nullable(),
+  servico_extra_valor: z.number().min(0).max(1000000).optional().default(0),
+  anotacoes: z.string().trim().max(2000).optional().nullable(),
 });
+
 
 // Admin edita nome, e-mail e (opcionalmente) senha de qualquer cliente.
 export const atualizarClienteAdmin = createServerFn({ method: "POST" })
