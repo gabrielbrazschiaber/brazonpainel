@@ -21,7 +21,7 @@ import {
 import { formatCurrency, formatDate, daysUntil, initials } from "@/lib/format";
 
 import { toast } from "sonner";
-import { Bell, CalendarClock, CreditCard, BadgeCheck, LogOut } from "lucide-react";
+import { Bell, CalendarClock, CreditCard, BadgeCheck, LogOut, RefreshCw } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { gerarCobranca } from "@/lib/asaas.functions";
 
