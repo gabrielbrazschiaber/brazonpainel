@@ -25,6 +25,7 @@ import { Bell, CalendarClock, CreditCard, BadgeCheck, RefreshCw } from "lucide-r
 import { SairButton } from "@/components/SairButton";
 import { useServerFn } from "@tanstack/react-start";
 import { gerarCobranca } from "@/lib/asaas.functions";
+import { validarMeuCupom } from "@/lib/cupons.functions";
 
 export const Route = createFileRoute("/cliente")({
   head: () => ({ meta: [{ title: "Minha assinatura" }] }),
@@ -73,6 +74,10 @@ function ClienteArea() {
   const [loading, setLoading] = useState(true);
   const [renovando, setRenovando] = useState<string | null>(null);
   const gerarCobrancaFn = useServerFn(gerarCobranca);
+  const validarCupomFn = useServerFn(validarMeuCupom);
+  const [codigoCupom, setCodigoCupom] = useState("");
+  const [cupomAplicado, setCupomAplicado] = useState<{ codigo: string; valor_desconto: number } | null>(null);
+  const [validandoCupom, setValidandoCupom] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -120,12 +125,45 @@ function ClienteArea() {
     return cliente?.status ?? "ativo";
   }
 
+  async function aplicarCupom() {
+    const cod = codigoCupom.trim();
+    if (!cod) {
+      toast.error("Digite o código do cupom.");
+      return;
+    }
+    setValidandoCupom(true);
+    try {
+      const res = await validarCupomFn({ data: { codigo: cod } });
+      if (!res.valido) {
+        setCupomAplicado(null);
+        toast.error(res.mensagem);
+        return;
+      }
+      setCodigoCupom(res.codigo);
+      setCupomAplicado({ codigo: res.codigo, valor_desconto: res.valor_desconto });
+      toast.success(`Cupom ${res.codigo} aplicado.`);
+    } catch {
+      toast.error("Não foi possível validar o cupom agora.");
+    } finally {
+      setValidandoCupom(false);
+    }
+  }
+
   async function handleRenovar(plano: Plano) {
     setRenovando(plano.id);
     try {
       const res = await gerarCobrancaFn({
-        data: { plano_id: plano.id, tipoPagamento: "PIX" },
+        data: {
+          plano_id: plano.id,
+          tipoPagamento: "PIX",
+          cupom: cupomAplicado?.codigo ?? null,
+        },
       });
+      if (res.descontoAplicado > 0) {
+        toast.success(
+          `Cupom ${res.cupom} aplicado: ${formatCurrency(res.descontoAplicado)} de desconto na 1ª mensalidade.`,
+        );
+      }
       const url = res.invoiceUrl || res.bankSlipUrl;
       if (url) {
         toast.success("Assinatura mensal gerada!", {
