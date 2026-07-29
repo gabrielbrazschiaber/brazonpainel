@@ -169,7 +169,12 @@ export interface UsoCupomAdmin {
   cliente_nome: string;
   cliente_email: string;
   valor_desconto: number;
+  valor_original: number;
+  valor_final: number;
+  origem: string;
   asaas_payment_id: string | null;
+  asaas_subscription_id: string | null;
+  pago_em: string | null;
   created_at: string;
 }
 
@@ -193,7 +198,7 @@ export const detalharCupom = createServerFn({ method: "POST" })
     const [{ data: usos }, { data: reservas }] = await Promise.all([
       supabaseAdmin
         .from("cupom_usos")
-        .select("id,cliente_id,valor_desconto,asaas_payment_id,created_at")
+        .select("id,cliente_id,valor_desconto,valor_original,valor_final,origem,asaas_payment_id,asaas_subscription_id,pago_em,created_at")
         .eq("cupom_id", data.cupom_id)
         .order("created_at", { ascending: false })
         .limit(200),
@@ -229,7 +234,12 @@ export const detalharCupom = createServerFn({ method: "POST" })
       cliente_nome: perfilPorCliente.get(u.cliente_id)?.nome ?? "—",
       cliente_email: perfilPorCliente.get(u.cliente_id)?.email ?? "—",
       valor_desconto: Number(u.valor_desconto),
+      valor_original: Number(u.valor_original ?? 0),
+      valor_final: Number(u.valor_final ?? 0),
+      origem: u.origem ?? "desconhecida",
       asaas_payment_id: u.asaas_payment_id,
+      asaas_subscription_id: u.asaas_subscription_id ?? null,
+      pago_em: u.pago_em ?? null,
       created_at: u.created_at,
     }));
 
