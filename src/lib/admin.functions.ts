@@ -282,9 +282,17 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
 
     const { error: cliUpdErr } = await supabaseAdmin
       .from("clientes")
-      .update({ cpf_cnpj: data.cpf_cnpj ?? null, telefone: data.telefone ?? null })
+      .update({
+        cpf_cnpj: data.cpf_cnpj ?? null,
+        telefone: data.telefone ?? null,
+        plano_id: data.plano_id ?? null,
+        servico_extra: data.servico_extra ?? null,
+        servico_extra_valor: data.servico_extra_valor ?? 0,
+        anotacoes: data.anotacoes ?? null,
+      })
       .eq("id", data.cliente_id);
-    if (cliUpdErr) throw new Error("Falha ao atualizar CPF/telefone do cliente.");
+    if (cliUpdErr) throw new Error("Falha ao atualizar os dados do cliente.");
+
 
 
 
