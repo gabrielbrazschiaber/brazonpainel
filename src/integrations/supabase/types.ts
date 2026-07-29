@@ -257,33 +257,57 @@ export type Database = {
       cupom_usos: {
         Row: {
           asaas_payment_id: string | null
+          asaas_subscription_id: string | null
           cliente_id: string
+          codigo: string | null
           created_at: string
           cupom_id: string
           id: string
+          origem: string
           pagamento_id: string | null
+          pago_em: string | null
+          plano_id: string | null
           user_id: string | null
           valor_desconto: number
+          valor_final: number
+          valor_original: number
+          vendedor_id: string | null
         }
         Insert: {
           asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
           cliente_id: string
+          codigo?: string | null
           created_at?: string
           cupom_id: string
           id?: string
+          origem?: string
           pagamento_id?: string | null
+          pago_em?: string | null
+          plano_id?: string | null
           user_id?: string | null
           valor_desconto?: number
+          valor_final?: number
+          valor_original?: number
+          vendedor_id?: string | null
         }
         Update: {
           asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
           cliente_id?: string
+          codigo?: string | null
           created_at?: string
           cupom_id?: string
           id?: string
+          origem?: string
           pagamento_id?: string | null
+          pago_em?: string | null
+          plano_id?: string | null
           user_id?: string | null
           valor_desconto?: number
+          valor_final?: number
+          valor_original?: number
+          vendedor_id?: string | null
         }
         Relationships: [
           {
@@ -298,6 +322,20 @@ export type Database = {
             columns: ["cupom_id"]
             isOneToOne: false
             referencedRelation: "cupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cupom_usos_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cupom_usos_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
             referencedColumns: ["id"]
           },
         ]
