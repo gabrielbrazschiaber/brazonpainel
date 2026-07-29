@@ -137,6 +137,7 @@ export type Database = {
           asaas_subscription_id: string | null
           cpf_cnpj: string | null
           created_at: string
+          cupom_pendente_id: string | null
           data_vencimento: string | null
           id: string
           mensagem_vendedor: string | null
@@ -155,6 +156,7 @@ export type Database = {
           asaas_subscription_id?: string | null
           cpf_cnpj?: string | null
           created_at?: string
+          cupom_pendente_id?: string | null
           data_vencimento?: string | null
           id?: string
           mensagem_vendedor?: string | null
@@ -173,6 +175,7 @@ export type Database = {
           asaas_subscription_id?: string | null
           cpf_cnpj?: string | null
           created_at?: string
+          cupom_pendente_id?: string | null
           data_vencimento?: string | null
           id?: string
           mensagem_vendedor?: string | null
@@ -186,6 +189,13 @@ export type Database = {
           vendedor_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "clientes_cupom_pendente_id_fkey"
+            columns: ["cupom_pendente_id"]
+            isOneToOne: false
+            referencedRelation: "cupons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "clientes_plano_id_fkey"
             columns: ["plano_id"]
@@ -241,6 +251,99 @@ export type Database = {
           nome_app?: string
           percentual_comissao_padrao?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      cupom_usos: {
+        Row: {
+          asaas_payment_id: string | null
+          cliente_id: string
+          created_at: string
+          cupom_id: string
+          id: string
+          pagamento_id: string | null
+          user_id: string | null
+          valor_desconto: number
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          cliente_id: string
+          created_at?: string
+          cupom_id: string
+          id?: string
+          pagamento_id?: string | null
+          user_id?: string | null
+          valor_desconto?: number
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          cliente_id?: string
+          created_at?: string
+          cupom_id?: string
+          id?: string
+          pagamento_id?: string | null
+          user_id?: string | null
+          valor_desconto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cupom_usos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cupom_usos_cupom_id_fkey"
+            columns: ["cupom_id"]
+            isOneToOne: false
+            referencedRelation: "cupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cupons: {
+        Row: {
+          apenas_primeira_mensalidade: boolean
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          max_usos: number | null
+          tipo: string
+          updated_at: string
+          usos: number
+          validade: string | null
+          valor_desconto: number
+        }
+        Insert: {
+          apenas_primeira_mensalidade?: boolean
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          max_usos?: number | null
+          tipo?: string
+          updated_at?: string
+          usos?: number
+          validade?: string | null
+          valor_desconto?: number
+        }
+        Update: {
+          apenas_primeira_mensalidade?: boolean
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          max_usos?: number | null
+          tipo?: string
+          updated_at?: string
+          usos?: number
+          validade?: string | null
+          valor_desconto?: number
         }
         Relationships: []
       }
