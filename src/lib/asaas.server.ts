@@ -629,7 +629,10 @@ export async function provisionarClienteAsaas(
       .eq('id', cliente.user_id)
       .maybeSingle();
 
-    if (!perfil?.email) return { provisionado: false, motivo: 'sem_email' };
+    if (!perfil?.email) {
+      await agendarRetry('sem_email');
+      return { provisionado: false, motivo: 'sem_email' };
+    }
 
     const config = await obterConfigAsaas();
     const asaasCustomerId = await obterOuCriarClienteAsaas(
@@ -642,6 +645,14 @@ export async function provisionarClienteAsaas(
       config
     );
 
+    // Deu certo: encerra qualquer retry pendente deste cliente.
+    try {
+      const { concluirSincronizacao } = await import('@/lib/asaas-queue.server');
+      await concluirSincronizacao(clienteId, 'cliente');
+    } catch {
+      /* não bloqueia o fluxo */
+    }
+
     return { provisionado: true, asaasCustomerId };
   } catch (err) {
     // Detalhe do provedor fica só no log do servidor.
@@ -649,6 +660,7 @@ export async function provisionarClienteAsaas(
       '[Asaas] Falha ao provisionar cliente no cadastro:',
       err instanceof Error ? err.message : err
     );
+    await agendarRetry('falha_asaas');
     return { provisionado: false, motivo: 'falha_asaas' };
   }
 }
