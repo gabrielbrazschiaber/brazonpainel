@@ -48,7 +48,6 @@ export const gerarCobranca = createServerFn({ method: "POST" })
     const {
       validarCupomParaCliente,
       registrarUsoCupom,
-      buscarCupomAtivo,
       MENSAGENS_CUPOM,
     } = await import("./cupons.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -79,9 +78,6 @@ export const gerarCobranca = createServerFn({ method: "POST" })
         codigo: res.cupom.codigo,
         valor: res.cupom.valor_desconto,
       };
-    } else {
-      // Mantém o comportamento silencioso quando não há cupom informado.
-      void buscarCupomAtivo;
     }
 
     // 4. Primeiro vencimento: 3 dias a partir de hoje (os próximos ciclos são mensais).
