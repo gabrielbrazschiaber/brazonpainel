@@ -428,3 +428,82 @@ export async function testarConexaoAsaas() {
     email: data.email || null
   };
 }
+
+/**
+ * Sincroniza o valor da assinatura recorrente no Asaas com o valor atual do
+ * cliente (plano + serviço extra). Usado quando o admin altera plano/valor.
+ * Retorna um resumo do que aconteceu; nunca lança para não bloquear o salvamento.
+ */
+export async function sincronizarAssinaturaCliente(clienteId: string): Promise<{
+  sincronizado: boolean;
+  motivo?: string;
+  valor?: number;
+}> {
+  try {
+    const { data: cliente } = await supabaseAdmin
+      .from('clientes')
+      .select('id, asaas_subscription_id, servico_extra_valor, planos(nome, valor)')
+      .eq('id', clienteId)
+      .maybeSingle();
+
+    if (!cliente) return { sincronizado: false, motivo: 'cliente_nao_encontrado' };
+    if (!cliente.asaas_subscription_id) {
+      return { sincronizado: false, motivo: 'sem_assinatura' };
+    }
+
+    const plano = (cliente as unknown as { planos: { nome: string; valor: number } | null }).planos;
+    const valor = Number(plano?.valor ?? 0) + Number(cliente.servico_extra_valor ?? 0);
+    if (!(valor > 0)) return { sincronizado: false, motivo: 'valor_invalido' };
+
+    const config = await obterConfigAsaas();
+
+    const respAssinatura = await fetch(
+      `${config.baseUrl}/subscriptions/${cliente.asaas_subscription_id}`,
+      { headers: asaasHeaders(config.apiKey) }
+    );
+    if (!respAssinatura.ok) {
+      console.error(
+        '[Asaas] Assinatura não encontrada ao sincronizar:',
+        (await respAssinatura.text()).slice(0, 300)
+      );
+      return { sincronizado: false, motivo: 'assinatura_invalida' };
+    }
+
+    const assinatura = await lerJson(respAssinatura, 'Consultar Assinatura');
+    if (assinatura.deleted || assinatura.status !== 'ACTIVE') {
+      return { sincronizado: false, motivo: 'assinatura_inativa' };
+    }
+    if (Number(assinatura.value) === Number(valor)) {
+      return { sincronizado: true, valor };
+    }
+
+    const upd = await fetch(`${config.baseUrl}/subscriptions/${assinatura.id}`, {
+      method: 'POST',
+      headers: asaasHeaders(config.apiKey, true),
+      body: JSON.stringify({
+        value: valor,
+        description: plano?.nome ? `Assinatura ${plano.nome} - Brazon` : 'Assinatura mensal Brazon',
+        updatePendingPayments: true,
+      }),
+    });
+    if (!upd.ok) {
+      console.error('[Asaas] Falha ao sincronizar assinatura:', (await upd.text()).slice(0, 300));
+      return { sincronizado: false, motivo: 'falha_asaas' };
+    }
+
+    // Atualiza a cobrança em aberto localmente (valor e link da fatura).
+    const atual = await buscarCobrancaAtualDaAssinatura(assinatura.id, config);
+    if (atual) {
+      await registrarPagamentoLocal(cliente.id, assinatura.id, atual);
+      await supabaseAdmin
+        .from('pagamentos')
+        .update({ valor: Number(atual.value ?? valor) })
+        .eq('asaas_payment_id', atual.id);
+    }
+
+    return { sincronizado: true, valor };
+  } catch (e) {
+    console.error('[Asaas] Erro ao sincronizar assinatura:', e instanceof Error ? e.message : e);
+    return { sincronizado: false, motivo: 'erro' };
+  }
+}
