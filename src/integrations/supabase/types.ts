@@ -316,6 +316,7 @@ export type Database = {
           usos: number
           validade: string | null
           valor_desconto: number
+          vendedor_id: string | null
         }
         Insert: {
           apenas_primeira_mensalidade?: boolean
@@ -330,6 +331,7 @@ export type Database = {
           usos?: number
           validade?: string | null
           valor_desconto?: number
+          vendedor_id?: string | null
         }
         Update: {
           apenas_primeira_mensalidade?: boolean
@@ -344,8 +346,17 @@ export type Database = {
           usos?: number
           validade?: string | null
           valor_desconto?: number
+          vendedor_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cupons_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       novidades: {
         Row: {
