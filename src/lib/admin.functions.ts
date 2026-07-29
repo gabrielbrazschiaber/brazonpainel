@@ -322,7 +322,7 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
       },
     });
 
-    return { ok: true };
+    return { ok: true, asaas: sincronizacaoAsaas };
   });
 
 /* ---------------- Exclusões ---------------- */

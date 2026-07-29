@@ -122,9 +122,27 @@ export function ClienteFormDialog({
       if (editando) {
         if (!cliente) return;
         const payload = { cliente_id: cliente.id, senha: v.senha || "", ...comum };
-        if (escopo === "admin") await salvarAdmin({ data: payload });
-        else await salvar({ data: payload });
-        toast.success("Dados do cliente atualizados!");
+        if (escopo === "admin") {
+          const res = await salvarAdmin({ data: payload });
+          const sync = res?.asaas;
+          if (sync?.sincronizado) {
+            toast.success("Dados atualizados!", {
+              description: "A cobrança recorrente no Asaas foi ajustada para o novo valor.",
+            });
+          } else if (sync && !sync.sincronizado) {
+            toast.warning("Dados atualizados, mas a cobrança não foi sincronizada.", {
+              description:
+                sync.motivo === "assinatura_inativa" || sync.motivo === "assinatura_invalida"
+                  ? "A assinatura no Asaas não está ativa. Gere uma nova cobrança."
+                  : "Verifique a integração do Asaas nas Configurações.",
+            });
+          } else {
+            toast.success("Dados do cliente atualizados!");
+          }
+        } else {
+          await salvar({ data: payload });
+          toast.success("Dados do cliente atualizados!");
+        }
       } else {
         await criar({
           data: {
