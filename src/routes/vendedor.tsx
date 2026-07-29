@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
+import { SairButton } from "@/components/SairButton";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
@@ -40,7 +41,6 @@ import {
   Wallet,
   Copy,
   UserPlus,
-  LogOut,
   MessageSquare,
   Pencil,
   UserCog,
@@ -87,7 +87,7 @@ interface ClienteRow {
 
 
 function VendedorArea() {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
   const [vendedor, setVendedor] = useState<Vendedor | null>(null);
   const [clientes, setClientes] = useState<ClienteRow[]>([]);
   const [planos, setPlanos] = useState<Plano[]>([]);
@@ -185,9 +185,7 @@ function VendedorArea() {
               <span className="hidden sm:inline">Minha conta</span>
             </Button>
             <NovidadesSino />
-            <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sair" title="Sair">
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <SairButton variante="icone" />
 
           </div>
         </div>

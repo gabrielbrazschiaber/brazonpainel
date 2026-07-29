@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
+import { useSair } from "@/lib/use-sair";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -152,7 +153,8 @@ interface Config {
 }
 
 function AdminArea() {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
+  const { sair, saindo } = useSair();
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [vendedores, setVendedores] = useState<VendedorRow[]>([]);
   const [clientes, setClientes] = useState<ClienteRow[]>([]);
@@ -299,7 +301,7 @@ function AdminArea() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={signOut} tooltip="Sair">
+                <SidebarMenuButton onClick={() => void sair()} disabled={saindo} tooltip="Sair">
                   <LogOut className="h-4 w-4" />
                   <span>Sair</span>
                 </SidebarMenuButton>
