@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as React from "react";
 import { describe, expect, it, vi, afterEach } from "vitest";
@@ -54,8 +54,10 @@ describe("PasswordInput", () => {
     fireEvent.click(botao());
     expect(campo()).toHaveAttribute("type", "text");
 
-    await vi.advanceTimersByTimeAsync(1100);
-    await waitFor(() => expect(campo()).toHaveAttribute("type", "password"));
+    act(() => {
+      vi.advanceTimersByTime(1100);
+    });
+    expect(campo()).toHaveAttribute("type", "password");
   });
 
   it("oculta ao sair do campo", async () => {
