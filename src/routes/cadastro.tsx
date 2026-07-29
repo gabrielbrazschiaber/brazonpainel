@@ -57,6 +57,7 @@ function CadastroPage() {
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [telefone, setTelefone] = useState("");
   const [saving, setSaving] = useState(false);
+  const [aceite, setAceite] = useState(false);
   const [done, setDone] = useState<{ email: string; emailEnviado: boolean } | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
@@ -88,6 +89,10 @@ function CadastroPage() {
       toast.error("Informe seu CPF ou CNPJ.");
       return;
     }
+    if (!aceite) {
+      toast.error("É necessário aceitar os Termos de Uso para criar a conta.");
+      return;
+    }
     setSaving(true);
     try {
       const emailCliente = email.trim();
@@ -100,6 +105,8 @@ function CadastroPage() {
 
           cpf_cnpj: cpfCnpj.trim(),
           telefone: telefone.trim() || null,
+          aceite_termos: true as const,
+          termos_versao: TERMOS_VERSAO,
         },
       });
       const { error: resetErr } = await enviarLinkDefinicaoSenha(emailCliente);
@@ -111,6 +118,7 @@ function CadastroPage() {
       setSaving(false);
     }
   }
+
 
   if (done) {
     return (
