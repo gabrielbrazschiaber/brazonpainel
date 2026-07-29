@@ -119,9 +119,9 @@ export function aplicarDesconto(valor: number, desconto: number): number {
 }
 
 /**
- * Registra o uso do cupom. O índice único por cliente é a proteção real
- * contra corrida/fraude: se duas requisições tentarem ao mesmo tempo,
- * apenas uma grava.
+ * Registra o uso do cupom com o máximo de contexto possível: cliente, cupom,
+ * pagamento gerado, plano, vendedor responsável, valores e origem do uso.
+ * O índice único por cliente é a proteção real contra corrida/fraude.
  */
 export async function registrarUsoCupom(params: {
   cupomId: string;
@@ -130,7 +130,27 @@ export async function registrarUsoCupom(params: {
   valorDesconto: number;
   pagamentoId?: string | null;
   asaasPaymentId?: string | null;
+  asaasSubscriptionId?: string | null;
+  codigo?: string | null;
+  valorOriginal?: number | null;
+  origem?: "cadastro_publico" | "renovacao_cliente" | "admin" | "vendedor" | "desconhecida";
 }): Promise<boolean> {
+  // Contexto extra do cliente (vendedor e plano no momento do uso).
+  const { data: cli } = await supabaseAdmin
+    .from("clientes")
+    .select("vendedor_id, plano_id")
+    .eq("id", params.clienteId)
+    .maybeSingle();
+
+  const { data: cupomInfo } = await supabaseAdmin
+    .from("cupons")
+    .select("codigo")
+    .eq("id", params.cupomId)
+    .maybeSingle();
+
+  const valorOriginal = Number(params.valorOriginal ?? 0);
+  const valorFinal = Math.max(0, Math.round((valorOriginal - params.valorDesconto) * 100) / 100);
+
   const { error } = await supabaseAdmin.from("cupom_usos").insert({
     cupom_id: params.cupomId,
     cliente_id: params.clienteId,
@@ -138,12 +158,20 @@ export async function registrarUsoCupom(params: {
     valor_desconto: params.valorDesconto,
     pagamento_id: params.pagamentoId ?? null,
     asaas_payment_id: params.asaasPaymentId ?? null,
+    asaas_subscription_id: params.asaasSubscriptionId ?? null,
+    codigo: params.codigo ?? cupomInfo?.codigo ?? null,
+    vendedor_id: cli?.vendedor_id ?? null,
+    plano_id: cli?.plano_id ?? null,
+    valor_original: valorOriginal,
+    valor_final: valorOriginal > 0 ? valorFinal : 0,
+    origem: params.origem ?? "desconhecida",
   });
 
   if (error) {
     console.error("[Cupom] Uso não registrado (provável duplicidade):", error.message);
     return false;
   }
+
 
   const { data: atual } = await supabaseAdmin
     .from("cupons")
