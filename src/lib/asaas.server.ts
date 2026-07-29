@@ -58,8 +58,9 @@ async function resolverBaseUrl(apiKey: string, preferido: string): Promise<strin
       ultimoErro = e instanceof Error ? e.message : String(e);
     }
   }
+  console.error('[Asaas] Chave não reconhecida em nenhum ambiente. Detalhe:', ultimoErro);
   throw new Error(
-    `Chave de API do Asaas inválida ou não reconhecida em nenhum ambiente (sandbox/produção). Verifique a chave nas Configurações. Detalhe: ${ultimoErro}`
+    'Chave de API do Asaas inválida ou não reconhecida em nenhum ambiente (sandbox/produção). Verifique a chave nas Configurações.'
   );
 }
 
@@ -127,7 +128,10 @@ async function obterOuCriarClienteAsaas(
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[Asaas] Falha ao criar cliente:', errorText);
-    throw new Error(`Erro Asaas (Criar Cliente): ${errorText.slice(0, 300)}`);
+    // Detalhe do provedor fica apenas no log do servidor.
+    throw new Error(
+      'Não foi possível registrar seus dados na plataforma de pagamento. Confira o CPF/CNPJ cadastrado e tente novamente.'
+    );
   }
 
   const data = await lerJson(response, 'Criar Cliente');
@@ -218,7 +222,10 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[Asaas] Falha ao criar cobrança:', errorText);
-    throw new Error(`Erro Asaas (Criar Cobrança): ${errorText.slice(0, 300)}`);
+    // Detalhe do provedor fica apenas no log do servidor.
+    throw new Error(
+      'Não foi possível gerar a cobrança no momento. Tente novamente em instantes ou fale com seu vendedor.'
+    );
   }
 
   const data = await lerJson(response, 'Criar Cobrança');
