@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { criarCliente, atualizarCliente } from "@/lib/vendedor.functions";
+import { atualizarClienteAdmin } from "@/lib/admin.functions";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import {
   clienteFormSchema,
@@ -51,6 +52,8 @@ export interface ClienteEditavel {
 
 type Props = {
   planos: PlanoOpcao[];
+  /** "admin" usa a server fn administrativa (edita qualquer cliente). */
+  escopo?: "vendedor" | "admin";
   onSaved: () => void;
   onOpenChange: (v: boolean) => void;
 } & (
@@ -79,9 +82,18 @@ function valoresDoCliente(cliente: ClienteEditavel | null | undefined): ClienteF
  * Diálogo único de cliente: usado para criar e para editar,
  * compartilhando o mesmo schema zod e a mesma validação.
  */
-export function ClienteFormDialog({ mode, open, cliente, planos, onOpenChange, onSaved }: Props) {
+export function ClienteFormDialog({
+  mode,
+  open,
+  cliente,
+  planos,
+  escopo = "vendedor",
+  onOpenChange,
+  onSaved,
+}: Props) {
   const criar = useServerFn(criarCliente);
   const salvar = useServerFn(atualizarCliente);
+  const salvarAdmin = useServerFn(atualizarClienteAdmin);
   const editando = mode === "editar";
   const aberto = editando ? !!cliente : !!open;
 
@@ -109,7 +121,9 @@ export function ClienteFormDialog({ mode, open, cliente, planos, onOpenChange, o
     try {
       if (editando) {
         if (!cliente) return;
-        await salvar({ data: { cliente_id: cliente.id, senha: v.senha || "", ...comum } });
+        const payload = { cliente_id: cliente.id, senha: v.senha || "", ...comum };
+        if (escopo === "admin") await salvarAdmin({ data: payload });
+        else await salvar({ data: payload });
         toast.success("Dados do cliente atualizados!");
       } else {
         await criar({
