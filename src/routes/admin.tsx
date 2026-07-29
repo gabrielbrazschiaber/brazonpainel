@@ -11,7 +11,7 @@ import { NovidadesTab } from "@/components/admin/NovidadesTab";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
-import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, excluirVendedor, excluirAdmin, excluirCliente } from "@/lib/admin.functions";
+import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, excluirVendedor, excluirAdmin, excluirCliente, reprocessarSyncCliente } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { obterConfiguracoes, salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
@@ -69,6 +69,7 @@ import {
   Trash2,
   Search,
   X,
+  RefreshCw,
 } from "lucide-react";
 import {
   Select,
@@ -132,6 +133,7 @@ interface ClienteRow {
   servico_extra: string | null;
   servico_extra_valor: number | null;
   anotacoes: string | null;
+  asaas_subscription_id?: string | null;
   planos: { nome: string; valor: number } | null;
   nome?: string;
   email?: string;
@@ -173,7 +175,7 @@ function AdminArea() {
         supabase
           .from("clientes")
           .select(
-            "id,user_id,vendedor_id,data_vencimento,status,cpf_cnpj,telefone,plano_id,servico_extra,servico_extra_valor,anotacoes,planos(nome,valor)",
+            "id,user_id,vendedor_id,data_vencimento,status,cpf_cnpj,telefone,plano_id,servico_extra,servico_extra_valor,anotacoes,asaas_subscription_id,planos(nome,valor)",
           )
           .order("created_at", { ascending: false }),
         obterConfig({}).catch(() => null),
@@ -1075,6 +1077,33 @@ function ClientesTab({
     [vendedores],
   );
   const excluir = useServerFn(excluirCliente);
+  const reprocessarSync = useServerFn(reprocessarSyncCliente);
+  const [reprocessando, setReprocessando] = useState<string | null>(null);
+
+  const reprocessarCliente = async (c: ClienteRow) => {
+    setReprocessando(c.id);
+    try {
+      const res = await reprocessarSync({ data: { cliente_id: c.id } });
+      if (res.ok) {
+        toast.success("Sincronização concluída!", {
+          description: `A cobrança de ${c.nome ?? "cliente"} foi atualizada no Asaas.`,
+        });
+      } else if (res.motivo === "sem_assinatura") {
+        toast.warning("Cliente sem assinatura ativa no Asaas.");
+      } else {
+        toast.info("Nova tentativa criada na fila.", {
+          description:
+            "Não foi possível sincronizar agora. A tentativa ficou agendada e será reprocessada automaticamente.",
+        });
+      }
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao reprocessar a sincronização.");
+    } finally {
+      setReprocessando(null);
+    }
+  };
+
   const [editing, setEditing] = useState<ClienteRow | null>(null);
   const [aExcluir, setAExcluir] = useState<ClienteRow | null>(null);
   const [excluindo, setExcluindo] = useState(false);
@@ -1239,9 +1268,24 @@ function ClientesTab({
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
+                    {c.asaas_subscription_id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={reprocessando === c.id}
+                        onClick={() => reprocessarCliente(c)}
+                        aria-label="Reprocessar sincronização com o Asaas"
+                        title="Reprocessar sincronização com o Asaas"
+                      >
+                        <RefreshCw
+                          className={`h-4 w-4 ${reprocessando === c.id ? "animate-spin" : ""}`}
+                        />
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" onClick={() => setEditing(c)}>
                       Editar
                     </Button>
+
                     <Button
                       variant="ghost"
                       size="icon"
