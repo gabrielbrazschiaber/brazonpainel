@@ -165,17 +165,17 @@ function ClienteArea() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mx-auto max-w-5xl px-3 py-6 sm:px-4 sm:py-8">
         {/* Boas-vindas */}
         <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 shrink-0 ring-2 ring-primary/15">
+          <Avatar className="h-11 w-11 shrink-0 ring-2 ring-primary/15 sm:h-12 sm:w-12">
             <AvatarFallback className="bg-primary font-semibold text-primary-foreground">
               {initials(profile?.nome || profile?.email)}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">Bem-vindo,</p>
-            <h1 className="truncate text-xl font-bold text-foreground sm:text-2xl">
+            <h1 className="truncate text-lg font-bold text-foreground sm:text-2xl">
               {profile?.nome || profile?.email}
             </h1>
           </div>
@@ -183,9 +183,9 @@ function ClienteArea() {
 
         {/* Mensagem do vendedor */}
         {cliente?.mensagem_vendedor && (
-          <div className="mt-6 flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/15 p-4">
+          <div className="mt-6 flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/15 p-3 sm:p-4">
             <Bell className="mt-0.5 h-5 w-5 shrink-0 text-warning-foreground" />
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-semibold text-warning-foreground">
                 Mensagem do seu vendedor
               </p>
@@ -197,15 +197,15 @@ function ClienteArea() {
         )}
 
         {/* Cards de resumo */}
-        <section className="mt-6 grid gap-4 sm:grid-cols-3">
-          <Card className="card-interactive p-5">
-            <div className="flex items-center gap-2.5 text-muted-foreground">
-              <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+        <section className="mt-6 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+          <Card className="card-interactive p-4 sm:p-5">
+            <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary sm:h-9 sm:w-9">
                 <CalendarClock className="h-4 w-4" />
               </span>
-              <span className="text-sm font-medium">Vencimento</span>
+              <span className="min-w-0 text-xs font-medium leading-tight sm:text-sm">Vencimento</span>
             </div>
-            <p className="mt-3 text-2xl font-bold text-foreground">{formatDate(venc)}</p>
+            <p className="mt-3 text-xl font-bold text-foreground sm:text-2xl">{formatDate(venc)}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {dias == null
                 ? "Sem data definida"
@@ -214,14 +214,14 @@ function ClienteArea() {
                   : `${dias} dia(s) restantes`}
             </p>
           </Card>
-          <Card className="card-interactive p-5">
-            <div className="flex items-center gap-2.5 text-muted-foreground">
-              <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+          <Card className="card-interactive p-4 sm:p-5">
+            <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary sm:h-9 sm:w-9">
                 <CreditCard className="h-4 w-4" />
               </span>
-              <span className="text-sm font-medium">Plano atual</span>
+              <span className="min-w-0 text-xs font-medium leading-tight sm:text-sm">Plano atual</span>
             </div>
-            <p className="mt-3 text-2xl font-bold text-foreground">
+            <p className="mt-3 text-xl font-bold text-foreground sm:text-2xl">
               {cliente?.planos?.nome ?? "—"}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -238,18 +238,19 @@ function ClienteArea() {
               </p>
             )}
           </Card>
-          <Card className="card-interactive p-5">
-            <div className="flex items-center gap-2.5 text-muted-foreground">
-              <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+          <Card className="card-interactive p-4 sm:p-5 min-[420px]:col-span-2 lg:col-span-1">
+            <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary sm:h-9 sm:w-9">
                 <BadgeCheck className="h-4 w-4" />
               </span>
-              <span className="text-sm font-medium">Status</span>
+              <span className="min-w-0 text-xs font-medium leading-tight sm:text-sm">Status</span>
             </div>
             <div className="mt-3">
               <StatusBadge status={cliente?.status ?? "ativo"} className="text-sm" />
             </div>
           </Card>
         </section>
+
 
         {/* Renovar assinatura */}
         <section className="mt-10">
