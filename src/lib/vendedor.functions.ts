@@ -107,7 +107,9 @@ export const criarCliente = createServerFn({ method: "POST" })
 const cadastroPublicoSchema = novoClienteSchema
   .omit({ mensagem_vendedor: true, anotacoes: true, data_vencimento: true })
   .extend({
-    ref: z.string().trim().min(1).max(60),
+    // Indicação é opcional: o cliente pode se cadastrar e comprar sozinho.
+    ref: z.string().trim().max(60).optional().nullable(),
+    cupom: z.string().trim().max(40).optional().nullable(),
     // Aceite obrigatório do Termo de Uso — o texto registrado vem do servidor.
     aceite_termos: z.literal(true),
     termos_versao: z.string().trim().min(1).max(40),
@@ -121,7 +123,7 @@ function vencimentoPadrao(): string {
   return d.toISOString().slice(0, 10);
 }
 
-// Cadastro público via link de indicação (/cadastro?ref=CODIGO).
+// Cadastro público (/cadastro, com ou sem ?ref=CODIGO).
 // Endpoint sem autenticação: tudo que é sensível é decidido no servidor e a
 // conta nasce SEM e-mail confirmado — a posse do e-mail é provada quando o
 // usuário abre o link de definição de senha.
@@ -130,13 +132,18 @@ export const cadastroPublico = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: vend } = await supabaseAdmin
-      .from("vendedores")
-      .select("id, ativo")
-      .eq("codigo_indicacao", data.ref)
-      .maybeSingle();
-    if (!vend || !vend.ativo) {
-      throw new Error("Link de indicação inválido ou inativo.");
+    // Indicação opcional: quando informada, precisa ser válida e ativa.
+    let vendedorId: string | null = null;
+    if (data.ref) {
+      const { data: vend } = await supabaseAdmin
+        .from("vendedores")
+        .select("id, ativo")
+        .eq("codigo_indicacao", data.ref)
+        .maybeSingle();
+      if (!vend || !vend.ativo) {
+        throw new Error("Link de indicação inválido ou inativo.");
+      }
+      vendedorId = vend.id;
     }
 
     // O plano precisa existir e estar ativo — nunca confiar no id enviado.
@@ -151,6 +158,20 @@ export const cadastroPublico = createServerFn({ method: "POST" })
         throw new Error("Plano inválido ou indisponível.");
       }
       planoId = plano.id;
+    }
+
+    // Cupom (opcional): validado no servidor e apenas RESERVADO no cadastro.
+    // O consumo real acontece quando a primeira cobrança é gerada.
+    let cupomPendenteId: string | null = null;
+    let cupomInfo: { codigo: string; valor_desconto: number } | null = null;
+    if (data.cupom) {
+      const { buscarCupomAtivo, MENSAGENS_CUPOM } = await import("./cupons.server");
+      const res = await buscarCupomAtivo(data.cupom);
+      if ("motivo" in res) {
+        throw new Error(MENSAGENS_CUPOM[res.motivo]);
+      }
+      cupomPendenteId = res.cupom.id;
+      cupomInfo = { codigo: res.cupom.codigo, valor_desconto: res.cupom.valor_desconto };
     }
 
     const email = data.email.trim().toLowerCase();
@@ -181,17 +202,19 @@ export const cadastroPublico = createServerFn({ method: "POST" })
 
     const { error: cliErr } = await supabaseAdmin.from("clientes").insert({
       user_id: newUserId,
-      vendedor_id: vend.id,
+      vendedor_id: vendedorId,
       plano_id: planoId,
       data_vencimento: vencimentoPadrao(),
       cpf_cnpj: data.cpf_cnpj ?? null,
       telefone: data.telefone ?? null,
+      cupom_pendente_id: cupomPendenteId,
       status: "ativo",
     });
     if (cliErr) {
       await supabaseAdmin.auth.admin.deleteUser(newUserId);
       throw new Error("Falha ao concluir o cadastro.");
     }
+
 
 
     // Registro do aceite do Termo de Uso: data/hora + texto integral aceito.
