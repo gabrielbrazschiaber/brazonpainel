@@ -4,7 +4,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { cadastroPublico } from "@/lib/vendedor.functions";
-import { validarCupomPublico, cupomEmDestaque } from "@/lib/cupons.functions";
+import { validarCupomPublico } from "@/lib/cupons.functions";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { Card } from "@/components/ui/card";
 import { BrazonLogo } from "@/components/BrazonLogo";
@@ -72,7 +72,6 @@ function CadastroPage() {
   const navigate = useNavigate();
   const cadastrar = useServerFn(cadastroPublico);
   const validarCupom = useServerFn(validarCupomPublico);
-  const carregarDestaque = useServerFn(cupomEmDestaque);
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -94,7 +93,6 @@ function CadastroPage() {
   const [codigoCupom, setCodigoCupom] = useState(cupomUrl ?? "");
   const [cupomAplicado, setCupomAplicado] = useState<CupomAplicado | null>(null);
   const [validando, setValidando] = useState(false);
-  const [destaque, setDestaque] = useState<CupomAplicado | null>(null);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -110,12 +108,6 @@ function CadastroPage() {
       .order("valor")
       .then(({ data }) => setPlanos((data ?? []) as Plano[]));
   }, []);
-
-  useEffect(() => {
-    carregarDestaque({})
-      .then((c) => setDestaque(c as CupomAplicado | null))
-      .catch(() => setDestaque(null));
-  }, [carregarDestaque]);
 
   async function aplicarCupom(codigo?: string) {
     const cod = (codigo ?? codigoCupom).trim();
