@@ -262,6 +262,9 @@ function VendedorArea() {
           </Card>
         </section>
 
+        {/* Cupons do vendedor */}
+        <CuponsVendedor />
+
         {/* Lista de clientes */}
         <section className="mt-8">
           <h2 className="text-lg font-bold text-foreground">Meus clientes</h2>
