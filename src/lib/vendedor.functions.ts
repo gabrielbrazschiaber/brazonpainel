@@ -246,7 +246,13 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       console.error("[cadastroPublico] falha ao registrar aceite:", aceiteErr.message);
     }
 
-    return { ok: true, termos_versao: TERMOS_VERSAO, cupom: cupomInfo };
+    return {
+      ok: true,
+      termos_versao: TERMOS_VERSAO,
+      cupom: cupomInfo,
+      pagamento_pronto: provisionamento.provisionado,
+    };
+
 
 
   });
