@@ -298,11 +298,17 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
       (cli.plano_id ?? null) !== (data.plano_id ?? null) ||
       Number(cli.servico_extra_valor ?? 0) !== Number(data.servico_extra_valor ?? 0);
 
-    let sincronizacaoAsaas: { sincronizado: boolean; motivo?: string; valor?: number } | null = null;
+    let sincronizacaoAsaas: {
+      sincronizado: boolean;
+      motivo?: string;
+      valor?: number;
+      enfileirado?: boolean;
+    } | null = null;
     if (mudouCobranca && cli.asaas_subscription_id) {
       const { sincronizarAssinaturaCliente } = await import("@/lib/asaas.server");
       sincronizacaoAsaas = await sincronizarAssinaturaCliente(data.cliente_id);
     }
+
 
     const { registrarAuditoria } = await import("@/lib/audit.server");
     await registrarAuditoria({
