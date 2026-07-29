@@ -12,7 +12,7 @@ const BACKOFF_BASE_MS = 60_000; // 1 minuto
 const BACKOFF_MAX_MS = 6 * 60 * 60 * 1000; // 6 horas
 const MAX_TENTATIVAS = 6;
 
-export type TipoSync = "assinatura";
+export type TipoSync = "assinatura" | "cliente";
 
 export function calcularBackoffMs(tentativas: number): number {
   const bruto = BACKOFF_BASE_MS * Math.pow(2, Math.max(0, tentativas - 1));
@@ -22,7 +22,13 @@ export function calcularBackoffMs(tentativas: number): number {
 
 /** Erros que valem retry (indisponibilidade temporária). */
 export function ehFalhaTransitoria(motivo?: string): boolean {
-  return motivo === "erro_rede" || motivo === "asaas_indisponivel" || motivo === "erro";
+  return (
+    motivo === "erro_rede" ||
+    motivo === "asaas_indisponivel" ||
+    motivo === "erro" ||
+    motivo === "falha_asaas" ||
+    motivo === "sem_email"
+  );
 }
 
 export function statusEhTransitorio(status: number): boolean {
@@ -104,7 +110,9 @@ export async function processarFilaAsaas(limite = 20): Promise<{
   const resumo = { processados: 0, concluidos: 0, reagendados: 0, falhados: 0 };
   if (!itens?.length) return resumo;
 
-  const { sincronizarAssinaturaCliente } = await import("@/lib/asaas.server");
+  const { sincronizarAssinaturaCliente, provisionarClienteAsaas } = await import(
+    "@/lib/asaas.server"
+  );
 
   for (const item of itens) {
     // Lock otimista: só processa se ainda estiver pendente.
@@ -120,9 +128,18 @@ export async function processarFilaAsaas(limite = 20): Promise<{
     resumo.processados++;
     const tentativas = item.tentativas + 1;
 
-    const resultado = await sincronizarAssinaturaCliente(item.cliente_id, {
-      enfileirarSeFalhar: false,
-    });
+    // tipo "cliente": só cria/recupera o customer na plataforma de pagamento.
+    const resultado =
+      item.tipo === "cliente"
+        ? await (async () => {
+            const r = await provisionarClienteAsaas(item.cliente_id, {
+              enfileirarSeFalhar: false,
+            });
+            return { sincronizado: r.provisionado, motivo: r.motivo };
+          })()
+        : await sincronizarAssinaturaCliente(item.cliente_id, {
+            enfileirarSeFalhar: false,
+          });
 
     if (resultado.sincronizado) {
       await supabaseAdmin

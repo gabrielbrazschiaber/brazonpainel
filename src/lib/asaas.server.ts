@@ -594,8 +594,22 @@ export async function sincronizarAssinaturaCliente(
  * também é criado sob demanda ao gerar a cobrança, caso este passo falhe.
  */
 export async function provisionarClienteAsaas(
-  clienteId: string
+  clienteId: string,
+  opcoes: { enfileirarSeFalhar?: boolean } = {}
 ): Promise<{ provisionado: boolean; motivo?: string; asaasCustomerId?: string }> {
+  const enfileirar = opcoes.enfileirarSeFalhar !== false;
+  const agendarRetry = async (motivo: string) => {
+    if (!enfileirar) return;
+    try {
+      const { enfileirarSincronizacao } = await import('@/lib/asaas-queue.server');
+      await enfileirarSincronizacao(clienteId, motivo, 'cliente');
+    } catch (e) {
+      console.error(
+        '[Asaas] Falha ao enfileirar provisionamento do cliente:',
+        e instanceof Error ? e.message : e
+      );
+    }
+  };
   try {
     const { data: cliente } = await supabaseAdmin
       .from('clientes')
@@ -615,7 +629,10 @@ export async function provisionarClienteAsaas(
       .eq('id', cliente.user_id)
       .maybeSingle();
 
-    if (!perfil?.email) return { provisionado: false, motivo: 'sem_email' };
+    if (!perfil?.email) {
+      await agendarRetry('sem_email');
+      return { provisionado: false, motivo: 'sem_email' };
+    }
 
     const config = await obterConfigAsaas();
     const asaasCustomerId = await obterOuCriarClienteAsaas(
@@ -628,6 +645,14 @@ export async function provisionarClienteAsaas(
       config
     );
 
+    // Deu certo: encerra qualquer retry pendente deste cliente.
+    try {
+      const { concluirSincronizacao } = await import('@/lib/asaas-queue.server');
+      await concluirSincronizacao(clienteId, 'cliente');
+    } catch {
+      /* não bloqueia o fluxo */
+    }
+
     return { provisionado: true, asaasCustomerId };
   } catch (err) {
     // Detalhe do provedor fica só no log do servidor.
@@ -635,6 +660,7 @@ export async function provisionarClienteAsaas(
       '[Asaas] Falha ao provisionar cliente no cadastro:',
       err instanceof Error ? err.message : err
     );
+    await agendarRetry('falha_asaas');
     return { provisionado: false, motivo: 'falha_asaas' };
   }
 }
