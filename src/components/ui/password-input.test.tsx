@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as React from "react";
 import { describe, expect, it, vi, afterEach } from "vitest";
@@ -50,9 +50,8 @@ describe("PasswordInput", () => {
 
   it("oculta sozinho após o tempo de revelação", async () => {
     vi.useFakeTimers();
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     render(<Campo tempoRevelacao={1000} />);
-    await user.click(botao());
+    fireEvent.click(botao());
     expect(campo()).toHaveAttribute("type", "text");
 
     await vi.advanceTimersByTimeAsync(1100);
