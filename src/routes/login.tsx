@@ -176,6 +176,13 @@ function LoginPage() {
           </Button>
         </form>
         <p className="mt-6 text-center text-xs text-muted-foreground">
+          Ao continuar, você concorda com os{" "}
+          <Link to="/termos-de-uso" className="text-primary underline-offset-2 hover:underline">
+            Termos de Uso
+          </Link>
+          .
+        </p>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
           É cliente novo? Use o link de indicação do seu vendedor para se{" "}
           <Link to="/" className="text-primary underline-offset-2 hover:underline">
             cadastrar
