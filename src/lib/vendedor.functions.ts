@@ -104,7 +104,11 @@ const cadastroPublicoSchema = novoClienteSchema
   .omit({ mensagem_vendedor: true, anotacoes: true, data_vencimento: true })
   .extend({
     ref: z.string().trim().min(1).max(60),
+    // Aceite obrigatório do Termo de Uso — o texto registrado vem do servidor.
+    aceite_termos: z.literal(true),
+    termos_versao: z.string().trim().min(1).max(40),
   });
+
 
 /** Vencimento inicial do cadastro público: sempre calculado no servidor (30 dias). */
 function vencimentoPadrao(): string {
