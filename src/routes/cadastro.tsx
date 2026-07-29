@@ -97,7 +97,7 @@ function CadastroPage() {
           nome: nome.trim(),
           email: emailCliente,
           plano_id: planoId,
-          data_vencimento: defaultVencimento(),
+
           cpf_cnpj: cpfCnpj.trim(),
           telefone: telefone.trim() || null,
         },
