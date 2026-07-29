@@ -1509,7 +1509,34 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
               value={form.dias_aviso_vencimento ?? 0}
               onChange={(e) => set("dias_aviso_vencimento", Number(e.target.value))}
             />
+            <p className="text-xs text-muted-foreground">
+              Clientes ativos recebem um lembrete automático no painel quando o vencimento
+              estiver dentro desse prazo. A rotina roda todos os dias.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="justify-self-start"
+              disabled={gerandoLembretes}
+              onClick={async () => {
+                setGerandoLembretes(true);
+                try {
+                  const r = await gerarLembretes({});
+                  toast.success(
+                    `Lembretes gerados: ${r.criados} novo(s) em ${r.avaliados} cliente(s).`,
+                  );
+                } catch {
+                  toast.error("Não foi possível gerar os lembretes agora.");
+                } finally {
+                  setGerandoLembretes(false);
+                }
+              }}
+            >
+              {gerandoLembretes ? "Gerando..." : "Gerar lembretes agora"}
+            </Button>
           </div>
+
           <div className="grid gap-2">
             <Label htmlFor="ccom">Comissão padrão (%)</Label>
             <Input
