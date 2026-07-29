@@ -172,7 +172,6 @@ function RedefinirSenhaPage() {
             <div className="space-y-2">
               <Label htmlFor="confirma">Confirmar senha</Label>
               <PasswordInput
-                mostrarRegras
                 id="confirma"
                 autoComplete="new-password"
                 required
