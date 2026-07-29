@@ -443,6 +443,7 @@ function DetalheCupomDialog({
                       <TableRow>
                         <TableHead>Cliente</TableHead>
                         <TableHead>Desconto</TableHead>
+                        <TableHead className="hidden md:table-cell">Cobrança</TableHead>
                         <TableHead className="hidden sm:table-cell">Data</TableHead>
                         <TableHead className="text-right">Ação</TableHead>
                       </TableRow>
@@ -453,11 +454,27 @@ function DetalheCupomDialog({
                           <TableCell>
                             <p className="font-medium text-foreground">{u.cliente_nome}</p>
                             <p className="text-xs text-muted-foreground">{u.cliente_email}</p>
+                            <p className="text-xs text-muted-foreground">Origem: {u.origem}</p>
                           </TableCell>
-                          <TableCell>{formatCurrency(u.valor_desconto)}</TableCell>
+                          <TableCell>
+                            {formatCurrency(u.valor_desconto)}
+                            {u.valor_original > 0 && (
+                              <div className="text-xs text-muted-foreground">
+                                {formatCurrency(u.valor_original)} →{" "}
+                                {formatCurrency(u.valor_final)}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <div className="font-mono text-xs">{u.asaas_payment_id ?? "—"}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {u.pago_em ? `Pago em ${formatDate(u.pago_em)}` : "Aguardando pagamento"}
+                            </div>
+                          </TableCell>
                           <TableCell className="hidden sm:table-cell">
                             {formatDate(u.created_at)}
                           </TableCell>
+
                           <TableCell className="text-right">
                             <Button size="sm" variant="ghost" onClick={() => estornarUso(u.id)}>
                               <RotateCcw className="mr-1 h-3.5 w-3.5" />
