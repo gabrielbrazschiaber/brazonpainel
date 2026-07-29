@@ -364,7 +364,6 @@ function ClienteArea() {
                     setCodigoCupom(e.target.value.toUpperCase());
                     setCupomAplicado(null);
                   }}
-                  placeholder="Ex.: 100OFF"
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm uppercase outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-xs"
                 />
                 <Button
