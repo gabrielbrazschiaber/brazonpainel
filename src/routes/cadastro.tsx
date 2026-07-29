@@ -43,11 +43,8 @@ interface Plano {
   descricao: string | null;
 }
 
-function defaultVencimento() {
-  const d = new Date();
-  d.setDate(d.getDate() + 30);
-  return d.toISOString().slice(0, 10);
-}
+// O vencimento inicial é calculado no servidor (não é enviado pelo formulário).
+
 
 function CadastroPage() {
   const { ref } = Route.useSearch();
