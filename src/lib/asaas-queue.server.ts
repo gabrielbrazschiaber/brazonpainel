@@ -104,7 +104,9 @@ export async function processarFilaAsaas(limite = 20): Promise<{
   const resumo = { processados: 0, concluidos: 0, reagendados: 0, falhados: 0 };
   if (!itens?.length) return resumo;
 
-  const { sincronizarAssinaturaCliente } = await import("@/lib/asaas.server");
+  const { sincronizarAssinaturaCliente, provisionarClienteAsaas } = await import(
+    "@/lib/asaas.server"
+  );
 
   for (const item of itens) {
     // Lock otimista: só processa se ainda estiver pendente.
@@ -120,9 +122,18 @@ export async function processarFilaAsaas(limite = 20): Promise<{
     resumo.processados++;
     const tentativas = item.tentativas + 1;
 
-    const resultado = await sincronizarAssinaturaCliente(item.cliente_id, {
-      enfileirarSeFalhar: false,
-    });
+    // tipo "cliente": só cria/recupera o customer na plataforma de pagamento.
+    const resultado =
+      item.tipo === "cliente"
+        ? await (async () => {
+            const r = await provisionarClienteAsaas(item.cliente_id, {
+              enfileirarSeFalhar: false,
+            });
+            return { sincronizado: r.provisionado, motivo: r.motivo };
+          })()
+        : await sincronizarAssinaturaCliente(item.cliente_id, {
+            enfileirarSeFalhar: false,
+          });
 
     if (resultado.sincronizado) {
       await supabaseAdmin
