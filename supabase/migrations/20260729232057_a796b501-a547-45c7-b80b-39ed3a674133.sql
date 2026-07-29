@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.tarefas_do_plano() FROM PUBLIC, anon, authenticated;
