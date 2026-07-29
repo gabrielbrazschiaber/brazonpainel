@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -47,6 +47,7 @@ import {
   MessageSquare,
   Pencil,
   UserCog,
+  ClipboardList,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
@@ -194,6 +195,12 @@ function VendedorArea() {
             >
               <UserCog className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Minha conta</span>
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="h-10 w-10 shrink-0 p-0 sm:h-9 sm:w-auto sm:px-3" aria-label="Tarefas">
+              <Link to="/tarefas">
+                <ClipboardList className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Tarefas</span>
+              </Link>
             </Button>
             <NovidadesSino />
             <SairButton variante="icone" />

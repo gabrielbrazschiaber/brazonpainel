@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -23,7 +23,7 @@ import {
 import { formatCurrency, formatDate, daysUntil, initials } from "@/lib/format";
 
 import { toast } from "sonner";
-import { Bell, CalendarClock, CreditCard, BadgeCheck, RefreshCw } from "lucide-react";
+import { Bell, CalendarClock, CreditCard, BadgeCheck, RefreshCw, ClipboardList } from "lucide-react";
 import { SairButton } from "@/components/SairButton";
 import { useServerFn } from "@tanstack/react-start";
 import { gerarCobranca } from "@/lib/asaas.functions";
@@ -204,6 +204,12 @@ function ClienteArea() {
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
 
             <StatusBadge status={headerTone()} />
+            <Button asChild variant="ghost" size="sm" className="h-10 w-10 shrink-0 p-0 sm:h-9 sm:w-auto sm:px-3" aria-label="Tarefas">
+              <Link to="/tarefas">
+                <ClipboardList className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Tarefas</span>
+              </Link>
+            </Button>
             <NovidadesSino />
             <SairButton variante="icone" />
           </div>
