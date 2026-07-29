@@ -382,7 +382,7 @@ function CadastroPage() {
               >
                 Termos de Uso
               </Link>{" "}
-              (versão {TERMOS_VERSAO}). O aceite será registrado com data e hora.
+              . O aceite será registrado com data e hora.
             </Label>
           </div>
           <Button onClick={submit} disabled={saving || cooldown > 0 || !aceite}>
