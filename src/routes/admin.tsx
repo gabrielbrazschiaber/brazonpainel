@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { useSair } from "@/lib/use-sair";
 import { SairButton } from "@/components/SairButton";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -155,7 +155,6 @@ interface Config {
 
 function AdminArea() {
   const { profile } = useAuth();
-  const { sair, saindo } = useSair();
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [vendedores, setVendedores] = useState<VendedorRow[]>([]);
   const [clientes, setClientes] = useState<ClienteRow[]>([]);
