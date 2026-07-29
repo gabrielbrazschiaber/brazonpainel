@@ -189,7 +189,23 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       throw new Error("Falha ao concluir o cadastro.");
     }
 
-    return { ok: true };
+
+    // Registro do aceite do Termo de Uso: data/hora + texto integral aceito.
+    // O texto vem sempre do servidor, nunca do cliente.
+    const { error: aceiteErr } = await supabaseAdmin.from("termos_aceites").insert({
+      user_id: newUserId,
+      email,
+      versao: TERMOS_VERSAO,
+      texto: TERMOS_TEXTO,
+      origem: "cadastro_publico",
+      aceito_em: new Date().toISOString(),
+    });
+    if (aceiteErr) {
+      console.error("[cadastroPublico] falha ao registrar aceite:", aceiteErr.message);
+    }
+
+    return { ok: true, termos_versao: TERMOS_VERSAO };
+
 
   });
 
