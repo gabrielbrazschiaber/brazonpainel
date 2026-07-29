@@ -501,14 +501,17 @@ export function ClienteFormDialog({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor={`${p}venc`}>Vencimento</Label>
+                <Label htmlFor={`${p}venc`}>Primeiro vencimento *</Label>
                 <Input
                   id={`${p}venc`}
                   type="date"
                   value={values.vencimento}
+                  aria-invalid={invalido("vencimento")}
                   onChange={(e) => set("vencimento", e.target.value)}
                 />
+                <Erro campo="vencimento" />
               </div>
+
               <div className="grid gap-2">
                 <Label htmlFor={`${p}msg`}>Mensagem ao cliente (opcional)</Label>
                 <Textarea
