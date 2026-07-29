@@ -77,7 +77,7 @@ function ClienteArea() {
     setLoading(true);
     const { data: cli } = await supabase
       .from("clientes")
-      .select("id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,planos(id,nome,valor,descricao,ativo)")
+      .select("id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,asaas_subscription_id,planos(id,nome,valor,descricao,ativo)")
       .maybeSingle();
     setCliente(cli as unknown as Cliente);
 
