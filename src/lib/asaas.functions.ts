@@ -107,7 +107,12 @@ export const gerarCobranca = createServerFn({ method: "POST" })
         valorDesconto: Number(resultado.descontoAplicado),
         pagamentoId: resultado.pagamentoIdLocal ?? null,
         asaasPaymentId: resultado.asaasPaymentId ?? null,
+        asaasSubscriptionId: (resultado.assinaturaId as string) ?? null,
+        codigo: cupomAplicado.codigo,
+        valorOriginal: valorTotal,
+        origem: "renovacao_cliente",
       });
+
       if (registrado) descontoAplicado = Number(resultado.descontoAplicado);
     }
 
