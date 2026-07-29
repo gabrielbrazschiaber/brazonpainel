@@ -1,3 +1,4 @@
+import * as React from "react";
 import { LogOut, UserCog } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -42,6 +43,18 @@ export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) 
     if (isMobile) setOpenMobile(false);
   }
 
+  // Ao girar a tela ou redimensionar, fecha o drawer para evitar
+  // um menu preso cobrindo o conteúdo em paisagem.
+  React.useEffect(() => {
+    const onResize = () => setOpenMobile(false);
+    window.addEventListener("orientationchange", onResize);
+    return () => window.removeEventListener("orientationchange", onResize);
+  }, [setOpenMobile]);
+
+  React.useEffect(() => {
+    if (!isMobile) setOpenMobile(false);
+  }, [isMobile, setOpenMobile]);
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
@@ -50,7 +63,7 @@ export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) 
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="overflow-y-auto overscroll-contain">
         <SidebarGroup>
           <SidebarGroupLabel>Navegação</SidebarGroupLabel>
           <SidebarGroupContent>
