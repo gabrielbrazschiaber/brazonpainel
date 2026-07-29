@@ -664,3 +664,104 @@ export async function provisionarClienteAsaas(
     return { provisionado: false, motivo: 'falha_asaas' };
   }
 }
+
+/**
+ * Cria automaticamente a ASSINATURA/cobrança inicial logo após o cadastro público,
+ * usando o plano escolhido e o asaas_customer_id já provisionado.
+ *
+ * Nunca lança: uma falha aqui não pode invalidar a conta recém-criada — o cliente
+ * ainda pode gerar a cobrança manualmente na área dele.
+ */
+export async function criarCobrancaInicialCadastro(
+  clienteId: string,
+  opcoes: { tipoPagamento?: 'PIX' | 'BOLETO' | 'CREDIT_CARD' } = {}
+): Promise<{
+  criada: boolean;
+  motivo?: string;
+  invoiceUrl?: string | null;
+  valor?: number;
+  descontoAplicado?: number;
+  cupom?: string | null;
+}> {
+  try {
+    const { data: cliente } = await supabaseAdmin
+      .from('clientes')
+      .select('id, user_id, plano_id, servico_extra_valor, cupom_pendente_id, asaas_subscription_id')
+      .eq('id', clienteId)
+      .maybeSingle();
+
+    if (!cliente) return { criada: false, motivo: 'cliente_nao_encontrado' };
+    if (cliente.asaas_subscription_id) return { criada: false, motivo: 'ja_possui_assinatura' };
+    if (!cliente.plano_id) return { criada: false, motivo: 'sem_plano' };
+
+    const { data: plano } = await supabaseAdmin
+      .from('planos')
+      .select('id, nome, valor, ativo')
+      .eq('id', cliente.plano_id)
+      .maybeSingle();
+    if (!plano || !plano.ativo) return { criada: false, motivo: 'plano_indisponivel' };
+
+    const valorTotal = Number(plano.valor) + Number(cliente.servico_extra_valor ?? 0);
+
+    // Cupom reservado no cadastro: validado de novo aqui, no servidor.
+    const { validarCupomParaCliente, registrarUsoCupom } = await import('./cupons.server');
+    let cupomAplicado: { id: string; codigo: string; valor: number } | null = null;
+    if (cliente.cupom_pendente_id) {
+      const { data: pend } = await supabaseAdmin
+        .from('cupons')
+        .select('codigo')
+        .eq('id', cliente.cupom_pendente_id)
+        .maybeSingle();
+      if (pend?.codigo) {
+        const res = await validarCupomParaCliente(pend.codigo, cliente.id);
+        if (!('motivo' in res)) {
+          cupomAplicado = {
+            id: res.cupom.id,
+            codigo: res.cupom.codigo,
+            valor: res.cupom.valor_desconto,
+          };
+        }
+      }
+    }
+
+    // Primeiro vencimento: 3 dias (os ciclos seguintes são mensais).
+    const venc = new Date();
+    venc.setDate(venc.getDate() + 3);
+
+    const resultado = await gerarCobrancaAsaas({
+      clienteId: cliente.id,
+      valor: valorTotal,
+      tipoPagamento: opcoes.tipoPagamento ?? 'PIX',
+      dataVencimento: venc.toISOString().split('T')[0],
+      descricao: `Assinatura mensal Brazon - ${plano.nome}`,
+      descontoPrimeiraMensalidade: cupomAplicado?.valor ?? 0,
+    });
+
+    let descontoAplicado = 0;
+    if (cupomAplicado && Number(resultado.descontoAplicado ?? 0) > 0) {
+      const registrado = await registrarUsoCupom({
+        cupomId: cupomAplicado.id,
+        clienteId: cliente.id,
+        userId: cliente.user_id,
+        valorDesconto: Number(resultado.descontoAplicado),
+        pagamentoId: resultado.pagamentoIdLocal ?? null,
+        asaasPaymentId: resultado.asaasPaymentId ?? null,
+      });
+      if (registrado) descontoAplicado = Number(resultado.descontoAplicado);
+    }
+
+    return {
+      criada: true,
+      invoiceUrl: (resultado.invoiceUrl as string | null) ?? null,
+      valor: valorTotal,
+      descontoAplicado,
+      cupom: descontoAplicado > 0 ? cupomAplicado!.codigo : null,
+    };
+  } catch (err) {
+    console.error(
+      '[Asaas] Falha ao criar cobrança inicial do cadastro:',
+      err instanceof Error ? err.message : err
+    );
+    return { criada: false, motivo: 'falha_asaas' };
+  }
+}
