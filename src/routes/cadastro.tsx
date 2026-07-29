@@ -210,6 +210,13 @@ function CadastroPage() {
         )}
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
+          Ao criar conta, você aceita os{" "}
+          <Link to="/termos-de-uso" className="font-medium text-primary underline-offset-2 hover:underline">
+            Termos de Uso
+          </Link>
+          .
+        </p>
+        <p className="mt-4 text-center text-sm text-muted-foreground">
           Já tem conta?{" "}
           <Link to="/login" className="font-medium text-primary">
             Entrar
