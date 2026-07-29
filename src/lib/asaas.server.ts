@@ -156,7 +156,13 @@ export interface CobrancaParams {
   tipoPagamento: 'PIX' | 'BOLETO' | 'CREDIT_CARD';
   dataVencimento: string; // Formato YYYY-MM-DD
   descricao?: string;
+  /**
+   * Desconto (R$) aplicado SOMENTE na primeira cobrança da assinatura.
+   * Os ciclos seguintes continuam com o valor cheio do plano.
+   */
+  descontoPrimeiraMensalidade?: number;
 }
+
 
 // Busca a cobrança em aberto de uma assinatura (a próxima a ser paga).
 async function buscarCobrancaAtualDaAssinatura(
