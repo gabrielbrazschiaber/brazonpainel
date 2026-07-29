@@ -233,7 +233,13 @@ Deno.serve(async (req) => {
             mappedPaymentStatus === 'vencido' ? 'vencido' : 'ativo'
           await supabase
             .from('clientes')
-            .update({ status: clienteStatus, updated_at: new Date().toISOString() })
+            .update({
+              status: clienteStatus,
+              ...(mappedPaymentStatus === 'pago'
+                ? { data_vencimento: proximoVencimento(payment.dueDate) }
+                : {}),
+              updated_at: new Date().toISOString(),
+            })
             .eq('id', clienteId)
         }
       } else {
