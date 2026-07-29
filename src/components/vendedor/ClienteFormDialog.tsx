@@ -10,9 +10,12 @@ import {
   clienteFormVazio,
   clientePayloadComum,
   defaultVencimento,
+  errosPorCampo,
   parseValorBR,
+  validarCadastro,
   type ClienteFormValues,
 } from "@/lib/cliente-form";
+
 import { formatCurrency } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
