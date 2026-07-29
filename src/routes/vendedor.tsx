@@ -230,7 +230,7 @@ function VendedorArea() {
 
 
         {/* Métricas */}
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <MetricCard icon={Users} label="Total de clientes" value={String(metrics.total)} />
           <MetricCard icon={CheckCircle2} label="Ativos" value={String(metrics.ativos)} tone="text-success" />
           <MetricCard
