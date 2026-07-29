@@ -8,8 +8,8 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
-import { criarCliente, atualizarMensagemCliente, atualizarCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
-import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
+import { atualizarMensagemCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
+import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
