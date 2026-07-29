@@ -433,12 +433,41 @@ export async function testarConexaoAsaas() {
  * Sincroniza o valor da assinatura recorrente no Asaas com o valor atual do
  * cliente (plano + serviço extra). Usado quando o admin altera plano/valor.
  * Retorna um resumo do que aconteceu; nunca lança para não bloquear o salvamento.
+ *
+ * Em falhas temporárias do Asaas (rede/timeout/429/5xx) a sincronização é
+ * enfileirada para retry automático com backoff exponencial.
  */
-export async function sincronizarAssinaturaCliente(clienteId: string): Promise<{
+export async function sincronizarAssinaturaCliente(
+  clienteId: string,
+  opcoes: { enfileirarSeFalhar?: boolean } = {}
+): Promise<{
   sincronizado: boolean;
   motivo?: string;
   valor?: number;
+  enfileirado?: boolean;
 }> {
+  const { enfileirarSeFalhar = true } = opcoes;
+  const {
+    enfileirarSincronizacao,
+    concluirSincronizacao,
+    ehFalhaTransitoria,
+    statusEhTransitorio,
+  } = await import('@/lib/asaas-queue.server');
+
+  const finalizar = async (
+    resultado: { sincronizado: boolean; motivo?: string; valor?: number }
+  ) => {
+    if (resultado.sincronizado) {
+      await concluirSincronizacao(clienteId);
+      return resultado;
+    }
+    if (enfileirarSeFalhar && ehFalhaTransitoria(resultado.motivo)) {
+      await enfileirarSincronizacao(clienteId, resultado.motivo ?? 'erro');
+      return { ...resultado, enfileirado: true };
+    }
+    return resultado;
+  };
+
   try {
     const { data: cliente } = await supabaseAdmin
       .from('clientes')
@@ -462,11 +491,14 @@ export async function sincronizarAssinaturaCliente(clienteId: string): Promise<{
       { headers: asaasHeaders(config.apiKey) }
     );
     if (!respAssinatura.ok) {
-      console.error(
-        '[Asaas] Assinatura não encontrada ao sincronizar:',
-        (await respAssinatura.text()).slice(0, 300)
-      );
-      return { sincronizado: false, motivo: 'assinatura_invalida' };
+      const detalhe = (await respAssinatura.text()).slice(0, 300);
+      console.error('[Asaas] Falha ao consultar assinatura ao sincronizar:', detalhe);
+      return finalizar({
+        sincronizado: false,
+        motivo: statusEhTransitorio(respAssinatura.status)
+          ? 'asaas_indisponivel'
+          : 'assinatura_invalida',
+      });
     }
 
     const assinatura = await lerJson(respAssinatura, 'Consultar Assinatura');
@@ -474,7 +506,7 @@ export async function sincronizarAssinaturaCliente(clienteId: string): Promise<{
       return { sincronizado: false, motivo: 'assinatura_inativa' };
     }
     if (Number(assinatura.value) === Number(valor)) {
-      return { sincronizado: true, valor };
+      return finalizar({ sincronizado: true, valor });
     }
 
     const upd = await fetch(`${config.baseUrl}/subscriptions/${assinatura.id}`, {
@@ -487,8 +519,12 @@ export async function sincronizarAssinaturaCliente(clienteId: string): Promise<{
       }),
     });
     if (!upd.ok) {
-      console.error('[Asaas] Falha ao sincronizar assinatura:', (await upd.text()).slice(0, 300));
-      return { sincronizado: false, motivo: 'falha_asaas' };
+      const detalhe = (await upd.text()).slice(0, 300);
+      console.error('[Asaas] Falha ao sincronizar assinatura:', detalhe);
+      return finalizar({
+        sincronizado: false,
+        motivo: statusEhTransitorio(upd.status) ? 'asaas_indisponivel' : 'falha_asaas',
+      });
     }
 
     // Atualiza a cobrança em aberto localmente (valor e link da fatura).
@@ -501,9 +537,16 @@ export async function sincronizarAssinaturaCliente(clienteId: string): Promise<{
         .eq('asaas_payment_id', atual.id);
     }
 
-    return { sincronizado: true, valor };
+    return finalizar({ sincronizado: true, valor });
   } catch (e) {
-    console.error('[Asaas] Erro ao sincronizar assinatura:', e instanceof Error ? e.message : e);
-    return { sincronizado: false, motivo: 'erro' };
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('[Asaas] Erro ao sincronizar assinatura:', msg);
+    // Erros de rede/timeout são transitórios; configuração ausente não é.
+    const configAusente = msg.includes('Configuração do Asaas');
+    return finalizar({
+      sincronizado: false,
+      motivo: configAusente ? 'sem_configuracao' : 'erro_rede',
+    });
   }
 }
+
