@@ -200,20 +200,35 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       throw new Error("Falha ao concluir o cadastro.");
     }
 
-    const { error: cliErr } = await supabaseAdmin.from("clientes").insert({
-      user_id: newUserId,
-      vendedor_id: vendedorId,
-      plano_id: planoId,
-      data_vencimento: vencimentoPadrao(),
-      cpf_cnpj: data.cpf_cnpj ?? null,
-      telefone: data.telefone ?? null,
-      cupom_pendente_id: cupomPendenteId,
-      status: "ativo",
-    });
-    if (cliErr) {
+    const { data: clienteCriado, error: cliErr } = await supabaseAdmin
+      .from("clientes")
+      .insert({
+        user_id: newUserId,
+        vendedor_id: vendedorId,
+        plano_id: planoId,
+        data_vencimento: vencimentoPadrao(),
+        cpf_cnpj: data.cpf_cnpj ?? null,
+        telefone: data.telefone ?? null,
+        cupom_pendente_id: cupomPendenteId,
+        status: "ativo",
+      })
+      .select("id")
+      .single();
+    if (cliErr || !clienteCriado) {
       await supabaseAdmin.auth.admin.deleteUser(newUserId);
       throw new Error("Falha ao concluir o cadastro.");
     }
+
+    // Garante o perfil (nome/e-mail) antes de provisionar na plataforma de pagamento.
+    await supabaseAdmin
+      .from("profiles")
+      .upsert({ id: newUserId, email, nome: data.nome }, { onConflict: "id" });
+
+    // Cria o customer na plataforma de pagamento e guarda o identificador,
+    // para que a cobrança possa ser iniciada depois. Falha aqui não bloqueia o cadastro.
+    const { provisionarClienteAsaas } = await import("./asaas.server");
+    const provisionamento = await provisionarClienteAsaas(clienteCriado.id);
+
 
 
 
@@ -231,7 +246,13 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       console.error("[cadastroPublico] falha ao registrar aceite:", aceiteErr.message);
     }
 
-    return { ok: true, termos_versao: TERMOS_VERSAO, cupom: cupomInfo };
+    return {
+      ok: true,
+      termos_versao: TERMOS_VERSAO,
+      cupom: cupomInfo,
+      pagamento_pronto: provisionamento.provisionado,
+    };
+
 
 
   });

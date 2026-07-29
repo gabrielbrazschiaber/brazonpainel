@@ -584,3 +584,57 @@ export async function sincronizarAssinaturaCliente(
   }
 }
 
+
+/**
+ * Provisiona o cliente na plataforma de pagamento logo no cadastro, salvando o
+ * asaas_customer_id em `clientes`. Assim a primeira cobrança/assinatura pode ser
+ * iniciada depois sem depender de criar o customer na hora.
+ *
+ * Nunca lança: falha aqui não pode impedir a criação da conta. O identificador
+ * também é criado sob demanda ao gerar a cobrança, caso este passo falhe.
+ */
+export async function provisionarClienteAsaas(
+  clienteId: string
+): Promise<{ provisionado: boolean; motivo?: string; asaasCustomerId?: string }> {
+  try {
+    const { data: cliente } = await supabaseAdmin
+      .from('clientes')
+      .select('id, user_id, asaas_customer_id, cpf_cnpj, telefone')
+      .eq('id', clienteId)
+      .maybeSingle();
+
+    if (!cliente) return { provisionado: false, motivo: 'cliente_nao_encontrado' };
+    if (cliente.asaas_customer_id) {
+      return { provisionado: true, asaasCustomerId: cliente.asaas_customer_id };
+    }
+    if (!cliente.cpf_cnpj) return { provisionado: false, motivo: 'sem_cpf_cnpj' };
+
+    const { data: perfil } = await supabaseAdmin
+      .from('profiles')
+      .select('nome, email')
+      .eq('id', cliente.user_id)
+      .maybeSingle();
+
+    if (!perfil?.email) return { provisionado: false, motivo: 'sem_email' };
+
+    const config = await obterConfigAsaas();
+    const asaasCustomerId = await obterOuCriarClienteAsaas(
+      cliente.id,
+      perfil.nome || perfil.email,
+      perfil.email,
+      cliente.cpf_cnpj,
+      cliente.telefone ?? null,
+      null,
+      config
+    );
+
+    return { provisionado: true, asaasCustomerId };
+  } catch (err) {
+    // Detalhe do provedor fica só no log do servidor.
+    console.error(
+      '[Asaas] Falha ao provisionar cliente no cadastro:',
+      err instanceof Error ? err.message : err
+    );
+    return { provisionado: false, motivo: 'falha_asaas' };
+  }
+}
