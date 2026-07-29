@@ -105,6 +105,12 @@ function ClienteArea() {
 
   const dias = daysUntil(cliente?.data_vencimento);
   const venc = cliente?.data_vencimento;
+  const totalMensal =
+    (cliente?.planos?.valor ?? 0) + (cliente?.servico_extra_valor ?? 0);
+  const assinaturaAtiva = Boolean(cliente?.asaas_subscription_id);
+  const faturaPendente = pagamentos.find(
+    (p) => p.status === "pendente" && p.invoice_url,
+  );
 
   function headerTone() {
     if (cliente?.status === "ativo" && (dias == null || dias > 5)) return "ativo";
