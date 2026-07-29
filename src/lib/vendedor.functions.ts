@@ -18,15 +18,29 @@ function gerarSenhaAleatoria(): string {
 const novoClienteSchema = z.object({
   nome: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(160),
-  plano_id: z.string().uuid().nullable().optional(),
-  data_vencimento: z.string().min(10).max(10),
+  // Plano é obrigatório: sem ele não há mensalidade nem cobrança recorrente.
+  plano_id: z.string().uuid("Selecione um plano válido."),
+  data_vencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data de vencimento inválida."),
   mensagem_vendedor: z.string().trim().max(500).optional().nullable(),
   anotacoes: z.string().trim().max(1000).optional().nullable(),
   servico_extra: z.string().trim().max(200).optional().nullable(),
   servico_extra_valor: z.number().min(0).max(1000000).optional().nullable(),
-  cpf_cnpj: z.string().trim().max(20).optional().nullable(),
-  telefone: z.string().trim().max(20).optional().nullable(),
+  // CPF/CNPJ é obrigatório para gerar cobranças na plataforma de pagamento.
+  cpf_cnpj: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/\D/g, ""))
+    .refine((v) => v.length === 11 || v.length === 14, "Informe um CPF (11) ou CNPJ (14 dígitos)."),
+  telefone: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/\D/g, ""))
+    .refine((v) => v === "" || v.length === 10 || v.length === 11, "Telefone inválido.")
+    .optional()
+    .nullable(),
+  cupom: z.string().trim().max(40).optional().nullable(),
 });
+
 
 // Vendedor logado cadastra um novo cliente (cria o login de acesso).
 export const criarCliente = createServerFn({ method: "POST" })
@@ -91,6 +105,24 @@ export const criarCliente = createServerFn({ method: "POST" })
       throw new Error("Falha ao cadastrar o cliente.");
     }
 
+    // Garante o perfil antes de integrar com a plataforma de pagamento.
+    await supabaseAdmin
+      .from("profiles")
+      .upsert({ id: newUserId, email: data.email, nome: data.nome }, { onConflict: "id" });
+
+    // Integração: cria o customer na plataforma de pagamento já no cadastro.
+    // Se a API falhar, o provisionamento é enfileirado com novas tentativas
+    // automáticas — o cadastro nunca é bloqueado por indisponibilidade externa.
+    let integracao: { provisionado: boolean; motivo?: string } = { provisionado: false };
+    if (novoCliente?.id) {
+      try {
+        const { provisionarClienteAsaas } = await import("./asaas.server");
+        integracao = await provisionarClienteAsaas(novoCliente.id);
+      } catch {
+        integracao = { provisionado: false, motivo: "erro_integracao" };
+      }
+    }
+
     const { registrarAuditoria } = await import("@/lib/audit.server");
     await registrarAuditoria({
       actorId: userId,
@@ -98,11 +130,19 @@ export const criarCliente = createServerFn({ method: "POST" })
       acao: "criar_cliente",
       entidade: "cliente",
       entidadeId: novoCliente?.id ?? null,
-      detalhes: { nome: data.nome, email: data.email, plano_id: data.plano_id ?? null, servico_extra: data.servico_extra ?? null, servico_extra_valor: data.servico_extra_valor ?? 0 },
+      detalhes: {
+        nome: data.nome,
+        email: data.email,
+        plano_id: data.plano_id,
+        servico_extra: data.servico_extra ?? null,
+        servico_extra_valor: data.servico_extra_valor ?? 0,
+        asaas_provisionado: integracao.provisionado,
+      },
     });
 
-    return { ok: true };
+    return { ok: true, integracao };
   });
+
 
 const cadastroPublicoSchema = novoClienteSchema
   .omit({ mensagem_vendedor: true, anotacoes: true, data_vencimento: true })
