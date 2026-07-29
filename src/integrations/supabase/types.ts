@@ -149,6 +149,7 @@ export type Database = {
           updated_at: string
           user_id: string
           vendedor_id: string | null
+          via_link: boolean
         }
         Insert: {
           anotacoes?: string | null
@@ -168,6 +169,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           vendedor_id?: string | null
+          via_link?: boolean
         }
         Update: {
           anotacoes?: string | null
@@ -187,6 +189,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vendedor_id?: string | null
+          via_link?: boolean
         }
         Relationships: [
           {
@@ -550,6 +553,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      referral_visitas: {
+        Row: {
+          codigo: string
+          created_at: string
+          id: string
+          session_id: string
+          vendedor_id: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          id?: string
+          session_id: string
+          vendedor_id: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          id?: string
+          session_id?: string
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_visitas_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_permissions: {
         Row: {

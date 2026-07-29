@@ -19,6 +19,7 @@ import { Route as ClienteRouteImport } from './routes/cliente'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicRefVisitaRouteImport } from './routes/api/public/ref-visita'
 import { Route as ApiPublicHooksAsaasSyncQueueRouteImport } from './routes/api/public/hooks/asaas-sync-queue'
 
 const VendedorRoute = VendedorRouteImport.update({
@@ -71,6 +72,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRefVisitaRoute = ApiPublicRefVisitaRouteImport.update({
+  id: '/api/public/ref-visita',
+  path: '/api/public/ref-visita',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksAsaasSyncQueueRoute =
   ApiPublicHooksAsaasSyncQueueRouteImport.update({
     id: '/api/public/hooks/asaas-sync-queue',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
+  '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
 }
 export interface FileRoutesByTo {
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
+  '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
 }
 export interface FileRoutesById {
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
+  '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
 }
 export interface FileRouteTypes {
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/termos-de-uso'
     | '/vendedor'
+    | '/api/public/ref-visita'
     | '/api/public/hooks/asaas-sync-queue'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/termos-de-uso'
     | '/vendedor'
+    | '/api/public/ref-visita'
     | '/api/public/hooks/asaas-sync-queue'
   id:
     | '__root__'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/termos-de-uso'
     | '/vendedor'
+    | '/api/public/ref-visita'
     | '/api/public/hooks/asaas-sync-queue'
   fileRoutesById: FileRoutesById
 }
@@ -171,6 +183,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermosDeUsoRoute: typeof TermosDeUsoRoute
   VendedorRoute: typeof VendedorRoute
+  ApiPublicRefVisitaRoute: typeof ApiPublicRefVisitaRoute
   ApiPublicHooksAsaasSyncQueueRoute: typeof ApiPublicHooksAsaasSyncQueueRoute
 }
 
@@ -246,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ref-visita': {
+      id: '/api/public/ref-visita'
+      path: '/api/public/ref-visita'
+      fullPath: '/api/public/ref-visita'
+      preLoaderRoute: typeof ApiPublicRefVisitaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/asaas-sync-queue': {
       id: '/api/public/hooks/asaas-sync-queue'
       path: '/api/public/hooks/asaas-sync-queue'
@@ -267,6 +287,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermosDeUsoRoute: TermosDeUsoRoute,
   VendedorRoute: VendedorRoute,
+  ApiPublicRefVisitaRoute: ApiPublicRefVisitaRoute,
   ApiPublicHooksAsaasSyncQueueRoute: ApiPublicHooksAsaasSyncQueueRoute,
 }
 export const routeTree = rootRouteImport

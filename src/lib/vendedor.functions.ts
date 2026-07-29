@@ -216,6 +216,7 @@ export const cadastroPublico = createServerFn({ method: "POST" })
         cpf_cnpj: data.cpf_cnpj ?? null,
         telefone: data.telefone ?? null,
         cupom_pendente_id: cupomPendenteId,
+        via_link: vendedorId !== null,
         status: "ativo",
       })
       .select("id")
