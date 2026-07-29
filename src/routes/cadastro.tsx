@@ -190,6 +190,9 @@ function CadastroPage() {
             }
           : null,
         planoNome: plano?.nome ?? null,
+        faturaUrl: res?.cobranca?.invoice_url ?? null,
+        faturaValor: res?.cobranca?.valor ?? null,
+
       });
     } catch (e) {
       toast.error(
