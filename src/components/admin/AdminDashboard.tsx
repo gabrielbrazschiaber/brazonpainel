@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { atualizarStatusPagamento } from "@/lib/admin.functions";
+import { atualizarStatusPagamento, listarWebhookLogs } from "@/lib/admin.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -121,6 +121,7 @@ export function AdminDashboard() {
   const [clientes, setClientes] = useState<ClienteRow[]>([]);
   const [vendedores, setVendedores] = useState<VendedorRow[]>([]);
   const [pagamentos, setPagamentos] = useState<PagamentoRow[]>([]);
+  const carregarWebhookLogs = useServerFn(listarWebhookLogs);
   const [webhookLogs, setWebhookLogs] = useState<WebhookLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [logDetail, setLogDetail] = useState<WebhookLog | null>(null);
@@ -180,13 +181,13 @@ export function AdminDashboard() {
   }, []);
 
   const loadWebhooks = useCallback(async () => {
-    const { data } = await supabase
-      .from("asaas_webhook_logs")
-      .select("id,event,payment_id,status,payload,processing_result,error_message,created_at")
-      .order("created_at", { ascending: false })
-      .limit(10);
-    setWebhookLogs((data ?? []) as unknown as WebhookLog[]);
-  }, []);
+    try {
+      const { logs } = await carregarWebhookLogs({});
+      setWebhookLogs(logs as unknown as WebhookLog[]);
+    } catch {
+      setWebhookLogs([]);
+    }
+  }, [carregarWebhookLogs]);
 
   useEffect(() => {
     load();

@@ -630,3 +630,113 @@ export const reprocessarSyncCliente = createServerFn({ method: "POST" })
       reagendado: !resultado.sincronizado,
     };
   });
+
+/* ---------------- Leituras e ações sensíveis (fail-closed no servidor) ---------------- */
+
+/** Lista o histórico de auditoria (exige a permissão de leitura de auditoria). */
+export const listarAuditoria = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await ensurePermission(supabase, userId, "auditoria.ler");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("auditoria")
+      .select("id,actor_email,actor_role,acao,entidade,entidade_id,detalhes,created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    return { registros: data ?? [] };
+  });
+
+/** Lista os últimos webhooks recebidos do Asaas (exige gerenciar configurações). */
+export const listarWebhookLogs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await ensurePermission(supabase, userId, "configuracoes.gerenciar");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("asaas_webhook_logs")
+      .select("id,event,payment_id,status,payload,processing_result,error_message,created_at")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    return { logs: data ?? [] };
+  });
+
+const planoSchema = z.object({
+  id: z.string().uuid().optional(),
+  nome: z.string().trim().min(2).max(120),
+  valor: z.number().min(0).max(1_000_000),
+  descricao: z.string().trim().max(500).nullable().optional(),
+  ativo: z.boolean(),
+});
+
+/** Cria ou atualiza um plano (exige a permissão de gerenciar planos). */
+export const salvarPlano = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => planoSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensurePermission(supabase, userId, "planos.gerenciar");
+
+    const payload = {
+      nome: data.nome,
+      valor: data.valor,
+      descricao: data.descricao?.trim() ? data.descricao.trim() : null,
+      ativo: data.ativo,
+    };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: salvo, error } = data.id
+      ? await supabaseAdmin.from("planos").update(payload).eq("id", data.id).select("id").maybeSingle()
+      : await supabaseAdmin.from("planos").insert(payload).select("id").maybeSingle();
+
+    if (error) throw new Error("Não foi possível salvar o plano.");
+
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      acao: data.id ? "atualizar_plano" : "criar_plano",
+      entidade: "plano",
+      entidadeId: salvo?.id ?? data.id ?? null,
+      detalhes: payload,
+    });
+
+    return { ok: true as const, id: salvo?.id ?? data.id ?? null };
+  });
+
+const vendedorAtivoSchema = z.object({
+  vendedor_id: z.string().uuid(),
+  ativo: z.boolean(),
+});
+
+/** Ativa/desativa um vendedor (exige a permissão de editar vendedores). */
+export const alternarVendedorAtivo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => vendedorAtivoSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await ensurePermission(supabase, userId, "vendedores.editar");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("vendedores")
+      .update({ ativo: data.ativo })
+      .eq("id", data.vendedor_id);
+
+    if (error) throw new Error("Não foi possível atualizar o vendedor.");
+
+    const { registrarAuditoria } = await import("@/lib/audit.server");
+    await registrarAuditoria({
+      actorId: userId,
+      acao: data.ativo ? "ativar_vendedor" : "desativar_vendedor",
+      entidade: "vendedor",
+      entidadeId: data.vendedor_id,
+    });
+
+    return { ok: true as const };
+  });
