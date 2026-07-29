@@ -159,7 +159,7 @@ function ClienteArea() {
     <div className="min-h-screen bg-background">
       {/* Barra superior fixa */}
       <header className="glass-header sticky top-0 z-30 border-b border-border/60">
-        <div className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-3 sm:flex sm:justify-between sm:gap-4 sm:px-4">
+        <div className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:flex sm:justify-between sm:gap-4 sm:px-4 sm:py-3">
           <div className="min-w-0"><BrazonLogo /></div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
 
