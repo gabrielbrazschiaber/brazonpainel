@@ -125,6 +125,8 @@ export function ClienteFormDialog({
     if (aberto) {
       setValues(valoresDoCliente(cliente));
       setCupomAplicado(null);
+      setErros({});
+
     }
   }, [aberto, cliente]);
 
