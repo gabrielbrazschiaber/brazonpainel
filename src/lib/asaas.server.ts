@@ -156,7 +156,13 @@ export interface CobrancaParams {
   tipoPagamento: 'PIX' | 'BOLETO' | 'CREDIT_CARD';
   dataVencimento: string; // Formato YYYY-MM-DD
   descricao?: string;
+  /**
+   * Desconto (R$) aplicado SOMENTE na primeira cobrança da assinatura.
+   * Os ciclos seguintes continuam com o valor cheio do plano.
+   */
+  descontoPrimeiraMensalidade?: number;
 }
+
 
 // Busca a cobrança em aberto de uma assinatura (a próxima a ser paga).
 async function buscarCobrancaAtualDaAssinatura(
@@ -338,6 +344,8 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
             bankSlipUrl: atual.bankSlipUrl ?? null,
             pixCopyPaste: await obterPixCopiaECola(atual.id, params.tipoPagamento, config),
             status: atual.status,
+            descontoAplicado: 0,
+
           };
         }
       }
@@ -389,7 +397,31 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
   }
 
   // 6. Busca a primeira cobrança gerada pela assinatura
-  const primeira = await buscarCobrancaAtualDaAssinatura(assinatura.id, config);
+  let primeira = await buscarCobrancaAtualDaAssinatura(assinatura.id, config);
+
+  // 6.1 Desconto da primeira mensalidade (cupom): altera só esta cobrança,
+  //     mantendo o valor cheio nos ciclos seguintes da assinatura.
+  let descontoAplicado = 0;
+  const desconto = Number(params.descontoPrimeiraMensalidade ?? 0);
+  if (primeira?.id && desconto > 0) {
+    const { aplicarDesconto } = await import('@/lib/cupons.server');
+    const valorComDesconto = aplicarDesconto(Number(primeira.value ?? params.valor), desconto);
+    const respDesc = await fetch(`${config.baseUrl}/payments/${primeira.id}`, {
+      method: 'POST',
+      headers: asaasHeaders(config.apiKey, true),
+      body: JSON.stringify({
+        value: valorComDesconto,
+        description: `${descricao} (cupom de desconto na 1ª mensalidade)`,
+      }),
+    });
+    if (respDesc.ok) {
+      primeira = await lerJson(respDesc, 'Aplicar Desconto');
+      descontoAplicado = Number((Number(params.valor) - valorComDesconto).toFixed(2));
+    } else {
+      console.error('[Asaas] Falha ao aplicar desconto na 1ª cobrança:', (await respDesc.text()).slice(0, 300));
+    }
+  }
+
   const pagamentoIdLocal = primeira
     ? await registrarPagamentoLocal(cliente.id, assinatura.id, primeira)
     : null;
@@ -403,7 +435,9 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
     bankSlipUrl: primeira?.bankSlipUrl ?? null,
     pixCopyPaste: await obterPixCopiaECola(primeira?.id, params.tipoPagamento, config),
     status: primeira?.status ?? assinatura.status,
+    descontoAplicado,
   };
+
 }
 
 
