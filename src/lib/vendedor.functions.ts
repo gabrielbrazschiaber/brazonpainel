@@ -101,12 +101,22 @@ export const criarCliente = createServerFn({ method: "POST" })
   });
 
 const cadastroPublicoSchema = novoClienteSchema
-  .omit({ mensagem_vendedor: true, anotacoes: true })
+  .omit({ mensagem_vendedor: true, anotacoes: true, data_vencimento: true })
   .extend({
     ref: z.string().trim().min(1).max(60),
   });
 
+/** Vencimento inicial do cadastro público: sempre calculado no servidor (30 dias). */
+function vencimentoPadrao(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 30);
+  return d.toISOString().slice(0, 10);
+}
+
 // Cadastro público via link de indicação (/cadastro?ref=CODIGO).
+// Endpoint sem autenticação: tudo que é sensível é decidido no servidor e a
+// conta nasce SEM e-mail confirmado — a posse do e-mail é provada quando o
+// usuário abre o link de definição de senha.
 export const cadastroPublico = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => cadastroPublicoSchema.parse(data))
   .handler(async ({ data }) => {
@@ -121,16 +131,34 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       throw new Error("Link de indicação inválido ou inativo.");
     }
 
+    // O plano precisa existir e estar ativo — nunca confiar no id enviado.
+    let planoId: string | null = null;
+    if (data.plano_id) {
+      const { data: plano } = await supabaseAdmin
+        .from("planos")
+        .select("id, ativo")
+        .eq("id", data.plano_id)
+        .maybeSingle();
+      if (!plano || !plano.ativo) {
+        throw new Error("Plano inválido ou indisponível.");
+      }
+      planoId = plano.id;
+    }
+
+    const email = data.email.trim().toLowerCase();
     const senhaGerada = gerarSenhaAleatoria();
 
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-      email: data.email,
+      email,
       password: senhaGerada,
-      email_confirm: true,
+      // Sem confirmação automática: quem não é dono do e-mail não ativa a conta.
+      email_confirm: false,
       user_metadata: { nome: data.nome },
     });
     if (createErr || !created.user) {
-      throw new Error(createErr?.message ?? "Não foi possível concluir o cadastro.");
+      // Mensagem genérica: não revelar se o e-mail já existe (enumeração de usuários).
+      console.error("[cadastroPublico] Falha ao criar usuário:", createErr?.message);
+      throw new Error("Não foi possível concluir o cadastro. Verifique os dados e tente novamente.");
     }
 
     const newUserId = created.user.id;
@@ -146,8 +174,8 @@ export const cadastroPublico = createServerFn({ method: "POST" })
     const { error: cliErr } = await supabaseAdmin.from("clientes").insert({
       user_id: newUserId,
       vendedor_id: vend.id,
-      plano_id: data.plano_id ?? null,
-      data_vencimento: data.data_vencimento,
+      plano_id: planoId,
+      data_vencimento: vencimentoPadrao(),
       cpf_cnpj: data.cpf_cnpj ?? null,
       telefone: data.telefone ?? null,
       status: "ativo",
@@ -158,6 +186,7 @@ export const cadastroPublico = createServerFn({ method: "POST" })
     }
 
     return { ok: true };
+
   });
 
 const mensagemSchema = z.object({

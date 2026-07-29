@@ -11,18 +11,29 @@ async function ensureAdmin(supabase: any, userId: string) {
 }
 
 /**
- * Admin lê o token de autenticação do webhook do Asaas (ASAAS_WEBHOOK_TOKEN).
- * O token é necessário para configurar o webhook no painel do Asaas. Como só é
- * acessível ao servidor, esta função (restrita a admins) o devolve para exibição.
+ * Admin consulta o token de autenticação do webhook do Asaas.
+ *
+ * Por padrão devolve APENAS uma máscara — o segredo não fica no HTML nem na
+ * memória da página. O valor completo só é retornado quando o admin pede
+ * explicitamente (botão "Revelar"/"Copiar"), reduzindo a exposição do segredo.
  */
-export const obterWebhookToken = createServerFn({ method: "GET" })
+export const obterWebhookToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data: unknown) =>
+    z.object({ revelar: z.boolean().optional() }).parse(data ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await ensureAdmin(supabase, userId);
-    const token = process.env.ASAAS_WEBHOOK_TOKEN ?? "";
-    return { token, definido: !!token };
+    const token = (process.env.ASAAS_WEBHOOK_TOKEN ?? "").trim();
+    return {
+      definido: !!token,
+      mascara: mascararChave(token),
+      token: data.revelar ? token : null,
+    };
   });
+
+
 
 
 /** Mascara a chave da API, revelando apenas os últimos 4 caracteres. */

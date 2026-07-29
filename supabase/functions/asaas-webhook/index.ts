@@ -4,6 +4,27 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.8'
 type PagamentoStatus = 'pago' | 'pendente' | 'vencido';
 type ClienteStatus = 'ativo' | 'vencido' | 'inadimplente' | 'cancelado';
 
+// Guarda apenas os campos necessários para auditoria/diagnóstico.
+// O payload bruto do Asaas contém dados pessoais e financeiros do pagador
+// que não precisam ser persistidos.
+// deno-lint-ignore no-explicit-any
+function resumirPayload(payload: any) {
+  if (!payload || typeof payload !== 'object') return null
+  const p = payload.payment ?? {}
+  return {
+    event: payload.event ?? null,
+    payment: {
+      id: p.id ?? null,
+      status: p.status ?? null,
+      value: p.value ?? null,
+      billingType: p.billingType ?? null,
+      dueDate: p.dueDate ?? null,
+      paymentDate: p.paymentDate ?? null,
+      externalReference: p.externalReference ?? null,
+    },
+  }
+}
+
 // deno-lint-ignore no-explicit-any
 async function logWebhook(
   // deno-lint-ignore no-explicit-any
@@ -20,7 +41,7 @@ async function logWebhook(
       event: event ?? null,
       payment_id: paymentId ?? null,
       status: status ?? null,
-      payload: payload ?? null,
+      payload: resumirPayload(payload),
       processing_result: processingResult,
       error_message: errorMessage,
     })

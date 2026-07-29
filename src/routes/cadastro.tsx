@@ -43,11 +43,8 @@ interface Plano {
   descricao: string | null;
 }
 
-function defaultVencimento() {
-  const d = new Date();
-  d.setDate(d.getDate() + 30);
-  return d.toISOString().slice(0, 10);
-}
+// O vencimento inicial é calculado no servidor (não é enviado pelo formulário).
+
 
 function CadastroPage() {
   const { ref } = Route.useSearch();
@@ -100,7 +97,7 @@ function CadastroPage() {
           nome: nome.trim(),
           email: emailCliente,
           plano_id: planoId,
-          data_vencimento: defaultVencimento(),
+
           cpf_cnpj: cpfCnpj.trim(),
           telefone: telefone.trim() || null,
         },
@@ -124,13 +121,14 @@ function CadastroPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             {done.emailEnviado ? (
               <>
-                Enviamos um e-mail para <strong>{done.email}</strong> com um link para você definir
-                sua senha de acesso. Verifique também a caixa de spam.
+                Enviamos um e-mail para <strong>{done.email}</strong> com um link para você
+                confirmar o endereço e definir sua senha de acesso. A conta só é ativada depois
+                desse passo. Verifique também a caixa de spam.
               </>
             ) : (
               <>
-                Sua conta foi criada. Para definir sua senha, acesse a tela de login e clique em{" "}
-                <strong>"Esqueci minha senha"</strong> usando o e-mail{" "}
+                Sua conta foi criada. Para confirmar seu e-mail e definir a senha, acesse a tela de
+                login e clique em <strong>"Esqueci minha senha"</strong> usando o e-mail{" "}
                 <strong>{done.email}</strong>.
               </>
             )}

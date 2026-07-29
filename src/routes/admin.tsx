@@ -1416,17 +1416,46 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
   const [novaChave, setNovaChave] = useState("");
   const [saving, setSaving] = useState(false);
   const [testando, setTestando] = useState(false);
-  const [webhookToken, setWebhookToken] = useState("");
+  const [tokenMascara, setTokenMascara] = useState("");
+  const [tokenRevelado, setTokenRevelado] = useState<string | null>(null);
+  const [tokenDefinido, setTokenDefinido] = useState(false);
+  const [carregandoToken, setCarregandoToken] = useState(false);
   const [copiado, setCopiado] = useState<"token" | "url" | null>(null);
   const testar = useServerFn(testarChaveAsaas);
   const salvar = useServerFn(salvarConfiguracoes);
   const carregarToken = useServerFn(obterWebhookToken);
 
   useEffect(() => {
-    carregarToken({})
-      .then((r) => setWebhookToken(r.token))
-      .catch(() => setWebhookToken(""));
+    carregarToken({ data: {} })
+      .then((r) => {
+        setTokenMascara(r.mascara);
+        setTokenDefinido(r.definido);
+      })
+      .catch(() => {
+        setTokenMascara("");
+        setTokenDefinido(false);
+      });
   }, [carregarToken]);
+
+  /** Busca o token completo sob demanda (não fica na página por padrão). */
+  async function obterTokenCompleto(): Promise<string | null> {
+    if (tokenRevelado) return tokenRevelado;
+    setCarregandoToken(true);
+    try {
+      const r = await carregarToken({ data: { revelar: true } });
+      if (!r.token) {
+        toast.error("Nenhum token configurado no servidor.");
+        return null;
+      }
+      setTokenRevelado(r.token);
+      return r.token;
+    } catch {
+      toast.error("Não foi possível ler o token.");
+      return null;
+    } finally {
+      setCarregandoToken(false);
+    }
+  }
 
   async function copiar(texto: string, qual: "token" | "url") {
     try {
@@ -1438,6 +1467,12 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
       toast.error("Não foi possível copiar. Copie manualmente.");
     }
   }
+
+  async function copiarToken() {
+    const t = await obterTokenCompleto();
+    if (t) await copiar(t, "token");
+  }
+
 
 
 
@@ -1572,22 +1607,26 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
               </div>
               <p className="text-xs text-muted-foreground">
                 Este token protege seu webhook: o painel só aceita notificações do Asaas que
-                enviem exatamente este valor. Copie e cole no Asaas.
+                enviem exatamente este valor. Por segurança ele fica oculto — use "Copiar" para
+                colar direto no Asaas, ou "Revelar" se precisar conferir.
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Input
                   id="ctoken"
                   readOnly
-                  value={webhookToken || "Carregando..."}
-                  className="font-mono text-xs"
+                  value={
+                    tokenRevelado ??
+                    (tokenDefinido ? tokenMascara : "Nenhum token configurado")
+                  }
+                  className="min-w-0 flex-1 font-mono text-xs"
                   onFocus={(e) => e.currentTarget.select()}
                 />
                 <Button
                   type="button"
                   variant="outline"
                   size="icon"
-                  disabled={!webhookToken}
-                  onClick={() => copiar(webhookToken, "token")}
+                  disabled={!tokenDefinido || carregandoToken}
+                  onClick={copiarToken}
                   aria-label="Copiar token"
                 >
                   {copiado === "token" ? (
@@ -1596,7 +1635,19 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
                     <Copy className="h-4 w-4" />
                   )}
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!tokenDefinido || carregandoToken}
+                  onClick={() =>
+                    tokenRevelado ? setTokenRevelado(null) : void obterTokenCompleto()
+                  }
+                >
+                  {tokenRevelado ? "Ocultar" : "Revelar"}
+                </Button>
               </div>
+
               <div className="mt-1 rounded-md bg-background p-3 text-xs text-muted-foreground">
                 <p className="mb-1 font-medium text-foreground">Como configurar no Asaas:</p>
                 <ol className="list-decimal space-y-1 pl-4">
