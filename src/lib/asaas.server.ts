@@ -336,7 +336,7 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
             asaasPaymentId: atual.id,
             invoiceUrl: atual.invoiceUrl ?? null,
             bankSlipUrl: atual.bankSlipUrl ?? null,
-            pixCopyPaste: atual.pixCopyPaste ?? null,
+            pixCopyPaste: await obterPixCopiaECola(atual.id, params.tipoPagamento, config),
             status: atual.status,
           };
         }
