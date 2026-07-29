@@ -4,9 +4,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.8'
 type PagamentoStatus = 'pago' | 'pendente' | 'vencido';
 type ClienteStatus = 'ativo' | 'vencido' | 'inadimplente' | 'cancelado';
 
-// Guarda apenas os campos necessários para auditoria/diagnóstico.
-// O payload bruto do Asaas contém dados pessoais e financeiros do pagador
-// que não precisam ser persistidos.
 // Avança o vencimento do cliente em 1 mês a partir do vencimento da cobrança paga
 // (ciclo MONTHLY da assinatura). Se o Asaas não informar dueDate, usa a data de hoje.
 function proximoVencimento(dueDate?: string | null): string {
@@ -20,6 +17,9 @@ function proximoVencimento(dueDate?: string | null): string {
   return proximo.toISOString().split('T')[0]
 }
 
+// Guarda apenas os campos necessários para auditoria/diagnóstico.
+// O payload bruto do Asaas contém dados pessoais e financeiros do pagador
+// que não precisam ser persistidos.
 // deno-lint-ignore no-explicit-any
 function resumirPayload(payload: any) {
   if (!payload || typeof payload !== 'object') return null
