@@ -396,6 +396,39 @@ export type Database = {
         }
         Relationships: []
       }
+      termos_aceites: {
+        Row: {
+          aceito_em: string
+          created_at: string
+          email: string | null
+          id: string
+          origem: string
+          texto: string
+          user_id: string
+          versao: string
+        }
+        Insert: {
+          aceito_em?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          origem?: string
+          texto: string
+          user_id: string
+          versao: string
+        }
+        Update: {
+          aceito_em?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          origem?: string
+          texto?: string
+          user_id?: string
+          versao?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

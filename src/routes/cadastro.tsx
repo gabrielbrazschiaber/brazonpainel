@@ -18,6 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/format";
+import { TERMOS_VERSAO } from "@/lib/termos";
+import { Checkbox } from "@/components/ui/checkbox";
+
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 
@@ -57,6 +60,7 @@ function CadastroPage() {
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [telefone, setTelefone] = useState("");
   const [saving, setSaving] = useState(false);
+  const [aceite, setAceite] = useState(false);
   const [done, setDone] = useState<{ email: string; emailEnviado: boolean } | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
@@ -88,6 +92,10 @@ function CadastroPage() {
       toast.error("Informe seu CPF ou CNPJ.");
       return;
     }
+    if (!aceite) {
+      toast.error("É necessário aceitar os Termos de Uso para criar a conta.");
+      return;
+    }
     setSaving(true);
     try {
       const emailCliente = email.trim();
@@ -100,6 +108,8 @@ function CadastroPage() {
 
           cpf_cnpj: cpfCnpj.trim(),
           telefone: telefone.trim() || null,
+          aceite_termos: true as const,
+          termos_versao: TERMOS_VERSAO,
         },
       });
       const { error: resetErr } = await enviarLinkDefinicaoSenha(emailCliente);
@@ -111,6 +121,7 @@ function CadastroPage() {
       setSaving(false);
     }
   }
+
 
   if (done) {
     return (
@@ -203,19 +214,32 @@ function CadastroPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={submit} disabled={saving || cooldown > 0}>
+            <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-3">
+              <Checkbox
+                id="aceite"
+                checked={aceite}
+                onCheckedChange={(v) => setAceite(v === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="aceite" className="text-sm font-normal leading-relaxed text-muted-foreground">
+                Li e aceito os{" "}
+                <Link
+                  to="/termos-de-uso"
+                  target="_blank"
+                  className="font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  Termos de Uso
+                </Link>{" "}
+                (versão {TERMOS_VERSAO}). O aceite será registrado com data e hora.
+              </Label>
+            </div>
+            <Button onClick={submit} disabled={saving || cooldown > 0 || !aceite}>
               {saving ? "Enviando..." : cooldown > 0 ? `Aguarde ${cooldown}s...` : "Criar conta"}
             </Button>
           </div>
         )}
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Ao criar conta, você aceita os{" "}
-          <Link to="/termos-de-uso" className="font-medium text-primary underline-offset-2 hover:underline">
-            Termos de Uso
-          </Link>
-          .
-        </p>
+
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Já tem conta?{" "}
           <Link to="/login" className="font-medium text-primary">
