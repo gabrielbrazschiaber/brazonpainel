@@ -180,12 +180,22 @@ Deno.serve(async (req) => {
       }
 
       // 2. Atualizar o status do cliente (e avançar o vencimento quando pago)
+      let ancora: number | null = null
+      if (mappedPaymentStatus === 'pago') {
+        const { data: cliAtual } = await supabase
+          .from('clientes')
+          .select('data_vencimento')
+          .eq('id', record.cliente_id)
+          .maybeSingle()
+        ancora = diaAncora(cliAtual?.data_vencimento)
+      }
+
       const { error: clientErr } = await supabase
         .from('clientes')
         .update({
           status: clienteStatus,
           ...(mappedPaymentStatus === 'pago'
-            ? { data_vencimento: proximoVencimento(payment.dueDate) }
+            ? { data_vencimento: proximoVencimento(payment.dueDate, ancora) }
             : {}),
           updated_at: new Date().toISOString()
         })
