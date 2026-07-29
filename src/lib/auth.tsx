@@ -7,6 +7,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import type { AppPermission } from "@/lib/permissions";
 
 export type AppRole = "cliente" | "vendedor" | "admin";
 
@@ -21,6 +22,8 @@ interface AuthContextValue {
   user: User | null;
   profile: Profile | null;
   role: AppRole | null;
+  permissoes: AppPermission[];
+  can: (permissao: AppPermission) => boolean;
   loading: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -32,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [permissoes, setPermissoes] = useState<AppPermission[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function loadUserData(userId: string) {
@@ -43,6 +47,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const roleList = (roles ?? []).map((r) => r.role as AppRole);
     const priority: AppRole[] = ["admin", "vendedor", "cliente"];
     setRole(priority.find((p) => roleList.includes(p)) ?? null);
+
+    // Permissões do(s) papel(éis) — usadas só para desenhar a interface.
+    // A autorização real é sempre revalidada no servidor a cada chamada.
+    if (roleList.length > 0) {
+      const { data: perms } = await supabase
+        .from("role_permissions")
+        .select("permission")
+        .in("role", roleList);
+      setPermissoes(
+        Array.from(new Set((perms ?? []).map((p) => p.permission as AppPermission))),
+      );
+    } else {
+      setPermissoes([]);
+    }
   }
 
   async function refresh() {
