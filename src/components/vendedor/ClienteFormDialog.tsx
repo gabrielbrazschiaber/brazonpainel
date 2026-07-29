@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { criarCliente, atualizarCliente } from "@/lib/vendedor.functions";
+import { validarCupomPublico, cupomEmDestaque } from "@/lib/cupons.functions";
 import { atualizarClienteAdmin } from "@/lib/admin.functions";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import {
@@ -9,6 +10,7 @@ import {
   clienteFormVazio,
   clientePayloadComum,
   defaultVencimento,
+  parseValorBR,
   type ClienteFormValues,
 } from "@/lib/cliente-form";
 import { formatCurrency } from "@/lib/format";
@@ -37,6 +39,13 @@ export interface PlanoOpcao {
   id: string;
   nome: string;
   valor: number;
+}
+
+interface CupomAplicado {
+  codigo: string;
+  descricao: string | null;
+  valor_desconto: number;
+  apenas_primeira_mensalidade: boolean;
 }
 
 export interface ClienteEditavel {
@@ -101,9 +110,71 @@ export function ClienteFormDialog({
   const [values, setValues] = useState<ClienteFormValues>(() => valoresDoCliente(cliente));
   const [saving, setSaving] = useState(false);
 
+  const validarCupom = useServerFn(validarCupomPublico);
+  const buscarDestaque = useServerFn(cupomEmDestaque);
+  const [destaque, setDestaque] = useState<CupomAplicado | null>(null);
+  const [cupomAplicado, setCupomAplicado] = useState<CupomAplicado | null>(null);
+  const [checandoCupom, setChecandoCupom] = useState(false);
+
   useEffect(() => {
-    if (aberto) setValues(valoresDoCliente(cliente));
+    if (aberto) {
+      setValues(valoresDoCliente(cliente));
+      setCupomAplicado(null);
+    }
   }, [aberto, cliente]);
+
+  useEffect(() => {
+    if (!aberto || editando) return;
+    let vivo = true;
+    buscarDestaque({})
+      .then((c) => {
+        if (vivo && c) setDestaque(c);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [aberto, editando, buscarDestaque]);
+
+  async function aplicarCupom(codigo?: string) {
+    const cod = (codigo ?? values.cupom).trim();
+    if (!cod) {
+      toast.error("Informe o código do cupom.");
+      return;
+    }
+    setChecandoCupom(true);
+    try {
+      const res = await validarCupom({ data: { codigo: cod } });
+      if (!res.valido) {
+        setCupomAplicado(null);
+        toast.error(res.mensagem);
+        return;
+      }
+      setValues((v) => ({ ...v, cupom: res.codigo }));
+      setCupomAplicado({
+        codigo: res.codigo,
+        descricao: res.descricao,
+        valor_desconto: res.valor_desconto,
+        apenas_primeira_mensalidade: res.apenas_primeira_mensalidade,
+      });
+      toast.success(`Cupom ${res.codigo} aplicado!`);
+    } catch {
+      toast.error("Não foi possível validar o cupom agora.");
+    } finally {
+      setChecandoCupom(false);
+    }
+  }
+
+  function removerCupom() {
+    setCupomAplicado(null);
+    setValues((v) => ({ ...v, cupom: "" }));
+  }
+
+  const valorPlano = planos.find((pl) => pl.id === values.planoId)?.valor ?? 0;
+  const valorExtra = parseValorBR(values.servicoValor) || 0;
+  const mensalidade = valorPlano + valorExtra;
+  const desconto = cupomAplicado ? Math.min(cupomAplicado.valor_desconto, mensalidade) : 0;
+  const primeiraMensalidade = Math.max(mensalidade - desconto, 0);
 
   function set<K extends keyof ClienteFormValues>(key: K, value: ClienteFormValues[K]) {
     setValues((v) => ({ ...v, [key]: value }));
@@ -155,6 +226,7 @@ export function ClienteFormDialog({
             ...comum,
             data_vencimento: v.vencimento || defaultVencimento(),
             mensagem_vendedor: v.mensagem || null,
+            cupom: cupomAplicado ? cupomAplicado.codigo : null,
           },
         });
         const { error: resetErr } = await enviarLinkDefinicaoSenha(v.email);
@@ -164,6 +236,7 @@ export function ClienteFormDialog({
             : `Enviamos um e-mail para ${v.email} definir a senha de acesso.`,
         });
         setValues(valoresDoCliente(undefined));
+        setCupomAplicado(null);
       }
       onOpenChange(false);
       onSaved();
@@ -289,6 +362,67 @@ export function ClienteFormDialog({
 
           {!editando && (
             <>
+              <div className="grid gap-2 rounded-md border border-primary/30 bg-primary/5 p-3">
+                <Label htmlFor={`${p}cupom`}>Cupom de desconto (opcional)</Label>
+                {destaque && !cupomAplicado && (
+                  <button
+                    type="button"
+                    onClick={() => aplicarCupom(destaque.codigo)}
+                    className="rounded-md border border-dashed border-primary/50 px-3 py-2 text-left text-xs text-primary hover:bg-primary/10"
+                  >
+                    <span className="font-semibold">{destaque.codigo}</span> —{" "}
+                    {destaque.descricao ??
+                      `${formatCurrency(destaque.valor_desconto)} de desconto`}
+                    {destaque.apenas_primeira_mensalidade && " (1ª mensalidade)"}. Toque para
+                    aplicar.
+                  </button>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    id={`${p}cupom`}
+                    value={values.cupom}
+                    onChange={(e) => set("cupom", e.target.value.toUpperCase())}
+                    placeholder="Ex: 100OFF"
+                    disabled={!!cupomAplicado}
+                  />
+                  {cupomAplicado ? (
+                    <Button type="button" variant="outline" onClick={removerCupom}>
+                      Remover
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => aplicarCupom()}
+                      disabled={checandoCupom}
+                    >
+                      {checandoCupom ? "..." : "Aplicar"}
+                    </Button>
+                  )}
+                </div>
+                <div className="mt-1 space-y-1 text-xs text-muted-foreground">
+                  <div className="flex justify-between">
+                    <span>Mensalidade</span>
+                    <span>{formatCurrency(mensalidade)}</span>
+                  </div>
+                  {cupomAplicado && (
+                    <>
+                      <div className="flex justify-between text-primary">
+                        <span>Desconto ({cupomAplicado.codigo})</span>
+                        <span>-{formatCurrency(desconto)}</span>
+                      </div>
+                      <div className="flex justify-between font-semibold text-foreground">
+                        <span>Total da 1ª mensalidade</span>
+                        <span>{formatCurrency(primeiraMensalidade)}</span>
+                      </div>
+                      {cupomAplicado.apenas_primeira_mensalidade && (
+                        <p>A partir do 2º mês: {formatCurrency(mensalidade)}.</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor={`${p}venc`}>Vencimento</Label>
                 <Input
