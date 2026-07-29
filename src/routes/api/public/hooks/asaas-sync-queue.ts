@@ -19,18 +19,32 @@ export const Route = createFileRoute("/api/public/hooks/asaas-sync-queue")({
             headers: { "Content-Type": "application/json" },
           });
 
-        const esperado = process.env.ASAAS_WEBHOOK_TOKEN;
-        if (!esperado) {
-          console.error("[AsaasQueue] ASAAS_WEBHOOK_TOKEN não configurado.");
-          return json({ error: "Endpoint indisponível" }, 503);
-        }
-
         const enviado =
           request.headers.get("x-cron-token") ??
           request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
           "";
 
-        if (enviado !== esperado) {
+        if (!enviado) return json({ error: "Não autorizado" }, 401);
+
+        // Segredos aceitos: o token do agendamento (guardado em configuracoes,
+        // fora do alcance do navegador) ou o segredo ASAAS_WEBHOOK_TOKEN.
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: cfg } = await supabaseAdmin
+          .from("configuracoes")
+          .select("cron_token")
+          .limit(1)
+          .maybeSingle();
+
+        const aceitos = [cfg?.cron_token, process.env.ASAAS_WEBHOOK_TOKEN].filter(
+          (t): t is string => typeof t === "string" && t.length > 0,
+        );
+
+        if (aceitos.length === 0) {
+          console.error("[AsaasQueue] Nenhum token de acionamento configurado.");
+          return json({ error: "Endpoint indisponível" }, 503);
+        }
+
+        if (!aceitos.includes(enviado)) {
           return json({ error: "Não autorizado" }, 401);
         }
 
