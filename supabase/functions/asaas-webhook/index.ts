@@ -272,12 +272,23 @@ Deno.serve(async (req) => {
           processingResult = 'CREATED'
           const clienteStatus: ClienteStatus =
             mappedPaymentStatus === 'vencido' ? 'vencido' : 'ativo'
+
+          let ancoraRec: number | null = null
+          if (mappedPaymentStatus === 'pago') {
+            const { data: cliAtual } = await supabase
+              .from('clientes')
+              .select('data_vencimento')
+              .eq('id', clienteId)
+              .maybeSingle()
+            ancoraRec = diaAncora(cliAtual?.data_vencimento)
+          }
+
           await supabase
             .from('clientes')
             .update({
               status: clienteStatus,
               ...(mappedPaymentStatus === 'pago'
-                ? { data_vencimento: proximoVencimento(payment.dueDate) }
+                ? { data_vencimento: proximoVencimento(payment.dueDate, ancoraRec) }
                 : {}),
               updated_at: new Date().toISOString(),
             })
