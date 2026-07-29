@@ -132,6 +132,7 @@ interface ClienteRow {
   servico_extra: string | null;
   servico_extra_valor: number | null;
   anotacoes: string | null;
+  asaas_subscription_id?: string | null;
   planos: { nome: string; valor: number } | null;
   nome?: string;
   email?: string;
