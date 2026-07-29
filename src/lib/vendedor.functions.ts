@@ -105,6 +105,24 @@ export const criarCliente = createServerFn({ method: "POST" })
       throw new Error("Falha ao cadastrar o cliente.");
     }
 
+    // Garante o perfil antes de integrar com a plataforma de pagamento.
+    await supabaseAdmin
+      .from("profiles")
+      .upsert({ id: newUserId, email: data.email, nome: data.nome }, { onConflict: "id" });
+
+    // Integração: cria o customer na plataforma de pagamento já no cadastro.
+    // Se a API falhar, o provisionamento é enfileirado com novas tentativas
+    // automáticas — o cadastro nunca é bloqueado por indisponibilidade externa.
+    let integracao: { provisionado: boolean; motivo?: string } = { provisionado: false };
+    if (novoCliente?.id) {
+      try {
+        const { provisionarClienteAsaas } = await import("./asaas.server");
+        integracao = await provisionarClienteAsaas(novoCliente.id);
+      } catch {
+        integracao = { provisionado: false, motivo: "erro_integracao" };
+      }
+    }
+
     const { registrarAuditoria } = await import("@/lib/audit.server");
     await registrarAuditoria({
       actorId: userId,
@@ -112,11 +130,19 @@ export const criarCliente = createServerFn({ method: "POST" })
       acao: "criar_cliente",
       entidade: "cliente",
       entidadeId: novoCliente?.id ?? null,
-      detalhes: { nome: data.nome, email: data.email, plano_id: data.plano_id ?? null, servico_extra: data.servico_extra ?? null, servico_extra_valor: data.servico_extra_valor ?? 0 },
+      detalhes: {
+        nome: data.nome,
+        email: data.email,
+        plano_id: data.plano_id,
+        servico_extra: data.servico_extra ?? null,
+        servico_extra_valor: data.servico_extra_valor ?? 0,
+        asaas_provisionado: integracao.provisionado,
+      },
     });
 
-    return { ok: true };
+    return { ok: true, integracao };
   });
+
 
 const cadastroPublicoSchema = novoClienteSchema
   .omit({ mensagem_vendedor: true, anotacoes: true, data_vencimento: true })
