@@ -23,6 +23,9 @@ import {
   excluirAdmin,
   excluirCliente,
   reprocessarSyncCliente,
+  listarAuditoria,
+  salvarPlano,
+  alternarVendedorAtivo,
 } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { obterConfiguracoes, salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
@@ -707,11 +710,12 @@ function VendedoresTab({
   }
 
   async function toggleAtivo(v: VendedorRow) {
-    const { error } = await supabase.from("vendedores").update({ ativo: !v.ativo }).eq("id", v.id);
-    if (error) toast.error("Não foi possível atualizar.");
-    else {
+    try {
+      await alternarAtivo({ data: { vendedor_id: v.id, ativo: !v.ativo } });
       toast.success(v.ativo ? "Vendedor desativado." : "Vendedor ativado.");
       onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível atualizar.");
     }
   }
 
@@ -925,14 +929,14 @@ function PlanosTab({ planos, onChanged }: { planos: Plano[]; onChanged: () => vo
       descricao: descricao.trim() || null,
       ativo,
     };
-    const { error } = editing
-      ? await supabase.from("planos").update(payload).eq("id", editing.id)
-      : await supabase.from("planos").insert(payload);
-    setSaving(false);
-    if (error) {
-      toast.error("Não foi possível salvar o plano.");
+    try {
+      await gravarPlano({ data: { ...payload, id: editing?.id } });
+    } catch (e) {
+      setSaving(false);
+      toast.error(e instanceof Error ? e.message : "Não foi possível salvar o plano.");
       return;
     }
+    setSaving(false);
     toast.success(editing ? "Plano atualizado." : "Plano criado.");
     setOpen(false);
     onChanged();
@@ -1629,19 +1633,20 @@ function formatDateTime(value: string) {
 }
 
 function AuditoriaTab() {
+  const carregarAuditoria = useServerFn(listarAuditoria);
   const [rows, setRows] = useState<AuditoriaRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("auditoria")
-      .select("id,actor_email,actor_role,acao,entidade,entidade_id,detalhes,created_at")
-      .order("created_at", { ascending: false })
-      .limit(200);
-    setRows((data ?? []) as unknown as AuditoriaRow[]);
+    try {
+      const { registros } = await carregarAuditoria({});
+      setRows(registros as unknown as AuditoriaRow[]);
+    } catch {
+      setRows([]);
+    }
     setLoading(false);
-  }, []);
+  }, [carregarAuditoria]);
 
   useEffect(() => {
     load();
