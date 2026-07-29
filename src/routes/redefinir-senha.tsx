@@ -86,8 +86,10 @@ function RedefinirSenhaPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (senha.length < 8) {
-      toast.error("A senha deve ter pelo menos 8 caracteres.");
+    const { valida, regras } = validarSenha(senha);
+    if (!valida) {
+      const faltando = regras.filter((r) => !r.ok).map((r) => r.label.toLowerCase());
+      toast.error(`A senha precisa de: ${faltando.join(", ")}.`);
       return;
     }
     if (senha !== confirma) {
