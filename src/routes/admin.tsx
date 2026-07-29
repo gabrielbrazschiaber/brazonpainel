@@ -10,6 +10,7 @@ import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { NovidadesTab } from "@/components/admin/NovidadesTab";
 import { NovidadesSino } from "@/components/NovidadesSino";
 
+import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
 import { criarVendedor, atualizarVendedor, criarAdmin, atualizarMeuPerfil, atualizarClienteAdmin, excluirVendedor, excluirAdmin, excluirCliente } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { obterConfiguracoes, salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
@@ -127,6 +128,10 @@ interface ClienteRow {
   status: string;
   cpf_cnpj: string | null;
   telefone: string | null;
+  plano_id: string | null;
+  servico_extra: string | null;
+  servico_extra_valor: number | null;
+  anotacoes: string | null;
   planos: { nome: string; valor: number } | null;
   nome?: string;
   email?: string;
@@ -167,7 +172,9 @@ function AdminArea() {
           .order("created_at", { ascending: false }),
         supabase
           .from("clientes")
-          .select("id,user_id,vendedor_id,data_vencimento,status,cpf_cnpj,telefone,planos(nome,valor)")
+          .select(
+            "id,user_id,vendedor_id,data_vencimento,status,cpf_cnpj,telefone,plano_id,servico_extra,servico_extra_valor,anotacoes,planos(nome,valor)",
+          )
           .order("created_at", { ascending: false }),
         obterConfig({}).catch(() => null),
         supabase.from("user_roles").select("user_id").eq("role", "admin"),
@@ -337,7 +344,7 @@ function AdminArea() {
                 <PlanosTab planos={planos} onChanged={load} />
               </TabsContent>
               <TabsContent value="clientes" className="mt-0">
-                <ClientesTab clientes={clientes} vendedores={vendedores} onChanged={load} />
+                <ClientesTab clientes={clientes} vendedores={vendedores} planos={planos} onChanged={load} />
               </TabsContent>
               <TabsContent value="novidades" className="mt-0">
                 <NovidadesTab />
@@ -1055,10 +1062,12 @@ function PlanosTab({ planos, onChanged }: { planos: Plano[]; onChanged: () => vo
 function ClientesTab({
   clientes,
   vendedores,
+  planos,
   onChanged,
 }: {
   clientes: ClienteRow[];
   vendedores: VendedorRow[];
+  planos: Plano[];
   onChanged: () => void;
 }) {
   const vmap = useMemo(
@@ -1257,8 +1266,11 @@ function ClientesTab({
             )}
           </TableBody>
         </Table>
-        <EditarClienteAdminDialog
+        <ClienteFormDialog
+          mode="editar"
+          escopo="admin"
           cliente={editing}
+          planos={planos.map((p) => ({ id: p.id, nome: p.nome, valor: p.valor }))}
           onOpenChange={(v) => !v && setEditing(null)}
           onSaved={onChanged}
         />
@@ -1285,117 +1297,6 @@ function ClientesTab({
         </AlertDialog>
       </Card>
     </div>
-  );
-}
-
-function EditarClienteAdminDialog({
-  cliente,
-  onOpenChange,
-  onSaved,
-}: {
-  cliente: ClienteRow | null;
-  onOpenChange: (v: boolean) => void;
-  onSaved: () => void;
-}) {
-  const salvar = useServerFn(atualizarClienteAdmin);
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [cpfCnpj, setCpfCnpj] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setNome(cliente?.nome ?? "");
-    setEmail(cliente?.email ?? "");
-    setSenha("");
-    setCpfCnpj(cliente?.cpf_cnpj ?? "");
-    setTelefone(cliente?.telefone ?? "");
-  }, [cliente]);
-
-  async function submit() {
-    if (!cliente) return;
-    if (nome.trim().length < 2 || !email.trim()) {
-      toast.error("Informe nome e e-mail válidos.");
-      return;
-    }
-    if (senha && senha.length < 6) {
-      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
-      return;
-    }
-    setSaving(true);
-    try {
-      await salvar({
-        data: { cliente_id: cliente.id, nome: nome.trim(), email: email.trim(), senha: senha || "", cpf_cnpj: cpfCnpj.trim() || null, telefone: telefone.trim() || null },
-      });
-      toast.success("Dados do cliente atualizados!");
-      onOpenChange(false);
-      onSaved();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao atualizar o cliente.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Dialog open={!!cliente} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Editar dados do cliente</DialogTitle>
-          <DialogDescription>
-            Atualize o nome, e-mail e senha de acesso do cliente.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="acnome">Nome</Label>
-            <Input id="acnome" value={nome} onChange={(e) => setNome(e.target.value)} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="acemail">E-mail</Label>
-            <Input id="acemail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="accpf">CPF ou CNPJ</Label>
-            <Input
-              id="accpf"
-              value={cpfCnpj}
-              onChange={(e) => setCpfCnpj(e.target.value)}
-              placeholder="Somente números"
-            />
-            <p className="text-xs text-muted-foreground">Obrigatório para gerar cobranças no Asaas.</p>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="actel">Telefone (opcional)</Label>
-            <Input
-              id="actel"
-              value={telefone}
-              onChange={(e) => setTelefone(e.target.value)}
-              placeholder="(00) 00000-0000"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="acsenha">Nova senha (opcional)</Label>
-            <Input
-              id="acsenha"
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              placeholder="Deixe em branco para manter"
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button onClick={submit} disabled={saving}>
-            {saving ? "Salvando..." : "Salvar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 
