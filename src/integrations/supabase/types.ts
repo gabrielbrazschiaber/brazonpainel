@@ -648,6 +648,7 @@ export type Database = {
         | "asaas.sincronizar"
         | "novidades.gerenciar"
         | "auditoria.ler"
+        | "cupons.gerenciar"
       app_role: "cliente" | "vendedor" | "admin"
       asaas_ambiente: "producao" | "sandbox"
       cliente_status: "ativo" | "vencido" | "inadimplente" | "cancelado"
@@ -795,6 +796,7 @@ export const Constants = {
         "asaas.sincronizar",
         "novidades.gerenciar",
         "auditoria.ler",
+        "cupons.gerenciar",
       ],
       app_role: ["cliente", "vendedor", "admin"],
       asaas_ambiente: ["producao", "sandbox"],
