@@ -186,13 +186,27 @@ function ClienteArea() {
       }
       const url = res.invoiceUrl || res.bankSlipUrl;
       if (url) {
-        toast.success("Assinatura mensal gerada!", {
-          description: "A cobrança se repete todo mês. Abrindo a página de pagamento...",
-        });
-        window.open(url, "_blank", "noopener,noreferrer");
+        // Como a abertura acontece após um await, o navegador (principalmente
+        // no celular) pode bloquear o pop-up. Nesse caso oferecemos o link.
+        const janela = window.open(url, "_blank", "noopener,noreferrer");
+        if (janela) {
+          toast.success("Assinatura mensal gerada!", {
+            description: "A cobrança se repete todo mês. Abrindo a página de pagamento...",
+          });
+        } else {
+          toast.success("Assinatura mensal gerada!", {
+            description: "Seu navegador bloqueou a nova aba. Toque para abrir a fatura.",
+            duration: 15000,
+            action: {
+              label: "Abrir fatura",
+              onClick: () => window.open(url, "_blank", "noopener,noreferrer"),
+            },
+          });
+        }
       } else {
         toast.success("Assinatura mensal criada com sucesso.");
       }
+
       await load();
     } catch (err) {
       toast.error("Não foi possível gerar a cobrança", {
