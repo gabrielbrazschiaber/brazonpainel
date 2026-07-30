@@ -161,10 +161,12 @@ export const criarCliente = createServerFn({ method: "POST" })
         servico_extra: data.servico_extra ?? null,
         servico_extra_valor: data.servico_extra_valor ?? 0,
         asaas_provisionado: integracao.provisionado,
+        cupom: cupomCodigo,
+        cupom_invalido: cupomAviso ? (data.cupom ?? null) : null,
       },
     });
 
-    return { ok: true, integracao };
+    return { ok: true, integracao, cupom_aplicado: cupomCodigo, cupom_invalido: cupomAviso };
   });
 
 
