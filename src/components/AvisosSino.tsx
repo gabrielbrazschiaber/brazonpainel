@@ -8,6 +8,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { marcarNovidadesVistas } from "@/lib/novidades.functions";
+import { usePaginaVisivel } from "@/lib/use-pagina-visivel";
+
 import { contarAvisosNaoLidos, marcarNotificacoesLidas } from "@/lib/notificacoes.functions";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
