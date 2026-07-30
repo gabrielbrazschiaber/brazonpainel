@@ -41,6 +41,23 @@ function diaAncora(dataVencimento?: string | null): number | null {
 // deno-lint-ignore no-explicit-any
 function resumirPayload(payload: any) {
   if (!payload || typeof payload !== 'object') return null
+
+  // Eventos de assinatura (SUBSCRIPTION_*) trazem payload.subscription.
+  if (payload.subscription && !payload.payment) {
+    const s = payload.subscription ?? {}
+    return {
+      event: payload.event ?? null,
+      subscription: {
+        id: s.id ?? null,
+        status: s.status ?? null,
+        value: s.value ?? null,
+        nextDueDate: s.nextDueDate ?? null,
+        deleted: s.deleted ?? null,
+        externalReference: s.externalReference ?? null,
+      },
+    }
+  }
+
   const p = payload.payment ?? {}
   return {
     event: payload.event ?? null,
@@ -55,6 +72,13 @@ function resumirPayload(payload: any) {
     },
   }
 }
+
+// Eventos de assinatura que encerram a recorrência no Asaas.
+const EVENTOS_ASSINATURA_ENCERRADA = [
+  'SUBSCRIPTION_INACTIVATED',
+  'SUBSCRIPTION_DELETED',
+]
+
 
 // deno-lint-ignore no-explicit-any
 async function logWebhook(
