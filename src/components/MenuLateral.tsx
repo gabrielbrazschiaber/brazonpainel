@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ClipboardList, Menu, MessagesSquare } from "lucide-react";
+import { ClipboardList, Menu, MessageSquare, MessagesSquare } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { ChatSheet } from "@/components/chat/ChatSheet";
 import { useChatNaoLidas } from "@/lib/use-chat-nao-lidas";
+import { useAuth } from "@/lib/auth";
 
 /**
  * Menu lateral com os atalhos de Tarefas e Chat com a equipe,
@@ -22,6 +23,8 @@ export function MenuLateral() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [chatAberto, setChatAberto] = useState(false);
   const { naoLidas, atualizar } = useChatNaoLidas({ pausado: chatAberto });
+  const { role } = useAuth();
+  const isCliente = role === "cliente";
 
   return (
     <>
@@ -51,9 +54,13 @@ export function MenuLateral() {
               className="h-11 justify-start"
               onClick={() => setMenuAberto(false)}
             >
-              <Link to="/tarefas">
-                <ClipboardList className="mr-2 h-4 w-4" />
-                Tarefas
+              <Link to={isCliente ? "/solicitacoes" : "/tarefas"}>
+                {isCliente ? (
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                ) : (
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                )}
+                {isCliente ? "Solicitações" : "Tarefas"}
               </Link>
             </Button>
             <Button
