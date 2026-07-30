@@ -14,6 +14,7 @@ import { PermissoesTab } from "@/components/admin/PermissoesTab";
 import { CuponsTab } from "@/components/admin/CuponsTab";
 import { ConfiguracoesPage, type SecaoConfiguracao } from "@/components/admin/ConfiguracoesPage";
 import { AvisosSino } from "@/components/AvisosSino";
+import { ADMIN_NAV_ITEMS, SECOES_CONFIG_META, abasInternas } from "@/lib/admin-nav";
 
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
 import {
@@ -261,73 +262,22 @@ function AdminArea() {
     );
   }
 
-  const navItems = [
-    { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { value: "clientes", label: "Clientes", icon: UserCircle },
-    { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
-    { value: "novidades", label: "Novidades", icon: Megaphone },
-    { value: "config", label: "Configurações", icon: Settings },
-    
-  ] as const;
+  const navItems = ADMIN_NAV_ITEMS;
 
-  const secoesConfig: SecaoConfiguracao[] = [
-    {
-      value: "cupons",
-      label: "Cupons",
-      descricao: "Descontos e histórico de uso",
-      icon: TicketPercent,
-      permissao: "cupons.gerenciar",
-      render: () => <CuponsTab />,
-    },
-    {
-      value: "planos",
-      label: "Planos",
-      descricao: "Valores e disponibilidade",
-      icon: Package,
-      permissao: "planos.gerenciar",
-      render: () => <PlanosTab planos={planos} onChanged={load} />,
-    },
-    {
-      value: "admins",
-      label: "Admins",
-      descricao: "Acessos administrativos",
-      icon: Shield,
-      permissao: "vendedores.ler",
-      render: () => <AdminsTab admins={admins} onChanged={load} />,
-    },
-    {
-      value: "vendedores",
-      label: "Vendedores",
-      descricao: "Equipe de vendas e comissões",
-      icon: Users,
-      permissao: "vendedores.ler",
-      render: () => <VendedoresTab vendedores={vendedores} onChanged={load} />,
-    },
-    {
-      value: "permissoes",
-      label: "Permissões",
-      descricao: "O que cada papel pode fazer",
-      icon: KeyRound,
-      permissao: "configuracoes.gerenciar",
-      render: () => <PermissoesTab />,
-    },
-    {
-      value: "geral",
-      label: "Geral e integrações",
-      descricao: "Dados do app, Asaas e webhook",
-      icon: Settings,
-      permissao: "configuracoes.gerenciar",
-      render: () => <ConfigTab config={config} onSaved={load} />,
-    },
-    {
-      value: "auditoria",
-      label: "Auditoria",
-      descricao: "Histórico de alterações",
-      icon: ScrollText,
-      permissao: "auditoria.ler",
-      render: () => <AuditoriaTab />,
-    },
-  ];
+  const renderSecao: Record<string, () => React.ReactNode> = {
+    cupons: () => <CuponsTab />,
+    planos: () => <PlanosTab planos={planos} onChanged={load} />,
+    admins: () => <AdminsTab admins={admins} onChanged={load} />,
+    vendedores: () => <VendedoresTab vendedores={vendedores} onChanged={load} />,
+    permissoes: () => <PermissoesTab />,
+    geral: () => <ConfigTab config={config} onSaved={load} />,
+    auditoria: () => <AuditoriaTab />,
+  };
+
+  const secoesConfig: SecaoConfiguracao[] = SECOES_CONFIG_META.map((meta) => ({
+    ...meta,
+    render: renderSecao[meta.value],
+  }));
 
   return (
     <AppShell
@@ -341,7 +291,7 @@ function AdminArea() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="sr-only">
-          {navItems.filter((item) => !("to" in item)).map((item) => (
+          {abasInternas(navItems).map((item) => (
             <TabsTrigger key={item.value} value={item.value}>
               {item.label}
             </TabsTrigger>

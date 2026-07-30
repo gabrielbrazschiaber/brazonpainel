@@ -12,7 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { PermissaoChave } from "@/lib/permissions";
+import type { AppPermission } from "@/lib/permissions";
 
 export interface AdminNavItem {
   value: string;
@@ -44,7 +44,7 @@ export interface SecaoConfigMeta {
   label: string;
   descricao: string;
   icon: LucideIcon;
-  permissao: PermissaoChave;
+  permissao: AppPermission;
 }
 
 /** Seções que vivem DENTRO de Configurações (inclusive Auditoria). */
