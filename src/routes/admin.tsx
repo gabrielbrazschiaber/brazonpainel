@@ -365,9 +365,6 @@ function AdminArea() {
         <TabsContent value="config" className="mt-0">
           <ConfiguracoesPage secoes={secoesConfig} />
         </TabsContent>
-        <TabsContent value="auditoria" className="mt-0">
-          <AuditoriaTab />
-        </TabsContent>
       </Tabs>
     </AppShell>
   );
