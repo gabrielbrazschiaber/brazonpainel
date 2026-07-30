@@ -30,42 +30,60 @@ interface Notificacao {
 /** Sino de notificações pessoais (ex.: tarefa atribuída ao usuário). */
 export function NotificacoesSino() {
   const { user } = useAuth();
+  const userId = user?.id ?? null;
   const [open, setOpen] = useState(false);
   const [itens, setItens] = useState<Notificacao[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const montado = useRef(true);
 
   const carregar = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
+    if (!userId) return;
+    const { data, error } = await supabase
       .from("notificacoes")
       .select("id,titulo,mensagem,link,tarefa_id,lida_em,created_at")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(50);
-    setItens((data ?? []) as Notificacao[]);
+    if (!montado.current) return;
+    if (!error) setItens((data ?? []) as Notificacao[]);
     setCarregando(false);
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
-    carregar();
-    const t = setInterval(carregar, 60_000);
-    return () => clearInterval(t);
-  }, [carregar]);
+    montado.current = true;
+    if (!userId) return;
+    void carregar();
+    // Só consulta com a aba visível: evita requisições inúteis em segundo plano.
+    const tick = () => {
+      if (document.visibilityState === "visible") void carregar();
+    };
+    const t = setInterval(tick, 60_000);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      montado.current = false;
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [carregar, userId]);
 
   const naoLidas = itens.filter((n) => !n.lida_em).length;
 
   async function handleOpenChange(v: boolean) {
     setOpen(v);
-    if (v && naoLidas > 0 && user) {
+    if (v && naoLidas > 0 && userId) {
       const agora = new Date().toISOString();
+      const anteriores = itens;
       setItens((atuais) => atuais.map((n) => (n.lida_em ? n : { ...n, lida_em: agora })));
-      await supabase
+      const { error } = await supabase
         .from("notificacoes")
         .update({ lida_em: agora })
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .is("lida_em", null);
+      // Se o backend recusar, desfaz a marcação otimista.
+      if (error && montado.current) setItens(anteriores);
     }
   }
+
 
   if (!user) return null;
 
