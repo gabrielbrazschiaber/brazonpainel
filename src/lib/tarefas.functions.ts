@@ -22,6 +22,7 @@ export interface Tarefa {
   cliente_nome: string | null;
   responsavel_nome: string | null;
   criado_por_nome: string | null;
+  comentarios_count: number;
 }
 
 export interface ResponsavelOpcao {
@@ -32,7 +33,7 @@ export interface ResponsavelOpcao {
 }
 
 /** Contexto do usuário atual dentro do módulo de tarefas. */
-async function contexto(supabase: any, userId: string) {
+export async function contexto(supabase: any, userId: string) {
   const [{ data: isAdmin }, { data: vendedorId }] = await Promise.all([
     supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
     supabase.rpc("current_vendedor_id"),
@@ -44,7 +45,7 @@ async function contexto(supabase: any, userId: string) {
 }
 
 /** Resolve nomes legíveis dos usuários citados nas tarefas visíveis. */
-async function nomesDeUsuarios(ids: string[]): Promise<Map<string, string>> {
+export async function nomesDeUsuarios(ids: string[]): Promise<Map<string, string>> {
   const unicos = Array.from(new Set(ids.filter(Boolean)));
   const mapa = new Map<string, string>();
   if (unicos.length === 0) return mapa;
@@ -76,6 +77,16 @@ export const listarTarefas = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     const linhas = data ?? [];
 
+    const { data: coments } = await context.supabase
+      .from("tarefa_comentarios")
+      .select("tarefa_id")
+      .in("tarefa_id", linhas.map((t) => t.id));
+
+    const contagem = new Map<string, number>();
+    for (const c of coments ?? []) {
+      contagem.set(c.tarefa_id, (contagem.get(c.tarefa_id) ?? 0) + 1);
+    }
+
     const nomes = await nomesDeUsuarios(
       linhas.flatMap((t) => [t.cliente_user_id, t.responsavel_id, t.criado_por_id] as string[]),
     );
@@ -97,6 +108,7 @@ export const listarTarefas = createServerFn({ method: "GET" })
       cliente_nome: t.cliente_user_id ? (nomes.get(t.cliente_user_id) ?? null) : null,
       responsavel_nome: t.responsavel_id ? (nomes.get(t.responsavel_id) ?? null) : null,
       criado_por_nome: t.criado_por_id ? (nomes.get(t.criado_por_id) ?? null) : null,
+      comentarios_count: contagem.get(t.id) ?? 0,
     }));
   });
 
