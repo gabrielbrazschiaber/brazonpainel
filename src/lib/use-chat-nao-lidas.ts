@@ -18,8 +18,10 @@ type Opcoes = {
  */
 export function useChatNaoLidas(opcoes: Opcoes = {}) {
   const { pausado = false } = opcoes;
+  const visivel = usePaginaVisivel();
+  const inativo = pausado || !visivel;
   const [naoLidas, setNaoLidas] = useState(0);
-  const montado = useRef(true);
+
   const buscar = useServerFn(listarConversas);
 
   const atualizar = useCallback(async () => {
