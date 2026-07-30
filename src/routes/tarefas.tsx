@@ -265,6 +265,16 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
     }
   }
 
+  function alterarStatus(t: Tarefa, novo: TarefaStatus) {
+    if (novo === t.status) return;
+    if (!transicaoPermitida(t.status, novo, isAdmin)) {
+      toast.error(mensagemTransicaoInvalida(t.status, novo, isAdmin));
+      return;
+    }
+    void alterar(t.id, { status: novo });
+  }
+
+
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
