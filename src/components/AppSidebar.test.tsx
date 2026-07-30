@@ -7,7 +7,11 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar, type AppNavItem } from "@/components/AppSidebar";
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, ...props }: { children: React.ReactNode }) => <a {...props}>{children}</a>,
+  Link: ({ children, to, ...props }: { children: React.ReactNode; to?: string }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
   useRouterState: () => "/admin",
   useNavigate: () => vi.fn(),
 }));
