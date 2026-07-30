@@ -1,6 +1,5 @@
 import * as React from "react";
 import { ClipboardList, LogOut, MessagesSquare, UserCog } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import {
   Sidebar,
@@ -99,10 +98,10 @@ export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) 
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Tarefas" className="h-10 md:h-8">
-                  <Link to="/tarefas" onClick={fecharSeMobile}>
+                  <a href="/tarefas" onClick={fecharSeMobile}>
                     <ClipboardList className="h-4 w-4" />
                     <span>Tarefas</span>
-                  </Link>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
