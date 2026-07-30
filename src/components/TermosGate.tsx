@@ -49,7 +49,7 @@ export function TermosGate({ children }: { children: ReactNode }) {
     return () => {
       ativo = false;
     };
-  }, [session, verificar]);
+  }, [userId, verificar]);
 
   async function confirmar() {
     setSalvando(true);
