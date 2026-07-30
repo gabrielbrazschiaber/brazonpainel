@@ -96,7 +96,7 @@ export const salvarCupom = createServerFn({ method: "POST" })
     const { data: existente } = await supabaseAdmin
       .from("cupons")
       .select("id")
-      .ilike("codigo", codigo)
+      .eq("codigo", codigo)
       .maybeSingle();
     if (existente && existente.id !== data.id) {
       throw new Error(`Já existe um cupom com o código ${codigo}.`);
