@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { contexto, nomesDeUsuarios, papeisDeUsuarios } from "@/lib/tarefas.server";
-import { contatosDaEquipe, garantirParticipantes } from "@/lib/chat.server";
+import { checarLimiteEnvio, contatosDaEquipe, garantirParticipantes } from "@/lib/chat.server";
 import { PREVIA_TAMANHO, exigirTexto, exigirUuid } from "@/lib/chat-validacao";
 
 export type ConversaTipo = "equipe" | "atendimento";
