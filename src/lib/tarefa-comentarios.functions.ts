@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { contexto, nomesDeUsuarios } from "@/lib/tarefas.functions";
+import { contexto, nomesDeUsuarios, papeisDeUsuarios } from "@/lib/tarefas.server";
 
 export interface Comentario {
   id: string;
@@ -13,29 +13,6 @@ export interface Comentario {
   created_at: string;
   updated_at: string;
   editado: boolean;
-}
-
-/** Papel principal (admin > vendedor > cliente) de cada autor citado. */
-async function papeisDeUsuarios(
-  ids: string[],
-): Promise<Map<string, "admin" | "vendedor" | "cliente">> {
-  const unicos = Array.from(new Set(ids.filter(Boolean)));
-  const mapa = new Map<string, "admin" | "vendedor" | "cliente">();
-  if (unicos.length === 0) return mapa;
-
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
-    .from("user_roles")
-    .select("user_id, role")
-    .in("user_id", unicos);
-
-  const prioridade = { admin: 3, vendedor: 2, cliente: 1 } as const;
-  for (const r of data ?? []) {
-    const papel = r.role as "admin" | "vendedor" | "cliente";
-    const atual = mapa.get(r.user_id);
-    if (!atual || prioridade[papel] > prioridade[atual]) mapa.set(r.user_id, papel);
-  }
-  return mapa;
 }
 
 function validarCorpo(valor: unknown): string {

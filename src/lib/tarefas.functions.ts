@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { contexto, nomesDeUsuarios } from "@/lib/tarefas.server";
 
 export type TarefaStatus = "aberta" | "em_andamento" | "concluida" | "cancelada";
 export type TarefaPrioridade = "baixa" | "media" | "alta";
@@ -30,36 +31,6 @@ export interface ResponsavelOpcao {
   nome: string;
   email: string;
   papel: "admin" | "vendedor";
-}
-
-/** Contexto do usuário atual dentro do módulo de tarefas. */
-export async function contexto(supabase: any, userId: string) {
-  const [{ data: isAdmin }, { data: vendedorId }] = await Promise.all([
-    supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
-    supabase.rpc("current_vendedor_id"),
-  ]);
-  return {
-    isAdmin: isAdmin === true,
-    vendedorId: (vendedorId as string | null) ?? null,
-  };
-}
-
-/** Resolve nomes legíveis dos usuários citados nas tarefas visíveis. */
-export async function nomesDeUsuarios(ids: string[]): Promise<Map<string, string>> {
-  const unicos = Array.from(new Set(ids.filter(Boolean)));
-  const mapa = new Map<string, string>();
-  if (unicos.length === 0) return mapa;
-
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
-    .from("profiles")
-    .select("id, nome, email")
-    .in("id", unicos);
-
-  for (const p of data ?? []) {
-    mapa.set(p.id, (p.nome || "").trim() || p.email);
-  }
-  return mapa;
 }
 
 /** Lista as tarefas visíveis para o usuário logado (RLS decide o escopo). */
