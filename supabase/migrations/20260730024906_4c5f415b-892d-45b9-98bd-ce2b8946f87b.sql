@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS conversa_participantes_updated_at ON public.conversa_participantes;
