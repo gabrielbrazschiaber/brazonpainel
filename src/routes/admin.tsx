@@ -1389,6 +1389,21 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
   const [saving, setSaving] = useState(false);
   const [gerandoLembretes, setGerandoLembretes] = useState(false);
   const gerarLembretes = useServerFn(gerarLembretesAgora);
+  const buscarUltimaExecucao = useServerFn(ultimaExecucaoLembretes);
+  const [ultimoLembrete, setUltimoLembrete] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    buscarUltimaExecucao({})
+      .then((r) => {
+        if (ativo) setUltimoLembrete(r.ultimo);
+      })
+      .catch(() => {});
+    return () => {
+      ativo = false;
+    };
+  }, [buscarUltimaExecucao]);
+
 
   const [testando, setTestando] = useState(false);
   const [tokenMascara, setTokenMascara] = useState("");
