@@ -213,6 +213,7 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      </div>
       {chatAberto && (
         <ChatSheet
           aberto={chatAberto}
