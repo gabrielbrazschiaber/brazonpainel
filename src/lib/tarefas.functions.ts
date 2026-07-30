@@ -269,6 +269,20 @@ export const atualizarTarefa = createServerFn({ method: "POST" })
       prazo?: string | null;
     } = {};
     if (data.status) {
+      const { data: atual, error: erroAtual } = await supabase
+        .from("tarefas")
+        .select("status")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (erroAtual) throw new Error(erroAtual.message);
+      if (!atual) {
+        throw new Error("Tarefa não encontrada ou você não tem permissão para alterá-la.");
+      }
+      const statusAtual = atual.status as TarefaStatusValor;
+      const novoStatus = data.status as TarefaStatusValor;
+      if (!transicaoPermitida(statusAtual, novoStatus, isAdmin)) {
+        throw new Error(mensagemTransicaoInvalida(statusAtual, novoStatus, isAdmin));
+      }
       patch.status = data.status;
       patch.concluida_em = data.status === "concluida" ? new Date().toISOString() : null;
     }
@@ -276,6 +290,7 @@ export const atualizarTarefa = createServerFn({ method: "POST" })
     if (data.responsavel_id !== undefined) patch.responsavel_id = data.responsavel_id;
     if (data.prazo !== undefined) patch.prazo = data.prazo;
     if (Object.keys(patch).length === 0) return { ok: true };
+
 
     const { data: atualizada, error } = await supabase
       .from("tarefas")
