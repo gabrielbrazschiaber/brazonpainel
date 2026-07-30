@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { listarConversas } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { usePaginaVisivel } from "@/lib/use-pagina-visivel";
+
 
 type Opcoes = {
   /** Quando true, o chat está aberto e o polling de fundo é suspenso. */
@@ -16,6 +18,8 @@ type Opcoes = {
  */
 export function useChatNaoLidas(opcoes: Opcoes = {}) {
   const { pausado = false } = opcoes;
+  const visivel = usePaginaVisivel();
+  const inativo = pausado || !visivel;
   const [naoLidas, setNaoLidas] = useState(0);
   const montado = useRef(true);
   const buscar = useServerFn(listarConversas);
@@ -37,20 +41,22 @@ export function useChatNaoLidas(opcoes: Opcoes = {}) {
     };
   }, []);
 
-  // Primeira carga + polling lento de segurança (suspenso com o chat aberto)
+  // Primeira carga + polling lento de segurança.
+  // Suspenso com o chat aberto ou com a aba do navegador em segundo plano.
   useEffect(() => {
-    if (pausado) return;
+    if (inativo) return;
     void atualizar();
     const id = setInterval(() => {
-      if (document.visibilityState !== "visible") return;
       void atualizar();
     }, 300000);
     return () => clearInterval(id);
-  }, [atualizar, pausado]);
+  }, [atualizar, inativo]);
 
-  // Realtime: novas mensagens disparam a recontagem (com pequeno debounce)
+  // Realtime: novas mensagens disparam a recontagem (com pequeno debounce).
+  // A assinatura só existe enquanto a aba está visível e o chat fechado.
   useEffect(() => {
-    if (pausado) return;
+    if (inativo) return;
+
     let timer: ReturnType<typeof setTimeout> | null = null;
     const agendar = () => {
       if (timer) clearTimeout(timer);
@@ -72,7 +78,7 @@ export function useChatNaoLidas(opcoes: Opcoes = {}) {
       if (timer) clearTimeout(timer);
       void supabase.removeChannel(canal);
     };
-  }, [atualizar, pausado]);
+  }, [atualizar, inativo]);
 
   return { naoLidas, atualizar };
 }
