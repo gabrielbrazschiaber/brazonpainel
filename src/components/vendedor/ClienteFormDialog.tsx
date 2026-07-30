@@ -241,7 +241,7 @@ export function ClienteFormDialog({
           toast.success("Dados do cliente atualizados!");
         }
       } else {
-        await criar({
+        const criado = await criar({
           data: {
             ...comum,
             data_vencimento: v.vencimento || defaultVencimento(),
@@ -250,11 +250,16 @@ export function ClienteFormDialog({
           },
         });
         const { error: resetErr } = await enviarLinkDefinicaoSenha(v.email);
-        toast.success("Cliente cadastrado!", {
-          description: resetErr
-            ? `Peça para ${v.email} usar "Esqueci minha senha" no login para definir a senha.`
-            : `Enviamos um e-mail para ${v.email} definir a senha de acesso.`,
-        });
+        const senhaMsg = resetErr
+          ? `Peça para ${v.email} usar "Esqueci minha senha" no login para definir a senha.`
+          : `Enviamos um e-mail para ${v.email} definir a senha de acesso.`;
+        if (criado?.cupom_invalido) {
+          toast.warning("Cliente cadastrado, mas o cupom NÃO foi aplicado", {
+            description: `${criado.cupom_invalido} O cliente será cobrado o valor cheio. ${senhaMsg}`,
+          });
+        } else {
+          toast.success("Cliente cadastrado!", { description: senhaMsg });
+        }
         setValues(valoresDoCliente(undefined));
         setCupomAplicado(null);
       }
