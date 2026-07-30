@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { contexto, nomesDeUsuarios, papeisDeUsuarios } from "@/lib/tarefas.server";
 import { CAMPOS_ANEXO, type Anexo } from "@/lib/tarefa-anexos.functions";
 
@@ -34,7 +36,7 @@ interface LinhaComentario {
   updated_at: string;
 }
 
-type ClienteSupabase = { from: (t: string) => any };
+type ClienteSupabase = SupabaseClient<Database>;
 
 async function decorar(
   supabase: ClienteSupabase,
