@@ -16,6 +16,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { BrazonSymbol } from "@/components/BrazonLogo";
 import { useSair } from "@/lib/use-sair";
 import { ChatSheet } from "@/components/chat/ChatSheet";
