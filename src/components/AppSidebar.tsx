@@ -16,6 +16,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { BrazonSymbol } from "@/components/BrazonLogo";
 import { useSair } from "@/lib/use-sair";
 import { ChatSheet } from "@/components/chat/ChatSheet";
@@ -61,6 +62,10 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
   // Trava o scroll da página enquanto o drawer mobile estiver aberto.
   useBodyScrollLock(isMobile && openMobile);
 
+  // Mantém o TAB preso dentro do drawer mobile até que ele seja fechado.
+  const trapRef = React.useRef<HTMLDivElement>(null);
+  useFocusTrap(isMobile && openMobile, trapRef);
+
   function fecharSeMobile() {
     if (isMobile) setOpenMobile(false);
   }
@@ -84,13 +89,14 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
-        <div className="flex items-center justify-center">
-          <BrazonSymbol className="h-8 w-8" />
-        </div>
-      </SidebarHeader>
+      <div ref={trapRef} className="flex h-full w-full flex-col">
+        <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
+          <div className="flex items-center justify-center">
+            <BrazonSymbol className="h-8 w-8" />
+          </div>
+        </SidebarHeader>
 
-      <SidebarContent className="overflow-y-auto overscroll-contain">
+        <SidebarContent className="overflow-y-auto overscroll-contain">
         {acaoPrincipal && (
           <SidebarGroup>
             <SidebarGroupContent>
@@ -212,6 +218,7 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      </div>
       {chatAberto && (
         <ChatSheet
           aberto={chatAberto}

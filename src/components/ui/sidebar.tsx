@@ -192,6 +192,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
+            aria-label="Menu de navegação"
             className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
             style={
               {
@@ -201,10 +202,14 @@ const Sidebar = React.forwardRef<
             side={side}
           >
             <SheetHeader className="sr-only">
-              <SheetTitle>Sidebar</SheetTitle>
-              <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+              <SheetTitle>Menu de navegação</SheetTitle>
+              <SheetDescription>
+                Use TAB para percorrer os itens do menu e ESC para fechar.
+              </SheetDescription>
             </SheetHeader>
-            <div className="flex h-full w-full flex-col">{children}</div>
+            <nav aria-label="Menu principal" className="flex h-full w-full flex-col">
+              {children}
+            </nav>
           </SheetContent>
         </Sheet>
       );
