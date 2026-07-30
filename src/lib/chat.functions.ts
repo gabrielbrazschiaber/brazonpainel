@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { contexto, nomesDeUsuarios, papeisDeUsuarios } from "@/lib/tarefas.server";
-import { contatosDaEquipe, garantirParticipantes } from "@/lib/chat.server";
+import { checarLimiteEnvio, contatosDaEquipe, garantirParticipantes } from "@/lib/chat.server";
 import { PREVIA_TAMANHO, exigirTexto, exigirUuid } from "@/lib/chat-validacao";
 
 export type ConversaTipo = "equipe" | "atendimento";
@@ -292,6 +292,8 @@ export const enviarMensagem = createServerFn({ method: "POST" })
     corpo: exigirTexto(input?.corpo, "A mensagem", 1, 4000),
   }))
   .handler(async ({ data, context }): Promise<Mensagem> => {
+    await checarLimiteEnvio(context.supabase, context.userId);
+
     const { data: criada, error } = await context.supabase
       .from("conversa_mensagens")
       .insert({
