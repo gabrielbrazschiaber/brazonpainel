@@ -21,7 +21,7 @@ import { useChatNaoLidas } from "@/lib/use-chat-nao-lidas";
 export function MenuLateral() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [chatAberto, setChatAberto] = useState(false);
-  const { naoLidas, atualizar } = useChatNaoLidas();
+  const { naoLidas, atualizar } = useChatNaoLidas({ pausado: chatAberto });
 
   return (
     <>
