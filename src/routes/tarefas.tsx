@@ -9,6 +9,7 @@ import { useAuth, roleHome } from "@/lib/auth";
 import { TermosGate } from "@/components/TermosGate";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
+import { ComentariosTarefa } from "@/components/tarefas/ComentariosTarefa";
 import { formatDate } from "@/lib/format";
 import {
   listarTarefas,
@@ -132,6 +133,11 @@ function TarefasConteudo({ equipe, home }: { equipe: boolean; home: string }) {
   const atualizar = useServerFn(atualizarTarefa);
 
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
+  const atualizarContagem = useCallback((tarefaId: string, quantidade: number) => {
+    setTarefas((atuais) =>
+      atuais.map((t) => (t.id === tarefaId ? { ...t, comentarios_count: quantidade } : t)),
+    );
+  }, []);
   const [responsaveis, setResponsaveis] = useState<ResponsavelOpcao[]>([]);
   const [clientes, setClientes] = useState<ClienteOpcao[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -342,6 +348,15 @@ function TarefasConteudo({ equipe, home }: { equipe: boolean; home: string }) {
                     <p className="text-xs text-muted-foreground">
                       Responsável: {t.responsavel_nome ?? "a direcionar"}
                     </p>
+                    <div className="pt-1">
+                      <ComentariosTarefa
+                        tarefaId={t.id}
+                        tarefaTitulo={t.titulo}
+                        equipe={equipe}
+                        quantidade={t.comentarios_count}
+                        onQuantidadeChange={atualizarContagem}
+                      />
+                    </div>
                   </div>
 
                   {equipe && (
