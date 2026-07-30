@@ -264,6 +264,7 @@ function AdminArea() {
   const navItems = [
     { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { value: "clientes", label: "Clientes", icon: UserCircle },
+    { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
     { value: "novidades", label: "Novidades", icon: Megaphone },
     { value: "config", label: "Configurações", icon: Settings },
     { value: "auditoria", label: "Auditoria", icon: ScrollText },
