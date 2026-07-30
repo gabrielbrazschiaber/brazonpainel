@@ -12,6 +12,8 @@ import { SairButton } from "@/components/SairButton";
 import { NotificacoesSino } from "@/components/NotificacoesSino";
 import { ComentariosTarefa } from "@/components/tarefas/ComentariosTarefa";
 import { formatDate } from "@/lib/format";
+import { buscarPerfis } from "@/lib/profiles";
+
 import {
   listarTarefas,
   listarResponsaveis,
