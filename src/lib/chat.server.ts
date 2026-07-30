@@ -80,3 +80,30 @@ export async function contatosDaEquipe(excluirUserId: string): Promise<ContatoEq
     }))
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 }
+
+/** Limite anti-spam: mensagens por autor numa janela curta. */
+export const LIMITE_MENSAGENS = 10;
+export const JANELA_SEGUNDOS = 30;
+
+/**
+ * Bloqueia envios acima de LIMITE_MENSAGENS em JANELA_SEGUNDOS.
+ * Usa o client do usuário (RLS ativa) e conta só as mensagens dele.
+ */
+export async function checarLimiteEnvio(supabase: any, userId: string) {
+  const desde = new Date(Date.now() - JANELA_SEGUNDOS * 1000).toISOString();
+
+  const { count, error } = await supabase
+    .from("conversa_mensagens")
+    .select("id", { count: "exact", head: true })
+    .eq("autor_id", userId)
+    .gte("created_at", desde);
+
+  // Falha na contagem não pode travar o chat.
+  if (error) return;
+
+  if ((count ?? 0) >= LIMITE_MENSAGENS) {
+    throw new Error(
+      `Você enviou muitas mensagens seguidas. Aguarde ${JANELA_SEGUNDOS} segundos antes de enviar outra.`,
+    );
+  }
+}
