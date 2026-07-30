@@ -180,22 +180,25 @@ function TarefasConteudo({ equipe, home }: { equipe: boolean; home: string }) {
         /* lista de responsáveis é opcional na tela */
       }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("clientes")
         .select("id, user_id")
         .order("created_at", { ascending: false })
         .limit(300);
+      if (error) return;
 
-      const ids = (data ?? []).map((c) => c.user_id);
-      if (ids.length === 0) return;
-      const { data: perfis } = await supabase
-        .from("profiles")
-        .select("id, nome, email")
-        .in("id", ids);
-      const nomes = new Map((perfis ?? []).map((p) => [p.id, (p.nome || "").trim() || p.email]));
-      setClientes(
-        (data ?? []).map((c) => ({ id: c.id, nome: nomes.get(c.user_id) ?? "Cliente" })),
+      const linhas = data ?? [];
+      if (linhas.length === 0) return;
+      const perfis = await buscarPerfis(linhas.map((c) => c.user_id)).catch(
+        () => new Map<string, { nome: string | null; email: string }>(),
       );
+      setClientes(
+        linhas.map((c) => {
+          const p = perfis.get(c.user_id);
+          return { id: c.id, nome: (p?.nome || "").trim() || p?.email || "Cliente" };
+        }),
+      );
+
     })();
   }, [equipe, carregarResponsaveis]);
 
