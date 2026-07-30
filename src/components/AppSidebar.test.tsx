@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { LayoutDashboard, Users } from "lucide-react";
+import { ClipboardList, LayoutDashboard, Users } from "lucide-react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { setViewport } from "@/test/setup";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -9,6 +9,15 @@ import { AppSidebar, type AppNavItem } from "@/components/AppSidebar";
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => <a {...props}>{children}</a>,
   useRouterState: () => "/admin",
+  useNavigate: () => vi.fn(),
+}));
+
+vi.mock("@/lib/use-tarefas-abertas", () => ({
+  useTarefasAbertas: () => ({ abertas: 3, atualizar: vi.fn() }),
+}));
+
+vi.mock("@/lib/use-chat-nao-lidas", () => ({
+  useChatNaoLidas: () => ({ naoLidas: 0, atualizar: vi.fn() }),
 }));
 
 const sair = vi.fn();
@@ -24,6 +33,7 @@ vi.mock("@/lib/auth", () => ({
 const items: readonly AppNavItem[] = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { value: "clientes", label: "Clientes", icon: Users },
+  { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
 ];
 
 function Harness({ onTab = vi.fn(), onConta = vi.fn() }) {
@@ -129,5 +139,21 @@ describe("AppSidebar — drawer mobile", () => {
     expect(drawer()).not.toBeInTheDocument();
     expect(screen.getByText("Clientes")).toBeInTheDocument();
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });
+  });
+});
+
+describe("AppSidebar — itens de rota", () => {
+  it("renderiza item com rota como link e mostra o contador de tarefas", () => {
+    setViewport(DESKTOP);
+    render(<Harness />);
+    const link = screen.getByRole("link", { name: /Tarefas/ });
+    expect(link).toHaveAttribute("href", "/tarefas");
+    expect(link).toHaveTextContent("3");
+  });
+
+  it("não mostra Auditoria na navegação lateral", () => {
+    setViewport(DESKTOP);
+    render(<Harness />);
+    expect(screen.queryByText("Auditoria")).toBeNull();
   });
 });
