@@ -123,7 +123,7 @@ export function NotificacoesSino() {
                       </p>
                       {n.link && (
                         <Link
-                          to={n.link}
+                          to="/tarefas"
                           onClick={() => setOpen(false)}
                           className="mt-2 inline-block text-xs font-medium text-primary hover:underline"
                         >
