@@ -98,19 +98,22 @@ export function AvisosSino() {
 
   useEffect(() => {
     montado.current = true;
-    if (!userId) return;
-    void carregar();
-    const tick = () => {
-      if (document.visibilityState === "visible") void carregar();
-    };
-    const t = setInterval(tick, 60_000);
-    document.addEventListener("visibilitychange", tick);
     return () => {
       montado.current = false;
-      clearInterval(t);
-      document.removeEventListener("visibilitychange", tick);
     };
-  }, [carregar, userId]);
+  }, []);
+
+  // Primeira carga + polling lento de segurança, só com a aba visível.
+  // Em segundo plano nada é buscado; ao voltar, recarrega uma vez.
+  useEffect(() => {
+    if (!userId || !visivel) return;
+    void carregar();
+    const t = setInterval(() => {
+      void carregar();
+    }, 300_000);
+    return () => clearInterval(t);
+  }, [carregar, userId, visivel]);
+
 
   const notifNaoLidas = contagem.notificacoes;
   const novasNovidades = contagem.novidades;
