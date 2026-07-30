@@ -401,20 +401,24 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
 
                       <Select
                         value={t.status}
-                        disabled={atualizandoId === t.id}
-                        onValueChange={(v) => alterar(t.id, { status: v as TarefaStatus })}
+                        disabled={
+                          atualizandoId === t.id ||
+                          transicoesPermitidas(t.status, isAdmin).length === 0
+                        }
+                        onValueChange={(v) => alterarStatus(t, v as TarefaStatus)}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {(Object.keys(STATUS_LABEL) as TarefaStatus[]).map((s) => (
+                          {[t.status, ...transicoesPermitidas(t.status, isAdmin)].map((s) => (
                             <SelectItem key={s} value={s}>
                               {STATUS_LABEL[s]}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+
                     </div>
                   )}
                 </div>
