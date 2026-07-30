@@ -6,6 +6,12 @@ import { ArrowLeft, ClipboardList, Plus, Loader2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
+import {
+  transicaoPermitida,
+  transicoesPermitidas,
+  mensagemTransicaoInvalida,
+} from "@/lib/tarefas-status";
+
 import { TermosGate } from "@/components/TermosGate";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
