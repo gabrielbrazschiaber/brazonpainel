@@ -267,7 +267,7 @@ function AdminArea() {
     { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
     { value: "novidades", label: "Novidades", icon: Megaphone },
     { value: "config", label: "Configurações", icon: Settings },
-    { value: "auditoria", label: "Auditoria", icon: ScrollText },
+    
   ] as const;
 
   const secoesConfig: SecaoConfiguracao[] = [
@@ -364,9 +364,6 @@ function AdminArea() {
         </TabsContent>
         <TabsContent value="config" className="mt-0">
           <ConfiguracoesPage secoes={secoesConfig} />
-        </TabsContent>
-        <TabsContent value="auditoria" className="mt-0">
-          <AuditoriaTab />
         </TabsContent>
       </Tabs>
     </AppShell>
