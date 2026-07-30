@@ -267,7 +267,7 @@ function AdminArea() {
     { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
     { value: "novidades", label: "Novidades", icon: Megaphone },
     { value: "config", label: "Configurações", icon: Settings },
-    { value: "auditoria", label: "Auditoria", icon: ScrollText },
+    
   ] as const;
 
   const secoesConfig: SecaoConfiguracao[] = [
