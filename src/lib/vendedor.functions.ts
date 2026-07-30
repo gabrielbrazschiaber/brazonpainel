@@ -38,7 +38,14 @@ const novoClienteSchema = z.object({
     .refine((v) => v === "" || v.length === 10 || v.length === 11, "Telefone inválido.")
     .optional()
     .nullable(),
-  cupom: z.string().trim().max(40).optional().nullable(),
+  cupom: z
+    .string()
+    .trim()
+    .max(40)
+    .regex(/^[A-Za-z0-9_-]+$/, "Código de cupom inválido.")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
 });
 
 
@@ -87,6 +94,22 @@ export const criarCliente = createServerFn({ method: "POST" })
       throw new Error("Falha ao definir o perfil do cliente.");
     }
 
+    // Cupom aplicado pelo vendedor: validado no servidor. Um código inválido
+    // não impede o cadastro — o cliente nasce sem desconto e o vendedor é avisado.
+    let cupomPendenteId: string | null = null;
+    let cupomAviso: string | null = null;
+    let cupomCodigo: string | null = null;
+    if (data.cupom) {
+      const { buscarCupomAtivo, MENSAGENS_CUPOM } = await import("./cupons.server");
+      const res = await buscarCupomAtivo(data.cupom);
+      if ("motivo" in res) {
+        cupomAviso = MENSAGENS_CUPOM[res.motivo];
+      } else {
+        cupomPendenteId = res.cupom.id;
+        cupomCodigo = res.cupom.codigo;
+      }
+    }
+
     const { data: novoCliente, error: cliErr } = await supabaseAdmin.from("clientes").insert({
       user_id: newUserId,
       vendedor_id: vend.id,
@@ -98,6 +121,7 @@ export const criarCliente = createServerFn({ method: "POST" })
       servico_extra_valor: data.servico_extra_valor ?? 0,
       cpf_cnpj: data.cpf_cnpj ?? null,
       telefone: data.telefone ?? null,
+      cupom_pendente_id: cupomPendenteId,
       status: "ativo",
     }).select("id").maybeSingle();
     if (cliErr) {
@@ -137,10 +161,12 @@ export const criarCliente = createServerFn({ method: "POST" })
         servico_extra: data.servico_extra ?? null,
         servico_extra_valor: data.servico_extra_valor ?? 0,
         asaas_provisionado: integracao.provisionado,
+        cupom: cupomCodigo,
+        cupom_invalido: cupomAviso ? (data.cupom ?? null) : null,
       },
     });
 
-    return { ok: true, integracao };
+    return { ok: true, integracao, cupom_aplicado: cupomCodigo, cupom_invalido: cupomAviso };
   });
 
 
@@ -149,7 +175,14 @@ const cadastroPublicoSchema = novoClienteSchema
   .extend({
     // Indicação é opcional: o cliente pode se cadastrar e comprar sozinho.
     ref: z.string().trim().max(60).optional().nullable(),
-    cupom: z.string().trim().max(40).optional().nullable(),
+    cupom: z
+      .string()
+      .trim()
+      .max(40)
+      .regex(/^[A-Za-z0-9_-]+$/, "Código de cupom inválido.")
+      .optional()
+      .nullable()
+      .or(z.literal("")),
     // Aceite obrigatório do Termo de Uso — o texto registrado vem do servidor.
     aceite_termos: z.literal(true),
     termos_versao: z.string().trim().min(1).max(40),

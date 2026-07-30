@@ -22,7 +22,7 @@ export async function criarCupomDoVendedor(supabase: SB, userId: string, codigoB
   const { data: existente } = await supabaseAdmin
     .from("cupons")
     .select("id")
-    .ilike("codigo", codigo)
+    .eq("codigo", codigo)
     .maybeSingle();
   if (existente) throw new Error("Este código já está em uso. Escolha outro.");
 
