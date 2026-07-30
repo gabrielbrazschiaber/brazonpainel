@@ -104,20 +104,41 @@ function CadastroPage() {
   // vendedor acompanhar visitantes x leads x conversões.
   useEffect(() => {
     if (!ref) return;
-    const chave = `ref-visita:${ref}`;
-    if (localStorage.getItem(chave)) return;
-    let sessao = localStorage.getItem("ref-sessao");
-    if (!sessao) {
-      sessao = crypto.randomUUID();
-      localStorage.setItem("ref-sessao", sessao);
+    // localStorage pode lançar (modo privado/bloqueio de cookies): nunca deve
+    // derrubar a página de cadastro.
+    let chave = "";
+    let sessao: string | null = null;
+    try {
+      chave = `ref-visita:${ref}`;
+      if (localStorage.getItem(chave)) return;
+      sessao = localStorage.getItem("ref-sessao");
+      if (!sessao) {
+        sessao = crypto.randomUUID();
+        localStorage.setItem("ref-sessao", sessao);
+      }
+    } catch {
+      sessao = null;
     }
-    localStorage.setItem(chave, "1");
+    const sessaoFinal = sessao ?? crypto.randomUUID();
     void fetch("/api/public/ref-visita", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codigo: ref, session: sessao }),
-    }).catch(() => {});
+      body: JSON.stringify({ codigo: ref, session: sessaoFinal }),
+    })
+      .then((r) => {
+        // Só marca como registrada quando o servidor confirmou, evitando
+        // perder a visita se a rede falhar.
+        if (r.ok && chave) {
+          try {
+            localStorage.setItem(chave, "1");
+          } catch {
+            /* armazenamento indisponível */
+          }
+        }
+      })
+      .catch(() => {});
   }, [ref]);
+
 
   useEffect(() => {
     supabase
