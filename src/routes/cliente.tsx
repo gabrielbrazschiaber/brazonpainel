@@ -143,6 +143,15 @@ function ClienteArea() {
     return cliente?.status ?? "ativo";
   }
 
+  const navItems: AppNavItem[] = [
+    { value: "assinatura", label: "Minha assinatura", icon: CreditCard, to: "/cliente" },
+    { value: "solicitacoes", label: "Solicitações", icon: MessageSquare, to: "/solicitacoes" },
+    { value: "aceites", label: "Meus aceites", icon: FileCheck2, to: "/meus-aceites" },
+    { value: "termos", label: "Termos de Uso", icon: ScrollText, to: "/termos-de-uso" },
+  ];
+
+
+
   async function aplicarCupom() {
     const cod = codigoCupom.trim();
     if (!cod) {
