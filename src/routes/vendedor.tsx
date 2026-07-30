@@ -172,6 +172,21 @@ function VendedorArea() {
     navigator.clipboard.writeText(text).then(() => toast.success(msg));
   }
 
+  const navItems: AppNavItem[] = [
+    { value: "painel", label: "Painel", icon: LayoutDashboard, to: "/vendedor" },
+    { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
+    { value: "indicacoes", label: "Indicações", icon: Share2 },
+    { value: "cupons", label: "Meus cupons", icon: Ticket },
+    { value: "clientes", label: "Meus clientes", icon: Users },
+  ];
+
+  /** Rola até a seção correspondente; o item ativo é simplesmente o último clicado. */
+  function irParaSecao(value: string) {
+    setSecaoAtiva(value);
+    document.getElementById(`secao-${value}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
