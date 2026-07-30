@@ -26,7 +26,7 @@ export interface Tarefa {
   concluida_em: string | null;
   created_at: string;
   categoria: string | null;
-  dados: Record<string, unknown> | null;
+  dados: Record<string, string> | null;
   cliente_nome: string | null;
   responsavel_nome: string | null;
   criado_por_nome: string | null;
@@ -84,7 +84,7 @@ export const listarTarefas = createServerFn({ method: "GET" })
       concluida_em: t.concluida_em,
       created_at: t.created_at,
       categoria: t.categoria,
-      dados: (t.dados as Record<string, unknown> | null) ?? null,
+      dados: (t.dados as Record<string, string> | null) ?? null,
       cliente_nome: t.cliente_user_id ? (nomes.get(t.cliente_user_id) ?? null) : null,
       responsavel_nome: t.responsavel_id ? (nomes.get(t.responsavel_id) ?? null) : null,
       criado_por_nome: t.criado_por_id ? (nomes.get(t.criado_por_id) ?? null) : null,
