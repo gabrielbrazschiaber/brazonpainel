@@ -19,12 +19,34 @@ let estadoAnterior: {
   scrollY: number;
 } | null = null;
 
-/** Detecta locks aplicados por outras libs (Radix/react-remove-scroll). */
-function outroLockAtivo() {
-  return (
-    document.body.hasAttribute("data-scroll-locked") ||
-    document.body.style.pointerEvents === "none"
-  );
+/**
+ * Seletores dos overlays que também travam/roubam o scroll:
+ * dialogs, alert dialogs, sheets, drawers (vaul), popovers modais e menus.
+ */
+const SELETORES_OVERLAY = [
+  '[data-state="open"][role="dialog"]',
+  '[data-state="open"][role="alertdialog"]',
+  '[data-state="open"][aria-modal="true"]',
+  "[data-radix-dialog-content]",
+  "[data-radix-alert-dialog-content]",
+  "[vaul-drawer][data-state='open']",
+  '[data-sonner-toast][data-expanded="true"]',
+].join(",");
+
+/** Detecta locks/overlays aplicados por outras libs (Radix, vaul, sonner). */
+function outroOverlayAtivo() {
+  if (typeof document === "undefined") return false;
+  const body = document.body;
+  if (body.hasAttribute("data-scroll-locked")) return true;
+  if (body.style.pointerEvents === "none") return true;
+  return document.querySelector(SELETORES_OVERLAY) !== null;
+}
+
+let observer: MutationObserver | null = null;
+
+function pararObserver() {
+  observer?.disconnect();
+  observer = null;
 }
 
 function aplicarLock() {
@@ -51,13 +73,12 @@ function aplicarLock() {
   body.style.width = "100%";
 }
 
-function liberarLock() {
-  locks = Math.max(0, locks - 1);
-  if (locks > 0 || !estadoAnterior) return;
-
+function restaurarBody() {
+  if (!estadoAnterior) return;
   const body = document.body;
   const { scrollY, ...estilos } = estadoAnterior;
   estadoAnterior = null;
+  pararObserver();
 
   body.style.overflow = estilos.overflow;
   body.style.position = estilos.position;
@@ -65,12 +86,32 @@ function liberarLock() {
   body.style.left = estilos.left;
   body.style.right = estilos.right;
   body.style.width = estilos.width;
-
-  // Se outra biblioteca ainda mantém a página travada (ex.: um dialog Radix
-  // aberto por cima), não mexemos na posição — ela será restaurada por quem
-  // ainda detém o lock ao fechar.
-  if (!outroLockAtivo()) window.scrollTo(0, scrollY);
+  window.scrollTo(0, scrollY);
 }
+
+function liberarLock() {
+  locks = Math.max(0, locks - 1);
+  if (locks > 0 || !estadoAnterior) return;
+
+  // Ainda há dialog/drawer/modal aberto por cima: mantém o body travado e
+  // só restaura quando o último overlay sumir do DOM.
+  if (outroOverlayAtivo()) {
+    if (observer || typeof MutationObserver === "undefined") return;
+    observer = new MutationObserver(() => {
+      if (locks === 0 && !outroOverlayAtivo()) restaurarBody();
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-state", "style", "data-scroll-locked", "aria-modal"],
+    });
+    return;
+  }
+
+  restaurarBody();
+}
+
 
 /**
  * Bloqueia o scroll da página enquanto `ativo` for verdadeiro, cooperando com
