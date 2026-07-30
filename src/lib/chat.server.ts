@@ -6,12 +6,19 @@ interface ClienteBasico {
   vendedor_id: string | null;
 }
 
+/** Todos os admins (participam de qualquer atendimento, é o "suporte"). */
+async function adminsUserIds(): Promise<string[]> {
+  const { data } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
+  return (data ?? []).map((r) => r.user_id as string);
+}
+
 /**
- * Garante que cliente, vendedor responsável e quem abriu estejam na conversa.
- * Usa o client do usuário (RLS ativa) — nada de service role aqui.
+ * Garante que cliente, vendedor responsável, admins (suporte) e quem abriu
+ * estejam na conversa. Usa service role porque o cliente não tem permissão de
+ * inscrever outras pessoas — a autorização já foi feita pelo chamador.
  */
 export async function garantirParticipantes(
-  supabase: any,
+  _supabase: unknown,
   userId: string,
   conversaId: string,
   cliente: ClienteBasico,
@@ -19,7 +26,7 @@ export async function garantirParticipantes(
   const usuarios = new Set<string>([cliente.user_id, userId]);
 
   if (cliente.vendedor_id) {
-    const { data: vend } = await supabase
+    const { data: vend } = await supabaseAdmin
       .from("vendedores")
       .select("user_id")
       .eq("id", cliente.vendedor_id)
@@ -28,13 +35,44 @@ export async function garantirParticipantes(
     if (vend?.user_id) usuarios.add(vend.user_id);
   }
 
-  await supabase
+  for (const id of await adminsUserIds()) usuarios.add(id);
+
+  await supabaseAdmin
     .from("conversa_participantes")
     .upsert(
       Array.from(usuarios).map((user_id) => ({ conversa_id: conversaId, user_id })),
       { onConflict: "conversa_id,user_id", ignoreDuplicates: true },
     );
 }
+
+/**
+ * Cria a conversa de atendimento do cliente. A posse do cliente já foi
+ * validada pelo chamador (server fn autenticada), então usamos service role
+ * para não esbarrar na RLS de inserção.
+ */
+export async function criarAtendimento(
+  clienteId: string,
+  vendedorId: string | null,
+  criadoPorId: string,
+): Promise<{ id: string | null; code: string | null; message: string | null }> {
+  const { data, error } = await supabaseAdmin
+    .from("conversas")
+    .insert({
+      tipo: "atendimento",
+      cliente_id: clienteId,
+      vendedor_id: vendedorId,
+      criado_por_id: criadoPorId,
+    })
+    .select("id")
+    .single();
+
+  return {
+    id: data?.id ?? null,
+    code: error?.code ?? null,
+    message: error?.message ?? null,
+  };
+}
+
 
 export interface ContatoEquipe {
   user_id: string;
