@@ -88,6 +88,7 @@ import {
   UserCircle,
   Settings,
   ScrollText,
+  ClipboardList,
   Megaphone,
   Trash2,
   Search,
@@ -263,6 +264,7 @@ function AdminArea() {
   const navItems = [
     { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { value: "clientes", label: "Clientes", icon: UserCircle },
+    { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
     { value: "novidades", label: "Novidades", icon: Megaphone },
     { value: "config", label: "Configurações", icon: Settings },
     { value: "auditoria", label: "Auditoria", icon: ScrollText },
@@ -339,7 +341,7 @@ function AdminArea() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="sr-only">
-          {navItems.map((item) => (
+          {navItems.filter((item) => !("to" in item)).map((item) => (
             <TabsTrigger key={item.value} value={item.value}>
               {item.label}
             </TabsTrigger>
