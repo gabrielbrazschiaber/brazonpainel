@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
-import { Loader2, MessageSquare, Pencil, Trash2 } from "lucide-react";
+import { Download, Loader2, MessageSquare, Paperclip, Pencil, Trash2, X } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
 import {
@@ -13,6 +13,14 @@ import {
   excluirComentario,
   type Comentario,
 } from "@/lib/tarefa-comentarios.functions";
+import {
+  registrarAnexo,
+  linkAnexo,
+  excluirAnexo,
+  BUCKET_ANEXOS,
+  TAMANHO_MAX_ANEXO,
+} from "@/lib/tarefa-anexos.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +54,17 @@ function quando(iso: string): string {
   }
 }
 
+function tamanhoLegivel(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function nomeSeguro(nome: string): string {
+  const ext = nome.includes(".") ? `.${nome.split(".").pop()!.toLowerCase().slice(0, 10)}` : "";
+  return `${crypto.randomUUID()}${ext.replace(/[^a-z0-9.]/g, "")}`;
+}
+
 function mensagemErro(e: unknown): string {
   return e instanceof Error ? e.message : "Não foi possível concluir a ação.";
 }
@@ -77,11 +96,16 @@ export function ComentariosTarefa({
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [corpoEdicao, setCorpoEdicao] = useState("");
   const [excluirId, setExcluirId] = useState<string | null>(null);
+  const [arquivos, setArquivos] = useState<File[]>([]);
+  const [baixandoId, setBaixandoId] = useState<string | null>(null);
 
   const listar = useServerFn(listarComentarios);
   const criar = useServerFn(criarComentario);
   const atualizar = useServerFn(atualizarComentario);
   const excluir = useServerFn(excluirComentario);
+  const registrar = useServerFn(registrarAnexo);
+  const gerarLink = useServerFn(linkAnexo);
+  const removerAnexo = useServerFn(excluirAnexo);
 
   const sincronizar = useCallback(
     (lista: Comentario[]) => {
@@ -107,6 +131,60 @@ export function ComentariosTarefa({
     if (aberto) carregar();
   }, [aberto, carregar]);
 
+  function selecionarArquivos(lista: FileList | null) {
+    if (!lista) return;
+    const escolhidos = Array.from(lista);
+    const grande = escolhidos.find((f) => f.size > TAMANHO_MAX_ANEXO);
+    if (grande) {
+      toast.error(`"${grande.name}" passa de 10 MB.`);
+      return;
+    }
+    setArquivos((atual) => [...atual, ...escolhidos].slice(0, 5));
+  }
+
+  async function enviarAnexos(comentarioId: string) {
+    for (const arquivo of arquivos) {
+      const path = `${tarefaId}/${nomeSeguro(arquivo.name)}`;
+      const { error } = await supabase.storage
+        .from(BUCKET_ANEXOS)
+        .upload(path, arquivo, { contentType: arquivo.type || "application/octet-stream" });
+      if (error) throw new Error(`Falha ao enviar "${arquivo.name}": ${error.message}`);
+
+      await registrar({
+        data: {
+          comentario_id: comentarioId,
+          tarefa_id: tarefaId,
+          path,
+          nome: arquivo.name.slice(0, 255),
+          tamanho: arquivo.size,
+          mime: arquivo.type || "application/octet-stream",
+        },
+      });
+    }
+  }
+
+  async function baixar(id: string) {
+    setBaixandoId(id);
+    try {
+      const { url } = await gerarLink({ data: { id } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast.error(mensagemErro(e));
+    } finally {
+      setBaixandoId(null);
+    }
+  }
+
+  async function apagarAnexo(id: string) {
+    try {
+      await removerAnexo({ data: { id } });
+      await carregar();
+      toast.success("Anexo excluído.");
+    } catch (e) {
+      toast.error(mensagemErro(e));
+    }
+  }
+
   async function enviar() {
     if (!corpo.trim()) return;
     setEnviando(true);
@@ -114,7 +192,13 @@ export function ComentariosTarefa({
       const novo = await criar({
         data: { tarefa_id: tarefaId, corpo, interno: equipe ? interno : false },
       });
-      sincronizar([...comentarios, novo]);
+      if (arquivos.length > 0) {
+        await enviarAnexos(novo.id);
+        setArquivos([]);
+        await carregar();
+      } else {
+        sincronizar([...comentarios, novo]);
+      }
       setCorpo("");
       setInterno(false);
     } catch (e) {
@@ -237,6 +321,48 @@ export function ComentariosTarefa({
                       <p className="whitespace-pre-line text-sm">{c.corpo}</p>
                     )}
 
+                    {c.anexos.length > 0 && (
+                      <div className="mt-2 flex flex-col gap-1">
+                        {c.anexos.map((a) => (
+                          <div
+                            key={a.id}
+                            className="flex items-center gap-2 rounded-md border bg-background/60 px-2 py-1"
+                          >
+                            <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <span className="truncate text-xs">{a.nome}</span>
+                            <span className="shrink-0 text-[11px] text-muted-foreground">
+                              {tamanhoLegivel(a.tamanho)}
+                            </span>
+                            <div className="ml-auto flex shrink-0 items-center">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2"
+                                disabled={baixandoId === a.id}
+                                onClick={() => baixar(a.id)}
+                              >
+                                {baixandoId === a.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Download className="h-3.5 w-3.5" />
+                                )}
+                              </Button>
+                              {(meu || isAdmin) && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 px-2 text-destructive"
+                                  onClick={() => apagarAnexo(a.id)}
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {editandoId !== c.id && (meu || isAdmin) && (
                       <div className="mt-2 flex gap-1">
                         {meu && (
@@ -275,6 +401,28 @@ export function ComentariosTarefa({
               value={corpo}
               onChange={(e) => setCorpo(e.target.value)}
             />
+            {arquivos.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {arquivos.map((f, i) => (
+                  <span
+                    key={`${f.name}-${i}`}
+                    className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs"
+                  >
+                    <Paperclip className="h-3 w-3" />
+                    <span className="max-w-[160px] truncate">{f.name}</span>
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => setArquivos((a) => a.filter((_, idx) => idx !== i))}
+                      aria-label={`Remover ${f.name}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center justify-between gap-2">
               {equipe ? (
                 <div className="flex items-center gap-2">
@@ -290,10 +438,28 @@ export function ComentariosTarefa({
               ) : (
                 <span />
               )}
-              <Button onClick={enviar} disabled={enviando || !corpo.trim()}>
-                {enviando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Enviar
-              </Button>
+              <div className="flex items-center gap-2">
+                <input
+                  id={`anexo-${tarefaId}`}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    selecionarArquivos(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+                <Button variant="outline" size="sm" asChild>
+                  <label htmlFor={`anexo-${tarefaId}`} className="cursor-pointer">
+                    <Paperclip className="mr-2 h-4 w-4" />
+                    Anexar
+                  </label>
+                </Button>
+                <Button onClick={enviar} disabled={enviando || !corpo.trim()}>
+                  {enviando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Enviar
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>

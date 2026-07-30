@@ -654,6 +654,57 @@ export type Database = {
         }
         Relationships: []
       }
+      tarefa_anexos: {
+        Row: {
+          autor_id: string
+          comentario_id: string
+          created_at: string
+          id: string
+          mime: string
+          nome: string
+          path: string
+          tamanho: number
+          tarefa_id: string
+        }
+        Insert: {
+          autor_id: string
+          comentario_id: string
+          created_at?: string
+          id?: string
+          mime?: string
+          nome: string
+          path: string
+          tamanho: number
+          tarefa_id: string
+        }
+        Update: {
+          autor_id?: string
+          comentario_id?: string
+          created_at?: string
+          id?: string
+          mime?: string
+          nome?: string
+          path?: string
+          tamanho?: number
+          tarefa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefa_anexos_comentario_id_fkey"
+            columns: ["comentario_id"]
+            isOneToOne: false
+            referencedRelation: "tarefa_comentarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefa_anexos_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefa_comentarios: {
         Row: {
           autor_id: string

@@ -1,6 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { contexto, nomesDeUsuarios, papeisDeUsuarios } from "@/lib/tarefas.server";
+import { CAMPOS_ANEXO, type Anexo } from "@/lib/tarefa-anexos.functions";
 
 export interface Comentario {
   id: string;
@@ -13,6 +16,7 @@ export interface Comentario {
   created_at: string;
   updated_at: string;
   editado: boolean;
+  anexos: Anexo[];
 }
 
 function validarCorpo(valor: unknown): string {
@@ -32,9 +36,32 @@ interface LinhaComentario {
   updated_at: string;
 }
 
-async function decorar(linhas: LinhaComentario[]): Promise<Comentario[]> {
+type ClienteSupabase = SupabaseClient<Database>;
+
+async function decorar(
+  supabase: ClienteSupabase,
+  linhas: LinhaComentario[],
+): Promise<Comentario[]> {
   const ids = linhas.map((c) => c.autor_id);
   const [nomes, papeis] = await Promise.all([nomesDeUsuarios(ids), papeisDeUsuarios(ids)]);
+
+  const porComentario = new Map<string, Anexo[]>();
+  if (linhas.length > 0) {
+    const { data: anexos } = await supabase
+      .from("tarefa_anexos")
+      .select(CAMPOS_ANEXO)
+      .in(
+        "comentario_id",
+        linhas.map((c) => c.id),
+      )
+      .order("created_at", { ascending: true });
+
+    for (const a of (anexos ?? []) as Anexo[]) {
+      const lista = porComentario.get(a.comentario_id) ?? [];
+      lista.push(a);
+      porComentario.set(a.comentario_id, lista);
+    }
+  }
 
   return linhas.map((c) => ({
     id: c.id,
@@ -47,6 +74,7 @@ async function decorar(linhas: LinhaComentario[]): Promise<Comentario[]> {
     created_at: c.created_at,
     updated_at: c.updated_at,
     editado: new Date(c.updated_at).getTime() - new Date(c.created_at).getTime() > 1000,
+    anexos: porComentario.get(c.id) ?? [],
   }));
 }
 
@@ -69,7 +97,7 @@ export const listarComentarios = createServerFn({ method: "GET" })
       .limit(500);
 
     if (error) throw new Error(error.message);
-    return decorar((linhas ?? []) as LinhaComentario[]);
+    return decorar(context.supabase, (linhas ?? []) as LinhaComentario[]);
   });
 
 /** Cria um comentário. Cliente nunca cria nota interna. */
@@ -99,7 +127,7 @@ export const criarComentario = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!criado) throw new Error("Não foi possível comentar nesta tarefa.");
 
-    const [comentario] = await decorar([criado as LinhaComentario]);
+    const [comentario] = await decorar(supabase, [criado as LinhaComentario]);
     return comentario;
   });
 
