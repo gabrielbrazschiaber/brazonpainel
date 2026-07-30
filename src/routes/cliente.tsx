@@ -6,6 +6,7 @@ import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { AvisosSino } from "@/components/AvisosSino";
+import { MenuLateral } from "@/components/MenuLateral";
 
 import { Card } from "@/components/ui/card";
 import { LembretesVencimento } from "@/components/cliente/LembretesVencimento";
@@ -23,7 +24,7 @@ import {
 import { formatCurrency, formatDate, daysUntil, initials } from "@/lib/format";
 
 import { toast } from "sonner";
-import { Bell, CalendarClock, CreditCard, BadgeCheck, RefreshCw, ClipboardList } from "lucide-react";
+import { Bell, CalendarClock, CreditCard, BadgeCheck, RefreshCw } from "lucide-react";
 import { SairButton } from "@/components/SairButton";
 import { useServerFn } from "@tanstack/react-start";
 import { gerarCobranca } from "@/lib/asaas.functions";
@@ -231,7 +232,10 @@ function ClienteArea() {
       {/* Barra superior fixa */}
       <header className="glass-header sticky top-0 z-30 border-b border-border/60">
         <div className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:flex sm:justify-between sm:gap-4 sm:px-4 sm:py-3">
-          <div className="min-w-0"><BrazonLogo /></div>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <MenuLateral />
+            <BrazonLogo />
+          </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
 
             <StatusBadge status={headerTone()} />

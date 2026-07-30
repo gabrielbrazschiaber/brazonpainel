@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SairButton } from "@/components/SairButton";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { AvisosSino } from "@/components/AvisosSino";
+import { MenuLateral } from "@/components/MenuLateral";
 
 import { atualizarMensagemCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
@@ -49,7 +50,6 @@ import {
   MessageSquare,
   Pencil,
   UserCog,
-  ClipboardList,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
@@ -185,7 +185,8 @@ function VendedorArea() {
       {/* Barra superior fixa */}
       <header className="glass-header sticky top-0 z-30 border-b border-border/60">
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:flex sm:justify-between sm:gap-4 sm:px-4 sm:py-3">
-          <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <MenuLateral />
             <BrazonLogo />
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
