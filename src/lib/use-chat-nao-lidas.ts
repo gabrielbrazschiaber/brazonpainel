@@ -21,7 +21,7 @@ export function useChatNaoLidas(opcoes: Opcoes = {}) {
   const visivel = usePaginaVisivel();
   const inativo = pausado || !visivel;
   const [naoLidas, setNaoLidas] = useState(0);
-
+  const montado = useRef(true);
   const buscar = useServerFn(listarConversas);
 
   const atualizar = useCallback(async () => {
@@ -41,20 +41,22 @@ export function useChatNaoLidas(opcoes: Opcoes = {}) {
     };
   }, []);
 
-  // Primeira carga + polling lento de segurança (suspenso com o chat aberto)
+  // Primeira carga + polling lento de segurança.
+  // Suspenso com o chat aberto ou com a aba do navegador em segundo plano.
   useEffect(() => {
-    if (pausado) return;
+    if (inativo) return;
     void atualizar();
     const id = setInterval(() => {
-      if (document.visibilityState !== "visible") return;
       void atualizar();
     }, 300000);
     return () => clearInterval(id);
-  }, [atualizar, pausado]);
+  }, [atualizar, inativo]);
 
-  // Realtime: novas mensagens disparam a recontagem (com pequeno debounce)
+  // Realtime: novas mensagens disparam a recontagem (com pequeno debounce).
+  // A assinatura só existe enquanto a aba está visível e o chat fechado.
   useEffect(() => {
-    if (pausado) return;
+    if (inativo) return;
+
     let timer: ReturnType<typeof setTimeout> | null = null;
     const agendar = () => {
       if (timer) clearTimeout(timer);
