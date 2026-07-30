@@ -73,6 +73,11 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
     if (!isMobile) setOpenMobile(false);
   }, [isMobile, setOpenMobile]);
 
+  // Qualquer navegação (inclusive por itens com rota `to`) fecha o drawer.
+  React.useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname, setOpenMobile]);
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
