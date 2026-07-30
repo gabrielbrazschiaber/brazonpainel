@@ -176,24 +176,16 @@ export const obterOuCriarAtendimento = createServerFn({ method: "POST" })
       return { conversa_id: jaExiste };
     }
 
-    const { data: criada, error: erroCriar } = await context.supabase
-      .from("conversas")
-      .insert({
-        tipo: "atendimento",
-        cliente_id: cliente.id,
-        vendedor_id: cliente.vendedor_id,
-        criado_por_id: context.userId,
-      })
-      .select("id")
-      .single();
+    const criada = await criarAtendimento(cliente.id, cliente.vendedor_id, context.userId);
 
-    if (erroCriar) {
+    if (!criada.id) {
       // 23505 = corrida com outra chamada simultânea; relê a conversa existente.
-      const emCorrida = erroCriar.code === "23505" ? await buscar() : null;
-      if (!emCorrida) throw new Error(erroCriar.message);
+      const emCorrida = criada.code === "23505" ? await buscar() : null;
+      if (!emCorrida) throw new Error(criada.message ?? "Não foi possível abrir o atendimento.");
       await garantirParticipantes(context.supabase, context.userId, emCorrida, cliente);
       return { conversa_id: emCorrida };
     }
+
 
     await garantirParticipantes(context.supabase, context.userId, criada.id, cliente);
     return { conversa_id: criada.id };
