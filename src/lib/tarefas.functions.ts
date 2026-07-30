@@ -1,6 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { contexto, nomesDeUsuarios } from "@/lib/tarefas.server";
+import {
+  transicaoPermitida,
+  mensagemTransicaoInvalida,
+  type TarefaStatusValor,
+} from "@/lib/tarefas-status";
+
 
 export type TarefaStatus =
   | "aberta"
