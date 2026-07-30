@@ -78,7 +78,7 @@ export function useChatNaoLidas(opcoes: Opcoes = {}) {
       if (timer) clearTimeout(timer);
       void supabase.removeChannel(canal);
     };
-  }, [atualizar, pausado]);
+  }, [atualizar, inativo]);
 
   return { naoLidas, atualizar };
 }
