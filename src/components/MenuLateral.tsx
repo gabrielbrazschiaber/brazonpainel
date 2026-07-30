@@ -22,7 +22,11 @@ import { useAuth } from "@/lib/auth";
 export function MenuLateral() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [chatAberto, setChatAberto] = useState(false);
-  const { naoLidas, atualizar } = useChatNaoLidas({ pausado: chatAberto });
+  const { naoLidas, atualizar } = useChatNaoLidas({
+    pausado: chatAberto,
+    aoAbrirChat: () => setChatAberto(true),
+  });
+
   const { role } = useAuth();
   const isCliente = role === "cliente";
 

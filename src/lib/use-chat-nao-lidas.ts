@@ -1,28 +1,47 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { listarConversas } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { usePaginaVisivel } from "@/lib/use-pagina-visivel";
-
+import { useAuth } from "@/lib/auth";
 
 type Opcoes = {
   /** Quando true, o chat está aberto e o polling de fundo é suspenso. */
   pausado?: boolean;
+  /** Abre o chat a partir do toast de nova mensagem. */
+  aoAbrirChat?: () => void;
 };
+
+const PREVIA_MAX = 90;
+
+function previa(corpo: unknown) {
+  const texto = typeof corpo === "string" ? corpo.trim() : "";
+  if (!texto) return undefined;
+  return texto.length > PREVIA_MAX ? `${texto.slice(0, PREVIA_MAX)}…` : texto;
+}
 
 /**
  * Conta as mensagens não lidas do chat.
- * Atualiza em tempo real (realtime) quando chegam novas mensagens e mantém
- * apenas um polling lento de segurança (5 min) enquanto a aba está visível.
- * Com o chat aberto (`pausado`), o polling de fundo é totalmente suspenso.
+ * Atualiza em tempo real (realtime) quando chegam novas mensagens, avisa com
+ * um toast quando o chat está fechado e mantém apenas um polling lento de
+ * segurança (5 min) enquanto a aba está visível.
  */
 export function useChatNaoLidas(opcoes: Opcoes = {}) {
-  const { pausado = false } = opcoes;
+  const { pausado = false, aoAbrirChat } = opcoes;
   const visivel = usePaginaVisivel();
   const inativo = pausado || !visivel;
   const [naoLidas, setNaoLidas] = useState(0);
   const montado = useRef(true);
   const buscar = useServerFn(listarConversas);
+  const { user } = useAuth();
+  const meuId = user?.id ?? null;
+
+  // Refs para não recriar a assinatura realtime a cada render.
+  const pausadoRef = useRef(pausado);
+  pausadoRef.current = pausado;
+  const abrirRef = useRef(aoAbrirChat);
+  abrirRef.current = aoAbrirChat;
 
   const atualizar = useCallback(async () => {
     try {
@@ -52,10 +71,11 @@ export function useChatNaoLidas(opcoes: Opcoes = {}) {
     return () => clearInterval(id);
   }, [atualizar, inativo]);
 
-  // Realtime: novas mensagens disparam a recontagem (com pequeno debounce).
-  // A assinatura só existe enquanto a aba está visível e o chat fechado.
+  // Realtime: novas mensagens recontam o badge e avisam com toast.
+  // Fica ativo mesmo com o chat aberto (o contador precisa acompanhar),
+  // mas o toast só aparece quando o chat está fechado.
   useEffect(() => {
-    if (inativo) return;
+    if (!visivel) return;
 
     let timer: ReturnType<typeof setTimeout> | null = null;
     const agendar = () => {
@@ -70,7 +90,27 @@ export function useChatNaoLidas(opcoes: Opcoes = {}) {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "conversa_mensagens" },
-        agendar,
+        (payload) => {
+          const nova = payload.new as {
+            autor_id?: string | null;
+            corpo?: string | null;
+            sistema?: boolean | null;
+          };
+
+          // Mensagem própria não conta como novidade.
+          if (meuId && nova.autor_id === meuId) return;
+
+          agendar();
+
+          if (!pausadoRef.current && !nova.sistema) {
+            toast.message("Nova mensagem no chat", {
+              description: previa(nova.corpo),
+              action: abrirRef.current
+                ? { label: "Abrir", onClick: () => abrirRef.current?.() }
+                : undefined,
+            });
+          }
+        },
       )
       .subscribe();
 
@@ -78,7 +118,7 @@ export function useChatNaoLidas(opcoes: Opcoes = {}) {
       if (timer) clearTimeout(timer);
       void supabase.removeChannel(canal);
     };
-  }, [atualizar, inativo]);
+  }, [atualizar, visivel, meuId]);
 
   return { naoLidas, atualizar };
 }
