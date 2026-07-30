@@ -38,7 +38,13 @@ const novoClienteSchema = z.object({
     .refine((v) => v === "" || v.length === 10 || v.length === 11, "Telefone inválido.")
     .optional()
     .nullable(),
-  cupom: z.string().trim().max(40).optional().nullable(),
+  cupom: z
+    .string()
+    .trim()
+    .max(40)
+    .regex(/^[A-Za-z0-9_-]+$/, "Código de cupom inválido.")
+    .optional()
+    .nullable(),
 });
 
 
