@@ -5,9 +5,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
-import { SairButton } from "@/components/SairButton";
-import { BrazonLogo } from "@/components/BrazonLogo";
-import { AvisosSino } from "@/components/AvisosSino";
 import { AppShell } from "@/components/AppShell";
 import type { AppNavItem } from "@/components/AppSidebar";
 
@@ -277,13 +274,18 @@ function VendedorArea() {
           </Card>
         </section>
 
-        {/* Cupons do vendedor */}
-        <ReferralsCard />
+        {/* Indicações */}
+        <div id="secao-indicacoes">
+          <ReferralsCard />
+        </div>
 
-        <CuponsVendedor />
+        {/* Cupons do vendedor */}
+        <div id="secao-cupons">
+          <CuponsVendedor />
+        </div>
 
         {/* Lista de clientes */}
-        <section className="mt-8">
+        <section id="secao-clientes" className="mt-8">
           <h2 className="text-lg font-bold text-foreground">Meus clientes</h2>
           <Card className="mt-4 overflow-x-auto">
             <Table>
