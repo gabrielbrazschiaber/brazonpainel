@@ -44,7 +44,8 @@ const novoClienteSchema = z.object({
     .max(40)
     .regex(/^[A-Za-z0-9_-]+$/, "Código de cupom inválido.")
     .optional()
-    .nullable(),
+    .nullable()
+    .or(z.literal("")),
 });
 
 
