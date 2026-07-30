@@ -56,7 +56,11 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
   const { isMobile, openMobile, setOpenMobile } = useSidebar();
   const { sair, saindo } = useSair();
   const [chatAberto, setChatAberto] = React.useState(false);
-  const { naoLidas, atualizar } = useChatNaoLidas({ pausado: chatAberto });
+  const { naoLidas, atualizar } = useChatNaoLidas({
+    pausado: chatAberto,
+    aoAbrirChat: () => setChatAberto(true),
+  });
+
   const pathname = useRouterState({ select: (r) => r.location.pathname });
 
   // Trava o scroll da página enquanto o drawer mobile estiver aberto.
