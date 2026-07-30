@@ -52,11 +52,14 @@ interface AppSidebarProps {
  * fecha o drawer automaticamente para não cobrir o conteúdo.
  */
 export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSidebarProps) {
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, openMobile, setOpenMobile } = useSidebar();
   const { sair, saindo } = useSair();
   const [chatAberto, setChatAberto] = React.useState(false);
   const { naoLidas, atualizar } = useChatNaoLidas({ pausado: chatAberto });
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+
+  // Trava o scroll da página enquanto o drawer mobile estiver aberto.
+  useBodyScrollLock(isMobile && openMobile);
 
   function fecharSeMobile() {
     if (isMobile) setOpenMobile(false);
