@@ -6,6 +6,12 @@ import { ArrowLeft, ClipboardList, Plus, Loader2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
+import {
+  transicaoPermitida,
+  transicoesPermitidas,
+  mensagemTransicaoInvalida,
+} from "@/lib/tarefas-status";
+
 import { TermosGate } from "@/components/TermosGate";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
@@ -123,7 +129,7 @@ function TarefasPage() {
 
   return (
     <TermosGate>
-      <TarefasConteudo home={roleHome(role)} />
+      <TarefasConteudo home={roleHome(role)} isAdmin={role === "admin"} />
     </TermosGate>
   );
 }
@@ -133,8 +139,9 @@ interface ClienteOpcao {
   nome: string;
 }
 
-function TarefasConteudo({ home }: { home: string }) {
+function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) {
   const equipe = true;
+
   const carregar = useServerFn(listarTarefas);
   const carregarResponsaveis = useServerFn(listarResponsaveis);
   const criar = useServerFn(criarTarefa);
@@ -263,6 +270,16 @@ function TarefasConteudo({ home }: { home: string }) {
       setAtualizandoId(null);
     }
   }
+
+  function alterarStatus(t: Tarefa, novo: TarefaStatus) {
+    if (novo === t.status) return;
+    if (!transicaoPermitida(t.status, novo, isAdmin)) {
+      toast.error(mensagemTransicaoInvalida(t.status, novo, isAdmin));
+      return;
+    }
+    void alterar(t.id, { status: novo });
+  }
+
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -400,20 +417,24 @@ function TarefasConteudo({ home }: { home: string }) {
 
                       <Select
                         value={t.status}
-                        disabled={atualizandoId === t.id}
-                        onValueChange={(v) => alterar(t.id, { status: v as TarefaStatus })}
+                        disabled={
+                          atualizandoId === t.id ||
+                          transicoesPermitidas(t.status, isAdmin).length === 0
+                        }
+                        onValueChange={(v) => alterarStatus(t, v as TarefaStatus)}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {(Object.keys(STATUS_LABEL) as TarefaStatus[]).map((s) => (
+                          {([t.status, ...transicoesPermitidas(t.status, isAdmin)] as TarefaStatus[]).map((s) => (
                             <SelectItem key={s} value={s}>
                               {STATUS_LABEL[s]}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+
                     </div>
                   )}
                 </div>
