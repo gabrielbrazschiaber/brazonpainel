@@ -1,12 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { listarConversas } from "@/lib/chat.functions";
+import { supabase } from "@/integrations/supabase/client";
+
+type Opcoes = {
+  /** Quando true, o chat está aberto e o polling de fundo é suspenso. */
+  pausado?: boolean;
+};
 
 /**
- * Conta as mensagens não lidas do chat, atualizando a cada 60s
- * apenas quando a aba está visível.
+ * Conta as mensagens não lidas do chat.
+ * Atualiza em tempo real (realtime) quando chegam novas mensagens e mantém
+ * apenas um polling lento de segurança (5 min) enquanto a aba está visível.
+ * Com o chat aberto (`pausado`), o polling de fundo é totalmente suspenso.
  */
-export function useChatNaoLidas() {
+export function useChatNaoLidas(opcoes: Opcoes = {}) {
+  const { pausado = false } = opcoes;
   const [naoLidas, setNaoLidas] = useState(0);
   const montado = useRef(true);
   const buscar = useServerFn(listarConversas);
@@ -23,16 +32,47 @@ export function useChatNaoLidas() {
 
   useEffect(() => {
     montado.current = true;
+    return () => {
+      montado.current = false;
+    };
+  }, []);
+
+  // Primeira carga + polling lento de segurança (suspenso com o chat aberto)
+  useEffect(() => {
+    if (pausado) return;
     void atualizar();
     const id = setInterval(() => {
       if (document.visibilityState !== "visible") return;
       void atualizar();
-    }, 60000);
-    return () => {
-      montado.current = false;
-      clearInterval(id);
+    }, 300000);
+    return () => clearInterval(id);
+  }, [atualizar, pausado]);
+
+  // Realtime: novas mensagens disparam a recontagem (com pequeno debounce)
+  useEffect(() => {
+    if (pausado) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const agendar = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        void atualizar();
+      }, 800);
     };
-  }, [atualizar]);
+
+    const canal = supabase
+      .channel("chat-nao-lidas")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "conversa_mensagens" },
+        agendar,
+      )
+      .subscribe();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      void supabase.removeChannel(canal);
+    };
+  }, [atualizar, pausado]);
 
   return { naoLidas, atualizar };
 }
