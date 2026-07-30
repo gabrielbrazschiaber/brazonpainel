@@ -279,7 +279,16 @@ export const atualizarTarefa = createServerFn({ method: "POST" })
     if (data.prazo !== undefined) patch.prazo = data.prazo;
     if (Object.keys(patch).length === 0) return { ok: true };
 
-    const { error } = await supabase.from("tarefas").update(patch).eq("id", data.id);
+    const { data: atualizada, error } = await supabase
+      .from("tarefas")
+      .update(patch)
+      .eq("id", data.id)
+      .select("id")
+      .maybeSingle();
+
     if (error) throw new Error(error.message);
+    if (!atualizada) {
+      throw new Error("Tarefa não encontrada ou você não tem permissão para alterá-la.");
+    }
     return { ok: true };
   });
