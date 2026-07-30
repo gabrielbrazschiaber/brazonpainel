@@ -16,6 +16,11 @@ vi.mock("@/lib/use-sair", () => ({
   useSair: () => ({ sair, saindo: false }),
 }));
 
+vi.mock("@/lib/auth", () => ({
+  useAuth: () => ({ user: { id: "user-1" }, role: "admin" }),
+}));
+
+
 const items: readonly AppNavItem[] = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { value: "clientes", label: "Clientes", icon: Users },
