@@ -49,7 +49,7 @@ export async function buscarCupomAtivo(
   const { data } = await supabaseAdmin
     .from("cupons")
     .select("id, codigo, descricao, valor_desconto, apenas_primeira_mensalidade, ativo, validade, max_usos, usos")
-    .ilike("codigo", cod)
+    .eq("codigo", cod)
     .maybeSingle();
 
   if (!data || !data.ativo) return { motivo: "codigo_invalido" };
