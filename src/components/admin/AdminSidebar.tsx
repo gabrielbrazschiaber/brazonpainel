@@ -41,7 +41,7 @@ export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) 
   const { isMobile, setOpenMobile } = useSidebar();
   const { sair, saindo } = useSair();
   const [chatAberto, setChatAberto] = React.useState(false);
-  const { naoLidas, atualizar } = useChatNaoLidas();
+  const { naoLidas, atualizar } = useChatNaoLidas({ pausado: chatAberto });
 
   function fecharSeMobile() {
     if (isMobile) setOpenMobile(false);
