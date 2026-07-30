@@ -48,18 +48,33 @@ export function AvisosSino() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const marcarVistas = useServerFn(marcarNovidadesVistas);
+  const marcarLidas = useServerFn(marcarNotificacoesLidas);
+  const contarNaoLidos = useServerFn(contarAvisosNaoLidos);
 
   const [open, setOpen] = useState(false);
   const [aba, setAba] = useState<"notificacoes" | "novidades">("notificacoes");
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [novidades, setNovidades] = useState<Novidade[]>([]);
   const [vistasEm, setVistasEm] = useState<string | null>(null);
+  const [contagem, setContagem] = useState({ notificacoes: 0, novidades: 0 });
   const [carregando, setCarregando] = useState(true);
   const montado = useRef(true);
 
+  /** Recalcula as contagens direto do banco (fonte da verdade). */
+  const recontar = useCallback(async () => {
+    try {
+      const c = await contarNaoLidos({});
+      if (!montado.current) return;
+      setContagem({ notificacoes: c.notificacoes, novidades: c.novidades });
+      setVistasEm(c.novidades_vistas_em ?? null);
+    } catch {
+      /* silencioso: badge é informativo */
+    }
+  }, [contarNaoLidos]);
+
   const carregar = useCallback(async () => {
     if (!userId) return;
-    const [notif, novs, prof] = await Promise.all([
+    const [notif, novs] = await Promise.all([
       supabase
         .from("notificacoes")
         .select("id,titulo,mensagem,link,tarefa_id,lida_em,created_at")
@@ -72,16 +87,13 @@ export function AvisosSino() {
         .eq("publicado", true)
         .order("data_publicacao", { ascending: false })
         .limit(50),
-      supabase.from("profiles").select("novidades_vistas_em").eq("id", userId).maybeSingle(),
     ]);
     if (!montado.current) return;
     if (!notif.error) setNotificacoes((notif.data ?? []) as Notificacao[]);
     setNovidades((novs.data ?? []) as Novidade[]);
-    setVistasEm(
-      (prof.data as { novidades_vistas_em: string | null } | null)?.novidades_vistas_em ?? null,
-    );
     setCarregando(false);
-  }, [userId]);
+    await recontar();
+  }, [userId, recontar]);
 
   useEffect(() => {
     montado.current = true;
@@ -99,36 +111,38 @@ export function AvisosSino() {
     };
   }, [carregar, userId]);
 
-  const notifNaoLidas = notificacoes.filter((n) => !n.lida_em).length;
-  const novasNovidades = novidades.filter((n) => {
-    if (!n.data_publicacao) return false;
-    if (!vistasEm) return true;
-    return new Date(n.data_publicacao).getTime() > new Date(vistasEm).getTime();
-  }).length;
+  const notifNaoLidas = contagem.notificacoes;
+  const novasNovidades = contagem.novidades;
   const total = notifNaoLidas + novasNovidades;
 
+  /** Persiste a leitura das notificações e atualiza o badge com o valor do banco. */
   async function marcarNotificacoes() {
     if (notifNaoLidas === 0 || !userId) return;
     const agora = new Date().toISOString();
     const anteriores = notificacoes;
     setNotificacoes((atuais) => atuais.map((n) => (n.lida_em ? n : { ...n, lida_em: agora })));
-    const { error } = await supabase
-      .from("notificacoes")
-      .update({ lida_em: agora })
-      .eq("user_id", userId)
-      .is("lida_em", null);
-    if (error && montado.current) setNotificacoes(anteriores);
+    try {
+      const r = await marcarLidas({ data: {} });
+      if (montado.current) setContagem((c) => ({ ...c, notificacoes: r.nao_lidas }));
+    } catch {
+      if (montado.current) setNotificacoes(anteriores);
+      await recontar();
+    }
   }
 
+  /** Persiste a data de visualização das novidades e zera o badge da aba. */
   async function marcarNovidades() {
     if (novasNovidades === 0) return;
     try {
       await marcarVistas({});
-      if (montado.current) setVistasEm(new Date().toISOString());
+      if (!montado.current) return;
+      setVistasEm(new Date().toISOString());
+      setContagem((c) => ({ ...c, novidades: 0 }));
     } catch {
-      /* ignora — indicador some no próximo carregamento */
+      await recontar();
     }
   }
+
 
   async function handleOpenChange(v: boolean) {
     setOpen(v);
