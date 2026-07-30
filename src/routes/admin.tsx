@@ -341,7 +341,7 @@ function AdminArea() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="sr-only">
-          {navItems.map((item) => (
+          {navItems.filter((item) => !("to" in item)).map((item) => (
             <TabsTrigger key={item.value} value={item.value}>
               {item.label}
             </TabsTrigger>
