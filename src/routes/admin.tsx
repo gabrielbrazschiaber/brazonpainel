@@ -1538,30 +1538,40 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
             />
             <p className="text-xs text-muted-foreground">
               Clientes ativos recebem um lembrete automático no painel quando o vencimento
-              estiver dentro desse prazo. A rotina roda todos os dias.
+              estiver dentro desse prazo. A rotina roda todos os dias às 6h (horário de
+              Brasília).
             </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="justify-self-start"
-              disabled={gerandoLembretes}
-              onClick={async () => {
-                setGerandoLembretes(true);
-                try {
-                  const r = await gerarLembretes({});
-                  toast.success(
-                    `Lembretes gerados: ${r.criados} novo(s) em ${r.avaliados} cliente(s).`,
-                  );
-                } catch {
-                  toast.error("Não foi possível gerar os lembretes agora.");
-                } finally {
-                  setGerandoLembretes(false);
-                }
-              }}
-            >
-              {gerandoLembretes ? "Gerando..." : "Gerar lembretes agora"}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={gerandoLembretes}
+                onClick={async () => {
+                  setGerandoLembretes(true);
+                  try {
+                    const r = await gerarLembretes({});
+                    toast.success(
+                      `Lembretes gerados: ${r.criados} novo(s) em ${r.avaliados} cliente(s).`,
+                    );
+                    const u = await buscarUltimaExecucao({});
+                    setUltimoLembrete(u.ultimo);
+                  } catch {
+                    toast.error("Não foi possível gerar os lembretes agora.");
+                  } finally {
+                    setGerandoLembretes(false);
+                  }
+                }}
+              >
+                {gerandoLembretes ? "Gerando..." : "Gerar lembretes agora"}
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {ultimoLembrete
+                  ? `Último lembrete criado em ${new Date(ultimoLembrete).toLocaleString("pt-BR")}`
+                  : "Nenhum lembrete gerado ainda."}
+              </span>
+            </div>
+
           </div>
 
           <div className="grid gap-2">
