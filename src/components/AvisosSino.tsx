@@ -144,6 +144,43 @@ export function AvisosSino() {
     }
   }
 
+  // Refs mantêm o realtime sempre com a versão atual do estado/handlers,
+  // sem precisar recriar o canal a cada render.
+  const marcarNotifRef = useRef(marcarNotificacoes);
+  marcarNotifRef.current = marcarNotificacoes;
+  const abaNotifAbertaRef = useRef(false);
+  abaNotifAbertaRef.current = open && aba === "notificacoes";
+
+  /**
+   * Realtime: qualquer inserção/atualização nas notificações do usuário
+   * recarrega a lista e recalcula os badges na hora. Se o painel já estiver
+   * aberto na aba de notificações, marca como lida automaticamente.
+   */
+  useEffect(() => {
+    if (!userId) return;
+    const canal = supabase
+      .channel(`avisos-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notificacoes",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          void (async () => {
+            await carregar();
+            if (abaNotifAbertaRef.current) await marcarNotifRef.current();
+          })();
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(canal);
+    };
+  }, [userId, carregar]);
+
 
   async function handleOpenChange(v: boolean) {
     setOpen(v);
