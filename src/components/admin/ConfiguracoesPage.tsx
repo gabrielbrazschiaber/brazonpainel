@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Lock } from "lucide-react";
+import { ArrowLeft, Lock, ShieldAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { usePermissoes } from "@/lib/use-permissoes";
@@ -33,7 +34,14 @@ export interface SecaoConfiguracao {
  * mostrando somente uma seção por vez para não sobrecarregar a tela.
  * No mobile a navegação vira um seletor; no desktop, uma lista lateral.
  */
-export function ConfiguracoesPage({ secoes }: { secoes: SecaoConfiguracao[] }) {
+export function ConfiguracoesPage({
+  secoes,
+  secaoInicial,
+}: {
+  secoes: SecaoConfiguracao[];
+  /** Seção pedida pela URL (?secao=...). */
+  secaoInicial?: string;
+}) {
   const { pode, carregando } = usePermissoes();
   const { role } = useAuth();
 
@@ -48,19 +56,58 @@ export function ConfiguracoesPage({ secoes }: { secoes: SecaoConfiguracao[] }) {
     [secoes, carregando, pode, role],
   );
 
-  const [ativa, setAtiva] = useState<string>(secoes[0]?.value ?? "");
+  const [ativa, setAtiva] = useState<string>(secaoInicial ?? secoes[0]?.value ?? "");
+  const [negada, setNegada] = useState<string | null>(null);
 
   useEffect(() => {
-    if (visiveis.length && !visiveis.some((s) => s.value === ativa)) {
-      setAtiva(visiveis[0].value);
+    if (carregando) return;
+    if (visiveis.some((s) => s.value === ativa)) {
+      setNegada(null);
+      return;
     }
-  }, [visiveis, ativa]);
+    // Seção existe no catálogo mas não é permitida para este usuário.
+    const existe = secoes.some((s) => s.value === ativa);
+    if (existe) {
+      setNegada(ativa);
+      return;
+    }
+    setNegada(null);
+    if (visiveis.length) setAtiva(visiveis[0].value);
+  }, [visiveis, ativa, carregando, secoes]);
+
+  function voltar() {
+    setNegada(null);
+    if (visiveis.length) setAtiva(visiveis[0].value);
+    if (typeof window !== "undefined" && window.location.search.includes("secao=")) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }
 
   if (carregando) {
     return (
       <div className="flex min-h-40 items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
+    );
+  }
+
+  if (negada) {
+    const rotulo = secoes.find((s) => s.value === negada)?.label ?? "esta seção";
+    return (
+      <Card className="flex flex-col items-center gap-3 p-8 text-center">
+        <ShieldAlert className="h-7 w-7 text-destructive" />
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Acesso negado</p>
+          <p className="text-sm text-muted-foreground">
+            Você não tem permissão para abrir “{rotulo}”. Fale com um administrador se precisar
+            desse acesso.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={voltar}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar às configurações
+        </Button>
+      </Card>
     );
   }
 
@@ -75,6 +122,7 @@ export function ConfiguracoesPage({ secoes }: { secoes: SecaoConfiguracao[] }) {
       </Card>
     );
   }
+
 
   const secaoAtual = visiveis.find((s) => s.value === ativa) ?? visiveis[0];
 
