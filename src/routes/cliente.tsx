@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { NovidadesSino } from "@/components/NovidadesSino";
 import { NotificacoesSino } from "@/components/NotificacoesSino";
+import { ChatBotao } from "@/components/chat/ChatBotao";
 
 import { Card } from "@/components/ui/card";
 import { LembretesVencimento } from "@/components/cliente/LembretesVencimento";
@@ -242,6 +243,7 @@ function ClienteArea() {
                 <span className="hidden sm:inline">Tarefas</span>
               </Link>
             </Button>
+            <ChatBotao />
             <NotificacoesSino />
             <NovidadesSino />
             <SairButton variante="icone" />
