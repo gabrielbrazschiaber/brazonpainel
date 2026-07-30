@@ -7,9 +7,7 @@ import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SairButton } from "@/components/SairButton";
 import { BrazonLogo } from "@/components/BrazonLogo";
-import { NovidadesSino } from "@/components/NovidadesSino";
-import { NotificacoesSino } from "@/components/NotificacoesSino";
-import { ChatBotao } from "@/components/chat/ChatBotao";
+import { AvisosSino } from "@/components/AvisosSino";
 
 import { atualizarMensagemCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
@@ -209,15 +207,7 @@ function VendedorArea() {
               <UserCog className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Minha conta</span>
             </Button>
-            <Button asChild variant="ghost" size="sm" className="h-10 w-10 shrink-0 p-0 sm:h-9 sm:w-auto sm:px-3" aria-label="Tarefas">
-              <Link to="/tarefas">
-                <ClipboardList className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Tarefas</span>
-              </Link>
-            </Button>
-            <ChatBotao />
-            <NotificacoesSino />
-            <NovidadesSino />
+            <AvisosSino />
             <SairButton variante="icone" />
           </div>
         </div>
