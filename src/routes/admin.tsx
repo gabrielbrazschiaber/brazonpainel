@@ -31,7 +31,7 @@ import {
 } from "@/lib/admin.functions";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { obterConfiguracoes, salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
-import { gerarLembretesAgora } from "@/lib/lembretes.functions";
+import { gerarLembretesAgora, ultimaExecucaoLembretes } from "@/lib/lembretes.functions";
 
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { Card } from "@/components/ui/card";
@@ -1389,6 +1389,21 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
   const [saving, setSaving] = useState(false);
   const [gerandoLembretes, setGerandoLembretes] = useState(false);
   const gerarLembretes = useServerFn(gerarLembretesAgora);
+  const buscarUltimaExecucao = useServerFn(ultimaExecucaoLembretes);
+  const [ultimoLembrete, setUltimoLembrete] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    buscarUltimaExecucao({})
+      .then((r) => {
+        if (ativo) setUltimoLembrete(r.ultimo);
+      })
+      .catch(() => {});
+    return () => {
+      ativo = false;
+    };
+  }, [buscarUltimaExecucao]);
+
 
   const [testando, setTestando] = useState(false);
   const [tokenMascara, setTokenMascara] = useState("");
@@ -1523,30 +1538,40 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
             />
             <p className="text-xs text-muted-foreground">
               Clientes ativos recebem um lembrete automático no painel quando o vencimento
-              estiver dentro desse prazo. A rotina roda todos os dias.
+              estiver dentro desse prazo. A rotina roda todos os dias às 6h (horário de
+              Brasília).
             </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="justify-self-start"
-              disabled={gerandoLembretes}
-              onClick={async () => {
-                setGerandoLembretes(true);
-                try {
-                  const r = await gerarLembretes({});
-                  toast.success(
-                    `Lembretes gerados: ${r.criados} novo(s) em ${r.avaliados} cliente(s).`,
-                  );
-                } catch {
-                  toast.error("Não foi possível gerar os lembretes agora.");
-                } finally {
-                  setGerandoLembretes(false);
-                }
-              }}
-            >
-              {gerandoLembretes ? "Gerando..." : "Gerar lembretes agora"}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={gerandoLembretes}
+                onClick={async () => {
+                  setGerandoLembretes(true);
+                  try {
+                    const r = await gerarLembretes({});
+                    toast.success(
+                      `Lembretes gerados: ${r.criados} novo(s) em ${r.avaliados} cliente(s).`,
+                    );
+                    const u = await buscarUltimaExecucao({});
+                    setUltimoLembrete(u.ultimo);
+                  } catch {
+                    toast.error("Não foi possível gerar os lembretes agora.");
+                  } finally {
+                    setGerandoLembretes(false);
+                  }
+                }}
+              >
+                {gerandoLembretes ? "Gerando..." : "Gerar lembretes agora"}
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {ultimoLembrete
+                  ? `Último lembrete criado em ${new Date(ultimoLembrete).toLocaleString("pt-BR")}`
+                  : "Nenhum lembrete gerado ainda."}
+              </span>
+            </div>
+
           </div>
 
           <div className="grid gap-2">

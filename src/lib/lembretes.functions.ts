@@ -54,3 +54,21 @@ export const gerarLembretesAgora = createServerFn({ method: "POST" })
     const { gerarLembretesVencimento } = await import("./lembretes.server");
     return gerarLembretesVencimento();
   });
+
+/** Data do lembrete mais recente gerado (para exibir a última execução da rotina). */
+export const ultimaExecucaoLembretes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ ultimo: string | null }> => {
+    const { ensurePermission } = await import("./permissions.guard");
+    await ensurePermission(context.supabase, context.userId, "configuracoes.gerenciar");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("lembretes_vencimento")
+      .select("created_at")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return { ultimo: data?.created_at ?? null };
+  });
