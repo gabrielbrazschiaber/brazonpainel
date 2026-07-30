@@ -106,6 +106,9 @@ import {
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 export const Route = createFileRoute("/admin")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    secao: typeof search.secao === "string" ? search.secao : undefined,
+  }),
   head: () => ({ meta: [{ title: "Administração" }] }),
   component: () => (
     <RequireRole role="admin">
@@ -263,6 +266,7 @@ function AdminArea() {
   }
 
   const navItems = ADMIN_NAV_ITEMS;
+  const { secao: secaoBuscada } = Route.useSearch();
 
   const renderSecao: Record<string, () => React.ReactNode> = {
     cupons: () => <CuponsTab />,
@@ -313,7 +317,7 @@ function AdminArea() {
           <NovidadesTab />
         </TabsContent>
         <TabsContent value="config" className="mt-0">
-          <ConfiguracoesPage secoes={secoesConfig} />
+          <ConfiguracoesPage secoes={secoesConfig} secaoInicial={secaoBuscada} />
         </TabsContent>
       </Tabs>
     </AppShell>
