@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { contexto, nomesDeUsuarios, papeisDeUsuarios } from "@/lib/tarefas.server";
+import { contatosDaEquipe, garantirParticipantes } from "@/lib/chat.server";
+import { PREVIA_TAMANHO, exigirTexto, exigirUuid } from "@/lib/chat-validacao";
 
 export type ConversaTipo = "equipe" | "atendimento";
 export type Papel = "admin" | "vendedor" | "cliente";
@@ -37,24 +39,6 @@ export interface ContatoEquipe {
   nome: string;
   email: string;
   papel: "admin" | "vendedor";
-}
-
-const PREVIA = 120;
-
-function exigirTexto(valor: unknown, campo: string, min: number, max: number): string {
-  const texto = typeof valor === "string" ? valor.trim() : "";
-  if (texto.length < min || texto.length > max) {
-    throw new Error(`${campo} deve ter entre ${min} e ${max} caracteres.`);
-  }
-  return texto;
-}
-
-function exigirUuid(valor: unknown, campo: string): string {
-  const texto = typeof valor === "string" ? valor.trim() : "";
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(texto)) {
-    throw new Error(`${campo} inválido.`);
-  }
-  return texto;
 }
 
 /** Lista as conversas visíveis (a RLS decide o escopo) com contagem de não lidas. */
@@ -141,7 +125,7 @@ export const listarConversas = createServerFn({ method: "GET" })
         vendedor_id: c.vendedor_id,
         ultima_mensagem_em: c.ultima_mensagem_em,
         ultima_mensagem_previa: u
-          ? u.corpo.slice(0, PREVIA) + (u.corpo.length > PREVIA ? "…" : "")
+          ? u.corpo.slice(0, PREVIA_TAMANHO) + (u.corpo.length > PREVIA_TAMANHO ? "…" : "")
           : null,
         nao_lidas: naoLidas.get(c.id) ?? 0,
         participantes_nomes: (participantesPorConversa.get(c.id) ?? [])
@@ -188,7 +172,7 @@ export const obterOuCriarAtendimento = createServerFn({ method: "POST" })
 
     const jaExiste = await buscar();
     if (jaExiste) {
-      await garantirParticipantes(context, jaExiste, cliente);
+      await garantirParticipantes(context.supabase, context.userId, jaExiste, cliente);
       return { conversa_id: jaExiste };
     }
 
@@ -207,36 +191,13 @@ export const obterOuCriarAtendimento = createServerFn({ method: "POST" })
       // 23505 = corrida com outra chamada simultânea; relê a conversa existente.
       const emCorrida = erroCriar.code === "23505" ? await buscar() : null;
       if (!emCorrida) throw new Error(erroCriar.message);
-      await garantirParticipantes(context, emCorrida, cliente);
+      await garantirParticipantes(context.supabase, context.userId, emCorrida, cliente);
       return { conversa_id: emCorrida };
     }
 
-    await garantirParticipantes(context, criada.id, cliente);
+    await garantirParticipantes(context.supabase, context.userId, criada.id, cliente);
     return { conversa_id: criada.id };
   });
-
-async function garantirParticipantes(
-  context: { supabase: any; userId: string },
-  conversaId: string,
-  cliente: { user_id: string; vendedor_id: string | null },
-) {
-  const usuarios = new Set<string>([cliente.user_id, context.userId]);
-  if (cliente.vendedor_id) {
-    const { data: vend } = await context.supabase
-      .from("vendedores")
-      .select("user_id")
-      .eq("id", cliente.vendedor_id)
-      .limit(1)
-      .maybeSingle();
-    if (vend?.user_id) usuarios.add(vend.user_id);
-  }
-  await context.supabase
-    .from("conversa_participantes")
-    .upsert(
-      Array.from(usuarios).map((user_id) => ({ conversa_id: conversaId, user_id })),
-      { onConflict: "conversa_id,user_id", ignoreDuplicates: true },
-    );
-}
 
 /** Cria uma conversa interna de equipe (somente admin/vendedor). */
 export const criarConversaEquipe = createServerFn({ method: "POST" })
@@ -429,39 +390,5 @@ export const listarContatosEquipe = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<ContatoEquipe[]> => {
     const { isAdmin, vendedorId } = await contexto(context.supabase, context.userId);
     if (!isAdmin && !vendedorId) throw new Error("Acesso restrito à equipe.");
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const [{ data: papeis }, { data: vendedoresAtivos }] = await Promise.all([
-      supabaseAdmin.from("user_roles").select("user_id, role").in("role", ["admin", "vendedor"]),
-      supabaseAdmin.from("vendedores").select("user_id").eq("ativo", true),
-    ]);
-
-    const ativos = new Set((vendedoresAtivos ?? []).map((v) => v.user_id));
-    const melhor = new Map<string, "admin" | "vendedor">();
-    for (const r of papeis ?? []) {
-      const papel = r.role as "admin" | "vendedor";
-      if (papel === "vendedor" && !ativos.has(r.user_id) && melhor.get(r.user_id) !== "admin") {
-        if (!melhor.has(r.user_id)) continue;
-      }
-      if (papel === "admin" || !melhor.has(r.user_id)) melhor.set(r.user_id, papel);
-    }
-    melhor.delete(context.userId);
-
-    const ids = Array.from(melhor.keys());
-    if (ids.length === 0) return [];
-
-    const { data: perfis } = await supabaseAdmin
-      .from("profiles")
-      .select("id, nome, email")
-      .in("id", ids);
-
-    return (perfis ?? [])
-      .map((p) => ({
-        user_id: p.id,
-        nome: (p.nome || "").trim() || p.email,
-        email: p.email,
-        papel: melhor.get(p.id) as "admin" | "vendedor",
-      }))
-      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    return contatosDaEquipe(context.userId);
   });
