@@ -2,7 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { contexto, nomesDeUsuarios } from "@/lib/tarefas.server";
 
-export type TarefaStatus = "aberta" | "em_andamento" | "concluida" | "cancelada";
+export type TarefaStatus =
+  | "aberta"
+  | "em_andamento"
+  | "aguardando_cliente"
+  | "concluida"
+  | "cancelada";
 export type TarefaPrioridade = "baixa" | "media" | "alta";
 export type TarefaOrigem = "plano" | "solicitacao_cliente" | "manual";
 
@@ -20,6 +25,8 @@ export interface Tarefa {
   prazo: string | null;
   concluida_em: string | null;
   created_at: string;
+  categoria: string | null;
+  dados: Record<string, string> | null;
   cliente_nome: string | null;
   responsavel_nome: string | null;
   criado_por_nome: string | null;
@@ -40,7 +47,7 @@ export const listarTarefas = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("tarefas")
       .select(
-        "id, titulo, descricao, status, prioridade, origem, cliente_id, cliente_user_id, vendedor_id, responsavel_id, criado_por_id, prazo, concluida_em, created_at",
+        "id, titulo, descricao, status, prioridade, origem, categoria, dados, cliente_id, cliente_user_id, vendedor_id, responsavel_id, criado_por_id, prazo, concluida_em, created_at",
       )
       .order("created_at", { ascending: false })
       .limit(300);
@@ -76,6 +83,8 @@ export const listarTarefas = createServerFn({ method: "GET" })
       prazo: t.prazo,
       concluida_em: t.concluida_em,
       created_at: t.created_at,
+      categoria: t.categoria,
+      dados: (t.dados as Record<string, string> | null) ?? null,
       cliente_nome: t.cliente_user_id ? (nomes.get(t.cliente_user_id) ?? null) : null,
       responsavel_nome: t.responsavel_id ? (nomes.get(t.responsavel_id) ?? null) : null,
       criado_por_nome: t.criado_por_id ? (nomes.get(t.criado_por_id) ?? null) : null,
@@ -221,7 +230,13 @@ interface AtualizarTarefaInput {
   prazo?: string | null;
 }
 
-const STATUS: TarefaStatus[] = ["aberta", "em_andamento", "concluida", "cancelada"];
+const STATUS: TarefaStatus[] = [
+  "aberta",
+  "em_andamento",
+  "aguardando_cliente",
+  "concluida",
+  "cancelada",
+];
 
 /** Atualiza status, prioridade, prazo ou responsável (equipe interna). */
 export const atualizarTarefa = createServerFn({ method: "POST" })

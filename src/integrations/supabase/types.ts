@@ -916,11 +916,13 @@ export type Database = {
       }
       tarefas: {
         Row: {
+          categoria: string | null
           cliente_id: string | null
           cliente_user_id: string | null
           concluida_em: string | null
           created_at: string
           criado_por_id: string | null
+          dados: Json | null
           descricao: string | null
           id: string
           origem: Database["public"]["Enums"]["tarefa_origem"]
@@ -934,11 +936,13 @@ export type Database = {
           vendedor_id: string | null
         }
         Insert: {
+          categoria?: string | null
           cliente_id?: string | null
           cliente_user_id?: string | null
           concluida_em?: string | null
           created_at?: string
           criado_por_id?: string | null
+          dados?: Json | null
           descricao?: string | null
           id?: string
           origem?: Database["public"]["Enums"]["tarefa_origem"]
@@ -952,11 +956,13 @@ export type Database = {
           vendedor_id?: string | null
         }
         Update: {
+          categoria?: string | null
           cliente_id?: string | null
           cliente_user_id?: string | null
           concluida_em?: string | null
           created_at?: string
           criado_por_id?: string | null
+          dados?: Json | null
           descricao?: string | null
           id?: string
           origem?: Database["public"]["Enums"]["tarefa_origem"]
@@ -1124,7 +1130,12 @@ export type Database = {
       pagamento_status: "pago" | "pendente" | "vencido" | "simulacao"
       tarefa_origem: "plano" | "solicitacao_cliente" | "manual"
       tarefa_prioridade: "baixa" | "media" | "alta"
-      tarefa_status: "aberta" | "em_andamento" | "concluida" | "cancelada"
+      tarefa_status:
+        | "aberta"
+        | "em_andamento"
+        | "concluida"
+        | "cancelada"
+        | "aguardando_cliente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1277,7 +1288,13 @@ export const Constants = {
       pagamento_status: ["pago", "pendente", "vencido", "simulacao"],
       tarefa_origem: ["plano", "solicitacao_cliente", "manual"],
       tarefa_prioridade: ["baixa", "media", "alta"],
-      tarefa_status: ["aberta", "em_andamento", "concluida", "cancelada"],
+      tarefa_status: [
+        "aberta",
+        "em_andamento",
+        "concluida",
+        "cancelada",
+        "aguardando_cliente",
+      ],
     },
   },
 } as const

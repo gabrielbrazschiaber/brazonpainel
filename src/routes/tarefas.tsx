@@ -13,6 +13,7 @@ import { AvisosSino } from "@/components/AvisosSino";
 import { ComentariosTarefa } from "@/components/tarefas/ComentariosTarefa";
 import { formatDate } from "@/lib/format";
 import { buscarPerfis } from "@/lib/profiles";
+import { rotuloCategoria } from "@/lib/solicitacoes";
 
 import {
   listarTarefas,
@@ -72,6 +73,7 @@ export const Route = createFileRoute("/tarefas")({
 const STATUS_LABEL: Record<TarefaStatus, string> = {
   aberta: "Aberta",
   em_andamento: "Em andamento",
+  aguardando_cliente: "Aguardando cliente",
   concluida: "Concluída",
   cancelada: "Cancelada",
 };
@@ -84,7 +86,8 @@ const PRIORIDADE_LABEL: Record<TarefaPrioridade, string> = {
 
 function statusClasse(status: TarefaStatus): string {
   if (status === "concluida") return "bg-emerald-100 text-emerald-700 border-emerald-200";
-  if (status === "em_andamento") return "bg-amber-100 text-amber-700 border-amber-200";
+  if (status === "em_andamento") return "bg-blue-100 text-blue-700 border-blue-200";
+  if (status === "aguardando_cliente") return "bg-amber-100 text-amber-700 border-amber-200";
   if (status === "cancelada") return "bg-muted text-muted-foreground";
   return "bg-primary/10 text-primary border-primary/20";
 }
@@ -107,9 +110,10 @@ function TarefasPage() {
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
-  }, [loading, session, navigate]);
+    else if (!loading && role === "cliente") navigate({ to: "/solicitacoes", replace: true });
+  }, [loading, session, role, navigate]);
 
-  if (loading || !session || !role) {
+  if (loading || !session || !role || role === "cliente") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -119,7 +123,7 @@ function TarefasPage() {
 
   return (
     <TermosGate>
-      <TarefasConteudo equipe={role !== "cliente"} home={roleHome(role)} />
+      <TarefasConteudo home={roleHome(role)} />
     </TermosGate>
   );
 }
@@ -129,7 +133,8 @@ interface ClienteOpcao {
   nome: string;
 }
 
-function TarefasConteudo({ equipe, home }: { equipe: boolean; home: string }) {
+function TarefasConteudo({ home }: { home: string }) {
+  const equipe = true;
   const carregar = useServerFn(listarTarefas);
   const carregarResponsaveis = useServerFn(listarResponsaveis);
   const criar = useServerFn(criarTarefa);
@@ -213,6 +218,7 @@ function TarefasConteudo({ equipe, home }: { equipe: boolean; home: string }) {
     () => ({
       abertas: tarefas.filter((t) => t.status === "aberta").length,
       andamento: tarefas.filter((t) => t.status === "em_andamento").length,
+      aguardando: tarefas.filter((t) => t.status === "aguardando_cliente").length,
       concluidas: tarefas.filter((t) => t.status === "concluida").length,
       semResponsavel: tarefas.filter((t) => !t.responsavel_id && t.status !== "concluida").length,
     }),
@@ -285,9 +291,10 @@ function TarefasConteudo({ equipe, home }: { equipe: boolean; home: string }) {
 
       <main className="mx-auto max-w-6xl space-y-4 px-4 py-5">
         {equipe && (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
             <Resumo titulo="Abertas" valor={resumo.abertas} />
             <Resumo titulo="Em andamento" valor={resumo.andamento} />
+            <Resumo titulo="Aguardando cliente" valor={resumo.aguardando} />
             <Resumo titulo="Sem responsável" valor={resumo.semResponsavel} />
             <Resumo titulo="Concluídas" valor={resumo.concluidas} />
           </div>
@@ -336,6 +343,9 @@ function TarefasConteudo({ equipe, home }: { equipe: boolean; home: string }) {
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{t.titulo}</span>
+                      {t.origem === "solicitacao_cliente" && t.categoria && (
+                        <Badge variant="secondary">{rotuloCategoria(t.categoria)}</Badge>
+                      )}
                       <Badge variant="outline" className={statusClasse(t.status)}>
                         {STATUS_LABEL[t.status]}
                       </Badge>
