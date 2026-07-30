@@ -70,6 +70,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { buscarPerfis } from "@/lib/profiles";
+
 import { toast } from "sonner";
 import {
   UserCog,
