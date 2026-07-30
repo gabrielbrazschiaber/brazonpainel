@@ -70,6 +70,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { buscarPerfis } from "@/lib/profiles";
+
 import { toast } from "sonner";
 import {
   UserCog,
@@ -175,8 +177,8 @@ function AdminArea() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: pls }, { data: vds }, { data: cls }, cfg, { data: adminRoles }] =
-      await Promise.all([
+    try {
+      const [resPls, resVds, resCls, cfg, resAdmins] = await Promise.all([
         supabase.from("planos").select("id,nome,valor,descricao,ativo").order("valor"),
         supabase
           .from("vendedores")
@@ -192,18 +194,20 @@ function AdminArea() {
         supabase.from("user_roles").select("user_id").eq("role", "admin"),
       ]);
 
-    const vrows = (vds ?? []) as unknown as VendedorRow[];
-    const crows = (cls ?? []) as unknown as ClienteRow[];
-    const adminIds = (adminRoles ?? []).map((r) => r.user_id);
+      const primeiroErro =
+        resPls.error ?? resVds.error ?? resCls.error ?? resAdmins.error ?? null;
+      if (primeiroErro) throw new Error(primeiroErro.message);
 
-    const userIds = [...vrows.map((v) => v.user_id), ...crows.map((c) => c.user_id), ...adminIds];
-    let adminRows: { user_id: string; nome?: string; email?: string }[] = [];
-    if (userIds.length) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id,nome,email")
-        .in("id", userIds);
-      const map = new Map((profs ?? []).map((p) => [p.id, p]));
+      const vrows = (resVds.data ?? []) as unknown as VendedorRow[];
+      const crows = (resCls.data ?? []) as unknown as ClienteRow[];
+      const adminIds = (resAdmins.data ?? []).map((r) => r.user_id);
+
+      const map = await buscarPerfis([
+        ...vrows.map((v) => v.user_id),
+        ...crows.map((c) => c.user_id),
+        ...adminIds,
+      ]);
+
       vrows.forEach((v) => {
         const p = map.get(v.user_id);
         v.nome = p?.nome || undefined;
@@ -215,30 +219,36 @@ function AdminArea() {
         c.nome = p?.nome || undefined;
         c.email = p?.email || undefined;
       });
-      adminRows = adminIds.map((id) => {
+      const adminRows = adminIds.map((id) => {
         const p = map.get(id);
         return { user_id: id, nome: p?.nome || undefined, email: p?.email || undefined };
       });
-    }
 
-    setPlanos((pls ?? []) as Plano[]);
-    setVendedores(vrows);
-    setClientes(crows);
-    setAdmins(adminRows);
-    setConfig(
-      (cfg as Config | null) ?? {
-        nome_app: "",
-        dominio: "",
-        dias_aviso_vencimento: 5,
-        percentual_comissao_padrao: 10,
-        asaas_webhook_url: "",
-        asaas_ambiente: "sandbox",
-        asaas_api_key_mascara: "",
-        asaas_api_key_definida: false,
-      },
-    );
-    setLoading(false);
+      setPlanos((resPls.data ?? []) as Plano[]);
+      setVendedores(vrows);
+      setClientes(crows);
+      setAdmins(adminRows);
+      setConfig(
+        (cfg as Config | null) ?? {
+          nome_app: "",
+          dominio: "",
+          dias_aviso_vencimento: 5,
+          percentual_comissao_padrao: 10,
+          asaas_webhook_url: "",
+          asaas_ambiente: "sandbox",
+          asaas_api_key_mascara: "",
+          asaas_api_key_definida: false,
+        },
+      );
+    } catch (e) {
+      toast.error("Não foi possível carregar o painel", {
+        description: e instanceof Error ? e.message : "Tente novamente em instantes.",
+      });
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
 
   useEffect(() => {
     load();

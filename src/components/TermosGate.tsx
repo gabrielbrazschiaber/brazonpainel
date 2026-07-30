@@ -21,7 +21,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
  * do Termo de Uso (por exemplo, após uma atualização de versão).
  */
 export function TermosGate({ children }: { children: ReactNode }) {
-  const { session } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+
   const { sair, saindo } = useSair();
   const verificar = useServerFn(statusAceiteTermos);
   const aceitar = useServerFn(registrarAceiteTermos);
@@ -32,7 +34,7 @@ export function TermosGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let ativo = true;
-    if (!session) {
+    if (!userId) {
       setPendente(false);
       return;
     }
@@ -47,7 +49,7 @@ export function TermosGate({ children }: { children: ReactNode }) {
     return () => {
       ativo = false;
     };
-  }, [session, verificar]);
+  }, [userId, verificar]);
 
   async function confirmar() {
     setSalvando(true);

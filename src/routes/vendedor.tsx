@@ -37,6 +37,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { buscarPerfis } from "@/lib/profiles";
+
 import { toast } from "sonner";
 import {
   Users,
@@ -103,40 +105,49 @@ function VendedorArea() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data: vend } = await supabase
-      .from("vendedores")
-      .select("id,codigo_indicacao,percentual_comissao,ativo")
-      .maybeSingle();
-    setVendedor(vend as Vendedor | null);
+    try {
+      const { data: vend, error: erroVend } = await supabase
+        .from("vendedores")
+        .select("id,codigo_indicacao,percentual_comissao,ativo")
+        .limit(1)
+        .maybeSingle();
+      if (erroVend) throw new Error(erroVend.message);
+      setVendedor((vend ?? null) as Vendedor | null);
 
-    const { data: pls } = await supabase
-      .from("planos")
-      .select("id,nome,valor")
-      .eq("ativo", true)
-      .order("valor");
-    setPlanos((pls ?? []) as Plano[]);
+      const { data: pls, error: erroPls } = await supabase
+        .from("planos")
+        .select("id,nome,valor")
+        .eq("ativo", true)
+        .order("valor");
+      if (erroPls) throw new Error(erroPls.message);
+      setPlanos((pls ?? []) as Plano[]);
 
-    const { data: cls } = await supabase
-      .from("clientes")
-      .select(
-        "id,user_id,data_vencimento,status,mensagem_vendedor,anotacoes,plano_id,servico_extra,servico_extra_valor,cpf_cnpj,telefone,planos(nome,valor)",
-      )
-      .order("created_at", { ascending: false });
-    const rows = (cls ?? []) as unknown as ClienteRow[];
+      const { data: cls, error: erroCls } = await supabase
+        .from("clientes")
+        .select(
+          "id,user_id,data_vencimento,status,mensagem_vendedor,anotacoes,plano_id,servico_extra,servico_extra_valor,cpf_cnpj,telefone,planos(nome,valor)",
+        )
+        .order("created_at", { ascending: false });
+      if (erroCls) throw new Error(erroCls.message);
+      const rows = (cls ?? []) as unknown as ClienteRow[];
 
-    const ids = rows.map((r) => r.user_id);
-    if (ids.length) {
-      const { data: profs } = await supabase.from("profiles").select("id,nome,email").in("id", ids);
-      const map = new Map((profs ?? []).map((p) => [p.id, p]));
+      const map = await buscarPerfis(rows.map((r) => r.user_id));
       rows.forEach((r) => {
         const p = map.get(r.user_id);
         r.nome = p?.nome || undefined;
         r.email = p?.email || undefined;
       });
+
+      setClientes(rows);
+    } catch (e) {
+      toast.error("Não foi possível carregar seus dados", {
+        description: e instanceof Error ? e.message : "Tente novamente em instantes.",
+      });
+    } finally {
+      setLoading(false);
     }
-    setClientes(rows);
-    setLoading(false);
   }, []);
+
 
   useEffect(() => {
     load();

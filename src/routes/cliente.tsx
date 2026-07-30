@@ -84,29 +84,46 @@ function ClienteArea() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data: cli } = await supabase
-      .from("clientes")
-      .select("id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,asaas_subscription_id,planos(id,nome,valor,descricao,ativo)")
-      .maybeSingle();
-    setCliente(cli as unknown as Cliente);
+    try {
+      const { data: cli, error: erroCli } = await supabase
+        .from("clientes")
+        .select(
+          "id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,asaas_subscription_id,planos(id,nome,valor,descricao,ativo)",
+        )
+        .limit(1)
+        .maybeSingle();
+      if (erroCli) throw new Error(erroCli.message);
+      setCliente((cli ?? null) as unknown as Cliente);
 
-    const { data: pls } = await supabase
-      .from("planos")
-      .select("id,nome,valor,descricao,ativo")
-      .eq("ativo", true)
-      .order("valor");
-    setPlanos((pls ?? []) as Plano[]);
+      const { data: pls, error: erroPls } = await supabase
+        .from("planos")
+        .select("id,nome,valor,descricao,ativo")
+        .eq("ativo", true)
+        .order("valor");
+      if (erroPls) throw new Error(erroPls.message);
+      setPlanos((pls ?? []) as Plano[]);
 
-    if (cli?.id) {
-      const { data: pgs } = await supabase
-        .from("pagamentos")
-        .select("id,valor,status,data_pagamento,created_at,invoice_url")
-        .eq("cliente_id", cli.id)
-        .order("created_at", { ascending: false });
-      setPagamentos((pgs ?? []) as Pagamento[]);
+      if (cli?.id) {
+        const { data: pgs, error: erroPgs } = await supabase
+          .from("pagamentos")
+          .select("id,valor,status,data_pagamento,created_at,invoice_url")
+          .eq("cliente_id", cli.id)
+          .order("created_at", { ascending: false });
+        if (erroPgs) throw new Error(erroPgs.message);
+        setPagamentos((pgs ?? []) as Pagamento[]);
+      } else {
+        setPagamentos([]);
+      }
+    } catch (e) {
+      // Antes o erro era ignorado e a tela ficava vazia sem explicação.
+      toast.error("Não foi possível carregar seus dados", {
+        description: e instanceof Error ? e.message : "Tente novamente em instantes.",
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
+
 
   useEffect(() => {
     load();
@@ -169,13 +186,27 @@ function ClienteArea() {
       }
       const url = res.invoiceUrl || res.bankSlipUrl;
       if (url) {
-        toast.success("Assinatura mensal gerada!", {
-          description: "A cobrança se repete todo mês. Abrindo a página de pagamento...",
-        });
-        window.open(url, "_blank", "noopener,noreferrer");
+        // Como a abertura acontece após um await, o navegador (principalmente
+        // no celular) pode bloquear o pop-up. Nesse caso oferecemos o link.
+        const janela = window.open(url, "_blank", "noopener,noreferrer");
+        if (janela) {
+          toast.success("Assinatura mensal gerada!", {
+            description: "A cobrança se repete todo mês. Abrindo a página de pagamento...",
+          });
+        } else {
+          toast.success("Assinatura mensal gerada!", {
+            description: "Seu navegador bloqueou a nova aba. Toque para abrir a fatura.",
+            duration: 15000,
+            action: {
+              label: "Abrir fatura",
+              onClick: () => window.open(url, "_blank", "noopener,noreferrer"),
+            },
+          });
+        }
       } else {
         toast.success("Assinatura mensal criada com sucesso.");
       }
+
       await load();
     } catch (err) {
       toast.error("Não foi possível gerar a cobrança", {

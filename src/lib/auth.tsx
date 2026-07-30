@@ -1,13 +1,17 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppPermission } from "@/lib/permissions";
+
 
 export type AppRole = "cliente" | "vendedor" | "admin";
 
@@ -38,104 +42,145 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [permissoes, setPermissoes] = useState<AppPermission[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function loadUserData(userId: string) {
-    const [{ data: prof }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("id,email,nome").eq("id", userId).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", userId),
-    ]);
-    setProfile(prof ?? null);
-    const roleList = (roles ?? []).map((r) => r.role as AppRole);
-    const priority: AppRole[] = ["admin", "vendedor", "cliente"];
-    setRole(priority.find((p) => roleList.includes(p)) ?? null);
+  // Evita corridas: apenas o carregamento mais recente pode gravar estado.
+  const cargaAtual = useRef(0);
+  // Evita recarregar perfil/papéis a cada TOKEN_REFRESHED (a cada ~1h e ao
+  // focar a aba), que gerava requisições duplicadas sem necessidade.
+  const usuarioCarregado = useRef<string | null>(null);
+  const montado = useRef(true);
 
-    // Permissões do(s) papel(éis) — usadas só para desenhar a interface.
-    // A autorização real é sempre revalidada no servidor a cada chamada.
-    if (roleList.length > 0) {
-      const { data: perms } = await supabase
-        .from("role_permissions")
-        .select("permission")
-        .in("role", roleList);
-      setPermissoes(
-        Array.from(new Set((perms ?? []).map((p) => p.permission as AppPermission))),
-      );
-    } else {
-      setPermissoes([]);
-    }
-  }
-
-  async function refresh() {
-    const { data } = await supabase.auth.getSession();
-    setSession(data.session);
-    if (data.session?.user) {
-      await loadUserData(data.session.user.id);
-    } else {
-      setProfile(null);
-      setRole(null);
-      setPermissoes([]);
-    }
-  }
-
-  useEffect(() => {
-    let mounted = true;
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      if (!mounted) return;
-      setSession(newSession);
-      if (newSession?.user) {
-        setTimeout(() => {
-          if (mounted) loadUserData(newSession.user.id);
-        }, 0);
-      } else {
-        setProfile(null);
-        setRole(null);
-        setPermissoes([]);
-      }
-    });
-
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      if (data.session?.user) {
-        await loadUserData(data.session.user.id);
-      }
-      if (mounted) setLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
-
-  async function signOut() {
-    await supabase.auth.signOut();
+  const limparDadosUsuario = useCallback(() => {
+    usuarioCarregado.current = null;
     setProfile(null);
     setRole(null);
     setPermissoes([]);
-    setSession(null);
-  }
+  }, []);
 
-  function can(permissao: AppPermission) {
-    return permissoes.includes(permissao);
-  }
+  const loadUserData = useCallback(async (userId: string) => {
+    const id = ++cargaAtual.current;
+    const aindaValido = () => montado.current && cargaAtual.current === id;
 
-  return (
-    <AuthContext.Provider
-      value={{
-        session,
-        user: session?.user ?? null,
-        profile,
-        role,
-        permissoes,
-        can,
-        loading,
-        signOut,
-        refresh,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    try {
+      const [{ data: prof }, { data: roles }] = await Promise.all([
+        supabase.from("profiles").select("id,email,nome").eq("id", userId).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", userId),
+      ]);
+      if (!aindaValido()) return;
+
+      setProfile(prof ?? null);
+      const roleList = (roles ?? []).map((r) => r.role as AppRole);
+      const priority: AppRole[] = ["admin", "vendedor", "cliente"];
+      setRole(priority.find((p) => roleList.includes(p)) ?? null);
+
+      // Permissões do(s) papel(éis) — usadas só para desenhar a interface.
+      // A autorização real é sempre revalidada no servidor a cada chamada.
+      if (roleList.length > 0) {
+        const { data: perms } = await supabase
+          .from("role_permissions")
+          .select("permission")
+          .in("role", roleList);
+        if (!aindaValido()) return;
+        setPermissoes(
+          Array.from(new Set((perms ?? []).map((p) => p.permission as AppPermission))),
+        );
+      } else if (aindaValido()) {
+        setPermissoes([]);
+      }
+      usuarioCarregado.current = userId;
+    } catch {
+      // Falha de rede não pode deixar o app preso no spinner: mantém o que
+      // já existe e permite nova tentativa no próximo evento de auth.
+      if (aindaValido()) usuarioCarregado.current = null;
+    }
+  }, []);
+
+  const refresh = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    setSession(data.session);
+    if (data.session?.user) {
+      usuarioCarregado.current = null;
+      await loadUserData(data.session.user.id);
+    } else {
+      limparDadosUsuario();
+    }
+  }, [loadUserData, limparDadosUsuario]);
+
+  useEffect(() => {
+    montado.current = true;
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (!montado.current) return;
+      setSession(newSession);
+
+      if (!newSession?.user) {
+        limparDadosUsuario();
+        setLoading(false);
+        return;
+      }
+      // Só recarrega quando muda de usuário ou quando ainda não há dados.
+      if (event === "TOKEN_REFRESHED" && usuarioCarregado.current === newSession.user.id) {
+        return;
+      }
+      if (usuarioCarregado.current === newSession.user.id) return;
+
+      const userId = newSession.user.id;
+      // setTimeout(0): não fazer chamadas ao Supabase dentro do callback de auth.
+      setTimeout(() => {
+        if (!montado.current) return;
+        void loadUserData(userId).finally(() => {
+          if (montado.current) setLoading(false);
+        });
+      }, 0);
+    });
+
+    void supabase.auth
+      .getSession()
+      .then(async ({ data }) => {
+        if (!montado.current) return;
+        setSession(data.session);
+        if (data.session?.user && usuarioCarregado.current !== data.session.user.id) {
+          await loadUserData(data.session.user.id);
+        }
+      })
+      .finally(() => {
+        if (montado.current) setLoading(false);
+      });
+
+    return () => {
+      montado.current = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [loadUserData, limparDadosUsuario]);
+
+  const signOut = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      // Mesmo que a chamada remota falhe, o estado local precisa ser limpo.
+      cargaAtual.current++;
+      limparDadosUsuario();
+      setSession(null);
+    }
+  }, [limparDadosUsuario]);
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      session,
+      user: session?.user ?? null,
+      profile,
+      role,
+      permissoes,
+      can: (permissao: AppPermission) => permissoes.includes(permissao),
+      loading,
+      signOut,
+      refresh,
+    }),
+    [session, profile, role, permissoes, loading, signOut, refresh],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
