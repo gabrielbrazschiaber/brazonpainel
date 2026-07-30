@@ -37,6 +37,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { buscarPerfis } from "@/lib/profiles";
+
 import { toast } from "sonner";
 import {
   Users,
