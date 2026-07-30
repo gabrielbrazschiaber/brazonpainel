@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.notifica_responsavel_tarefa() FROM PUBLIC, anon, authenticated;

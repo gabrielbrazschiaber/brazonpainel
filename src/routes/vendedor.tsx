@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SairButton } from "@/components/SairButton";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { NovidadesSino } from "@/components/NovidadesSino";
+import { NotificacoesSino } from "@/components/NotificacoesSino";
 
 import { atualizarMensagemCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
@@ -202,6 +203,7 @@ function VendedorArea() {
                 <span className="hidden sm:inline">Tarefas</span>
               </Link>
             </Button>
+            <NotificacoesSino />
             <NovidadesSino />
             <SairButton variante="icone" />
           </div>
