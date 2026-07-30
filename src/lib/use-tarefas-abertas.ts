@@ -40,7 +40,7 @@ export function useTarefasAbertas(opcoes: Opcoes = {}) {
 
   const atualizar = useCallback(async () => {
     try {
-      const total = await buscar({ data: {} });
+      const total = await buscar({});
       if (!montado.current) return;
       setAbertas(total);
     } catch {
