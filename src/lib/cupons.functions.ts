@@ -3,7 +3,12 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const codigoSchema = z.object({
-  codigo: z.string().trim().min(2).max(40),
+  codigo: z
+    .string()
+    .trim()
+    .min(2)
+    .max(40)
+    .regex(/^[A-Za-z0-9_-]+$/, "Código de cupom inválido."),
 });
 
 /**
