@@ -15,6 +15,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useBodyScrollLock } from "@/lib/use-body-scroll-lock";
 import { BrazonSymbol } from "@/components/BrazonLogo";
 import { useSair } from "@/lib/use-sair";
 import { ChatSheet } from "@/components/chat/ChatSheet";
