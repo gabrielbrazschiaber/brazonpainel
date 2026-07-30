@@ -292,6 +292,8 @@ export const enviarMensagem = createServerFn({ method: "POST" })
     corpo: exigirTexto(input?.corpo, "A mensagem", 1, 4000),
   }))
   .handler(async ({ data, context }): Promise<Mensagem> => {
+    await checarLimiteEnvio(context.supabase, context.userId);
+
     const { data: criada, error } = await context.supabase
       .from("conversa_mensagens")
       .insert({
