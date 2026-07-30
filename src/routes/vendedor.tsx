@@ -356,7 +356,6 @@ function VendedorArea() {
             </Table>
           </Card>
         </section>
-      </div>
 
       <ClienteFormDialog
         mode="criar"
@@ -379,7 +378,8 @@ function VendedorArea() {
         onOpenChange={(v: boolean) => !v && setEditCliente(null)}
         onSaved={load}
       />
-    </div>
+    </AppShell>
+
   );
 }
 
