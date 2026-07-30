@@ -76,14 +76,16 @@ export function MenuLateral() {
         </SheetContent>
       </Sheet>
 
-      <ChatSheet
+      {chatAberto && (
+        <ChatSheet
         aberto={chatAberto}
         onOpenChange={(v) => {
           setChatAberto(v);
           if (!v) void atualizar();
         }}
-        aoMudarNaoLidas={atualizar}
-      />
+          aoMudarNaoLidas={atualizar}
+        />
+      )}
     </>
   );
 }

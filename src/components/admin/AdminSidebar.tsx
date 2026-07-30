@@ -159,14 +159,16 @@ export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) 
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-      <ChatSheet
+      {chatAberto && (
+        <ChatSheet
         aberto={chatAberto}
         onOpenChange={(v) => {
           setChatAberto(v);
           if (!v) void atualizar();
         }}
-        aoMudarNaoLidas={atualizar}
-      />
+          aoMudarNaoLidas={atualizar}
+        />
+      )}
     </Sidebar>
   );
 }
