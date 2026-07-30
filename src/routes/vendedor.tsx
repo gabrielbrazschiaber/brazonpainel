@@ -193,7 +193,6 @@ function VendedorArea() {
         onClick: () => setDialogOpen(true),
       }}
     >
-      <div>
 
         {/* Cabeçalho */}
         <header className="flex flex-wrap items-start justify-between gap-4">
