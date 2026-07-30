@@ -123,7 +123,7 @@ function TarefasPage() {
 
   return (
     <TermosGate>
-      <TarefasConteudo home={roleHome(role)} />
+      <TarefasConteudo home={roleHome(role)} isAdmin={role === "admin"} />
     </TermosGate>
   );
 }
@@ -133,8 +133,9 @@ interface ClienteOpcao {
   nome: string;
 }
 
-function TarefasConteudo({ home }: { home: string }) {
+function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) {
   const equipe = true;
+
   const carregar = useServerFn(listarTarefas);
   const carregarResponsaveis = useServerFn(listarResponsaveis);
   const criar = useServerFn(criarTarefa);
