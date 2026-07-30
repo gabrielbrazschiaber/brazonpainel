@@ -9,7 +9,7 @@ import { useAuth, roleHome } from "@/lib/auth";
 import { TermosGate } from "@/components/TermosGate";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
-import { NotificacoesSino } from "@/components/NotificacoesSino";
+import { AvisosSino } from "@/components/AvisosSino";
 import { ComentariosTarefa } from "@/components/tarefas/ComentariosTarefa";
 import { formatDate } from "@/lib/format";
 import { buscarPerfis } from "@/lib/profiles";
@@ -278,7 +278,7 @@ function TarefasConteudo({ equipe, home }: { equipe: boolean; home: string }) {
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
             </Link>
           </Button>
-          <NotificacoesSino />
+          <AvisosSino />
           <SairButton />
         </div>
       </header>

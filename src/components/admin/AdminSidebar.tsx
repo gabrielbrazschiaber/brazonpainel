@@ -1,5 +1,5 @@
 import * as React from "react";
-import { LogOut, UserCog } from "lucide-react";
+import { ClipboardList, LogOut, MessagesSquare, UserCog } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   Sidebar,
@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/sidebar";
 import { BrazonSymbol } from "@/components/BrazonLogo";
 import { useSair } from "@/lib/use-sair";
+import { ChatSheet } from "@/components/chat/ChatSheet";
+import { useChatNaoLidas } from "@/lib/use-chat-nao-lidas";
 
 export interface AdminNavItem {
   value: string;
@@ -38,6 +40,8 @@ interface AdminSidebarProps {
 export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) {
   const { isMobile, setOpenMobile } = useSidebar();
   const { sair, saindo } = useSair();
+  const [chatAberto, setChatAberto] = React.useState(false);
+  const { naoLidas, atualizar } = useChatNaoLidas();
 
   function fecharSeMobile() {
     if (isMobile) setOpenMobile(false);
@@ -87,6 +91,40 @@ export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) 
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Atalhos</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Tarefas" className="h-10 md:h-8">
+                  <a href="/tarefas" onClick={fecharSeMobile}>
+                    <ClipboardList className="h-4 w-4" />
+                    <span>Tarefas</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => {
+                    fecharSeMobile();
+                    setChatAberto(true);
+                  }}
+                  tooltip="Chat com a equipe"
+                  className="h-10 md:h-8"
+                >
+                  <MessagesSquare className="h-4 w-4" />
+                  <span>Chat com a equipe</span>
+                  {naoLidas > 0 && (
+                    <span className="ml-auto rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground">
+                      {naoLidas > 9 ? "9+" : naoLidas}
+                    </span>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
@@ -121,6 +159,16 @@ export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) 
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      {chatAberto && (
+        <ChatSheet
+        aberto={chatAberto}
+        onOpenChange={(v) => {
+          setChatAberto(v);
+          if (!v) void atualizar();
+        }}
+          aoMudarNaoLidas={atualizar}
+        />
+      )}
     </Sidebar>
   );
 }
