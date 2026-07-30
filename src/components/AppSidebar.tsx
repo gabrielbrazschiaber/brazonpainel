@@ -84,13 +84,14 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
-        <div className="flex items-center justify-center">
-          <BrazonSymbol className="h-8 w-8" />
-        </div>
-      </SidebarHeader>
+      <div ref={trapRef} className="flex h-full w-full flex-col">
+        <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
+          <div className="flex items-center justify-center">
+            <BrazonSymbol className="h-8 w-8" />
+          </div>
+        </SidebarHeader>
 
-      <SidebarContent className="overflow-y-auto overscroll-contain">
+        <SidebarContent className="overflow-y-auto overscroll-contain">
         {acaoPrincipal && (
           <SidebarGroup>
             <SidebarGroupContent>
