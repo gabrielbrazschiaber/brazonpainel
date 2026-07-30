@@ -1,5 +1,6 @@
 import * as React from "react";
-import { ClipboardList, LogOut, MessagesSquare, UserCog } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { LogOut, MessagesSquare, UserCog } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   Sidebar,
@@ -19,29 +20,42 @@ import { useSair } from "@/lib/use-sair";
 import { ChatSheet } from "@/components/chat/ChatSheet";
 import { useChatNaoLidas } from "@/lib/use-chat-nao-lidas";
 
-export interface AdminNavItem {
+export interface AppNavItem {
   value: string;
   label: string;
   icon: LucideIcon;
+  /** Se presente, o item navega para esta rota em vez de trocar de aba. */
+  to?: string;
 }
 
-interface AdminSidebarProps {
-  items: readonly AdminNavItem[];
-  tab: string;
-  onTab: (value: string) => void;
-  onConta: () => void;
+export interface AppAcaoPrincipal {
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+}
+
+interface AppSidebarProps {
+  items: readonly AppNavItem[];
+  /** aba ativa (quando a tela usa Tabs internas, como o admin) */
+  tab?: string;
+  onTab?: (value: string) => void;
+  /** abre o dialog "Minha conta"; se ausente, o item não é renderizado */
+  onConta?: () => void;
+  /** ação extra destacada no topo (ex.: "Cadastrar cliente" do vendedor) */
+  acaoPrincipal?: AppAcaoPrincipal;
 }
 
 /**
- * Sidebar do painel admin.
+ * Sidebar única dos painéis (admin, vendedor e cliente).
  * No mobile ela vira um drawer: qualquer ação (navegar, minha conta, sair)
  * fecha o drawer automaticamente para não cobrir o conteúdo.
  */
-export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) {
+export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSidebarProps) {
   const { isMobile, setOpenMobile } = useSidebar();
   const { sair, saindo } = useSair();
   const [chatAberto, setChatAberto] = React.useState(false);
   const { naoLidas, atualizar } = useChatNaoLidas({ pausado: chatAberto });
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
 
   function fecharSeMobile() {
     if (isMobile) setOpenMobile(false);
@@ -68,24 +82,60 @@ export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) 
       </SidebarHeader>
 
       <SidebarContent className="overflow-y-auto overscroll-contain">
+        {acaoPrincipal && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => {
+                      fecharSeMobile();
+                      acaoPrincipal.onClick();
+                    }}
+                    tooltip={acaoPrincipal.label}
+                    className="h-10 bg-primary/10 font-medium text-primary hover:bg-primary/20 hover:text-primary md:h-8"
+                  >
+                    <acaoPrincipal.icon className="h-4 w-4" />
+                    <span>{acaoPrincipal.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         <SidebarGroup>
           <SidebarGroupLabel>Navegação</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.value}>
-                  <SidebarMenuButton
-                    isActive={tab === item.value}
-                    onClick={() => {
-                      onTab(item.value);
-                      fecharSeMobile();
-                    }}
-                    tooltip={item.label}
-                    className="h-10 md:h-8"
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
+                  {item.to ? (
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.to}
+                      tooltip={item.label}
+                      className="h-10 md:h-8"
+                    >
+                      <Link to={item.to} onClick={fecharSeMobile}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  ) : (
+                    <SidebarMenuButton
+                      isActive={tab === item.value}
+                      onClick={() => {
+                        onTab?.(item.value);
+                        fecharSeMobile();
+                      }}
+                      tooltip={item.label}
+                      className="h-10 md:h-8"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -96,14 +146,6 @@ export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) 
           <SidebarGroupLabel>Atalhos</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Tarefas" className="h-10 md:h-8">
-                  <a href="/tarefas" onClick={fecharSeMobile}>
-                    <ClipboardList className="h-4 w-4" />
-                    <span>Tarefas</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => {
@@ -129,19 +171,21 @@ export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) 
 
       <SidebarFooter className="border-t border-sidebar-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => {
-                onConta();
-                fecharSeMobile();
-              }}
-              tooltip="Minha conta"
-              className="h-10 md:h-8"
-            >
-              <UserCog className="h-4 w-4" />
-              <span>Minha conta</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {onConta && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => {
+                  onConta();
+                  fecharSeMobile();
+                }}
+                tooltip="Minha conta"
+                className="h-10 md:h-8"
+              >
+                <UserCog className="h-4 w-4" />
+                <span>Minha conta</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={() => {
@@ -161,11 +205,11 @@ export function AdminSidebar({ items, tab, onTab, onConta }: AdminSidebarProps) 
       </SidebarFooter>
       {chatAberto && (
         <ChatSheet
-        aberto={chatAberto}
-        onOpenChange={(v) => {
-          setChatAberto(v);
-          if (!v) void atualizar();
-        }}
+          aberto={chatAberto}
+          onOpenChange={(v) => {
+            setChatAberto(v);
+            if (!v) void atualizar();
+          }}
           aoMudarNaoLidas={atualizar}
         />
       )}

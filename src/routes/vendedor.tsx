@@ -5,10 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
-import { SairButton } from "@/components/SairButton";
-import { BrazonLogo } from "@/components/BrazonLogo";
-import { AvisosSino } from "@/components/AvisosSino";
-import { MenuLateral } from "@/components/MenuLateral";
+import { AppShell } from "@/components/AppShell";
+import type { AppNavItem } from "@/components/AppSidebar";
 
 import { atualizarMensagemCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
@@ -50,6 +48,10 @@ import {
   MessageSquare,
   Pencil,
   UserCog,
+  LayoutDashboard,
+  ClipboardList,
+  Share2,
+  Ticket,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
@@ -101,6 +103,7 @@ function VendedorArea() {
   const [msgCliente, setMsgCliente] = useState<ClienteRow | null>(null);
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
   const [contaOpen, setContaOpen] = useState(false);
+  const [secaoAtiva, setSecaoAtiva] = useState("painel");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -172,6 +175,21 @@ function VendedorArea() {
     navigator.clipboard.writeText(text).then(() => toast.success(msg));
   }
 
+  const navItems: AppNavItem[] = [
+    { value: "painel", label: "Painel", icon: LayoutDashboard, to: "/vendedor" },
+    { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
+    { value: "indicacoes", label: "Indicações", icon: Share2 },
+    { value: "cupons", label: "Meus cupons", icon: Ticket },
+    { value: "clientes", label: "Meus clientes", icon: Users },
+  ];
+
+  /** Rola até a seção correspondente; o item ativo é simplesmente o último clicado. */
+  function irParaSecao(value: string) {
+    setSecaoAtiva(value);
+    document.getElementById(`secao-${value}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -181,40 +199,19 @@ function VendedorArea() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Barra superior fixa */}
-      <header className="glass-header sticky top-0 z-30 border-b border-border/60">
-        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:flex sm:justify-between sm:gap-4 sm:px-4 sm:py-3">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <MenuLateral />
-            <BrazonLogo />
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <Button
-              onClick={() => setDialogOpen(true)}
-              className="h-10 px-2.5 sm:h-9 sm:px-4"
-              aria-label="Cadastrar cliente"
-            >
-              <UserPlus className="h-4 w-4 min-[420px]:mr-2" />
-              <span className="hidden min-[420px]:inline sm:hidden">Cadastrar</span>
-              <span className="hidden sm:inline">Cadastrar cliente</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setContaOpen(true)}
-              className="h-10 w-10 shrink-0 p-0 sm:h-9 sm:w-auto sm:px-4"
-              aria-label="Minha conta"
-            >
-              <UserCog className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Minha conta</span>
-            </Button>
-            <AvisosSino />
-            <SairButton variante="icone" />
-          </div>
-        </div>
-      </header>
+    <AppShell
+      contexto="Painel do vendedor"
+      items={navItems}
+      tab={secaoAtiva}
+      onTab={irParaSecao}
+      onConta={() => setContaOpen(true)}
+      acaoPrincipal={{
+        label: "Cadastrar cliente",
+        icon: UserPlus,
+        onClick: () => setDialogOpen(true),
+      }}
+    >
 
-      <div className="mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-8">
         {/* Cabeçalho */}
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
@@ -277,13 +274,18 @@ function VendedorArea() {
           </Card>
         </section>
 
-        {/* Cupons do vendedor */}
-        <ReferralsCard />
+        {/* Indicações */}
+        <div id="secao-indicacoes">
+          <ReferralsCard />
+        </div>
 
-        <CuponsVendedor />
+        {/* Cupons do vendedor */}
+        <div id="secao-cupons">
+          <CuponsVendedor />
+        </div>
 
         {/* Lista de clientes */}
-        <section className="mt-8">
+        <section id="secao-clientes" className="mt-8">
           <h2 className="text-lg font-bold text-foreground">Meus clientes</h2>
           <Card className="mt-4 overflow-x-auto">
             <Table>
@@ -356,7 +358,6 @@ function VendedorArea() {
             </Table>
           </Card>
         </section>
-      </div>
 
       <ClienteFormDialog
         mode="criar"
@@ -379,7 +380,8 @@ function VendedorArea() {
         onOpenChange={(v: boolean) => !v && setEditCliente(null)}
         onSaved={load}
       />
-    </div>
+    </AppShell>
+
   );
 }
 

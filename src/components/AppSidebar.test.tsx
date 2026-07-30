@@ -4,14 +4,19 @@ import { LayoutDashboard, Users } from "lucide-react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { setViewport } from "@/test/setup";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AdminSidebar, type AdminNavItem } from "@/components/admin/AdminSidebar";
+import { AppSidebar, type AppNavItem } from "@/components/AppSidebar";
+
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, ...props }: { children: React.ReactNode }) => <a {...props}>{children}</a>,
+  useRouterState: () => "/admin",
+}));
 
 const sair = vi.fn();
 vi.mock("@/lib/use-sair", () => ({
   useSair: () => ({ sair, saindo: false }),
 }));
 
-const items: readonly AdminNavItem[] = [
+const items: readonly AppNavItem[] = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { value: "clientes", label: "Clientes", icon: Users },
 ];
@@ -20,7 +25,7 @@ function Harness({ onTab = vi.fn(), onConta = vi.fn() }) {
   return (
     <SidebarProvider>
       <SidebarTrigger aria-label="Abrir menu" />
-      <AdminSidebar items={items} tab="dashboard" onTab={onTab} onConta={onConta} />
+      <AppSidebar items={items} tab="dashboard" onTab={onTab} onConta={onConta} />
     </SidebarProvider>
   );
 }
@@ -34,7 +39,7 @@ const RETRATO = { width: 390, height: 844 };
 const PAISAGEM = { width: 844, height: 390 };
 const DESKTOP = { width: 1280, height: 900, coarsePointer: false };
 
-describe("AdminSidebar — drawer mobile", () => {
+describe("AppSidebar — drawer mobile", () => {
   beforeEach(() => {
     sair.mockClear();
     document.body.style.pointerEvents = "";

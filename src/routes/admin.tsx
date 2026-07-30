@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { SairButton } from "@/components/SairButton";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -320,69 +320,49 @@ function AdminArea() {
   ];
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AdminSidebar
-          items={navItems}
-          tab={tab}
-          onTab={setTab}
-          onConta={() => setContaOpen(true)}
-        />
+    <AppShell
+      contexto="Administração"
+      items={navItems}
+      tab={tab}
+      onTab={setTab}
+      onConta={() => setContaOpen(true)}
+    >
+      <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="glass-header sticky top-0 z-30 flex h-14 items-center gap-1 border-b border-border/60 px-2 pt-[env(safe-area-inset-top)] sm:gap-2 sm:px-4">
-            <SidebarTrigger className="h-10 w-10 shrink-0" aria-label="Abrir menu" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Administração</p>
-              <h1 className="truncate text-sm font-semibold text-foreground sm:text-base">
-                {profile?.nome || profile?.email}
-              </h1>
-            </div>
-            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-              <AvisosSino />
-              <SairButton variante="icone" />
-            </div>
-          </header>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="sr-only">
+          {navItems.map((item) => (
+            <TabsTrigger key={item.value} value={item.value}>
+              {item.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-          <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-4 sm:py-6">
-            <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
-
-            <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="sr-only">
-                {navItems.map((item) => (
-                  <TabsTrigger key={item.value} value={item.value}>
-                    {item.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              <TabsContent value="dashboard" className="mt-0">
-                <AdminDashboard />
-              </TabsContent>
-              <TabsContent value="clientes" className="mt-0">
-                <ClientesTab
-                  clientes={clientes}
-                  vendedores={vendedores}
-                  planos={planos}
-                  onChanged={load}
-                />
-              </TabsContent>
-              <TabsContent value="novidades" className="mt-0">
-                <NovidadesTab />
-              </TabsContent>
-              <TabsContent value="config" className="mt-0">
-                <ConfiguracoesPage secoes={secoesConfig} />
-              </TabsContent>
-              <TabsContent value="auditoria" className="mt-0">
-                <AuditoriaTab />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
-      </div>
-    </SidebarProvider>
+        <TabsContent value="dashboard" className="mt-0">
+          <AdminDashboard />
+        </TabsContent>
+        <TabsContent value="clientes" className="mt-0">
+          <ClientesTab
+            clientes={clientes}
+            vendedores={vendedores}
+            planos={planos}
+            onChanged={load}
+          />
+        </TabsContent>
+        <TabsContent value="novidades" className="mt-0">
+          <NovidadesTab />
+        </TabsContent>
+        <TabsContent value="config" className="mt-0">
+          <ConfiguracoesPage secoes={secoesConfig} />
+        </TabsContent>
+        <TabsContent value="auditoria" className="mt-0">
+          <AuditoriaTab />
+        </TabsContent>
+      </Tabs>
+    </AppShell>
   );
 }
+
 
 /* ---------------- Minha conta (admin) ---------------- */
 function MinhaContaDialog({
