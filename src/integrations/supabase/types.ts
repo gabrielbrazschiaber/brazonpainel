@@ -257,6 +257,130 @@ export type Database = {
         }
         Relationships: []
       }
+      conversa_mensagens: {
+        Row: {
+          autor_id: string
+          conversa_id: string
+          corpo: string
+          created_at: string
+          id: string
+          sistema: boolean
+          updated_at: string
+        }
+        Insert: {
+          autor_id: string
+          conversa_id: string
+          corpo: string
+          created_at?: string
+          id?: string
+          sistema?: boolean
+          updated_at?: string
+        }
+        Update: {
+          autor_id?: string
+          conversa_id?: string
+          corpo?: string
+          created_at?: string
+          id?: string
+          sistema?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversa_mensagens_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "conversas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversa_participantes: {
+        Row: {
+          conversa_id: string
+          created_at: string
+          id: string
+          lido_em: string | null
+          user_id: string
+        }
+        Insert: {
+          conversa_id: string
+          created_at?: string
+          id?: string
+          lido_em?: string | null
+          user_id: string
+        }
+        Update: {
+          conversa_id?: string
+          created_at?: string
+          id?: string
+          lido_em?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversa_participantes_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "conversas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversas: {
+        Row: {
+          arquivada: boolean
+          cliente_id: string | null
+          created_at: string
+          criado_por_id: string
+          id: string
+          tipo: Database["public"]["Enums"]["conversa_tipo"]
+          titulo: string | null
+          ultima_mensagem_em: string
+          updated_at: string
+          vendedor_id: string | null
+        }
+        Insert: {
+          arquivada?: boolean
+          cliente_id?: string | null
+          created_at?: string
+          criado_por_id: string
+          id?: string
+          tipo: Database["public"]["Enums"]["conversa_tipo"]
+          titulo?: string | null
+          ultima_mensagem_em?: string
+          updated_at?: string
+          vendedor_id?: string | null
+        }
+        Update: {
+          arquivada?: boolean
+          cliente_id?: string | null
+          created_at?: string
+          criado_por_id?: string
+          id?: string
+          tipo?: Database["public"]["Enums"]["conversa_tipo"]
+          titulo?: string | null
+          ultima_mensagem_em?: string
+          updated_at?: string
+          vendedor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversas_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cupom_usos: {
         Row: {
           asaas_payment_id: string | null
@@ -973,6 +1097,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      pode_ver_conversa: { Args: { _conversa_id: string }; Returns: boolean }
     }
     Enums: {
       app_permission:
@@ -995,6 +1120,7 @@ export type Database = {
       app_role: "cliente" | "vendedor" | "admin"
       asaas_ambiente: "producao" | "sandbox"
       cliente_status: "ativo" | "vencido" | "inadimplente" | "cancelado"
+      conversa_tipo: "equipe" | "atendimento"
       pagamento_status: "pago" | "pendente" | "vencido" | "simulacao"
       tarefa_origem: "plano" | "solicitacao_cliente" | "manual"
       tarefa_prioridade: "baixa" | "media" | "alta"
@@ -1147,6 +1273,7 @@ export const Constants = {
       app_role: ["cliente", "vendedor", "admin"],
       asaas_ambiente: ["producao", "sandbox"],
       cliente_status: ["ativo", "vencido", "inadimplente", "cancelado"],
+      conversa_tipo: ["equipe", "atendimento"],
       pagamento_status: ["pago", "pendente", "vencido", "simulacao"],
       tarefa_origem: ["plano", "solicitacao_cliente", "manual"],
       tarefa_prioridade: ["baixa", "media", "alta"],

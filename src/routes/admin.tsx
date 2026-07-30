@@ -15,6 +15,7 @@ import { CuponsTab } from "@/components/admin/CuponsTab";
 import { ConfiguracoesPage, type SecaoConfiguracao } from "@/components/admin/ConfiguracoesPage";
 import { NovidadesSino } from "@/components/NovidadesSino";
 import { NotificacoesSino } from "@/components/NotificacoesSino";
+import { ChatBotao } from "@/components/chat/ChatBotao";
 
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
 import {
@@ -347,6 +348,7 @@ function AdminArea() {
                 <span className="hidden sm:inline">Tarefas</span>
               </Link>
             </Button>
+            <ChatBotao />
             <NotificacoesSino />
             <NovidadesSino />
               <SairButton variante="icone" />
