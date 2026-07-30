@@ -8,7 +8,8 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SairButton } from "@/components/SairButton";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { AvisosSino } from "@/components/AvisosSino";
-import { MenuLateral } from "@/components/MenuLateral";
+import { AppShell } from "@/components/AppShell";
+import type { AppNavItem } from "@/components/AppSidebar";
 
 import { atualizarMensagemCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
 import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
@@ -50,6 +51,10 @@ import {
   MessageSquare,
   Pencil,
   UserCog,
+  LayoutDashboard,
+  ClipboardList,
+  Share2,
+  Ticket,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
@@ -101,6 +106,7 @@ function VendedorArea() {
   const [msgCliente, setMsgCliente] = useState<ClienteRow | null>(null);
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
   const [contaOpen, setContaOpen] = useState(false);
+  const [secaoAtiva, setSecaoAtiva] = useState("painel");
 
   const load = useCallback(async () => {
     setLoading(true);
