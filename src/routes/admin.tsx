@@ -88,6 +88,7 @@ import {
   UserCircle,
   Settings,
   ScrollText,
+  ClipboardList,
   Megaphone,
   Trash2,
   Search,
