@@ -311,3 +311,15 @@ export const atualizarTarefa = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/** Conta as tarefas em aberto visíveis para o usuário (RLS decide o escopo). */
+export const contarTarefasAbertas = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<number> => {
+    const { count, error } = await context.supabase
+      .from("tarefas")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["aberta", "em_andamento", "aguardando_cliente"]);
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  });
