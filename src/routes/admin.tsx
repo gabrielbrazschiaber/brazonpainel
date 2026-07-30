@@ -317,6 +317,14 @@ function AdminArea() {
       permissao: "configuracoes.gerenciar",
       render: () => <ConfigTab config={config} onSaved={load} />,
     },
+    {
+      value: "auditoria",
+      label: "Auditoria",
+      descricao: "Histórico de alterações",
+      icon: ScrollText,
+      permissao: "auditoria.ler",
+      render: () => <AuditoriaTab />,
+    },
   ];
 
   return (
