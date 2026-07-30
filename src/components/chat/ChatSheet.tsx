@@ -47,7 +47,7 @@ export function ChatSheet({
   const carregar = useCallback(async () => {
     setCarregando(true);
     try {
-      const lista = await buscarConversas({});
+      const lista = await buscarConversas({ data: {} });
       setConversas(lista);
       return lista;
     } catch (e) {
@@ -72,8 +72,8 @@ export function ChatSheet({
       if (ehCliente) {
         setCarregando(true);
         try {
-          const { conversa_id } = await abrirAtendimento({});
-          const lista = await buscarConversas({ tipo: "atendimento" });
+          const { conversa_id } = await abrirAtendimento({ data: {} });
+          const lista = await buscarConversas({ data: { tipo: "atendimento" } });
           if (cancelado) return;
           const minha = lista.find((c) => c.id === conversa_id);
           setConversas(lista);

@@ -39,7 +39,7 @@ export function NovaConversaDialog({
   useEffect(() => {
     if (!aberto) return;
     setCarregando(true);
-    void buscarContatos({})
+    void buscarContatos({ data: undefined } as never)
       .then(setContatos)
       .catch((e) =>
         toast.error("Não foi possível carregar a equipe", {
