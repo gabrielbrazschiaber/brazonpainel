@@ -427,7 +427,7 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {[t.status, ...transicoesPermitidas(t.status, isAdmin)].map((s) => (
+                          {([t.status, ...transicoesPermitidas(t.status, isAdmin)] as TarefaStatus[]).map((s) => (
                             <SelectItem key={s} value={s}>
                               {STATUS_LABEL[s]}
                             </SelectItem>
