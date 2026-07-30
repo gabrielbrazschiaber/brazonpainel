@@ -61,6 +61,10 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
   // Trava o scroll da página enquanto o drawer mobile estiver aberto.
   useBodyScrollLock(isMobile && openMobile);
 
+  // Mantém o TAB preso dentro do drawer mobile até que ele seja fechado.
+  const trapRef = React.useRef<HTMLDivElement>(null);
+  useFocusTrap(isMobile && openMobile, trapRef);
+
   function fecharSeMobile() {
     if (isMobile) setOpenMobile(false);
   }
