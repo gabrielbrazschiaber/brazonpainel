@@ -130,18 +130,12 @@ function VendedorArea() {
       const rows = (cls ?? []) as unknown as ClienteRow[];
 
       const map = await buscarPerfis(rows.map((r) => r.user_id));
-      {
-        rows.forEach((r) => {
-          const p = map.get(r.user_id);
-          r.nome = p?.nome || undefined;
-          r.email = p?.email || undefined;
+      rows.forEach((r) => {
+        const p = map.get(r.user_id);
+        r.nome = p?.nome || undefined;
+        r.email = p?.email || undefined;
+      });
 
-        rows.forEach((r) => {
-          const p = map.get(r.user_id);
-          r.nome = p?.nome || undefined;
-          r.email = p?.email || undefined;
-        });
-      }
       setClientes(rows);
     } catch (e) {
       toast.error("Não foi possível carregar seus dados", {
