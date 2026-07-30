@@ -34,7 +34,7 @@ export function TermosGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let ativo = true;
-    if (!session) {
+    if (!userId) {
       setPendente(false);
       return;
     }
