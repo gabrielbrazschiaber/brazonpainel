@@ -4,7 +4,8 @@ import { Lock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { usePermissoes } from "@/lib/use-permissoes";
-import type { AppPermission } from "@/lib/permissions";
+import type { AppPermission, AppRole } from "@/lib/permissions";
+import { useAuth } from "@/lib/auth";
 import {
   Select,
   SelectContent,
@@ -20,6 +21,8 @@ export interface SecaoConfiguracao {
   icon: LucideIcon;
   /** Permissão exigida para ver a seção (a checagem real é no servidor). */
   permissao: AppPermission;
+  /** Quando presente, só estes papéis enxergam a seção. */
+  roles?: readonly AppRole[];
   render: () => ReactNode;
 }
 
@@ -32,11 +35,17 @@ export interface SecaoConfiguracao {
  */
 export function ConfiguracoesPage({ secoes }: { secoes: SecaoConfiguracao[] }) {
   const { pode, carregando } = usePermissoes();
+  const { role } = useAuth();
 
   const visiveis = useMemo(
-    () => (carregando ? [] : secoes.filter((s) => pode(s.permissao))),
+    () =>
+      carregando
+        ? []
+        : secoes.filter(
+            (s) => pode(s.permissao) && (!s.roles || (role !== null && s.roles.includes(role))),
+          ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [secoes, carregando, pode],
+    [secoes, carregando, pode, role],
   );
 
   const [ativa, setAtiva] = useState<string>(secoes[0]?.value ?? "");

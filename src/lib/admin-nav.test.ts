@@ -17,6 +17,19 @@ describe("navegação do admin", () => {
     expect(ADMIN_NAV_ITEMS.some((i) => i.value === "config")).toBe(true);
   });
 
+  it("restringe Auditoria ao papel admin", () => {
+    const auditoria = SECOES_CONFIG_META.find((s) => s.value === "auditoria");
+    expect(auditoria?.roles).toEqual(["admin"]);
+    expect(auditoria?.roles).not.toContain("vendedor");
+    expect(auditoria?.roles).not.toContain("cliente");
+  });
+
+  it("as demais seções não restringem papel além da permissão", () => {
+    for (const secao of SECOES_CONFIG_META.filter((s) => s.value !== "auditoria")) {
+      expect(secao.roles).toBeUndefined();
+    }
+  });
+
   it("não duplica nenhuma seção de configurações no menu lateral", () => {
     const navValues = new Set(ADMIN_NAV_ITEMS.map((i) => i.value));
     for (const secao of SECOES_CONFIG_META) {

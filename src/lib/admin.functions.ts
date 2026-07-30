@@ -639,6 +639,13 @@ export const listarAuditoria = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     await ensurePermission(supabase, userId, "auditoria.ler");
+    const { data: ehAdmin } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
+    if (ehAdmin !== true) {
+      throw new Error("Acesso negado: a auditoria é restrita a administradores.");
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin

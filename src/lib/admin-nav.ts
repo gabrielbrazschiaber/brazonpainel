@@ -12,7 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { AppPermission } from "@/lib/permissions";
+import type { AppPermission, AppRole } from "@/lib/permissions";
 
 export interface AdminNavItem {
   value: string;
@@ -45,6 +45,8 @@ export interface SecaoConfigMeta {
   descricao: string;
   icon: LucideIcon;
   permissao: AppPermission;
+  /** Quando presente, só estes papéis enxergam a seção (além da permissão). */
+  roles?: readonly AppRole[];
 }
 
 /** Seções que vivem DENTRO de Configurações (inclusive Auditoria). */
@@ -97,5 +99,6 @@ export const SECOES_CONFIG_META: readonly SecaoConfigMeta[] = [
     descricao: "Histórico de alterações",
     icon: ScrollText,
     permissao: "auditoria.ler",
+    roles: ["admin"],
   },
 ];
