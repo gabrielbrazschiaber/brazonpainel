@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { LogOut, MessagesSquare, UserCog } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -21,6 +21,8 @@ import { BrazonSymbol } from "@/components/BrazonLogo";
 import { useSair } from "@/lib/use-sair";
 import { ChatSheet } from "@/components/chat/ChatSheet";
 import { useChatNaoLidas } from "@/lib/use-chat-nao-lidas";
+import { useTarefasAbertas } from "@/lib/use-tarefas-abertas";
+import { useAuth } from "@/lib/auth";
 
 export interface AppNavItem {
   value: string;
@@ -59,6 +61,13 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
   const { naoLidas, atualizar } = useChatNaoLidas({
     pausado: chatAberto,
     aoAbrirChat: () => setChatAberto(true),
+  });
+
+  const { role } = useAuth();
+  const navigate = useNavigate();
+  const { abertas } = useTarefasAbertas({
+    ativo: role === "admin",
+    aoAbrirTarefas: () => void navigate({ to: "/tarefas" }),
   });
 
   const pathname = useRouterState({ select: (r) => r.location.pathname });
@@ -139,6 +148,11 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
                       <Link to={item.to} onClick={fecharSeMobile}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.label}</span>
+                        {item.to === "/tarefas" && abertas > 0 && (
+                          <span className="ml-auto rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground">
+                            {abertas > 99 ? "99+" : abertas}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   ) : (
