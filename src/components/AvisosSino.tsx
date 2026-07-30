@@ -162,9 +162,22 @@ export function AvisosSino() {
    * Realtime: qualquer inserção/atualização nas notificações do usuário
    * recarrega a lista e recalcula os badges na hora. Se o painel já estiver
    * aberto na aba de notificações, marca como lida automaticamente.
+   * A assinatura é criada só com a aba do navegador visível e derrubada
+   * assim que o usuário sai, para não manter conexão/consumo em segundo plano.
    */
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !visivel) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const agendar = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        void (async () => {
+          await carregar();
+          if (abaNotifAbertaRef.current) await marcarNotifRef.current();
+        })();
+      }, 600);
+    };
+
     const canal = supabase
       .channel(`avisos-${userId}`)
       .on(
@@ -175,18 +188,15 @@ export function AvisosSino() {
           table: "notificacoes",
           filter: `user_id=eq.${userId}`,
         },
-        () => {
-          void (async () => {
-            await carregar();
-            if (abaNotifAbertaRef.current) await marcarNotifRef.current();
-          })();
-        },
+        agendar,
       )
       .subscribe();
     return () => {
+      if (timer) clearTimeout(timer);
       void supabase.removeChannel(canal);
     };
-  }, [userId, carregar]);
+  }, [userId, carregar, visivel]);
+
 
 
   async function handleOpenChange(v: boolean) {
