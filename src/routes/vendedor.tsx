@@ -129,13 +129,13 @@ function VendedorArea() {
       if (erroCls) throw new Error(erroCls.message);
       const rows = (cls ?? []) as unknown as ClienteRow[];
 
-      const ids = Array.from(new Set(rows.map((r) => r.user_id)));
-      if (ids.length) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id,nome,email")
-          .in("id", ids);
-        const map = new Map((profs ?? []).map((p) => [p.id, p]));
+      const map = await buscarPerfis(rows.map((r) => r.user_id));
+      {
+        rows.forEach((r) => {
+          const p = map.get(r.user_id);
+          r.nome = p?.nome || undefined;
+          r.email = p?.email || undefined;
+
         rows.forEach((r) => {
           const p = map.get(r.user_id);
           r.nome = p?.nome || undefined;
