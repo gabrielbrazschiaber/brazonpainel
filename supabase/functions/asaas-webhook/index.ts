@@ -133,13 +133,11 @@ Deno.serve(async (req) => {
 
     const event = payload.event
     const payment = payload.payment
+    const subscription = payload.subscription
 
-    if (!event || !payment) {
+    if (!event || (!payment && !subscription)) {
       return new Response('Payload inválido', { status: 400 })
     }
-
-    const asaasPaymentId = payment.id
-    const asaasStatus = payment.status
 
     // Inicializa o cliente do Supabase com a Service Role Key para ignorar RLS
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -155,6 +153,80 @@ Deno.serve(async (req) => {
         persistSession: false
       }
     })
+
+    // ---------- Caminho 1: eventos de assinatura (SUBSCRIPTION_*) ----------
+    if (subscription && !payment) {
+      const subId = subscription.id ?? null
+      const subStatus = subscription.status ?? null
+      const encerrada =
+        EVENTOS_ASSINATURA_ENCERRADA.includes(event) || subscription.deleted === true
+
+      let resultado = encerrada ? 'OK' : 'SUBSCRIPTION_IGNORED'
+      let erro: string | null = null
+
+      if (encerrada) {
+        const { data: cli } = await supabase
+          .from('clientes')
+          .select('id')
+          .eq('asaas_subscription_id', subId)
+          .maybeSingle()
+
+        if (!cli) {
+          console.warn(`[Asaas Webhook] Nenhum cliente para a assinatura ${subId}`)
+          resultado = 'NOT_FOUND'
+          erro = `Nenhum cliente local encontrado para a assinatura ${subId}`
+        } else {
+          const { error: updErr } = await supabase
+            .from('clientes')
+            .update({
+              status: 'cancelado' as ClienteStatus,
+              asaas_subscription_id: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', cli.id)
+
+          if (updErr) {
+            console.error('[Asaas Webhook] Erro ao cancelar cliente:', updErr.message)
+            resultado = 'ERROR'
+            erro = updErr.message
+          } else {
+            try {
+              await supabase.from('auditoria').insert({
+                actor_id: null,
+                actor_email: 'asaas-webhook',
+                actor_role: null,
+                acao: 'webhook_assinatura_cancelada',
+                entidade: 'cliente',
+                entidade_id: cli.id,
+                detalhes: {
+                  asaas_subscription_id: subId,
+                  evento: event,
+                  status_assinatura: subStatus,
+                },
+              })
+            } catch (auditErr) {
+              console.warn('[Asaas Webhook] Erro ao registrar auditoria:', auditErr)
+            }
+          }
+        }
+      } else {
+        // SUBSCRIPTION_CREATED/UPDATED e demais: apenas registramos.
+        // A fonte da verdade do valor é o banco local (sincronizarAssinaturaCliente).
+        console.log(`[Asaas Webhook] Evento de assinatura ${event} apenas registrado.`)
+      }
+
+      await logWebhook(supabase, event, subId, subStatus, payload, resultado, erro)
+
+      return new Response(JSON.stringify({ success: true, processed: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    // ---------- Caminho 2: eventos de cobrança (fluxo original) ----------
+    const asaasPaymentId = payment.id
+    const asaasStatus = payment.status
+
 
     // Mapeamento do status de pagamento do Asaas para o banco local
     let mappedPaymentStatus: PagamentoStatus = 'pendente'
