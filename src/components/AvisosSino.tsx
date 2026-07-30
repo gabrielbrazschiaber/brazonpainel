@@ -48,6 +48,8 @@ interface Novidade {
 export function AvisosSino() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
+  const visivel = usePaginaVisivel();
+
   const marcarVistas = useServerFn(marcarNovidadesVistas);
   const marcarLidas = useServerFn(marcarNotificacoesLidas);
   const contarNaoLidos = useServerFn(contarAvisosNaoLidos);
