@@ -175,7 +175,14 @@ const cadastroPublicoSchema = novoClienteSchema
   .extend({
     // Indicação é opcional: o cliente pode se cadastrar e comprar sozinho.
     ref: z.string().trim().max(60).optional().nullable(),
-    cupom: z.string().trim().max(40).optional().nullable(),
+    cupom: z
+      .string()
+      .trim()
+      .max(40)
+      .regex(/^[A-Za-z0-9_-]+$/, "Código de cupom inválido.")
+      .optional()
+      .nullable()
+      .or(z.literal("")),
     // Aceite obrigatório do Termo de Uso — o texto registrado vem do servidor.
     aceite_termos: z.literal(true),
     termos_versao: z.string().trim().min(1).max(40),
