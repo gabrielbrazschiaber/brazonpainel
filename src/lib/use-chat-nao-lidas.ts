@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { listarConversas } from "@/lib/chat.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { usePaginaVisivel } from "@/lib/use-pagina-visivel";
+
 
 type Opcoes = {
   /** Quando true, o chat está aberto e o polling de fundo é suspenso. */
