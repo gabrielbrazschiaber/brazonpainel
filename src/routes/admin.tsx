@@ -257,6 +257,9 @@ function AdminArea() {
     load();
   }, [load]);
 
+  // Hooks precisam vir antes de qualquer retorno condicional.
+  const { secao: secaoBuscada } = Route.useSearch();
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -266,7 +269,7 @@ function AdminArea() {
   }
 
   const navItems = ADMIN_NAV_ITEMS;
-  const { secao: secaoBuscada } = Route.useSearch();
+
 
   const renderSecao: Record<string, () => React.ReactNode> = {
     cupons: () => <CuponsTab />,
