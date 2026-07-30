@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VendedorRouteImport } from './routes/vendedor'
 import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
 import { Route as TarefasRouteImport } from './routes/tarefas'
+import { Route as SolicitacoesRouteImport } from './routes/solicitacoes'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as MeusAceitesRouteImport } from './routes/meus-aceites'
@@ -37,6 +38,11 @@ const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
 const TarefasRoute = TarefasRouteImport.update({
   id: '/tarefas',
   path: '/tarefas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SolicitacoesRoute = SolicitacoesRouteImport.update({
+  id: '/solicitacoes',
+  path: '/solicitacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/solicitacoes': typeof SolicitacoesRoute
   '/tarefas': typeof TarefasRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/solicitacoes': typeof SolicitacoesRoute
   '/tarefas': typeof TarefasRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/solicitacoes': typeof SolicitacoesRoute
   '/tarefas': typeof TarefasRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/meus-aceites'
     | '/redefinir-senha'
     | '/sitemap.xml'
+    | '/solicitacoes'
     | '/tarefas'
     | '/termos-de-uso'
     | '/vendedor'
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/meus-aceites'
     | '/redefinir-senha'
     | '/sitemap.xml'
+    | '/solicitacoes'
     | '/tarefas'
     | '/termos-de-uso'
     | '/vendedor'
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/meus-aceites'
     | '/redefinir-senha'
     | '/sitemap.xml'
+    | '/solicitacoes'
     | '/tarefas'
     | '/termos-de-uso'
     | '/vendedor'
@@ -206,6 +218,7 @@ export interface RootRouteChildren {
   MeusAceitesRoute: typeof MeusAceitesRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SolicitacoesRoute: typeof SolicitacoesRoute
   TarefasRoute: typeof TarefasRoute
   TermosDeUsoRoute: typeof TermosDeUsoRoute
   VendedorRoute: typeof VendedorRoute
@@ -235,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/tarefas'
       fullPath: '/tarefas'
       preLoaderRoute: typeof TarefasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solicitacoes': {
+      id: '/solicitacoes'
+      path: '/solicitacoes'
+      fullPath: '/solicitacoes'
+      preLoaderRoute: typeof SolicitacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -326,6 +346,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeusAceitesRoute: MeusAceitesRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SolicitacoesRoute: SolicitacoesRoute,
   TarefasRoute: TarefasRoute,
   TermosDeUsoRoute: TermosDeUsoRoute,
   VendedorRoute: VendedorRoute,
