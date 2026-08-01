@@ -57,6 +57,7 @@ import {
 import { ComercialDashboard } from "@/components/comercial/ComercialDashboard";
 import { LeadDetalheSheet } from "@/components/comercial/LeadDetalheSheet";
 import { LeadFormDialog } from "@/components/comercial/LeadFormDialog";
+import { FollowUpsPanel } from "@/components/comercial/FollowUpsPanel";
 
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
@@ -364,6 +365,12 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             </Select>
           )}
         </div>
+
+        <FollowUpsPanel
+          isAdmin={isAdmin}
+          vendedorId={filtroVendedor}
+          onAtualizado={() => void recarregar()}
+        />
 
         {carregando && !dados ? (
           <div className="flex justify-center py-16">
