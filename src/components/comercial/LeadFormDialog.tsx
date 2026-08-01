@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -215,14 +217,18 @@ export function LeadFormDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="telefone">Telefone *</Label>
-            <Input
-              id="telefone"
-              value={form.telefone}
-              placeholder="(11) 99999-9999"
-              onChange={(e) => campo("telefone")(e.target.value)}
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                id="telefone"
+                value={form.telefone}
+                placeholder="(11) 99999-9999"
+                onChange={(e) => campo("telefone")(e.target.value)}
+              />
+              <WhatsAppIndicator telefone={form.telefone} />
+            </div>
             {erros.telefone && <p className="text-xs text-destructive">{erros.telefone}</p>}
           </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="email">E-mail</Label>
             <Input

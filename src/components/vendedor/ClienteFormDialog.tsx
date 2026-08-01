@@ -17,6 +17,8 @@ import {
 } from "@/lib/cliente-form";
 
 import { formatCurrency } from "@/lib/format";
+import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -364,16 +366,20 @@ export function ClienteFormDialog({
               </div>
               <div className="grid gap-2">
                 <Label htmlFor={`${p}tel`}>Telefone (opcional)</Label>
-                <Input
-                  id={`${p}tel`}
-                  inputMode="tel"
-                  value={values.telefone}
-                  aria-invalid={invalido("telefone")}
-                  onChange={(e) => set("telefone", e.target.value)}
-                  placeholder="(00) 00000-0000"
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id={`${p}tel`}
+                    inputMode="tel"
+                    value={values.telefone}
+                    aria-invalid={invalido("telefone")}
+                    onChange={(e) => set("telefone", e.target.value)}
+                    placeholder="(00) 00000-0000"
+                  />
+                  <WhatsAppIndicator telefone={values.telefone} />
+                </div>
                 <Erro campo="telefone" />
               </div>
+
             </div>
 
             {editando && (
