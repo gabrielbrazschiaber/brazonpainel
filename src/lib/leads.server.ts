@@ -159,10 +159,16 @@ export async function listarLeadsServer(
 
   let query = supabase
     .from("leads")
-    .select(CAMPOS_LEAD, { count: "exact" })
-    .order("created_at", { ascending: false })
-    // Busca 1 registro extra para saber se existe próxima página.
-    .range(inicio, inicio + porPagina);
+    .select(CAMPOS_LEAD, { count: "exact" });
+
+  // Ordenação: mais recentes (padrão) ou mais incompletos primeiro.
+  query =
+    filtros.ordem === "completude"
+      ? query.order("completude", { ascending: true }).order("created_at", { ascending: false })
+      : query.order("created_at", { ascending: false });
+
+  // Busca 1 registro extra para saber se existe próxima página.
+  query = query.range(inicio, inicio + porPagina);
 
   // Vendedor: a RLS já limita aos seus; o vendedor_id recebido é ignorado.
   if (escopo.isAdmin && filtros.vendedor_id) {
@@ -171,6 +177,8 @@ export async function listarLeadsServer(
   if (filtros.estagio) query = query.eq("estagio", filtros.estagio);
   if (filtros.origem) query = query.eq("origem", filtros.origem);
   if (filtros.segmento) query = query.eq("segmento", filtros.segmento);
+  if (filtros.importacao_id) query = query.eq("importacao_id", filtros.importacao_id);
+  if (filtros.apenas_incompletos) query = query.lt("completude", 4);
 
   const limite = dataLimite(filtros.dias);
   if (limite) query = query.gte("contatado_em", limite);
