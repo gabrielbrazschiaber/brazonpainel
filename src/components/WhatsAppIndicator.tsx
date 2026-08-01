@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { linkWhatsApp } from "@/lib/leads";
 import {
   WHATSAPP_CORES,
-  WHATSAPP_MENSAGEM,
+  mensagemTooltipWhatsApp,
   statusWhatsApp,
   type WhatsAppStatus,
 } from "@/lib/whatsapp";
@@ -36,7 +36,7 @@ export function WhatsAppIndicator({
 }) {
   const st = status ?? statusWhatsApp(telefone);
   const ativo = st === "ativo";
-  const mensagem = WHATSAPP_MENSAGEM[st];
+  const mensagem = mensagemTooltipWhatsApp(telefone);
 
   const icone = (
     <span
@@ -70,7 +70,7 @@ export function WhatsAppIndicator({
             <span className="inline-flex">{icone}</span>
           )}
         </TooltipTrigger>
-        <TooltipContent>{mensagem}</TooltipContent>
+        <TooltipContent className="max-w-xs text-center">{mensagem}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

@@ -1,6 +1,6 @@
 import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
 import { useCallback, useEffect, useState } from "react";
-import { statusWhatsApp, WHATSAPP_MENSAGEM, type WhatsAppStatus } from "@/lib/whatsapp";
+import { mensagemTooltipWhatsApp, statusWhatsApp, type WhatsAppStatus } from "@/lib/whatsapp";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -256,7 +256,7 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
                   href={linkWhatsApp(lead.telefone)}
                   target="_blank"
                   rel="noreferrer"
-                  title={WHATSAPP_MENSAGEM[zap]}
+                  title={mensagemTooltipWhatsApp(lead.telefone)}
                 >
                   WhatsApp
                 </a>
