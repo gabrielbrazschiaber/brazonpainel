@@ -600,11 +600,10 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                       <span className="text-right">
                         {l.reunioes_count} reuniã{l.reunioes_count === 1 ? "o" : "es"}
                       </span>
-                      {l.proximo_contato && (
-                        <span className="col-span-2">
-                          Próximo contato: {formatDate(l.proximo_contato)}
-                        </span>
-                      )}
+                      <span className="col-span-2">
+                        Próximo contato: <ProximoContatoCell lead={l} />
+                      </span>
+
                     </div>
                   </Card>
                 ))}
