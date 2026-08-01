@@ -335,3 +335,54 @@
     transform: none;
   }
 }
+
+/* ── Acessibilidade no modo escuro ───────────────────────────────
+   Foco mais visível e hover com contraste suficiente (WCAG AA). */
+.dark {
+  /* anel de foco com halo escuro para destacar em superfícies claras */
+  --focus-halo: 0 0 0 1px oklch(0.17 0.02 285);
+}
+
+.dark :focus-visible {
+  outline: 3px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+/* Hover perceptível em elementos interativos translúcidos */
+.dark a:hover,
+.dark [role="button"]:hover,
+.dark button:not(:disabled):hover {
+  --tw-hover-boost: 1;
+}
+
+.dark button:not(:disabled):hover,
+.dark [role="menuitem"]:hover,
+.dark [role="option"]:hover,
+.dark [role="tab"]:hover {
+  color: var(--color-foreground);
+}
+
+/* Bordas de campos ficam mais nítidas ao interagir */
+.dark input:hover:not(:disabled),
+.dark textarea:hover:not(:disabled),
+.dark select:hover:not(:disabled) {
+  border-color: color-mix(in oklab, var(--color-primary) 65%, transparent);
+}
+
+.dark input:focus-visible,
+.dark textarea:focus-visible,
+.dark select:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ring) 45%, transparent);
+}
+
+/* Links com contraste e sublinhado no hover */
+.dark a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Estados desabilitados legíveis (não abaixo de 3:1) */
+.dark :disabled,
+.dark [aria-disabled="true"] {
+  opacity: 0.65;
+}
