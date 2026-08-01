@@ -1,7 +1,16 @@
 import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertCircle, FileSpreadsheet, Info, Loader2, Upload } from "lucide-react";
+import {
+  AlertCircle,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Info,
+  Loader2,
+  Trash2,
+  Upload,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
