@@ -754,23 +754,59 @@ export function ImportarBancoDialog({
                 </Table>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium text-foreground">
-                  Prévia da importação
-                  <span className="ml-2 text-xs font-normal text-muted-foreground">
-                    {comProblema.length} linha(s) a conferir · {totalAvisos} aviso(s)
-                  </span>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-foreground">
+                    Prévia da importação
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      {comProblema.length} linha(s) a conferir · {totalAvisos} aviso(s)
+                    </span>
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={soProblemas ? "default" : "outline"}
+                    onClick={() => setSoProblemas((v) => !v)}
+                    disabled={comProblema.length === 0}
+                  >
+                    {soProblemas ? "Mostrar todas as linhas" : "Só linhas com aviso ou erro"}
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => excluirCriticas()}
+                    disabled={aExcluirCriticas === 0}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir {aExcluirCriticas || ""} linha(s) com problema
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setExcluidas([])}
+                    disabled={excluidas.length === 0}
+                  >
+                    Restaurar {excluidas.length} excluída(s)
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => baixarCsv()}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Relatório CSV
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => baixarPdf()}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Relatório PDF
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Excluir remove da confirmação as linhas com erro ou aviso crítico (CNPJ corrompido,
+                  irreconhecível ou com dígito inválido) — as demais continuam válidas.
                 </p>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={soProblemas ? "default" : "outline"}
-                  onClick={() => setSoProblemas((v) => !v)}
-                  disabled={comProblema.length === 0}
-                >
-                  {soProblemas ? "Mostrar todas as linhas" : "Só linhas com aviso ou erro"}
-                </Button>
               </div>
+
 
               <div className="overflow-x-auto rounded-md border border-border">
                 <Table>
