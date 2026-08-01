@@ -186,6 +186,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const [segmento, setSegmento] = useState("todos");
   const [origem, setOrigem] = useState<LeadOrigem | "todas">("todas");
   const [followUp, setFollowUp] = useState(false);
+  const [soZap, setSoZap] = useState(false);
 
   const [formAberto, setFormAberto] = useState(false);
   const [editando, setEditando] = useState<Lead | null>(null);
@@ -289,6 +290,11 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const listaSegmentos = useMemo(() => segmentos, [segmentos]);
   /** Status de WhatsApp calculado uma vez por carregamento da lista. */
   const statusZap = useMemo(() => mapaWhatsApp(leads), [leads]);
+  /** Filtro local: mostra apenas contatos com WhatsApp ativo. */
+  const leadsVisiveis = useMemo(
+    () => (soZap ? leads.filter((l) => statusZap.get(l.id) === "ativo") : leads),
+    [leads, soZap, statusZap],
+  );
 
 
   async function confirmarExclusao() {
@@ -434,12 +440,21 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             </Select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Switch id="follow-up" checked={followUp} onCheckedChange={setFollowUp} />
-            <Label htmlFor="follow-up" className="text-sm">
-              Só follow-up de hoje
-            </Label>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <div className="flex items-center gap-2">
+              <Switch id="follow-up" checked={followUp} onCheckedChange={setFollowUp} />
+              <Label htmlFor="follow-up" className="text-sm">
+                Só follow-up de hoje
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="so-whatsapp" checked={soZap} onCheckedChange={setSoZap} />
+              <Label htmlFor="so-whatsapp" className="text-sm">
+                Só com WhatsApp ativo
+              </Label>
+            </div>
           </div>
+
 
           {carregando ? (
             <>
@@ -469,17 +484,26 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                 <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
               </Button>
             </div>
-          ) : leads.length === 0 ? (
+          ) : leadsVisiveis.length === 0 ? (
             <EmptyState
               icon={Target}
-              titulo="Nenhum lead ainda. Cadastre o primeiro contato do dia."
-              descricao="Cada lead cadastrado alimenta o funil e as taxas de conversão desta página."
+              titulo={
+                soZap
+                  ? "Nenhum lead com WhatsApp ativo nos filtros atuais."
+                  : "Nenhum lead ainda. Cadastre o primeiro contato do dia."
+              }
+              descricao={
+                soZap
+                  ? "Confira se os telefones estão cadastrados com DDD e número de celular."
+                  : "Cada lead cadastrado alimenta o funil e as taxas de conversão desta página."
+              }
             />
           ) : (
             <>
               {/* Mobile: cards empilhados */}
               <div className="space-y-3 sm:hidden">
-                {leads.map((l) => (
+                {leadsVisiveis.map((l) => (
+
                   <Card
                     key={l.id}
                     className="cursor-pointer space-y-2 p-4"
@@ -526,7 +550,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                 <Table>
                   <CabecalhoLeads />
                   <TableBody>
-                    {leads.map((l) => (
+                    {leadsVisiveis.map((l) => (
                       <TableRow key={l.id} className="cursor-pointer" onClick={() => setDetalhe(l)}>
                         <TableCell>
                           <p className="font-medium">{l.nome_contato}</p>
@@ -596,7 +620,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                 className="flex flex-col items-center gap-2 pt-2 text-xs text-muted-foreground"
               >
                 <span aria-live="polite">
-                  Mostrando {leads.length} de {total} lead{total === 1 ? "" : "s"}
+                  Mostrando {leadsVisiveis.length} de {total} lead{total === 1 ? "" : "s"}
+                  {soZap ? " (só com WhatsApp ativo)" : ""}
                 </span>
 
                 {carregandoMais && (

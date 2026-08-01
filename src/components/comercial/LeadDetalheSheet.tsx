@@ -1,5 +1,6 @@
 import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
 import { useCallback, useEffect, useState } from "react";
+import { statusWhatsApp, WHATSAPP_MENSAGEM, type WhatsAppStatus } from "@/lib/whatsapp";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -71,6 +72,8 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
   const [nota, setNota] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [carregando, setCarregando] = useState(false);
+  /** Revalidado sempre que a tela abre, para refletir telefones editados há pouco. */
+  const [zap, setZap] = useState<WhatsAppStatus>(() => statusWhatsApp(lead?.telefone));
 
   const [formReuniao, setFormReuniao] = useState({
     aberto: false,
@@ -101,6 +104,12 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
   useEffect(() => {
     if (aberto && lead) void recarregar();
   }, [aberto, lead, recarregar]);
+
+  // Reverifica o WhatsApp ao abrir o detalhe (o telefone pode ter sido editado).
+  useEffect(() => {
+    if (aberto) setZap(statusWhatsApp(lead?.telefone));
+  }, [aberto, lead?.telefone]);
+
 
   if (!lead) return null;
 
@@ -242,12 +251,17 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
                   <Phone className="mr-2 h-4 w-4" /> Ligar
                 </a>
               </Button>
-              <Button asChild variant="outline" size="sm">
-                <a href={linkWhatsApp(lead.telefone)} target="_blank" rel="noreferrer">
+              <Button asChild variant="outline" size="sm" disabled={zap !== "ativo"}>
+                <a
+                  href={linkWhatsApp(lead.telefone)}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={WHATSAPP_MENSAGEM[zap]}
+                >
                   WhatsApp
                 </a>
               </Button>
-              <WhatsAppIndicator telefone={lead.telefone} />
+              <WhatsAppIndicator telefone={lead.telefone} status={zap} />
             </div>
 
             <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -255,9 +269,10 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
                 <dt className="text-muted-foreground">Telefone</dt>
                 <dd className="flex items-center gap-1.5">
                   {lead.telefone}
-                  <WhatsAppIndicator telefone={lead.telefone} size="sm" />
+                  <WhatsAppIndicator telefone={lead.telefone} status={zap} size="sm" />
                 </dd>
               </div>
+
 
               <div>
                 <dt className="text-muted-foreground">E-mail</dt>
