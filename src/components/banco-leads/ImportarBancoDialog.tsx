@@ -766,7 +766,13 @@ export function ImportarBancoDialog({
                           {l.cnae_codigo ? formatarCnae(l.cnae_codigo) : "—"}
                         </TableCell>
                         <TableCell className="min-w-[11rem] align-top">
+                          {l.erro ? (
+                            <Badge variant="destructive" className="mb-1 sm:hidden">
+                              {l.erro}
+                            </Badge>
+                          ) : null}
                           {l.avisos.length ? (
+
                             <div className="flex flex-wrap gap-1">
                               {l.avisos.map((a) => {
                                 const explica =
