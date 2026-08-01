@@ -52,6 +52,7 @@ import {
   ClipboardList,
   Share2,
   Ticket,
+  Target,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
