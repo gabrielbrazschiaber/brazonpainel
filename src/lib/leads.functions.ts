@@ -3,6 +3,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   atividadeSchema,
   dashboardSchema,
+  followUpsSchema,
+  reagendarFollowUpSchema,
   idSchema,
   leadIdSchema,
   listarLeadsSchema,
@@ -17,6 +19,8 @@ export type {
   Reuniao,
   DashboardComercial,
   ListaLeads,
+  FollowUp,
+  PainelFollowUps,
 } from "@/lib/leads.server";
 
 export const listarLeads = createServerFn({ method: "GET" })
@@ -103,4 +107,20 @@ export const dashboardComercial = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { dashboardComercialServer } = await import("@/lib/leads.server");
     return dashboardComercialServer(context.supabase, context.userId, data);
+  });
+
+export const painelFollowUps = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => followUpsSchema.parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const { followUpsServer } = await import("@/lib/leads.server");
+    return followUpsServer(context.supabase, context.userId, data);
+  });
+
+export const reagendarFollowUp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => reagendarFollowUpSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { reagendarFollowUpServer } = await import("@/lib/leads.server");
+    return reagendarFollowUpServer(context.supabase, context.userId, data);
   });

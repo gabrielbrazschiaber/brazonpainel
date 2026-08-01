@@ -105,6 +105,16 @@ export const salvarReuniaoSchema = z.object({
   nova_data: z.string().trim().optional(),
 });
 
+export const followUpsSchema = z.object({
+  vendedor_id: z.string().uuid().optional(),
+  limite: z.number().int().min(1).max(100).optional(),
+});
+
+export const reagendarFollowUpSchema = z.object({
+  id: z.string().uuid(),
+  proximo_contato: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
+});
+
 export const dashboardSchema = z.object({
   dias: z.number().int().min(0).max(3650).optional(),
   vendedor_id: z.string().uuid().optional(),
