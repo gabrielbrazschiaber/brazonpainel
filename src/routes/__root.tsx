@@ -32,7 +32,6 @@ function NotFoundComponent() {
             Voltar ao início
           </Link>
         </div>
-
       </div>
     </div>
   );
