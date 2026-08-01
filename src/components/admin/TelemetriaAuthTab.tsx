@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { AlertasAcesso } from "@/components/admin/AlertasAcesso";
 import { TraceTimeline } from "@/components/admin/TraceTimeline";
+import { formatDateTime, formatNumber } from "@/lib/format";
 
 interface LinhaResumo {
   app_version: string;
@@ -123,15 +124,15 @@ export function TelemetriaAuthTab() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <Kpi titulo="Eventos" valor={totais.eventos.toLocaleString("pt-BR")} />
+        <Kpi titulo="Eventos" valor={formatNumber(totais.eventos)} />
         <Kpi
           titulo="Falhas de perfil"
-          valor={totais.erros.toLocaleString("pt-BR")}
+          valor={formatNumber(totais.erros)}
           alerta={totais.erros > 0}
         />
         <Kpi
           titulo="Contas sem perfil"
-          valor={totais.semPapel.toLocaleString("pt-BR")}
+          valor={formatNumber(totais.semPapel)}
           alerta={totais.semPapel > 0}
         />
         <Kpi titulo="Mediana (perfil)" valor={`${totais.p50} ms`} />
@@ -148,8 +149,8 @@ export function TelemetriaAuthTab() {
             {problematicas.map((l) => (
               <li key={`${l.app_version}-${l.rota}-${l.tipo}`}>
                 <span className="font-medium text-foreground">{l.rota}</span> ·{" "}
-                {ROTULOS[l.tipo] ?? l.tipo} · versão {l.app_version} ·{" "}
-                {Number(l.total).toLocaleString("pt-BR")} ocorrência(s)
+                {ROTULOS[l.tipo] ?? l.tipo} · versão {l.app_version} · {formatNumber(l.total)}{" "}
+                ocorrência(s)
               </li>
             ))}
           </ul>
@@ -186,9 +187,7 @@ export function TelemetriaAuthTab() {
                 <td className="px-3 py-2 text-right">{Number(l.total)}</td>
                 <td className="px-3 py-2 text-right">{l.p50_ms} ms</td>
                 <td className="px-3 py-2 text-right">{l.p95_ms} ms</td>
-                <td className="px-3 py-2 text-muted-foreground">
-                  {new Date(l.ultima).toLocaleString("pt-BR")}
-                </td>
+                <td className="px-3 py-2 text-muted-foreground">{formatDateTime(l.ultima)}</td>
               </tr>
             ))}
             {!carregando && linhas.length === 0 && (
@@ -279,7 +278,7 @@ function IncidentesPorTrace({
               <code className="rounded bg-muted px-1.5 py-0.5 text-xs">sem trace</code>
             )}
             <span className="text-xs text-muted-foreground">
-              versão {i.app_version} · {new Date(i.created_at).toLocaleString("pt-BR")}
+              versão {i.app_version} · {formatDateTime(i.created_at)}
             </span>
           </li>
         ))}

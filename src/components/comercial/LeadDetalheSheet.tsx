@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
 import {
   ESTAGIOS_COM_MOTIVO,
   ESTAGIO_LABEL,
@@ -424,9 +424,7 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
               reunioes.map((r) => (
                 <Card key={r.id} className="space-y-2 p-4">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium">
-                      {new Date(r.agendada_para).toLocaleString("pt-BR")}
-                    </p>
+                    <p className="text-sm font-medium">{formatDateTime(r.agendada_para)}</p>
                     <Badge variant="outline">{REUNIAO_LABEL[r.status]}</Badge>
                   </div>
                   {r.remarcada_de && (

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { progressoEquipe } from "@/lib/onboarding.functions";
 import { CHAVE_BOAS_VINDAS, TUTORIAIS } from "@/lib/onboarding";
+import { formatDateTime } from "@/lib/format";
 
 type Situacao = "concluido" | "pulado" | "em_andamento" | "nao_iniciado";
 
@@ -298,9 +299,7 @@ export function AuditoriaTutoriaisTab() {
                   <span>Papel: {ROTULO_PAPEL_AUDITORIA[l.papel] ?? l.papel}</span>
                   <span>Vendedor: {l.vendedorNome ?? "—"}</span>
                   <span className="col-span-2">Tutorial: {l.tutorialLabel}</span>
-                  <span className="col-span-2">
-                    Data: {l.em ? new Date(l.em).toLocaleString("pt-BR") : "—"}
-                  </span>
+                  <span className="col-span-2">Data: {formatDateTime(l.em)}</span>
                 </div>
               </Card>
             ))}
@@ -337,7 +336,7 @@ export function AuditoriaTutoriaisTab() {
                       <SituacaoBadge situacao={l.situacao} />
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {l.em ? new Date(l.em).toLocaleString("pt-BR") : "—"}
+                      {formatDateTime(l.em)}
                     </TableCell>
                   </TableRow>
                 ))}

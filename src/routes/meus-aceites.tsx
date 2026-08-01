@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { ChevronLeft, FileCheck2 } from "lucide-react";
 import { listarMeusAceites } from "@/lib/termos.functions";
 import { useAuth, roleHome } from "@/lib/auth";
+import { formatDateTimeShort } from "@/lib/format";
+
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
 import { Button } from "@/components/ui/button";
@@ -51,12 +53,6 @@ const ORIGEM_LABEL: Record<string, string> = {
   cadastro_publico: "Cadastro na plataforma",
   revalidacao: "Aceite de nova versão",
 };
-
-function formatarDataHora(iso: string): string {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
-}
 
 function MeusAceitesPage() {
   const navigate = useNavigate();
@@ -145,7 +141,7 @@ function MeusAceitesPage() {
                           <Badge variant="secondary">Vigente</Badge>
                         ) : null}
                         <span className="text-sm text-muted-foreground">
-                          {formatarDataHora(a.aceito_em)}
+                          {formatDateTimeShort(a.aceito_em)}
                         </span>
                         {a.origem ? (
                           <span className="text-xs text-muted-foreground">
