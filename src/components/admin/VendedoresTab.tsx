@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useProgressoEquipe, BadgeOnboarding } from "@/components/onboarding/ProgressoEquipe";
 import {
@@ -43,6 +43,13 @@ import {
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 import type { VendedorRow } from "@/lib/admin-tipos";
+import { SelecaoMultipla, type OpcaoMultipla } from "@/components/ui/selecao-multipla";
+import { opcoesEscopo } from "@/lib/banco-leads.functions";
+import type { OpcoesEscopo } from "@/lib/banco-leads.functions";
+import { ESTADOS_BR } from "@/lib/banco-leads";
+import { resumoEscopo, SEM_RESTRICAO } from "@/lib/escopo";
+import { formatarCnae } from "@/lib/cnaes";
+import { Separator } from "@/components/ui/separator";
 
 export function VendedoresTab({
   vendedores,
@@ -66,6 +73,39 @@ export function VendedoresTab({
   const [saving, setSaving] = useState(false);
   const [aExcluir, setAExcluir] = useState<VendedorRow | null>(null);
   const [excluindo, setExcluindo] = useState(false);
+  const [segmentos, setSegmentos] = useState<string[]>([]);
+  const [estados, setEstados] = useState<string[]>([]);
+  const [cnaes, setCnaes] = useState<string[]>([]);
+  const [opcoes, setOpcoes] = useState<OpcoesEscopo>({ segmentos: [], cnaes: [] });
+  const buscarOpcoes = useServerFn(opcoesEscopo);
+
+  // Opções reais de segmento e CNAE: sem elas o escopo (e a reserva) fica vazio.
+  useEffect(() => {
+    void (async () => {
+      try {
+        setOpcoes(await buscarOpcoes({}));
+      } catch {
+        setOpcoes({ segmentos: [], cnaes: [] });
+      }
+    })();
+  }, [buscarOpcoes]);
+
+  const opcoesSegmentos: OpcaoMultipla[] = useMemo(
+    () => opcoes.segmentos.map((s) => ({ valor: s, rotulo: s })),
+    [opcoes.segmentos],
+  );
+  const opcoesEstados: OpcaoMultipla[] = useMemo(
+    () => ESTADOS_BR.map((uf) => ({ valor: uf, rotulo: uf })),
+    [],
+  );
+  const opcoesCnaes: OpcaoMultipla[] = useMemo(
+    () =>
+      opcoes.cnaes.map((c) => ({
+        valor: c.codigo,
+        rotulo: `${formatarCnae(c.codigo)}${c.descricao ? ` — ${c.descricao}` : ""}`,
+      })),
+    [opcoes.cnaes],
+  );
 
   function openNew() {
     setEditing(null);
@@ -74,6 +114,9 @@ export function VendedoresTab({
     setCodigo("");
     setComissao("10");
     setSenha("");
+    setSegmentos([]);
+    setEstados([]);
+    setCnaes([]);
     setOpen(true);
   }
 
@@ -84,6 +127,9 @@ export function VendedoresTab({
     setCodigo(v.codigo_indicacao);
     setComissao(String(v.percentual_comissao));
     setSenha("");
+    setSegmentos(v.segmentos ?? []);
+    setEstados(v.estados ?? []);
+    setCnaes(v.cnaes ?? []);
     setOpen(true);
   }
 
@@ -107,6 +153,9 @@ export function VendedoresTab({
             codigo_indicacao: codigo.trim().toUpperCase(),
             percentual_comissao: Number(comissao) || 0,
             senha: senha || "",
+            segmentos,
+            estados,
+            cnaes,
           },
         });
         toast.success("Vendedor atualizado!");
@@ -118,6 +167,9 @@ export function VendedoresTab({
             codigo_indicacao: codigo.trim().toUpperCase(),
             percentual_comissao: Number(comissao) || 0,
             senha: senha || "",
+            segmentos,
+            estados,
+            cnaes,
           },
         });
         if (res.senha_definida) {
@@ -184,6 +236,7 @@ export function VendedoresTab({
               <TableHead className="hidden md:table-cell">Código</TableHead>
               <TableHead className="hidden md:table-cell">Comissão</TableHead>
               <TableHead className="hidden lg:table-cell">Clientes</TableHead>
+              <TableHead className="hidden lg:table-cell">Escopo</TableHead>
               <TableHead>Ativo</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -199,6 +252,9 @@ export function VendedoresTab({
                     cliente
                     {(v.clientes_count ?? 0) === 1 ? "" : "s"}
                   </div>
+                  <div className="mt-1 text-xs text-muted-foreground lg:hidden">
+                    Escopo: {resumoEscopo(v)}
+                  </div>
                   {progressoCarregado && (
                     <div className="mt-1">
                       <BadgeOnboarding concluido={concluidos.has(v.user_id)} />
@@ -210,6 +266,9 @@ export function VendedoresTab({
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{v.percentual_comissao}%</TableCell>
                 <TableCell className="hidden lg:table-cell">{v.clientes_count ?? 0}</TableCell>
+                <TableCell className="hidden max-w-[16rem] lg:table-cell">
+                  <span className="text-xs text-muted-foreground">{resumoEscopo(v)}</span>
+                </TableCell>
                 <TableCell>
                   <Switch checked={v.ativo} onCheckedChange={() => toggleAtivo(v)} />
                 </TableCell>
@@ -233,7 +292,7 @@ export function VendedoresTab({
             ))}
             {vendedores.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
                   Nenhum vendedor cadastrado.
                 </TableCell>
               </TableRow>
@@ -295,6 +354,44 @@ export function VendedoresTab({
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder={editing ? "Deixe em branco para manter" : "Mín. 6 caracteres"}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="grid gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Escopo de atuação</h3>
+                <p className="text-xs text-muted-foreground">
+                  Define quais leads reservados este vendedor pode ver no Banco de leads. Deixe
+                  vazio para não restringir ({SEM_RESTRICAO.toLowerCase()}).
+                </p>
+              </div>
+              <SelecaoMultipla
+                label="Segmentos"
+                placeholder="Todos os segmentos"
+                opcoes={opcoesSegmentos}
+                selecionados={segmentos}
+                onChange={setSegmentos}
+                ajuda="Vazio = vê leads de qualquer segmento."
+                semOpcoesTexto="Nenhum segmento no banco ainda. Importe leads ou cadastre CNAEs."
+              />
+              <SelecaoMultipla
+                label="Estados"
+                placeholder="Todos os estados"
+                opcoes={opcoesEstados}
+                selecionados={estados}
+                onChange={setEstados}
+                ajuda="Vazio = vê leads de qualquer estado."
+              />
+              <SelecaoMultipla
+                label="CNAEs"
+                placeholder="Todos os CNAEs"
+                opcoes={opcoesCnaes}
+                selecionados={cnaes}
+                onChange={setCnaes}
+                ajuda="Vazio = vê leads de qualquer CNAE."
+                semOpcoesTexto="Nenhum CNAE ativo no catálogo. Cadastre em Configurações › CNAEs."
               />
             </div>
           </div>
