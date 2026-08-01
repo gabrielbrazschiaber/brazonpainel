@@ -71,22 +71,28 @@ export async function listarCuponsDoVendedor(
     .eq("vendedor_id", vendedorId)
     .order("created_at", { ascending: false });
 
-  const resultado: CupomVendedorRow[] = [];
-  for (const c of cupons ?? []) {
-    const { count } = await supabaseAdmin
+  const ids = (cupons ?? []).map((c) => c.id);
+
+  // Uma única consulta para todos os cupons (evita N+1).
+  const contagem = new Map<string, number>();
+  if (ids.length > 0) {
+    const { data: usos } = await supabaseAdmin
       .from("cupom_usos")
-      .select("id", { count: "exact", head: true })
-      .eq("cupom_id", c.id);
-    resultado.push({
-      id: c.id,
-      codigo: c.codigo,
-      valor_desconto: Number(c.valor_desconto),
-      ativo: c.ativo,
-      usos: Number(c.usos ?? 0),
-      clientes: count ?? 0,
-    });
+      .select("cupom_id")
+      .in("cupom_id", ids);
+    for (const u of usos ?? []) {
+      contagem.set(u.cupom_id, (contagem.get(u.cupom_id) ?? 0) + 1);
+    }
   }
-  return resultado;
+
+  return (cupons ?? []).map((c) => ({
+    id: c.id,
+    codigo: c.codigo,
+    valor_desconto: Number(c.valor_desconto),
+    ativo: c.ativo,
+    usos: Number(c.usos ?? 0),
+    clientes: contagem.get(c.id) ?? 0,
+  }));
 }
 
 export async function alternarCupomDoVendedor(
