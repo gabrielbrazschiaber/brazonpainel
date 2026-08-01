@@ -30,7 +30,7 @@ export interface Escopo {
   vendedorId: string | null;
 }
 
-const CAMPOS_LEAD =
+export const CAMPOS_LEAD =
   "id, vendedor_id, nome_contato, empresa, cargo, telefone, email, segmento, origem, estagio, valor_estimado, motivo_perda, observacoes, proximo_contato, follow_ups_feitos, ultimo_contato_em, cadencia_encerrada, cliente_id, contatado_em, fechado_em, importacao_id, completude, created_at, updated_at";
 
 export interface Lead {
@@ -92,7 +92,7 @@ export function dataLimite(dias: number | null | undefined): string | null {
 }
 
 /** Nomes de vendedores (perfis) resolvidos em lote via cliente administrativo. */
-async export function nomesVendedores(vendedorIds: string[]): Promise<Map<string, string>> {
+export async function nomesVendedores(vendedorIds: string[]): Promise<Map<string, string>> {
   const mapa = new Map<string, string>();
   const unicos = Array.from(new Set(vendedorIds.filter(Boolean)));
   if (unicos.length === 0) return mapa;
