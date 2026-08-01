@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Pencil, Target, Trash2, UserPlus } from "lucide-react";
@@ -122,6 +122,8 @@ function ComercialPage() {
     </TermosGate>
   );
 }
+
+const POR_PAGINA = 25;
 
 function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }) {
   const carregarLeads = useServerFn(listarLeads);
