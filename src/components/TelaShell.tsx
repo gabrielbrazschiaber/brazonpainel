@@ -7,12 +7,16 @@ import { AvisosSino } from "@/components/AvisosSino";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ErroLimite } from "@/components/ErroLimite";
+import { PularParaConteudo } from "@/components/PularParaConteudo";
+import { Trilha, type TrilhaItem } from "@/components/ui/trilha";
 
 interface TelaShellProps {
   /** rota do painel principal do usuário (destino do "Voltar") */
   voltarPara: string;
   /** nome da área, usado no limite de erro */
   area: string;
+  /** trilha de navegação (breadcrumbs); o último item é a página atual */
+  trilha?: readonly TrilhaItem[];
   /** slot à esquerda do seletor de tema (ex.: ajuda da tela) */
   headerExtra?: ReactNode;
   /** largura máxima do conteúdo */
@@ -28,10 +32,12 @@ interface TelaShellProps {
 export function TelaShell({
   voltarPara,
   area,
+  trilha,
   headerExtra,
   larguraMax = "max-w-6xl",
   children,
 }: TelaShellProps) {
+
   return (
     <div className="min-h-dvh bg-background">
       <header className="glass-header sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border/60 px-2 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-5">
