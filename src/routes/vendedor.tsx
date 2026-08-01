@@ -304,8 +304,12 @@ function VendedorArea() {
                 {clientes.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>
-                      <div className="font-medium text-foreground">{c.nome ?? "—"}</div>
+                      <div className="flex items-center gap-1.5 font-medium text-foreground">
+                        {c.nome ?? "—"}
+                        <WhatsAppIndicator telefone={c.telefone} size="sm" />
+                      </div>
                       <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
+
                       <div className="mt-2 flex flex-wrap gap-2 sm:hidden">
                         <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
                           <MessageSquare className="mr-2 h-4 w-4" />
