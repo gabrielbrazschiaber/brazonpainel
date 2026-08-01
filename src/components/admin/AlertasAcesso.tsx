@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { AlertTriangle, BellRing, RefreshCw, ShieldCheck } from "lucide-react";
+import { formatDateTime, formatNumber } from "@/lib/format";
 
 interface Alerta {
   app_version: string;
@@ -98,10 +99,10 @@ export function AlertasAcesso({ janelaHoras = 6 }: { janelaHoras?: number }) {
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {a.incidentes_janela} falha(s) em {a.eventos_janela} acesso(s) —{" "}
-                {Number(a.taxa_janela).toLocaleString("pt-BR")}% agora contra{" "}
-                {Number(a.taxa_base).toLocaleString("pt-BR")}% na média anterior (
-                {Number(a.fator).toLocaleString("pt-BR")}x). Última em{" "}
-                {new Date(a.ultima).toLocaleString("pt-BR")}.
+                {formatNumber(a.taxa_janela)}% agora contra{" "}
+                {formatNumber(a.taxa_base)}% na média anterior (
+                {formatNumber(a.fator)}x). Última em{" "}
+                {formatDateTime(a.ultima)}.
               </p>
               {a.ultimo_erro && (
                 <p className="mt-1 flex items-start gap-1 break-words text-xs text-destructive">

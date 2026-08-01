@@ -28,3 +28,31 @@ export function initials(name: string | null | undefined): string {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
+
+/**
+ * Data e hora completas (ex.: "01/08/2026 13:20:45").
+ * Usada em auditoria, telemetria e histórico, onde os segundos importam.
+ */
+export function formatDateTime(date: string | Date | null | undefined): string {
+  if (!date) return "—";
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString("pt-BR");
+}
+
+/**
+ * Data e hora curtas (ex.: "01/08/26 13:20"), para listas onde o espaço é
+ * apertado e os segundos não agregam nada.
+ */
+export function formatDateTimeShort(date: string | Date | null | undefined): string {
+  if (!date) return "—";
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
+/** Número no padrão brasileiro (separador de milhar e decimal). */
+export function formatNumber(value: number | string | null | undefined): string {
+  const v = typeof value === "string" ? Number(value) : (value ?? 0);
+  return Number.isFinite(v) ? v.toLocaleString("pt-BR") : "—";
+}
