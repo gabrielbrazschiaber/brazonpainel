@@ -484,17 +484,26 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                 <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
               </Button>
             </div>
-          ) : leads.length === 0 ? (
+          ) : leadsVisiveis.length === 0 ? (
             <EmptyState
               icon={Target}
-              titulo="Nenhum lead ainda. Cadastre o primeiro contato do dia."
-              descricao="Cada lead cadastrado alimenta o funil e as taxas de conversão desta página."
+              titulo={
+                soZap
+                  ? "Nenhum lead com WhatsApp ativo nos filtros atuais."
+                  : "Nenhum lead ainda. Cadastre o primeiro contato do dia."
+              }
+              descricao={
+                soZap
+                  ? "Confira se os telefones estão cadastrados com DDD e número de celular."
+                  : "Cada lead cadastrado alimenta o funil e as taxas de conversão desta página."
+              }
             />
           ) : (
             <>
               {/* Mobile: cards empilhados */}
               <div className="space-y-3 sm:hidden">
-                {leads.map((l) => (
+                {leadsVisiveis.map((l) => (
+
                   <Card
                     key={l.id}
                     className="cursor-pointer space-y-2 p-4"
