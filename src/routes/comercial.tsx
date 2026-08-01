@@ -117,7 +117,7 @@ const PERIODOS = [
 ];
 
 function ComercialPage() {
-  const { loading, session, role } = useAuth();
+  const { loading, session, role, roleResolvido } = useAuth();
   const navigate = useNavigate();
 
   const permitido = role === "admin" || role === "vendedor";
@@ -125,10 +125,13 @@ function ComercialPage() {
   useEffect(() => {
     if (loading) return;
     if (!session) void navigate({ to: "/login", replace: true });
-    else if (role && !permitido) void navigate({ to: roleHome(role), replace: true });
-  }, [loading, session, role, permitido, navigate]);
+    // Redireciona por papel apenas quando ele já está resolvido.
+    else if (roleResolvido && role && !permitido) {
+      void navigate({ to: roleHome(role), replace: true });
+    }
+  }, [loading, session, role, roleResolvido, permitido, navigate]);
 
-  if (loading || !session || !role || !permitido) {
+  if (loading || !session || !roleResolvido || !role || !permitido) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
