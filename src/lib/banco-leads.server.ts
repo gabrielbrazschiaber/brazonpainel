@@ -138,6 +138,7 @@ export async function listarBancoLeadsServer(
   if (filtros.segmento) q = q.eq("segmento", filtros.segmento);
   if (filtros.cidade) q = q.ilike("cidade", `%${filtros.cidade}%`);
   if (filtros.estado) q = q.eq("estado", filtros.estado.toUpperCase());
+  if (filtros.cnae) q = q.eq("cnae_codigo", filtros.cnae.replace(/\D/g, ""));
   if (filtros.lote_id) q = q.eq("lote_id", filtros.lote_id);
   if (isAdmin && filtros.vendedor_id) q = q.eq("puxado_por", filtros.vendedor_id);
   if (filtros.meus) {
@@ -774,6 +775,7 @@ export async function definirEscopoVendedorServer(
     .update({
       segmentos: dados.segmentos,
       estados: dados.estados.map((e) => e.toUpperCase()),
+      cnaes: dados.cnaes,
     })
     .eq("id", dados.vendedor_id)
     .select("id")
@@ -788,6 +790,7 @@ export interface EscopoVendedor {
   nome: string;
   segmentos: string[];
   estados: string[];
+  cnaes: string[];
 }
 
 export async function listarEscoposVendedoresServer(
@@ -797,10 +800,15 @@ export async function listarEscoposVendedoresServer(
   await exigirAdmin(supabase, userId);
   const { data, error } = await supabase
     .from("vendedores")
-    .select("id, segmentos, estados")
+    .select("id, segmentos, estados, cnaes")
     .eq("ativo", true);
   if (error) throw new Error(error.message);
-  const linhas = (data ?? []) as { id: string; segmentos: string[]; estados: string[] }[];
+  const linhas = (data ?? []) as {
+    id: string;
+    segmentos: string[];
+    estados: string[];
+    cnaes: string[] | null;
+  }[];
   const nomes = await nomesDosVendedores(linhas.map((l) => l.id));
   return linhas
     .map((l) => ({
@@ -808,6 +816,7 @@ export async function listarEscoposVendedoresServer(
       nome: nomes.get(l.id) ?? "Vendedor",
       segmentos: l.segmentos ?? [],
       estados: l.estados ?? [],
+      cnaes: l.cnaes ?? [],
     }))
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 }
