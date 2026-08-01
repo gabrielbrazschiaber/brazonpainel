@@ -519,6 +519,7 @@ interface LeadAgregado {
   valor_estimado: number;
   contatado_em: string;
   vendedor_id: string;
+  follow_ups_feitos?: number | null;
 }
 
 function contarFunil(leads: LeadAgregado[]) {
