@@ -19,6 +19,7 @@ import * as Icons from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
+import { GateDependenteDePapel } from "@/components/GateEstado";
 import { TermosGate } from "@/components/TermosGate";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";

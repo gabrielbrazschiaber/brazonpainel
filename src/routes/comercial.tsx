@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { useAuth, roleHome } from "@/lib/auth";
+import { GateDependenteDePapel } from "@/components/GateEstado";
 import { TermosGate } from "@/components/TermosGate";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";

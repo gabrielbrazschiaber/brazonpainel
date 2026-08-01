@@ -6,6 +6,7 @@ import { ArrowLeft, ClipboardList, Plus, Loader2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
+import { GateDependenteDePapel } from "@/components/GateEstado";
 import {
   transicaoPermitida,
   transicoesPermitidas,

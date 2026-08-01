@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth, roleHome } from "@/lib/auth";
+import { GateDependenteDePapel } from "@/components/GateEstado";
 
 export const Route = createFileRoute("/")({
   head: () => ({
