@@ -69,6 +69,10 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
     ativo: role === "admin",
     aoAbrirTarefas: () => void navigate({ to: "/tarefas" }),
   });
+  const { pendentes: followUps } = useFollowUpsPendentes({
+    ativo: role === "admin" || role === "vendedor",
+  });
+
 
   const pathname = useRouterState({ select: (r) => r.location.pathname });
 
