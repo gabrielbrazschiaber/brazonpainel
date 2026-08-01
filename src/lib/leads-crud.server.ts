@@ -1,5 +1,12 @@
 /** Leads: listagem, CRUD, atividades e reuniões. */
-import { CAMPOS_LEAD, escopoComercial, hojeISO, dataLimite, nomesVendedores, nomesDeUsuarios } from "@/lib/leads-base.server";
+import {
+  CAMPOS_LEAD,
+  escopoComercial,
+  hojeISO,
+  dataLimite,
+  nomesVendedores,
+  nomesDeUsuarios,
+} from "@/lib/leads-base.server";
 import type { Sb, Lead } from "@/lib/leads-base.server";
 import { ESTAGIOS_SEM_FOLLOW_UP, apenasDigitos } from "@/lib/leads";
 import type { ReuniaoStatus } from "@/lib/leads";

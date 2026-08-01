@@ -299,9 +299,7 @@ export function AuditoriaTutoriaisTab() {
                   <span>Papel: {ROTULO_PAPEL_AUDITORIA[l.papel] ?? l.papel}</span>
                   <span>Vendedor: {l.vendedorNome ?? "—"}</span>
                   <span className="col-span-2">Tutorial: {l.tutorialLabel}</span>
-                  <span className="col-span-2">
-                    Data: {formatDateTime(l.em)}
-                  </span>
+                  <span className="col-span-2">Data: {formatDateTime(l.em)}</span>
                 </div>
               </Card>
             ))}

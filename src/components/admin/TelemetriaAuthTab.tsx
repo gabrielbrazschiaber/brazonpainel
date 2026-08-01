@@ -149,8 +149,8 @@ export function TelemetriaAuthTab() {
             {problematicas.map((l) => (
               <li key={`${l.app_version}-${l.rota}-${l.tipo}`}>
                 <span className="font-medium text-foreground">{l.rota}</span> ·{" "}
-                {ROTULOS[l.tipo] ?? l.tipo} · versão {l.app_version} ·{" "}
-                {formatNumber(l.total)} ocorrência(s)
+                {ROTULOS[l.tipo] ?? l.tipo} · versão {l.app_version} · {formatNumber(l.total)}{" "}
+                ocorrência(s)
               </li>
             ))}
           </ul>
@@ -187,9 +187,7 @@ export function TelemetriaAuthTab() {
                 <td className="px-3 py-2 text-right">{Number(l.total)}</td>
                 <td className="px-3 py-2 text-right">{l.p50_ms} ms</td>
                 <td className="px-3 py-2 text-right">{l.p95_ms} ms</td>
-                <td className="px-3 py-2 text-muted-foreground">
-                  {formatDateTime(l.ultima)}
-                </td>
+                <td className="px-3 py-2 text-muted-foreground">{formatDateTime(l.ultima)}</td>
               </tr>
             ))}
             {!carregando && linhas.length === 0 && (

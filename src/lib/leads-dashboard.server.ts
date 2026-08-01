@@ -4,9 +4,7 @@ import type { Sb } from "@/lib/leads-base.server";
 import { ESTAGIOS_FECHADOS, ESTAGIOS_SEM_FOLLOW_UP, razao } from "@/lib/leads";
 import type { LeadEstagio, ReuniaoStatus } from "@/lib/leads";
 import type { z } from "zod";
-import type {
-  dashboardSchema,
-} from "@/lib/leads.schemas";
+import type { dashboardSchema } from "@/lib/leads.schemas";
 
 // ---------------------------------------------------------------------------
 // Dashboard: tudo agregado no servidor.

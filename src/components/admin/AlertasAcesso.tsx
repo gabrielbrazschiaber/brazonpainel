@@ -99,10 +99,8 @@ export function AlertasAcesso({ janelaHoras = 6 }: { janelaHoras?: number }) {
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {a.incidentes_janela} falha(s) em {a.eventos_janela} acesso(s) —{" "}
-                {formatNumber(a.taxa_janela)}% agora contra{" "}
-                {formatNumber(a.taxa_base)}% na média anterior (
-                {formatNumber(a.fator)}x). Última em{" "}
-                {formatDateTime(a.ultima)}.
+                {formatNumber(a.taxa_janela)}% agora contra {formatNumber(a.taxa_base)}% na média
+                anterior ({formatNumber(a.fator)}x). Última em {formatDateTime(a.ultima)}.
               </p>
               {a.ultimo_erro && (
                 <p className="mt-1 flex items-start gap-1 break-words text-xs text-destructive">
