@@ -1,5 +1,6 @@
 import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
 import { useCallback, useEffect, useState } from "react";
+import { statusWhatsApp, WHATSAPP_MENSAGEM, type WhatsAppStatus } from "@/lib/whatsapp";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
