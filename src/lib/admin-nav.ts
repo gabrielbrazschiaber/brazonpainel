@@ -1,4 +1,5 @@
 import {
+  Activity,
   ClipboardList,
   KeyRound,
   LayoutDashboard,
@@ -100,6 +101,14 @@ export const SECOES_CONFIG_META: readonly SecaoConfigMeta[] = [
     label: "Auditoria",
     descricao: "Histórico de alterações",
     icon: ScrollText,
+    permissao: "auditoria.ler",
+    roles: ["admin"],
+  },
+  {
+    value: "telemetria",
+    label: "Acesso e sessão",
+    descricao: "Métricas de login e regressões",
+    icon: Activity,
     permissao: "auditoria.ler",
     roles: ["admin"],
   },

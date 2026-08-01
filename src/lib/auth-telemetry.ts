@@ -4,8 +4,13 @@
  * papel". Sem isso, um falso positivo de bloqueio ("Acesso não liberado")
  * é indistinguível de uma conta realmente sem perfil.
  *
+ * Além do buffer em memória (usado por testes e suporte), os eventos relevantes
+ * são gravados em `auth_telemetria` para o painel do admin comparar versões e
+ * rotas ao longo do tempo.
+ *
  * Não envia dados pessoais: apenas ids técnicos, durações e desfechos.
  */
+import { supabase } from "@/integrations/supabase/client";
 
 export type AuthTelemetryEvent =
   | { tipo: "sessao_resolvida"; comSessao: boolean; duracaoMs: number }
@@ -25,7 +30,12 @@ export type AuthTelemetryEvent =
       motivo: MotivoCarga;
       erro: string;
     }
-  | { tipo: "papel_retry"; userId: string | null }
+  | {
+      tipo: "papel_retry";
+      userId: string | null;
+      tentativa?: number;
+      automatico?: boolean;
+    }
   | { tipo: "troca_de_conta"; deUserId: string | null; paraUserId: string };
 
 export type MotivoCarga = "inicial" | "troca_de_conta" | "retry" | "auth_event";
@@ -34,6 +44,11 @@ type EventoRegistrado = AuthTelemetryEvent & { emMs: number; rota: string };
 
 const MAX_EVENTOS = 50;
 const eventos: EventoRegistrado[] = [];
+
+/** Versão do build — permite comparar regressões entre publicações. */
+export const APP_VERSION: string =
+  (import.meta.env["VITE_APP_VERSION"] as string | undefined) ??
+  (import.meta.env.MODE === "production" ? "producao" : "desenvolvimento");
 
 declare global {
   interface Window {
@@ -46,8 +61,7 @@ declare global {
   }
 }
 
-const agora = () =>
-  typeof performance !== "undefined" ? performance.now() : Date.now();
+const agora = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
 /** Cronômetro simples: `const fim = iniciarMedicao(); fim() // ms` */
 export function iniciarMedicao(): () => number {
@@ -66,7 +80,93 @@ function debugAtivo(): boolean {
   }
 }
 
-/** Registra um evento de telemetria de auth (memória + Sentry + console opcional). */
+/* ------------------------------ persistência ------------------------------ */
+
+interface LinhaTelemetria {
+  user_id: string | null;
+  tipo: string;
+  motivo: string | null;
+  rota: string;
+  duracao_ms: number | null;
+  papel: string | null;
+  erro: string | null;
+  app_version: string;
+  user_agent: string | null;
+}
+
+/** `papel_inicio` é ruído: só o desfecho interessa para métricas. */
+const TIPOS_PERSISTIDOS = new Set([
+  "sessao_resolvida",
+  "papel_resolvido",
+  "papel_sem_papel",
+  "papel_erro",
+  "papel_retry",
+  "troca_de_conta",
+]);
+
+const fila: LinhaTelemetria[] = [];
+const LOTE_MAX = 20;
+const ESPERA_MS = 3000;
+let agendado: ReturnType<typeof setTimeout> | null = null;
+let enviando = false;
+
+function paraLinha(e: EventoRegistrado): LinhaTelemetria {
+  const registro = e as Record<string, unknown>;
+  const userId =
+    e.tipo === "troca_de_conta"
+      ? e.paraUserId
+      : ((registro["userId"] as string | null | undefined) ?? null);
+  return {
+    user_id: userId ?? null,
+    tipo: e.tipo,
+    motivo: (registro["motivo"] as string | undefined) ?? null,
+    rota: e.rota,
+    duracao_ms: (registro["duracaoMs"] as number | undefined) ?? null,
+    papel: (registro["papel"] as string | undefined) ?? null,
+    erro: (registro["erro"] as string | undefined) ?? null,
+    app_version: APP_VERSION,
+    user_agent: typeof navigator === "undefined" ? null : navigator.userAgent.slice(0, 300),
+  };
+}
+
+async function descarregar() {
+  if (enviando || fila.length === 0) return;
+  enviando = true;
+  const lote = fila.splice(0, LOTE_MAX);
+  try {
+    // Telemetria nunca deve quebrar a aplicação nem tentar de novo em loop.
+    await supabase.from("auth_telemetria").insert(lote);
+  } catch {
+    /* silencioso por design */
+  } finally {
+    enviando = false;
+    if (fila.length > 0) agendarDescarga();
+  }
+}
+
+function agendarDescarga() {
+  if (agendado) return;
+  agendado = setTimeout(() => {
+    agendado = null;
+    void descarregar();
+  }, ESPERA_MS);
+}
+
+function enfileirar(e: EventoRegistrado) {
+  if (typeof window === "undefined") return;
+  if (!TIPOS_PERSISTIDOS.has(e.tipo)) return;
+  fila.push(paraLinha(e));
+  if (fila.length >= LOTE_MAX) void descarregar();
+  else agendarDescarga();
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("pagehide", () => void descarregar());
+}
+
+/* -------------------------------- registro -------------------------------- */
+
+/** Registra um evento de telemetria de auth (memória + banco + Sentry). */
 export function registrarAuthTelemetria(evento: AuthTelemetryEvent): void {
   const registrado: EventoRegistrado = {
     ...evento,
@@ -79,6 +179,7 @@ export function registrarAuthTelemetria(evento: AuthTelemetryEvent): void {
 
   if (typeof window === "undefined") return;
   window.__brazonAuthTelemetry = eventos;
+  enfileirar(registrado);
 
   window.Sentry?.addBreadcrumb?.({
     category: "auth",
@@ -101,7 +202,6 @@ export function registrarAuthTelemetria(evento: AuthTelemetryEvent): void {
   }
 
   if (debugAtivo()) {
-    // eslint-disable-next-line no-console
     console.info("[auth]", evento.tipo, registrado);
   }
 }

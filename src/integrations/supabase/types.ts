@@ -130,6 +130,48 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_telemetria: {
+        Row: {
+          app_version: string
+          created_at: string
+          duracao_ms: number | null
+          erro: string | null
+          id: string
+          motivo: string | null
+          papel: string | null
+          rota: string | null
+          tipo: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string
+          created_at?: string
+          duracao_ms?: number | null
+          erro?: string | null
+          id?: string
+          motivo?: string | null
+          papel?: string | null
+          rota?: string | null
+          tipo: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string
+          created_at?: string
+          duracao_ms?: number | null
+          erro?: string | null
+          id?: string
+          motivo?: string | null
+          papel?: string | null
+          rota?: string | null
+          tipo?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           anotacoes: string | null
@@ -1334,6 +1376,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auth_telemetria_resumo: {
+        Args: { _dias?: number }
+        Returns: {
+          app_version: string
+          erros: number
+          p50_ms: number
+          p95_ms: number
+          rota: string
+          sem_papel: number
+          tipo: string
+          total: number
+          ultima: string
+        }[]
+      }
       current_vendedor_id: { Args: never; Returns: string }
       has_permission: {
         Args: {
