@@ -43,13 +43,18 @@ const items: readonly AppNavItem[] = [
 ];
 
 function Harness({ onTab = vi.fn(), onConta = vi.fn() }) {
+  // O prefetch por intenção usa o cache de queries, então o menu precisa do provider.
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
-    <SidebarProvider>
-      <SidebarTrigger aria-label="Abrir menu" />
-      <AppSidebar items={items} tab="dashboard" onTab={onTab} onConta={onConta} />
-    </SidebarProvider>
+    <QueryClientProvider client={queryClient}>
+      <SidebarProvider>
+        <SidebarTrigger aria-label="Abrir menu" />
+        <AppSidebar items={items} tab="dashboard" onTab={onTab} onConta={onConta} />
+      </SidebarProvider>
+    </QueryClientProvider>
   );
 }
+
 
 /** O drawer mobile é um dialog do Radix; no desktop a sidebar é estática. */
 function drawer() {
