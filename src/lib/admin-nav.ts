@@ -7,6 +7,7 @@ import {
   ScrollText,
   Settings,
   Shield,
+  Target,
   TicketPercent,
   UserCircle,
   Users,
@@ -27,6 +28,7 @@ export const ADMIN_NAV_ITEMS: readonly AdminNavItem[] = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { value: "clientes", label: "Clientes", icon: UserCircle },
   { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
+  { value: "comercial", label: "Comercial", icon: Target, to: "/comercial" },
   { value: "novidades", label: "Novidades", icon: Megaphone },
   { value: "config", label: "Configurações", icon: Settings },
 ];

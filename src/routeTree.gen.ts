@@ -17,6 +17,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as MeusAceitesRouteImport } from './routes/meus-aceites'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ComercialRouteImport } from './routes/comercial'
 import { Route as ClienteRouteImport } from './routes/cliente'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -65,6 +66,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComercialRoute = ComercialRouteImport.update({
+  id: '/comercial',
+  path: '/comercial',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClienteRoute = ClienteRouteImport.update({
   id: '/cliente',
   path: '/cliente',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/cadastro': typeof CadastroRoute
   '/cliente': typeof ClienteRoute
+  '/comercial': typeof ComercialRoute
   '/login': typeof LoginRoute
   '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/cadastro': typeof CadastroRoute
   '/cliente': typeof ClienteRoute
+  '/comercial': typeof ComercialRoute
   '/login': typeof LoginRoute
   '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/cadastro': typeof CadastroRoute
   '/cliente': typeof ClienteRoute
+  '/comercial': typeof ComercialRoute
   '/login': typeof LoginRoute
   '/meus-aceites': typeof MeusAceitesRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cadastro'
     | '/cliente'
+    | '/comercial'
     | '/login'
     | '/meus-aceites'
     | '/redefinir-senha'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cadastro'
     | '/cliente'
+    | '/comercial'
     | '/login'
     | '/meus-aceites'
     | '/redefinir-senha'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cadastro'
     | '/cliente'
+    | '/comercial'
     | '/login'
     | '/meus-aceites'
     | '/redefinir-senha'
@@ -214,6 +226,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   CadastroRoute: typeof CadastroRoute
   ClienteRoute: typeof ClienteRoute
+  ComercialRoute: typeof ComercialRoute
   LoginRoute: typeof LoginRoute
   MeusAceitesRoute: typeof MeusAceitesRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
@@ -285,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/comercial': {
+      id: '/comercial'
+      path: '/comercial'
+      fullPath: '/comercial'
+      preLoaderRoute: typeof ComercialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cliente': {
       id: '/cliente'
       path: '/cliente'
@@ -342,6 +362,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   CadastroRoute: CadastroRoute,
   ClienteRoute: ClienteRoute,
+  ComercialRoute: ComercialRoute,
   LoginRoute: LoginRoute,
   MeusAceitesRoute: MeusAceitesRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
@@ -358,13 +379,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
