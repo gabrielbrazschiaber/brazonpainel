@@ -709,8 +709,17 @@ export async function dashboardComercialServer(
       .sort((a, b) => b.ganhos - a.ganhos || (b.taxa ?? 0) - (a.taxa ?? 0));
   }
 
+  // Card extra: leads com dados faltando. Não entra em nenhuma outra métrica.
+  let qIncompletos = supabase
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .lt("completude", 4);
+  if (vendedorFiltro) qIncompletos = qIncompletos.eq("vendedor_id", vendedorFiltro);
+  const { count: incompletos } = await qIncompletos;
+
   return {
     isAdmin: escopo.isAdmin,
+    incompletos: incompletos ?? 0,
     dias: dias ?? 0,
     funil,
     anterior: funilAnterior,
