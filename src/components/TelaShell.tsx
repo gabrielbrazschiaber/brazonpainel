@@ -40,6 +40,7 @@ export function TelaShell({
 
   return (
     <div className="min-h-dvh bg-background">
+      <PularParaConteudo />
       <header className="glass-header sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border/60 px-2 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-5">
         <Button
           asChild
@@ -56,6 +57,10 @@ export function TelaShell({
 
         <BrazonLogo className="hidden sm:flex" symbolClassName="h-7 w-7" textClassName="text-lg" />
 
+        {trilha && trilha.length > 0 && (
+          <Trilha itens={trilha} className="hidden md:block" />
+        )}
+
         <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1.5">
           {headerExtra}
           <ThemeToggle />
@@ -67,10 +72,13 @@ export function TelaShell({
       </header>
 
       <main
+        id="conteudo"
         className={`mx-auto w-full ${larguraMax} space-y-5 px-4 py-6 sm:space-y-6 sm:px-6 sm:py-8`}
       >
+        {trilha && trilha.length > 0 && <Trilha itens={trilha} className="md:hidden" />}
         <ErroLimite area={area}>{children}</ErroLimite>
       </main>
     </div>
   );
+
 }
