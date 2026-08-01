@@ -1,13 +1,17 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
+import { usarCodigoRecuperacaoMfa } from "@/lib/mfa.functions";
+import { lerNivelSeguranca, listarFatoresTotp, mensagemErroMfa, verificarCodigoTotp } from "@/lib/mfa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Card } from "@/components/ui/card";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { toast } from "sonner";
