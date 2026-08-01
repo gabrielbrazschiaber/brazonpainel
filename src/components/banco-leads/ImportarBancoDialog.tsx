@@ -222,10 +222,10 @@ function prepararLinhas(
 
     const bruto = pega("cnpj");
     const editado = edicoes[i + 1];
-    const { cnpj, aviso, cientifico, completado } = normalizarCnpj(
-      editado !== undefined ? editado : bruto,
-    );
+    const normalizado = normalizarCnpj(editado !== undefined ? editado : bruto);
+    const { cnpj, aviso, cientifico, completado } = normalizado;
     if (aviso) avisos.push(aviso);
+
 
     const cnae = normalizarCnae(pega("cnae_codigo"));
     const cnaeDesc = texto(pega("cnae_descricao"), 300);
