@@ -28,6 +28,8 @@ import { useJanelaVirtual } from "@/lib/use-janela-virtual";
 import { TelaShell } from "@/components/TelaShell";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+import { CardsEsqueleto } from "@/components/ui/loading-state";
+
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { LeadsSkeletonCards, LeadsSkeletonRows } from "@/components/comercial/LeadsSkeleton";
