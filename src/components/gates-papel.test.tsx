@@ -186,9 +186,11 @@ describe("troca de conta sem recarregar a página", () => {
     const primeiroCliente = depois.findIndex((h) => h.papel === "cliente");
     // Do momento da troca até o novo papel resolver, "admin" não pode reaparecer.
     expect(depois.slice(0, primeiroCliente).every((h) => h.papel === "-")).toBe(true);
-    // O painel do papel antigo não pode ser renderizado durante a transição.
-    expect(textos.some((t) => t.includes("PAINEL ADMIN"))).toBe(false);
-    expect(textos.some((t) => t.includes(BLOQUEIO))).toBe(false);
+    // O painel do papel antigo não pode ser renderizado durante a transição
+    // (o índice 0 é a foto anterior à troca, por isso é descartado).
+    const durante = textos.slice(1);
+    expect(durante.some((t) => t.includes("PAINEL ADMIN"))).toBe(false);
+    expect(durante.some((t) => t.includes(BLOQUEIO))).toBe(false);
     // E o usuário é levado ao painel correto do novo papel.
     await waitFor(() =>
       expect(mock.navigate).toHaveBeenCalledWith({ to: "/cliente", replace: true }),
