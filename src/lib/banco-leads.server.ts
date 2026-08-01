@@ -2,11 +2,12 @@
 import type { z } from "zod";
 import { escopoComercial } from "@/lib/leads.server";
 import { apenasDigitos, type LeadOrigem } from "@/lib/leads";
-import type { BancoLeadStatus } from "@/lib/banco-leads";
+import { HORAS_RESERVA_PADRAO, type BancoLeadStatus } from "@/lib/banco-leads";
 import type {
   listarBancoLeadsSchema,
   salvarBancoLeadSchema,
-  importarBancoLeadsSchema,
+  criarLoteBancoSchema,
+  importarBlocoBancoSchema,
   puxarLeadsSchema,
   definirEscopoVendedorSchema,
 } from "@/lib/banco-leads.schemas";
@@ -19,7 +20,7 @@ const CHUNK = 200;
 const PRAZO_PADRAO = 7;
 
 const CAMPOS =
-  "id, nome_contato, empresa, cargo, telefone, email, segmento, cidade, estado, origem, observacoes, status, puxado_por, puxado_em, lead_id, lote_id, reservado_segmento, reservado_estado, bloqueado_ate, vezes_devolvido, created_at, updated_at";
+  "id, nome_contato, empresa, cargo, telefone, email, segmento, cidade, estado, origem, observacoes, status, puxado_por, puxado_em, lead_id, lote_id, reservado_segmento, reservado_estado, reservado_cnae, bloqueado_ate, vezes_devolvido, cnpj, razao_social, nome_fantasia, socios, data_abertura, porte, cnae_codigo, cnae_descricao, created_at, updated_at";
 
 export interface BancoLead {
   id: string;
@@ -41,8 +42,17 @@ export interface BancoLead {
   lote_id: string | null;
   reservado_segmento: string | null;
   reservado_estado: string | null;
+  reservado_cnae: string | null;
   bloqueado_ate: string | null;
   vezes_devolvido: number;
+  cnpj: string | null;
+  razao_social: string | null;
+  nome_fantasia: string | null;
+  socios: string | null;
+  data_abertura: string | null;
+  porte: string | null;
+  cnae_codigo: string | null;
+  cnae_descricao: string | null;
   created_at: string;
   updated_at: string;
   /** true quando telefone/e-mail vieram mascarados. */
