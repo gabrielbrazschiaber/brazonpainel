@@ -36,23 +36,95 @@ function LoginPage() {
   const [mode, setMode] = useState<"login" | "forgot">("login");
   const [resetSent, setResetSent] = useState(false);
 
+  // Segunda etapa (2FA): guardamos o fator verificado da conta.
+  const [fatorPendente, setFatorPendente] = useState<string | null>(null);
+  const [otp, setOtp] = useState("");
+  const [modoRecuperacao, setModoRecuperacao] = useState(false);
+  const [codigoRecuperacao, setCodigoRecuperacao] = useState("");
+  const usarCodigo = useServerFn(usarCodigoRecuperacaoMfa);
+
   useEffect(() => {
     // Aguarda o papel resolver para não mandar o usuário ao painel errado.
-    if (!loading && session && roleResolvido) {
+    // Enquanto o segundo fator estiver pendente, ninguém entra no painel.
+    if (!loading && session && roleResolvido && !fatorPendente) {
       navigate({ to: roleHome(role) });
     }
-  }, [loading, session, role, roleResolvido, navigate]);
+  }, [loading, session, role, roleResolvido, fatorPendente, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setSubmitting(false);
     if (error) {
+      setSubmitting(false);
       toast.error("E-mail ou senha incorretos.");
       return;
     }
+
+    try {
+      const nivel = await lerNivelSeguranca();
+      if (nivel.precisaSegundoFator) {
+        const fatores = await listarFatoresTotp();
+        const verificado = fatores.find((f) => f.verificado);
+        if (verificado) {
+          setFatorPendente(verificado.id);
+          setOtp("");
+          setSubmitting(false);
+          return;
+        }
+      }
+    } catch {
+      // Se não conseguirmos ler o nível, o MfaGate ainda protege o painel.
+    }
+    setSubmitting(false);
     toast.success("Bem-vindo de volta!");
+  }
+
+  async function confirmarSegundoFator(e: React.FormEvent) {
+    e.preventDefault();
+    if (!fatorPendente || otp.replace(/\D/g, "").length < 6) {
+      toast.error("Digite o código de 6 dígitos do app autenticador.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await verificarCodigoTotp(fatorPendente, otp);
+      setFatorPendente(null);
+      toast.success("Bem-vindo de volta!");
+    } catch (err) {
+      toast.error(mensagemErroMfa(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function confirmarRecuperacao(e: React.FormEvent) {
+    e.preventDefault();
+    if (codigoRecuperacao.trim().length < 4) {
+      toast.error("Informe um código de recuperação.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await usarCodigo({ data: { codigo: codigoRecuperacao } });
+      await supabase.auth.refreshSession();
+      setCodigoRecuperacao("");
+      setModoRecuperacao(false);
+      setFatorPendente(null);
+      toast.success("Acesso liberado. Cadastre a verificação em duas etapas novamente.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Código de recuperação inválido.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function cancelarSegundoFator() {
+    setFatorPendente(null);
+    setOtp("");
+    setModoRecuperacao(false);
+    setCodigoRecuperacao("");
+    await supabase.auth.signOut();
   }
 
   async function handleForgot(e: React.FormEvent) {
