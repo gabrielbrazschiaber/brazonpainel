@@ -319,7 +319,7 @@ export async function criarLoteBancoServer(
   const reservaEstado = dados.reservado_estado ? dados.reservado_estado.toUpperCase() : null;
   const reservaCnae = dados.reservado_cnae ?? null;
   const temReserva = Boolean(reservaSegmento || reservaEstado || reservaCnae);
-  const horas = dados.horas_reserva ?? (await horasReserva(supabase));
+  const horas = dados.horas_reserva ?? (await horasReserva());
   const bloqueadoAte = temReserva
     ? new Date(Date.now() + horas * 60 * 60 * 1000).toISOString()
     : null;
