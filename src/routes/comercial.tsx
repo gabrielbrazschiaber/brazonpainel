@@ -132,18 +132,12 @@ function ComercialPage() {
     }
   }, [loading, session, role, roleResolvido, permitido, navigate]);
 
-  if (loading || !session || !roleResolvido || !role || !permitido) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
   return (
-    <TermosGate>
-      <ComercialConteudo isAdmin={role === "admin"} home={roleHome(role)} />
-    </TermosGate>
+    <GateDependenteDePapel pronto={Boolean(role) && permitido}>
+      <TermosGate>
+        <ComercialConteudo isAdmin={role === "admin"} home={roleHome(role)} />
+      </TermosGate>
+    </GateDependenteDePapel>
   );
 }
 
