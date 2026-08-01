@@ -175,6 +175,145 @@ export type Database = {
         }
         Relationships: []
       }
+      banco_leads: {
+        Row: {
+          bloqueado_ate: string | null
+          cargo: string | null
+          cidade: string | null
+          created_at: string
+          criado_por_id: string
+          email: string | null
+          empresa: string | null
+          estado: string | null
+          id: string
+          lead_id: string | null
+          lote_id: string | null
+          nome_contato: string
+          observacoes: string | null
+          origem: Database["public"]["Enums"]["lead_origem"]
+          puxado_em: string | null
+          puxado_por: string | null
+          reservado_estado: string | null
+          reservado_segmento: string | null
+          segmento: string | null
+          status: Database["public"]["Enums"]["banco_lead_status"]
+          telefone: string
+          updated_at: string
+          vezes_devolvido: number
+        }
+        Insert: {
+          bloqueado_ate?: string | null
+          cargo?: string | null
+          cidade?: string | null
+          created_at?: string
+          criado_por_id: string
+          email?: string | null
+          empresa?: string | null
+          estado?: string | null
+          id?: string
+          lead_id?: string | null
+          lote_id?: string | null
+          nome_contato: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["lead_origem"]
+          puxado_em?: string | null
+          puxado_por?: string | null
+          reservado_estado?: string | null
+          reservado_segmento?: string | null
+          segmento?: string | null
+          status?: Database["public"]["Enums"]["banco_lead_status"]
+          telefone: string
+          updated_at?: string
+          vezes_devolvido?: number
+        }
+        Update: {
+          bloqueado_ate?: string | null
+          cargo?: string | null
+          cidade?: string | null
+          created_at?: string
+          criado_por_id?: string
+          email?: string | null
+          empresa?: string | null
+          estado?: string | null
+          id?: string
+          lead_id?: string | null
+          lote_id?: string | null
+          nome_contato?: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["lead_origem"]
+          puxado_em?: string | null
+          puxado_por?: string | null
+          reservado_estado?: string | null
+          reservado_segmento?: string | null
+          segmento?: string | null
+          status?: Database["public"]["Enums"]["banco_lead_status"]
+          telefone?: string
+          updated_at?: string
+          vezes_devolvido?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banco_leads_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banco_leads_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "banco_leads_lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banco_leads_puxado_por_fkey"
+            columns: ["puxado_por"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      banco_leads_lotes: {
+        Row: {
+          arquivo_nome: string
+          autor_id: string
+          created_at: string
+          fonte: string | null
+          id: string
+          ignorados: number
+          importados: number
+          reservado_estado: string | null
+          reservado_segmento: string | null
+          total_linhas: number
+        }
+        Insert: {
+          arquivo_nome: string
+          autor_id: string
+          created_at?: string
+          fonte?: string | null
+          id?: string
+          ignorados?: number
+          importados?: number
+          reservado_estado?: string | null
+          reservado_segmento?: string | null
+          total_linhas?: number
+        }
+        Update: {
+          arquivo_nome?: string
+          autor_id?: string
+          created_at?: string
+          fonte?: string | null
+          id?: string
+          ignorados?: number
+          importados?: number
+          reservado_estado?: string | null
+          reservado_segmento?: string | null
+          total_linhas?: number
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           anotacoes: string | null
@@ -268,6 +407,7 @@ export type Database = {
           created_at: string
           cron_token: string
           dias_aviso_vencimento: number
+          dias_devolver_lead: number
           dominio: string | null
           id: string
           nome_app: string
@@ -281,6 +421,7 @@ export type Database = {
           created_at?: string
           cron_token?: string
           dias_aviso_vencimento?: number
+          dias_devolver_lead?: number
           dominio?: string | null
           id?: string
           nome_app?: string
@@ -294,6 +435,7 @@ export type Database = {
           created_at?: string
           cron_token?: string
           dias_aviso_vencimento?: number
+          dias_devolver_lead?: number
           dominio?: string | null
           id?: string
           nome_app?: string
@@ -713,6 +855,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          banco_lead_id: string | null
           cadencia_encerrada: boolean
           cargo: string | null
           cliente_id: string | null
@@ -739,6 +882,7 @@ export type Database = {
           vendedor_id: string
         }
         Insert: {
+          banco_lead_id?: string | null
           cadencia_encerrada?: boolean
           cargo?: string | null
           cliente_id?: string | null
@@ -765,6 +909,7 @@ export type Database = {
           vendedor_id: string
         }
         Update: {
+          banco_lead_id?: string | null
           cadencia_encerrada?: boolean
           cargo?: string | null
           cliente_id?: string | null
@@ -791,6 +936,13 @@ export type Database = {
           vendedor_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "leads_banco_lead_id_fkey"
+            columns: ["banco_lead_id"]
+            isOneToOne: false
+            referencedRelation: "banco_leads"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "leads_cliente_id_fkey"
             columns: ["cliente_id"]
@@ -1376,8 +1528,10 @@ export type Database = {
           ativo: boolean
           codigo_indicacao: string
           created_at: string
+          estados: string[]
           id: string
           percentual_comissao: number
+          segmentos: string[]
           updated_at: string
           user_id: string
         }
@@ -1385,8 +1539,10 @@ export type Database = {
           ativo?: boolean
           codigo_indicacao: string
           created_at?: string
+          estados?: string[]
           id?: string
           percentual_comissao?: number
+          segmentos?: string[]
           updated_at?: string
           user_id: string
         }
@@ -1394,8 +1550,10 @@ export type Database = {
           ativo?: boolean
           codigo_indicacao?: string
           created_at?: string
+          estados?: string[]
           id?: string
           percentual_comissao?: number
+          segmentos?: string[]
           updated_at?: string
           user_id?: string
         }
@@ -1456,7 +1614,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      avisar_leads_a_devolver: { Args: { _dias?: number }; Returns: number }
       current_vendedor_id: { Args: never; Returns: string }
+      devolver_banco_lead: {
+        Args: { _automatico?: boolean; _id: string }
+        Returns: string
+      }
+      devolver_leads_abandonados: { Args: { _dias?: number }; Returns: number }
       has_permission: {
         Args: {
           _permission: Database["public"]["Enums"]["app_permission"]
@@ -1479,7 +1643,27 @@ export type Database = {
         }
         Returns: string
       }
+      pode_ver_banco_lead: {
+        Args: { _reservado_estado: string; _reservado_segmento: string }
+        Returns: boolean
+      }
       pode_ver_conversa: { Args: { _conversa_id: string }; Returns: boolean }
+      puxar_banco_leads: {
+        Args: { _ids: string[] }
+        Returns: {
+          banco_lead_id: string
+          lead_id: string
+          resultado: string
+        }[]
+      }
+      saldo_puxadas: {
+        Args: never
+        Returns: {
+          limite: number
+          renova_em: string
+          restante: number
+        }[]
+      }
     }
     Enums: {
       app_permission:
@@ -1501,6 +1685,7 @@ export type Database = {
         | "cupons.gerenciar"
       app_role: "cliente" | "vendedor" | "admin"
       asaas_ambiente: "producao" | "sandbox"
+      banco_lead_status: "disponivel" | "puxado" | "arquivado"
       cliente_status: "ativo" | "vencido" | "inadimplente" | "cancelado"
       conversa_tipo: "equipe" | "atendimento"
       lead_estagio:
@@ -1679,6 +1864,7 @@ export const Constants = {
       ],
       app_role: ["cliente", "vendedor", "admin"],
       asaas_ambiente: ["producao", "sandbox"],
+      banco_lead_status: ["disponivel", "puxado", "arquivado"],
       cliente_status: ["ativo", "vencido", "inadimplente", "cancelado"],
       conversa_tipo: ["equipe", "atendimento"],
       lead_estagio: [

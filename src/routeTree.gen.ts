@@ -20,10 +20,12 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ComercialRouteImport } from './routes/comercial'
 import { Route as ClienteRouteImport } from './routes/cliente'
 import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as BancoLeadsRouteImport } from './routes/banco-leads'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicRefVisitaRouteImport } from './routes/api/public/ref-visita'
 import { Route as ApiPublicHooksLembretesVencimentoRouteImport } from './routes/api/public/hooks/lembretes-vencimento'
+import { Route as ApiPublicHooksDevolverLeadsAbandonadosRouteImport } from './routes/api/public/hooks/devolver-leads-abandonados'
 import { Route as ApiPublicHooksAsaasSyncQueueRouteImport } from './routes/api/public/hooks/asaas-sync-queue'
 
 const VendedorRoute = VendedorRouteImport.update({
@@ -81,6 +83,11 @@ const CadastroRoute = CadastroRouteImport.update({
   path: '/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BancoLeadsRoute = BancoLeadsRouteImport.update({
+  id: '/banco-leads',
+  path: '/banco-leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -102,6 +109,12 @@ const ApiPublicHooksLembretesVencimentoRoute =
     path: '/api/public/hooks/lembretes-vencimento',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksDevolverLeadsAbandonadosRoute =
+  ApiPublicHooksDevolverLeadsAbandonadosRouteImport.update({
+    id: '/api/public/hooks/devolver-leads-abandonados',
+    path: '/api/public/hooks/devolver-leads-abandonados',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAsaasSyncQueueRoute =
   ApiPublicHooksAsaasSyncQueueRouteImport.update({
     id: '/api/public/hooks/asaas-sync-queue',
@@ -112,6 +125,7 @@ const ApiPublicHooksAsaasSyncQueueRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/banco-leads': typeof BancoLeadsRoute
   '/cadastro': typeof CadastroRoute
   '/cliente': typeof ClienteRoute
   '/comercial': typeof ComercialRoute
@@ -125,11 +139,13 @@ export interface FileRoutesByFullPath {
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
+  '/api/public/hooks/devolver-leads-abandonados': typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/banco-leads': typeof BancoLeadsRoute
   '/cadastro': typeof CadastroRoute
   '/cliente': typeof ClienteRoute
   '/comercial': typeof ComercialRoute
@@ -143,12 +159,14 @@ export interface FileRoutesByTo {
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
+  '/api/public/hooks/devolver-leads-abandonados': typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/banco-leads': typeof BancoLeadsRoute
   '/cadastro': typeof CadastroRoute
   '/cliente': typeof ClienteRoute
   '/comercial': typeof ComercialRoute
@@ -162,6 +180,7 @@ export interface FileRoutesById {
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
+  '/api/public/hooks/devolver-leads-abandonados': typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
 }
 export interface FileRouteTypes {
@@ -169,6 +188,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/banco-leads'
     | '/cadastro'
     | '/cliente'
     | '/comercial'
@@ -182,11 +202,13 @@ export interface FileRouteTypes {
     | '/vendedor'
     | '/api/public/ref-visita'
     | '/api/public/hooks/asaas-sync-queue'
+    | '/api/public/hooks/devolver-leads-abandonados'
     | '/api/public/hooks/lembretes-vencimento'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
+    | '/banco-leads'
     | '/cadastro'
     | '/cliente'
     | '/comercial'
@@ -200,11 +222,13 @@ export interface FileRouteTypes {
     | '/vendedor'
     | '/api/public/ref-visita'
     | '/api/public/hooks/asaas-sync-queue'
+    | '/api/public/hooks/devolver-leads-abandonados'
     | '/api/public/hooks/lembretes-vencimento'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/banco-leads'
     | '/cadastro'
     | '/cliente'
     | '/comercial'
@@ -218,12 +242,14 @@ export interface FileRouteTypes {
     | '/vendedor'
     | '/api/public/ref-visita'
     | '/api/public/hooks/asaas-sync-queue'
+    | '/api/public/hooks/devolver-leads-abandonados'
     | '/api/public/hooks/lembretes-vencimento'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  BancoLeadsRoute: typeof BancoLeadsRoute
   CadastroRoute: typeof CadastroRoute
   ClienteRoute: typeof ClienteRoute
   ComercialRoute: typeof ComercialRoute
@@ -237,6 +263,7 @@ export interface RootRouteChildren {
   VendedorRoute: typeof VendedorRoute
   ApiPublicRefVisitaRoute: typeof ApiPublicRefVisitaRoute
   ApiPublicHooksAsaasSyncQueueRoute: typeof ApiPublicHooksAsaasSyncQueueRoute
+  ApiPublicHooksDevolverLeadsAbandonadosRoute: typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   ApiPublicHooksLembretesVencimentoRoute: typeof ApiPublicHooksLembretesVencimentoRoute
 }
 
@@ -319,6 +346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/banco-leads': {
+      id: '/banco-leads'
+      path: '/banco-leads'
+      fullPath: '/banco-leads'
+      preLoaderRoute: typeof BancoLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -347,6 +381,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksLembretesVencimentoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/devolver-leads-abandonados': {
+      id: '/api/public/hooks/devolver-leads-abandonados'
+      path: '/api/public/hooks/devolver-leads-abandonados'
+      fullPath: '/api/public/hooks/devolver-leads-abandonados'
+      preLoaderRoute: typeof ApiPublicHooksDevolverLeadsAbandonadosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/asaas-sync-queue': {
       id: '/api/public/hooks/asaas-sync-queue'
       path: '/api/public/hooks/asaas-sync-queue'
@@ -360,6 +401,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  BancoLeadsRoute: BancoLeadsRoute,
   CadastroRoute: CadastroRoute,
   ClienteRoute: ClienteRoute,
   ComercialRoute: ComercialRoute,
@@ -373,6 +415,8 @@ const rootRouteChildren: RootRouteChildren = {
   VendedorRoute: VendedorRoute,
   ApiPublicRefVisitaRoute: ApiPublicRefVisitaRoute,
   ApiPublicHooksAsaasSyncQueueRoute: ApiPublicHooksAsaasSyncQueueRoute,
+  ApiPublicHooksDevolverLeadsAbandonadosRoute:
+    ApiPublicHooksDevolverLeadsAbandonadosRoute,
   ApiPublicHooksLembretesVencimentoRoute:
     ApiPublicHooksLembretesVencimentoRoute,
 }
