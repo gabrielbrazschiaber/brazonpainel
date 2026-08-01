@@ -141,6 +141,7 @@ export type Database = {
           papel: string | null
           rota: string | null
           tipo: string
+          trace_id: string | null
           user_agent: string | null
           user_id: string | null
         }
@@ -154,6 +155,7 @@ export type Database = {
           papel?: string | null
           rota?: string | null
           tipo: string
+          trace_id?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -167,6 +169,7 @@ export type Database = {
           papel?: string | null
           rota?: string | null
           tipo?: string
+          trace_id?: string | null
           user_agent?: string | null
           user_id?: string | null
         }

@@ -11,6 +11,8 @@
  * Não envia dados pessoais: apenas ids técnicos, durações e desfechos.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { traceId } from "@/lib/telemetry-trace";
+import { exportarEventos, type EventoExportado } from "@/lib/telemetry-export";
 
 export type AuthTelemetryEvent =
   | { tipo: "sessao_resolvida"; comSessao: boolean; duracaoMs: number }
@@ -40,7 +42,7 @@ export type AuthTelemetryEvent =
 
 export type MotivoCarga = "inicial" | "troca_de_conta" | "retry" | "auth_event";
 
-type EventoRegistrado = AuthTelemetryEvent & { emMs: number; rota: string };
+type EventoRegistrado = AuthTelemetryEvent & { emMs: number; rota: string; traceId: string };
 
 const MAX_EVENTOS = 50;
 const eventos: EventoRegistrado[] = [];
@@ -92,6 +94,8 @@ interface LinhaTelemetria {
   erro: string | null;
   app_version: string;
   user_agent: string | null;
+  /** Correlaciona com os artefatos do E2E (vídeo/screenshot/dump). */
+  trace_id: string;
 }
 
 /** `papel_inicio` é ruído: só o desfecho interessa para métricas. */
@@ -126,6 +130,22 @@ function paraLinha(e: EventoRegistrado): LinhaTelemetria {
     erro: (registro["erro"] as string | undefined) ?? null,
     app_version: APP_VERSION,
     user_agent: typeof navigator === "undefined" ? null : navigator.userAgent.slice(0, 300),
+    trace_id: e.traceId,
+  };
+}
+
+function paraExportado(l: LinhaTelemetria): EventoExportado {
+  return {
+    tipo: l.tipo,
+    motivo: l.motivo,
+    rota: l.rota,
+    duracao_ms: l.duracao_ms,
+    papel: l.papel,
+    erro: l.erro,
+    app_version: l.app_version,
+    trace_id: l.trace_id,
+    user_id: l.user_id,
+    em: new Date().toISOString(),
   };
 }
 
@@ -135,7 +155,10 @@ async function descarregar() {
   const lote = fila.splice(0, LOTE_MAX);
   try {
     // Telemetria nunca deve quebrar a aplicação nem tentar de novo em loop.
-    await supabase.from("auth_telemetria").insert(lote);
+    await Promise.all([
+      supabase.from("auth_telemetria").insert(lote),
+      exportarEventos(lote.map(paraExportado)),
+    ]);
   } catch {
     /* silencioso por design */
   } finally {
@@ -166,12 +189,13 @@ if (typeof window !== "undefined") {
 
 /* -------------------------------- registro -------------------------------- */
 
-/** Registra um evento de telemetria de auth (memória + banco + Sentry). */
+/** Registra um evento de telemetria de auth (memória + banco + externo + Sentry). */
 export function registrarAuthTelemetria(evento: AuthTelemetryEvent): void {
   const registrado: EventoRegistrado = {
     ...evento,
     emMs: Date.now(),
     rota: typeof window === "undefined" ? "ssr" : window.location.pathname,
+    traceId: traceId(),
   };
 
   eventos.push(registrado);
