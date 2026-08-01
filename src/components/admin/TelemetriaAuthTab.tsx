@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertasAcesso } from "@/components/admin/AlertasAcesso";
+import { TraceTimeline } from "@/components/admin/TraceTimeline";
 
 interface LinhaResumo {
   app_version: string;
@@ -49,6 +51,7 @@ export function TelemetriaAuthTab() {
   const [dias, setDias] = useState("7");
   const [linhas, setLinhas] = useState<LinhaResumo[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [traceAberto, setTraceAberto] = useState("");
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -198,7 +201,9 @@ export function TelemetriaAuthTab() {
           </tbody>
         </table>
       </div>
-      <IncidentesPorTrace dias={Number(dias)} />
+      <AlertasAcesso />
+      <IncidentesPorTrace dias={Number(dias)} onAbrirTrace={setTraceAberto} />
+      <TraceTimeline traceId={traceAberto} onTraceIdChange={setTraceAberto} />
       <p className="text-xs text-muted-foreground">
         {totais.versoes} versão(ões) do app no período. Defina <code>VITE_APP_VERSION</code> no
         build para comparar publicações.
@@ -221,7 +226,13 @@ interface Incidente {
  * (vídeo/screenshot/dump) e viaja para o destino externo (Sentry/Datadog),
  * permitindo rastrear cada caso ponta a ponta.
  */
-function IncidentesPorTrace({ dias }: { dias: number }) {
+function IncidentesPorTrace({
+  dias,
+  onAbrirTrace,
+}: {
+  dias: number;
+  onAbrirTrace: (traceId: string) => void;
+}) {
   const [itens, setItens] = useState<Incidente[]>([]);
 
   useEffect(() => {
@@ -254,9 +265,19 @@ function IncidentesPorTrace({ dias }: { dias: number }) {
               {ROTULOS[i.tipo] ?? i.tipo}
             </Badge>
             <span className="font-medium text-foreground">{i.rota ?? "—"}</span>
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-              {i.trace_id ?? "sem trace"}
-            </code>
+            {i.trace_id ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-auto px-1.5 py-0.5 font-mono text-xs"
+                onClick={() => onAbrirTrace(i.trace_id as string)}
+              >
+                {i.trace_id}
+              </Button>
+            ) : (
+              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">sem trace</code>
+            )}
             <span className="text-xs text-muted-foreground">
               versão {i.app_version} · {new Date(i.created_at).toLocaleString("pt-BR")}
             </span>
