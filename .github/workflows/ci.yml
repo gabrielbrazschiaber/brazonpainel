@@ -24,10 +24,6 @@ jobs:
       # Inclui as regressões dos gates de papel (carregando → erro → sem papel)
       # e de troca de conta.
       - run: bun run test
-      # Contrato de exportação: todo evento precisa levar trace_id, versão e rota
-      # com os mesmos campos esperados pelo destino externo. Falha antes do deploy.
-      - name: Validar contrato da telemetria exportada
-        run: bun run validar:telemetria
 
   e2e-auth:
     name: E2E auth (rede afunilada e troca de conta)
@@ -44,6 +40,9 @@ jobs:
       VITE_APP_VERSION: ${{ github.sha }}
       # Trace único por execução: casa artefatos do E2E com auth_telemetria.trace_id
       E2E_TRACE_ID: ci-${{ github.run_id }}-${{ github.run_attempt }}
+      # Destino fake interceptado pelo teste: permite validar o contrato dos
+      # eventos exportados (trace_id + versão + rota) antes do deploy.
+      VITE_TELEMETRY_EXPORT_URL: http://127.0.0.1:9/telemetria-e2e
     steps:
       - uses: actions/checkout@v4
 
@@ -74,6 +73,10 @@ jobs:
       # ("Acesso não liberado" / "Falha de conexão") durante o carregamento.
       - name: Gates de auth (rotas críticas por papel e tipo de navegação)
         run: bun run test:e2e:auth
+
+      # Falha o build se algum evento exportado estiver sem trace_id, versão ou rota.
+      - name: Validar contrato da telemetria exportada
+        run: bun run validar:telemetria
 
       - name: Tours de onboarding (primeira visita, conclusão e mobile)
         run: bun run test:e2e:onboarding
