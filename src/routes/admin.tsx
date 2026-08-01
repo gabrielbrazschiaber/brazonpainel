@@ -133,6 +133,7 @@ function AdminConteudo({
     planos: () => <PlanosTab planos={planos} onChanged={recarregar} />,
     admins: () => <AdminsTab admins={admins} onChanged={recarregar} />,
     vendedores: () => <VendedoresTab vendedores={vendedores} onChanged={recarregar} />,
+    cnaes: () => <CnaesTab />,
     permissoes: () => <PermissoesTab />,
     geral: () => <ConfigTab config={config} onSaved={recarregar} />,
     auditoria: () => <AuditoriaTab />,

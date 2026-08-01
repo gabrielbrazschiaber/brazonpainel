@@ -11,6 +11,7 @@ import {
   Shield,
   Target,
   TicketPercent,
+  Tags,
   UserCircle,
   Users,
   Database,
@@ -84,6 +85,13 @@ export const SECOES_CONFIG_META: readonly SecaoConfigMeta[] = [
     descricao: "Equipe de vendas e comissões",
     icon: Users,
     permissao: "vendedores.ler",
+  },
+  {
+    value: "cnaes",
+    label: "CNAEs",
+    descricao: "Catálogo e segmento sugerido",
+    icon: Tags,
+    permissao: "configuracoes.gerenciar",
   },
   {
     value: "permissoes",
