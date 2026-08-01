@@ -15,6 +15,13 @@ import type { AppPermission } from "@/lib/permissions";
 
 export type AppRole = "cliente" | "vendedor" | "admin";
 
+/**
+ * Estado explícito do papel. `role: null` sozinho é ambíguo (não sabemos ainda
+ * vs. sabemos que não tem), e essa ambiguidade fazia a tela "Acesso não
+ * liberado" piscar durante o carregamento.
+ */
+export type EstadoPapel = "carregando" | "resolvido" | "sem_papel" | "erro";
+
 interface Profile {
   id: string;
   email: string;
@@ -26,6 +33,10 @@ interface AuthContextValue {
   user: User | null;
   profile: Profile | null;
   role: AppRole | null;
+  /** Situação da consulta de papel — use antes de decidir qualquer bloqueio. */
+  estadoPapel: EstadoPapel;
+  /** true quando já sabemos com certeza se o usuário tem (ou não) papel. */
+  roleResolvido: boolean;
   permissoes: AppPermission[];
   can: (permissao: AppPermission) => boolean;
   loading: boolean;
@@ -37,10 +48,12 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
+  /** A sessão já foi lida do storage/rede pelo menos uma vez? */
+  const [sessaoResolvida, setSessaoResolvida] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [estadoPapel, setEstadoPapel] = useState<EstadoPapel>("carregando");
   const [permissoes, setPermissoes] = useState<AppPermission[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Evita corridas: apenas o carregamento mais recente pode gravar estado.
   const cargaAtual = useRef(0);
@@ -53,8 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     usuarioCarregado.current = null;
     setProfile(null);
     setRole(null);
+    setEstadoPapel("carregando");
     setPermissoes([]);
   }, []);
+
 
   const loadUserData = useCallback(async (userId: string) => {
     const id = ++cargaAtual.current;
