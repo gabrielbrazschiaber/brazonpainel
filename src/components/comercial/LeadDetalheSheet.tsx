@@ -105,6 +105,12 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
     if (aberto && lead) void recarregar();
   }, [aberto, lead, recarregar]);
 
+  // Reverifica o WhatsApp ao abrir o detalhe (o telefone pode ter sido editado).
+  useEffect(() => {
+    if (aberto) setZap(statusWhatsApp(lead?.telefone));
+  }, [aberto, lead?.telefone]);
+
+
   if (!lead) return null;
 
   async function trocarEstagio(estagio: LeadEstagio) {
