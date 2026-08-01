@@ -39,6 +39,7 @@ export function AppShell({
   return (
     <SidebarProvider>
       <div className="flex min-h-dvh w-full bg-background">
+        <PularParaConteudo />
         <AppSidebar
           items={items}
           tab={tab}
@@ -68,14 +69,16 @@ export function AppShell({
             </div>
           </header>
 
-          <div
+          <main
+            id="conteudo"
             className={`mx-auto w-full ${larguraMax} space-y-5 px-4 py-6 sm:space-y-6 sm:px-6 sm:py-8`}
           >
             {/* Falha de um painel não derruba menu/cabeçalho nem a tela toda. */}
             <ErroLimite area={contexto}>{children}</ErroLimite>
-          </div>
+          </main>
         </div>
       </div>
+
     </SidebarProvider>
   );
 }
