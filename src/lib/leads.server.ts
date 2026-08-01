@@ -191,8 +191,9 @@ export async function listarLeadsServer(
     query = query
       .not("proximo_contato", "is", null)
       .lte("proximo_contato", hojeISO())
-      .not("estagio", "in", `(${ESTAGIOS_FECHADOS.join(",")})`);
+      .not("estagio", "in", `(${ESTAGIOS_SEM_FOLLOW_UP.join(",")})`);
   }
+
 
   if (filtros.busca) {
     const termo = filtros.busca.replace(/[%,]/g, " ").trim();
