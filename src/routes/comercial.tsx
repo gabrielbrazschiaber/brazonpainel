@@ -21,10 +21,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { AvisosSino } from "@/components/AvisosSino";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  LeadsSkeletonCards,
-  LeadsSkeletonRows,
-} from "@/components/comercial/LeadsSkeleton";
+import { LeadsSkeletonCards, LeadsSkeletonRows } from "@/components/comercial/LeadsSkeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -224,9 +221,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       setTemMais(l.temMais);
       setPagina(0);
     } catch (err) {
-      setErroLista(
-        err instanceof Error ? err.message : "Não foi possível carregar os leads.",
-      );
+      setErroLista(err instanceof Error ? err.message : "Não foi possível carregar os leads.");
     } finally {
       setCarregando(false);
     }
@@ -250,9 +245,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       setTemMais(l.temMais);
       setPagina(proxima);
     } catch (err) {
-      setErroMais(
-        err instanceof Error ? err.message : "Não foi possível carregar mais leads.",
-      );
+      setErroMais(err instanceof Error ? err.message : "Não foi possível carregar mais leads.");
     } finally {
       setCarregandoMais(false);
     }
@@ -279,9 +272,13 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   }, [carregarMais, temMais, erroMais]);
 
   useEffect(() => {
-    void carregarSegmentos({}).then(setSegmentos).catch(() => undefined);
+    void carregarSegmentos({})
+      .then(setSegmentos)
+      .catch(() => undefined);
     if (isAdmin) {
-      void carregarVendedores({}).then(setVendedores).catch(() => undefined);
+      void carregarVendedores({})
+        .then(setVendedores)
+        .catch(() => undefined);
     }
   }, [carregarSegmentos, carregarVendedores, isAdmin]);
 
@@ -509,11 +506,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                   <CabecalhoLeads />
                   <TableBody>
                     {leads.map((l) => (
-                      <TableRow
-                        key={l.id}
-                        className="cursor-pointer"
-                        onClick={() => setDetalhe(l)}
-                      >
+                      <TableRow key={l.id} className="cursor-pointer" onClick={() => setDetalhe(l)}>
                         <TableCell>
                           <p className="font-medium">{l.nome_contato}</p>
                           <p className="text-xs text-muted-foreground">
