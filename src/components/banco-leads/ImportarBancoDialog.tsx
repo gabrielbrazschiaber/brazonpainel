@@ -1,13 +1,19 @@
 import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertCircle, FileSpreadsheet, Loader2, Upload } from "lucide-react";
+import { AlertCircle, FileSpreadsheet, Info, Loader2, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -714,7 +720,8 @@ export function ImportarBancoDialog({
                               }
                             />
                             {l.cnpjCompletado ? (
-                              <Tooltip>
+                              <TooltipProvider>
+                                <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Info
                                     className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
@@ -724,7 +731,8 @@ export function ImportarBancoDialog({
                                 <TooltipContent>
                                   Completado com zeros à esquerda (o Excel os havia removido)
                                 </TooltipContent>
-                              </Tooltip>
+                                </Tooltip>
+                              </TooltipProvider>
                             ) : null}
                           </div>
                         </TableCell>
