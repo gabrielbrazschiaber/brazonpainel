@@ -224,6 +224,9 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const [soZap, setSoZap] = useState(false);
   /** Aba/filtro de leads com dados faltando. */
   const [incompletos, setIncompletos] = useState(false);
+  const [abaFollowUp, setAbaFollowUp] = useState<
+    "atrasados" | "hoje" | "proximos" | undefined
+  >(undefined);
   const [ordem, setOrdem] = useState<"recentes" | "completude">("recentes");
   /** Filtro por lote de importação (vem do resultado da importação). */
   const [loteId, setLoteId] = useState<string | null>(null);
