@@ -447,7 +447,7 @@ export function ImportarLeadsDialog({
                   Os demais campos podem ficar em branco — você preenche depois, conforme entrar em
                   contato.
                 </p>
-                <Button variant="link" className="h-auto px-0" onClick={() => baixarModelo()}>
+                <Button variant="link" className="h-auto px-0" onClick={() => void baixarModelo()}>
                   <Download className="mr-2 h-4 w-4" /> Baixar modelo de planilha
                 </Button>
               </Card>

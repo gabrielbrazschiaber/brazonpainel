@@ -2,8 +2,6 @@
  * Parsing e normalização de planilhas de leads — 100% no navegador.
  * Nenhum arquivo é enviado ao servidor: só o array de linhas já normalizado.
  */
-import * as XLSX from "xlsx";
-import Papa from "papaparse";
 
 export const MAX_LINHAS = 2000;
 export const MAX_BYTES = 5 * 1024 * 1024;
@@ -166,12 +164,6 @@ export interface ArquivoLido {
   matriz: string[][];
 }
 
-function limparMatriz(bruta: unknown[][]): string[][] {
-  return bruta
-    .map((linha) => (linha ?? []).map((c) => (c === null || c === undefined ? "" : String(c))))
-    .filter((linha) => linha.some((c) => c.trim() !== ""));
-}
-
 export async function lerArquivo(file: File): Promise<ArquivoLido> {
   if (file.size > MAX_BYTES) {
     throw new Error("Arquivo acima de 5 MB. Divida a planilha em partes menores.");
@@ -181,20 +173,9 @@ export async function lerArquivo(file: File): Promise<ArquivoLido> {
     throw new Error("Formato não aceito. Envie um arquivo .xlsx, .xls ou .csv.");
   }
 
-  let bruta: string[][] = [];
-  if (ext === "csv") {
-    const texto = await file.text();
-    const r = Papa.parse<string[]>(texto, { skipEmptyLines: true });
-    bruta = limparMatriz((r.data ?? []) as unknown[][]);
-  } else {
-    const buf = await file.arrayBuffer();
-    const wb = XLSX.read(buf, { type: "array" });
-    const nomeAba = wb.SheetNames[0];
-    if (!nomeAba) throw new Error("A planilha está vazia.");
-    const ws = wb.Sheets[nomeAba];
-    const json = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: "" });
-    bruta = limparMatriz(json as unknown[][]);
-  }
+  // xlsx/papaparse só entram no bundle quando o usuário abre uma planilha.
+  const { lerMatriz } = await import("@/lib/leads-planilha");
+  const bruta = await lerMatriz(file, ext);
 
   if (bruta.length === 0) throw new Error("Nenhuma linha encontrada no arquivo.");
 
@@ -414,8 +395,8 @@ export function paraEnvio(linhas: LinhaImport[]) {
     }));
 }
 
-/** Modelo .xlsx gerado no navegador. */
-export function baixarModelo(): void {
+/** Modelo .xlsx gerado no navegador (biblioteca carregada sob demanda). */
+export async function baixarModelo(): Promise<void> {
   const dados = [
     ["Nome", "Telefone", "Empresa", "Cargo", "E-mail", "Segmento", "Observações", "Valor"],
     [
@@ -430,9 +411,6 @@ export function baixarModelo(): void {
     ],
     ["João Lima", "(21) 99888-7766", "", "", "", "", "", ""],
   ];
-  const ws = XLSX.utils.aoa_to_sheet(dados);
-  ws["!cols"] = dados[0].map(() => ({ wch: 20 }));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Leads");
-  XLSX.writeFile(wb, "modelo-leads-brazon.xlsx");
+  const { baixarPlanilha } = await import("@/lib/leads-planilha");
+  baixarPlanilha(dados, "Leads", "modelo-leads-brazon.xlsx");
 }

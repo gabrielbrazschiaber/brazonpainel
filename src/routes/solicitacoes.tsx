@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -14,15 +14,24 @@ import {
   Loader2,
   MessageSquare,
   SlidersHorizontal,
+  ArrowUpDown,
+  PackagePlus,
+  Receipt,
+  CalendarClock,
+  UserPen,
+  CircleX,
+  MessageSquarePlus,
 } from "lucide-react";
-import * as Icons from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
 import { GateDependenteDePapel } from "@/components/GateEstado";
 import { TermosGate } from "@/components/TermosGate";
 import { OnboardingProvider, useTourDaTela } from "@/components/onboarding/OnboardingProvider";
-import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
+const AjudaDaTela = lazy(() =>
+  import("@/components/onboarding/AjudaDaTela").then((m) => ({ default: m.AjudaDaTela })),
+);
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -117,9 +126,23 @@ function statusClasse(status: SolicitacaoStatus): string {
   return "bg-primary/10 text-primary border-primary/20";
 }
 
+/**
+ * Ícones do catálogo de solicitações, declarados um a um.
+ * Antes usávamos `import * as Icons from "lucide-react"`, o que arrastava a
+ * biblioteca inteira (~500 kB) para o pacote compartilhado de todas as telas.
+ */
+const ICONES_CATALOGO: Record<string, LucideIcon> = {
+  ArrowUpDown,
+  PackagePlus,
+  Receipt,
+  CalendarClock,
+  UserPen,
+  CircleX,
+  MessageSquarePlus,
+};
+
 function IconeCatalogo({ nome, className }: { nome: string; className?: string }) {
-  const registro = Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>;
-  const Componente = registro[nome] ?? MessageSquare;
+  const Componente = ICONES_CATALOGO[nome] ?? MessageSquare;
   return <Componente className={className} />;
 }
 
@@ -372,7 +395,9 @@ function SolicitacoesConteudo({ home }: { home: string }) {
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
             </Link>
           </Button>
-          <AjudaDaTela chave="tela:solicitacoes" />
+          <Suspense fallback={null}>
+            <AjudaDaTela chave="tela:solicitacoes" />
+          </Suspense>
           <ThemeToggle />
           <AvisosSino />
           <SairButton />

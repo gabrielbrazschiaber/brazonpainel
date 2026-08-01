@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -19,7 +19,11 @@ import { useAuth, roleHome } from "@/lib/auth";
 import { GateDependenteDePapel } from "@/components/GateEstado";
 import { TermosGate } from "@/components/TermosGate";
 import { OnboardingProvider, useTourDaTela } from "@/components/onboarding/OnboardingProvider";
-import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
+import { MontarQuandoAberto } from "@/components/MontarQuandoAberto";
+
+const AjudaDaTela = lazy(() =>
+  import("@/components/onboarding/AjudaDaTela").then((m) => ({ default: m.AjudaDaTela })),
+);
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -59,11 +63,21 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import { ComercialDashboard } from "@/components/comercial/ComercialDashboard";
-import { LeadDetalheSheet } from "@/components/comercial/LeadDetalheSheet";
+const ComercialDashboard = lazy(() =>
+  import("@/components/comercial/ComercialDashboard").then((m) => ({
+    default: m.ComercialDashboard,
+  })),
+);
+const LeadDetalheSheet = lazy(() =>
+  import("@/components/comercial/LeadDetalheSheet").then((m) => ({ default: m.LeadDetalheSheet })),
+);
 import { LeadFormDialog } from "@/components/comercial/LeadFormDialog";
 import { FollowUpsPanel } from "@/components/comercial/FollowUpsPanel";
-import { ImportarLeadsDialog } from "@/components/comercial/ImportarLeadsDialog";
+const ImportarLeadsDialog = lazy(() =>
+  import("@/components/comercial/ImportarLeadsDialog").then((m) => ({
+    default: m.ImportarLeadsDialog,
+  })),
+);
 import { CompletarLeadsDialog } from "@/components/comercial/CompletarLeadsDialog";
 import { Progress } from "@/components/ui/progress";
 
@@ -373,7 +387,9 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         </Button>
         <BrazonLogo className="hidden h-7 sm:block" />
         <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
-          <AjudaDaTela chave="tela:comercial" />
+          <Suspense fallback={null}>
+            <AjudaDaTela chave="tela:comercial" />
+          </Suspense>
           <ThemeToggle />
           <AvisosSino />
           <SairButton variante="icone" />
@@ -464,19 +480,27 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
           </div>
         ) : (
           dados && (
-            <ComercialDashboard
-              dados={dados}
-              onVerIncompletos={() => {
-                setIncompletos(true);
-                setOrdem("completude");
-              }}
-              onVerFollowUps={() => {
-                setAbaFollowUp("atrasados");
-                document
-                  .getElementById("follow-ups")
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-            />
+            <Suspense
+              fallback={
+                <div className="flex justify-center py-16">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              }
+            >
+              <ComercialDashboard
+                dados={dados}
+                onVerIncompletos={() => {
+                  setIncompletos(true);
+                  setOrdem("completude");
+                }}
+                onVerFollowUps={() => {
+                  setAbaFollowUp("atrasados");
+                  document
+                    .getElementById("follow-ups")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              />
+            </Suspense>
           )
         )}
 
@@ -783,19 +807,21 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         onSalvo={() => void recarregar()}
       />
 
-      <ImportarLeadsDialog
-        aberto={importarAberto}
-        onOpenChange={setImportarAberto}
-        isAdmin={isAdmin}
-        vendedores={vendedores}
-        segmentos={listaSegmentos}
-        onConcluido={() => void recarregar()}
-        onVerLote={(importacaoId) => {
-          setLoteId(importacaoId);
-          setIncompletos(true);
-          setOrdem("completude");
-        }}
-      />
+      <MontarQuandoAberto aberto={importarAberto}>
+        <ImportarLeadsDialog
+          aberto={importarAberto}
+          onOpenChange={setImportarAberto}
+          isAdmin={isAdmin}
+          vendedores={vendedores}
+          segmentos={listaSegmentos}
+          onConcluido={() => void recarregar()}
+          onVerLote={(importacaoId) => {
+            setLoteId(importacaoId);
+            setIncompletos(true);
+            setOrdem("completude");
+          }}
+        />
+      </MontarQuandoAberto>
 
       <CompletarLeadsDialog
         aberto={completarAberto}
@@ -805,14 +831,16 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         onAtualizado={() => void recarregar()}
       />
 
-      <LeadDetalheSheet
-        lead={detalhe}
-        aberto={Boolean(detalhe)}
-        onOpenChange={(v) => {
-          if (!v) setDetalhe(null);
-        }}
-        onAtualizado={() => void recarregar()}
-      />
+      <MontarQuandoAberto aberto={Boolean(detalhe)}>
+        <LeadDetalheSheet
+          lead={detalhe}
+          aberto={Boolean(detalhe)}
+          onOpenChange={(v) => {
+            if (!v) setDetalhe(null);
+          }}
+          onAtualizado={() => void recarregar()}
+        />
+      </MontarQuandoAberto>
 
       <AlertDialog open={Boolean(excluindo)} onOpenChange={(v) => !v && setExcluindo(null)}>
         <AlertDialogContent>

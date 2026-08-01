@@ -1,13 +1,18 @@
+import { Loader2 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, lazy, Suspense } from "react";
 
 import { RequireRole } from "@/components/RequireRole";
 import { AppShell } from "@/components/AppShell";
-import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
+const AjudaDaTela = lazy(() =>
+  import("@/components/onboarding/AjudaDaTela").then((m) => ({ default: m.AjudaDaTela })),
+);
 import { useTourDaTela } from "@/components/onboarding/OnboardingProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { AdminDashboard } from "@/components/admin/AdminDashboard";
+const AdminDashboard = lazy(() =>
+  import("@/components/admin/AdminDashboard").then((m) => ({ default: m.AdminDashboard })),
+);
 import { AdminErroLimite } from "@/components/admin/AdminErroLimite";
 import { AdminsTab } from "@/components/admin/AdminsTab";
 import { AuditoriaTab } from "@/components/admin/AuditoriaTab";
@@ -104,7 +109,13 @@ function AdminArea() {
       tab={tab}
       onTab={setTab}
       onConta={() => setContaOpen(true)}
-      headerExtra={chaveTour ? <AjudaDaTela chave={chaveTour} /> : undefined}
+      headerExtra={
+        chaveTour ? (
+          <Suspense fallback={null}>
+            <AjudaDaTela chave={chaveTour} />
+          </Suspense>
+        ) : undefined
+      }
     >
       <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={recarregar} />
 
@@ -120,7 +131,9 @@ function AdminArea() {
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-0">
-            <AdminDashboard />
+            <Suspense fallback={<CarregandoBloco />}>
+              <AdminDashboard />
+            </Suspense>
           </TabsContent>
           <TabsContent value="clientes" className="mt-0">
             <ClientesTab
@@ -139,5 +152,13 @@ function AdminArea() {
         </Tabs>
       </AdminErroLimite>
     </AppShell>
+  );
+}
+
+function CarregandoBloco() {
+  return (
+    <div className="flex justify-center py-16">
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+    </div>
   );
 }

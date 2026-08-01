@@ -59,7 +59,14 @@ export function AlertasAcesso({ janelaHoras = 6 }: { janelaHoras?: number }) {
   useEffect(() => {
     void carregar(true);
     // Revisita a cada 5 minutos enquanto o painel estiver aberto.
-    const t = setInterval(() => void carregar(true), 5 * 60 * 1000);
+    const t = setInterval(
+      () => {
+        // Em aba oculta não gastamos requisição nem CPU.
+        if (document.visibilityState !== "visible") return;
+        void carregar(true);
+      },
+      5 * 60 * 1000,
+    );
     return () => clearInterval(t);
   }, [carregar]);
 

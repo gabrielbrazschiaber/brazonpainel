@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -22,7 +22,11 @@ import { useAuth, roleHome } from "@/lib/auth";
 import { GateDependenteDePapel } from "@/components/GateEstado";
 import { TermosGate } from "@/components/TermosGate";
 import { OnboardingProvider, useTourDaTela } from "@/components/onboarding/OnboardingProvider";
-import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
+import { MontarQuandoAberto } from "@/components/MontarQuandoAberto";
+
+const AjudaDaTela = lazy(() =>
+  import("@/components/onboarding/AjudaDaTela").then((m) => ({ default: m.AjudaDaTela })),
+);
 import { AppShell } from "@/components/AppShell";
 import type { AppNavItem } from "@/components/AppSidebar";
 import { ErroLimite } from "@/components/ErroLimite";
@@ -64,7 +68,11 @@ import {
 
 import { BancoAdminPainel } from "@/components/banco-leads/BancoAdminPainel";
 import { BancoLeadFormDialog } from "@/components/banco-leads/BancoLeadFormDialog";
-import { ImportarBancoDialog } from "@/components/banco-leads/ImportarBancoDialog";
+const ImportarBancoDialog = lazy(() =>
+  import("@/components/banco-leads/ImportarBancoDialog").then((m) => ({
+    default: m.ImportarBancoDialog,
+  })),
+);
 
 import { formatDate } from "@/lib/format";
 import { formatarTelefone } from "@/lib/leads-import";
@@ -324,7 +332,11 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
       contexto="Banco de Leads"
       items={navItems}
       tab="banco"
-      headerExtra={<AjudaDaTela chave="tela:banco-leads" />}
+      headerExtra={
+        <Suspense fallback={null}>
+          <AjudaDaTela chave="tela:banco-leads" />
+        </Suspense>
+      }
       {...(isAdmin
         ? {
             acaoPrincipal: {
@@ -719,12 +731,14 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
         </div>
       </ErroLimite>
 
-      <ImportarBancoDialog
-        aberto={importAberto}
-        onOpenChange={setImportAberto}
-        segmentos={segmentos}
-        onConcluido={() => void carregar()}
-      />
+      <MontarQuandoAberto aberto={importAberto}>
+        <ImportarBancoDialog
+          aberto={importAberto}
+          onOpenChange={setImportAberto}
+          segmentos={segmentos}
+          onConcluido={() => void carregar()}
+        />
+      </MontarQuandoAberto>
       <BancoLeadFormDialog
         aberto={formAberto}
         onOpenChange={setFormAberto}

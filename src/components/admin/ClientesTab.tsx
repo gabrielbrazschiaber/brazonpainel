@@ -2,7 +2,14 @@ import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
 import { useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
+import { lazy } from "react";
+import { MontarQuandoAberto } from "@/components/MontarQuandoAberto";
+
+const ClienteFormDialog = lazy(() =>
+  import("@/components/vendedor/ClienteFormDialog").then((m) => ({
+    default: m.ClienteFormDialog,
+  })),
+);
 import { excluirCliente, reprocessarSyncCliente } from "@/lib/admin.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -290,14 +297,16 @@ export function ClientesTab({
             )}
           </TableBody>
         </Table>
-        <ClienteFormDialog
-          mode="editar"
-          escopo="admin"
-          cliente={editing}
-          planos={planos.map((p) => ({ id: p.id, nome: p.nome, valor: p.valor }))}
-          onOpenChange={(v) => !v && setEditing(null)}
-          onSaved={onChanged}
-        />
+        <MontarQuandoAberto aberto={Boolean(editing)}>
+          <ClienteFormDialog
+            mode="editar"
+            escopo="admin"
+            cliente={editing}
+            planos={planos.map((p) => ({ id: p.id, nome: p.nome, valor: p.valor }))}
+            onOpenChange={(v) => !v && setEditing(null)}
+            onSaved={onChanged}
+          />
+        </MontarQuandoAberto>
         <AlertDialog open={!!aExcluir} onOpenChange={(o) => !o && setAExcluir(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
