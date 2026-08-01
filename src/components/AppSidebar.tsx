@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LogOut, MessagesSquare, UserCog } from "lucide-react";
+import { GraduationCap, LogOut, MessagesSquare, UserCog } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   Sidebar,
@@ -24,6 +24,8 @@ import { useChatNaoLidas } from "@/lib/use-chat-nao-lidas";
 import { useTarefasAbertas } from "@/lib/use-tarefas-abertas";
 import { useFollowUpsPendentes } from "@/lib/use-follow-ups-pendentes";
 import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
+import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 
 export interface AppNavItem {
   value: string;
@@ -65,6 +67,17 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
   });
 
   const { role } = useAuth();
+  // "Rever tutoriais" é sempre manual: abre o tour agora e não reativa no login.
+  const { tutoriais, reiniciar } = useOnboarding();
+
+  const reverTutoriais = React.useCallback(async () => {
+    try {
+      const feito = await reiniciar();
+      if (!feito) toast.info("Nenhum tutorial disponível para o seu acesso.");
+    } catch {
+      toast.error("Não foi possível abrir os tutoriais agora.");
+    }
+  }, [reiniciar]);
   const navigate = useNavigate();
   const { abertas } = useTarefasAbertas({
     ativo: role === "admin",
@@ -222,6 +235,22 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
 
       <SidebarFooter className="border-t border-sidebar-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <SidebarMenu>
+          {tutoriais.length > 0 && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                data-tour="nav-tutoriais"
+                onClick={() => {
+                  fecharSeMobile();
+                  void reverTutoriais();
+                }}
+                tooltip="Rever tutoriais"
+                className="h-10 md:h-8"
+              >
+                <GraduationCap className="h-4 w-4" />
+                <span>Rever tutoriais</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           {onConta && (
             <SidebarMenuItem>
               <SidebarMenuButton
