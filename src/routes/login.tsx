@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -69,7 +70,8 @@ function LoginPage() {
     return (
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
         <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
-        <Card className="relative w-full max-w-md rounded-2xl p-8 shadow-lg">
+      <div className="pointer-events-none absolute -bottom-40 right-1/4 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
+        <Card className="fade-in-up relative w-full max-w-md rounded-2xl p-6 shadow-lg sm:p-8">
           <div className="mb-6 text-center">
             <BrazonLogo
               className="mb-4 justify-center"
@@ -113,6 +115,7 @@ function LoginPage() {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {submitting ? "Enviando..." : "Enviar link"}
               </Button>
               <Button
@@ -133,7 +136,8 @@ function LoginPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
       <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
-      <Card className="relative w-full max-w-md rounded-2xl p-8 shadow-lg">
+      <div className="pointer-events-none absolute -bottom-40 right-1/4 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
+      <Card className="fade-in-up relative w-full max-w-md rounded-2xl p-6 shadow-lg sm:p-8">
         <div className="mb-6 text-center">
           <BrazonLogo
             className="mb-4 justify-center"
@@ -179,6 +183,7 @@ function LoginPage() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={submitting}>
+            {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             {submitting ? "Entrando..." : "Entrar"}
           </Button>
         </form>

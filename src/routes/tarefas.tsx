@@ -33,6 +33,7 @@ import {
 } from "@/lib/tarefas.functions";
 
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -339,19 +340,20 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
         </div>
 
         {carregando ? (
-          <div className="flex justify-center py-16">
+          <div className="flex flex-col items-center gap-2 py-16">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Carregando tarefas...</p>
           </div>
         ) : visiveis.length === 0 ? (
-          <Card className="flex flex-col items-center gap-2 p-10 text-center">
-            <ClipboardList className="h-8 w-8 text-muted-foreground" />
-            <p className="font-medium">Nenhuma tarefa por aqui</p>
-            <p className="text-sm text-muted-foreground">
-              {equipe
+          <EmptyState
+            icon={ClipboardList}
+            titulo="Nenhuma tarefa por aqui"
+            descricao={
+              equipe
                 ? "Tarefas são criadas automaticamente quando um cliente contrata um plano."
-                : "Crie uma solicitação e o seu vendedor cuidará do direcionamento."}
-            </p>
-          </Card>
+                : "Crie uma solicitação e o seu vendedor cuidará do direcionamento."
+            }
+          />
         ) : (
           <div className="space-y-3">
             {visiveis.map((t) => (
