@@ -1478,6 +1478,17 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
   }
 
   return (
+    <div className="max-w-2xl space-y-4">
+    <Card className="p-6">
+      <p className="section-title">Tutoriais do sistema</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Reinicie os tutoriais guiados para revê-los desde o começo.
+      </p>
+      <div className="mt-3">
+        <ReverTutoriais />
+      </div>
+    </Card>
+    (
     <Card className="max-w-2xl p-6">
       <div className="grid gap-4">
         <div className="grid gap-2 sm:grid-cols-2">
