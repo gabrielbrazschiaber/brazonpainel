@@ -410,6 +410,8 @@ export type Database = {
           dias_devolver_lead: number
           dominio: string | null
           id: string
+          mfa_obrigatorio_admin: boolean
+          mfa_obrigatorio_vendedor: boolean
           nome_app: string
           percentual_comissao_padrao: number
           updated_at: string
@@ -424,6 +426,8 @@ export type Database = {
           dias_devolver_lead?: number
           dominio?: string | null
           id?: string
+          mfa_obrigatorio_admin?: boolean
+          mfa_obrigatorio_vendedor?: boolean
           nome_app?: string
           percentual_comissao_padrao?: number
           updated_at?: string
@@ -438,6 +442,8 @@ export type Database = {
           dias_devolver_lead?: number
           dominio?: string | null
           id?: string
+          mfa_obrigatorio_admin?: boolean
+          mfa_obrigatorio_vendedor?: boolean
           nome_app?: string
           percentual_comissao_padrao?: number
           updated_at?: string
@@ -1010,6 +1016,33 @@ export type Database = {
           },
         ]
       }
+      mfa_codigos_recuperacao: {
+        Row: {
+          codigo_hash: string
+          created_at: string
+          id: string
+          updated_at: string
+          usado_em: string | null
+          user_id: string
+        }
+        Insert: {
+          codigo_hash: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          usado_em?: string | null
+          user_id: string
+        }
+        Update: {
+          codigo_hash?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          usado_em?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notificacoes: {
         Row: {
           created_at: string
@@ -1219,6 +1252,7 @@ export type Database = {
           id: string
           nome: string
           novidades_vistas_em: string | null
+          telefone: string | null
           updated_at: string
         }
         Insert: {
@@ -1227,6 +1261,7 @@ export type Database = {
           id: string
           nome?: string
           novidades_vistas_em?: string | null
+          telefone?: string | null
           updated_at?: string
         }
         Update: {
@@ -1235,6 +1270,7 @@ export type Database = {
           id?: string
           nome?: string
           novidades_vistas_em?: string | null
+          telefone?: string | null
           updated_at?: string
         }
         Relationships: []
