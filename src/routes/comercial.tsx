@@ -193,8 +193,15 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const [origem, setOrigem] = useState<LeadOrigem | "todas">("todas");
   const [followUp, setFollowUp] = useState(false);
   const [soZap, setSoZap] = useState(false);
+  /** Aba/filtro de leads com dados faltando. */
+  const [incompletos, setIncompletos] = useState(false);
+  const [ordem, setOrdem] = useState<"recentes" | "completude">("recentes");
+  /** Filtro por lote de importação (vem do resultado da importação). */
+  const [loteId, setLoteId] = useState<string | null>(null);
 
   const [formAberto, setFormAberto] = useState(false);
+  const [importarAberto, setImportarAberto] = useState(false);
+  const [completarAberto, setCompletarAberto] = useState(false);
   const [editando, setEditando] = useState<Lead | null>(null);
   const [detalhe, setDetalhe] = useState<Lead | null>(null);
   const [excluindo, setExcluindo] = useState<Lead | null>(null);
@@ -211,9 +218,13 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       ...(segmento !== "todos" ? { segmento } : {}),
       ...(busca.trim() ? { busca: busca.trim() } : {}),
       ...(followUp ? { apenas_follow_up: true } : {}),
+      ...(incompletos ? { apenas_incompletos: true } : {}),
+      ...(loteId ? { importacao_id: loteId } : {}),
+      ordem,
     }),
-    [dias, filtroVendedor, estagio, origem, segmento, busca, followUp],
+    [dias, filtroVendedor, estagio, origem, segmento, busca, followUp, incompletos, loteId, ordem],
   );
+
 
   const recarregar = useCallback(async () => {
     setCarregando(true);
