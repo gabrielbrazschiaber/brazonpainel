@@ -468,18 +468,11 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       </div>
 
       {carregando && !dados ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </div>
+        <CardsEsqueleto quantidade={3} />
       ) : (
         dados && (
-          <Suspense
-            fallback={
-              <div className="flex justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            }
-          >
+          <Suspense fallback={<CardsEsqueleto quantidade={3} />}>
+
             <ComercialDashboard
               dados={dados}
               onVerIncompletos={() => {
