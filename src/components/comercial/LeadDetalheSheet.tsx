@@ -71,6 +71,7 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
   const [reunioes, setReunioes] = useState<Reuniao[]>([]);
   const [nota, setNota] = useState("");
   const [ocupado, setOcupado] = useState(false);
+  const [carregando, setCarregando] = useState(false);
   /** Revalidado sempre que a tela abre, para refletir telefones editados há pouco. */
   const [zap, setZap] = useState<WhatsAppStatus>(() => statusWhatsApp(lead?.telefone));
 
