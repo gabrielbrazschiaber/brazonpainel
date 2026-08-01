@@ -737,7 +737,7 @@ export async function dashboardComercialServer(
 export type DashboardComercial = Awaited<ReturnType<typeof dashboardComercialServer>>;
 
 /* ------------------------------------------------------------------ *
- * Follow-ups: atrasados e de hoje, priorizados
+ * Follow-ups: atrasados, de hoje e próximos, priorizados
  * ------------------------------------------------------------------ */
 
 export interface FollowUp {
@@ -754,10 +754,14 @@ export interface FollowUp {
   observacoes: string | null;
   vendedor_id: string;
   vendedor_nome?: string | null;
-  /** Dias de atraso (0 = follow-up é hoje). */
+  /** Dias de atraso (0 = follow-up é hoje; negativo = ainda vai vencer). */
   atraso: number;
   /** Pontuação de prioridade (maior = mais urgente). */
   prioridade: number;
+  /** Tentativas SEM resposta já registradas. */
+  follow_ups_feitos: number;
+  ultimo_contato_em: string | null;
+  cadencia_encerrada: boolean;
 }
 
 export interface PainelFollowUps {
@@ -765,8 +769,13 @@ export interface PainelFollowUps {
   hojeISO: string;
   atrasados: FollowUp[];
   hoje: FollowUp[];
+  /** Follow-ups agendados entre amanhã e +7 dias. */
+  proximos: FollowUp[];
   totalAtrasados: number;
   totalHoje: number;
+  totalProximos: number;
+  /** Leads com cadência encerrada e estágio ainda aberto. */
+  totalEncerrados: number;
 }
 
 /** Peso do estágio na priorização: quanto mais perto do fechamento, mais urgente. */
@@ -774,12 +783,22 @@ const PESO_ESTAGIO: Record<string, number> = {
   em_negociacao: 40,
   interessado: 25,
   contatado: 10,
+  nao_interessado: 2,
 };
 
 function diasEntre(deISO: string, ateISO: string): number {
   const a = new Date(`${deISO}T00:00:00`).getTime();
   const b = new Date(`${ateISO}T00:00:00`).getTime();
   return Math.round((b - a) / 86400000);
+}
+
+/** Soma dias a uma data ISO (AAAA-MM-DD) sem depender de fuso. */
+function somarDias(baseISO: string, dias: number): string {
+  const d = new Date(`${baseISO}T00:00:00`);
+  d.setDate(d.getDate() + dias);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
 }
 
 /** Prioridade = atraso + estágio + valor estimado (com teto), tudo em pontos. */
@@ -790,6 +809,41 @@ function pontuar(atraso: number, estagio: LeadEstagio, valor: number): number {
   return Math.round(pAtraso + pEstagio + pValor);
 }
 
+const CAMPOS_FOLLOW_UP =
+  "id, vendedor_id, nome_contato, empresa, telefone, email, segmento, origem, estagio, valor_estimado, observacoes, proximo_contato, follow_ups_feitos, ultimo_contato_em, cadencia_encerrada";
+
+const SEM_FOLLOW_UP_SQL = `(${ESTAGIOS_SEM_FOLLOW_UP.join(",")})`;
+
+function mapearFollowUp(
+  l: Record<string, unknown>,
+  hoje: string,
+  nomes: Map<string, string>,
+): FollowUp {
+  const proximo = String(l.proximo_contato);
+  const atraso = diasEntre(proximo, hoje);
+  const valor = Number(l.valor_estimado ?? 0);
+  return {
+    id: String(l.id),
+    nome_contato: String(l.nome_contato),
+    empresa: (l.empresa as string | null) ?? null,
+    telefone: String(l.telefone ?? ""),
+    email: (l.email as string | null) ?? null,
+    segmento: (l.segmento as string | null) ?? null,
+    origem: l.origem as LeadOrigem,
+    estagio: l.estagio as LeadEstagio,
+    valor_estimado: valor,
+    proximo_contato: proximo,
+    observacoes: (l.observacoes as string | null) ?? null,
+    vendedor_id: String(l.vendedor_id),
+    vendedor_nome: nomes.get(String(l.vendedor_id)) ?? null,
+    atraso,
+    prioridade: pontuar(Math.max(0, atraso), l.estagio as LeadEstagio, valor),
+    follow_ups_feitos: Number(l.follow_ups_feitos ?? 0),
+    ultimo_contato_em: (l.ultimo_contato_em as string | null) ?? null,
+    cadencia_encerrada: Boolean(l.cadencia_encerrada),
+  };
+}
+
 export async function followUpsServer(
   supabase: Sb,
   userId: string,
@@ -798,66 +852,62 @@ export async function followUpsServer(
   const escopo = await escopoComercial(supabase, userId);
   const hoje = hojeISO();
   const limite = filtros.limite ?? 50;
+  const fim = somarDias(hoje, 7);
 
   let query = supabase
     .from("leads")
-    .select(
-      "id, vendedor_id, nome_contato, empresa, telefone, email, segmento, origem, estagio, valor_estimado, observacoes, proximo_contato",
-    )
+    .select(CAMPOS_FOLLOW_UP)
     .not("proximo_contato", "is", null)
-    .lte("proximo_contato", hoje)
-    .not("estagio", "in", `(${ESTAGIOS_FECHADOS.join(",")})`)
+    .lte("proximo_contato", fim)
+    .not("estagio", "in", SEM_FOLLOW_UP_SQL)
     .order("proximo_contato", { ascending: true })
-    .limit(300);
+    .limit(400);
+
+  let queryEncerrados = supabase
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .eq("cadencia_encerrada", true)
+    .not("estagio", "in", SEM_FOLLOW_UP_SQL);
 
   // Vendedor: a RLS já restringe aos leads dele; o filtro é só para o admin.
   if (escopo.isAdmin && filtros.vendedor_id) {
     query = query.eq("vendedor_id", filtros.vendedor_id);
+    queryEncerrados = queryEncerrados.eq("vendedor_id", filtros.vendedor_id);
   }
 
-  const { data, error } = await query;
+  const [{ data, error }, { count: encerrados }] = await Promise.all([
+    query,
+    queryEncerrados,
+  ]);
   if (error) throw new Error(error.message);
 
   const nomes = escopo.isAdmin
     ? await nomesVendedores((data ?? []).map((l: { vendedor_id: string }) => l.vendedor_id))
     : new Map<string, string>();
 
-  const itens: FollowUp[] = (data ?? []).map((l: Record<string, unknown>) => {
-    const proximo = String(l.proximo_contato);
-    const atraso = Math.max(0, diasEntre(proximo, hoje));
-    const valor = Number(l.valor_estimado ?? 0);
-    return {
-      id: String(l.id),
-      nome_contato: String(l.nome_contato),
-      empresa: (l.empresa as string | null) ?? null,
-      telefone: String(l.telefone ?? ""),
-      email: (l.email as string | null) ?? null,
-      segmento: (l.segmento as string | null) ?? null,
-      origem: l.origem as LeadOrigem,
-      estagio: l.estagio as LeadEstagio,
-      valor_estimado: valor,
-      proximo_contato: proximo,
-      observacoes: (l.observacoes as string | null) ?? null,
-      vendedor_id: String(l.vendedor_id),
-      vendedor_nome: nomes.get(String(l.vendedor_id)) ?? null,
-      atraso,
-      prioridade: pontuar(atraso, l.estagio as LeadEstagio, valor),
-    };
-  });
+  const itens: FollowUp[] = (data ?? []).map((l: Record<string, unknown>) =>
+    mapearFollowUp(l, hoje, nomes),
+  );
 
   const ordenar = (a: FollowUp, b: FollowUp) =>
     b.prioridade - a.prioridade || b.valor_estimado - a.valor_estimado;
+  const porData = (a: FollowUp, b: FollowUp) =>
+    a.proximo_contato.localeCompare(b.proximo_contato) || ordenar(a, b);
 
   const atrasados = itens.filter((i) => i.atraso > 0).sort(ordenar);
   const deHoje = itens.filter((i) => i.atraso === 0).sort(ordenar);
+  const proximos = itens.filter((i) => i.atraso < 0).sort(porData);
 
   return {
     isAdmin: escopo.isAdmin,
     hojeISO: hoje,
     atrasados: atrasados.slice(0, limite),
     hoje: deHoje.slice(0, limite),
+    proximos: proximos.slice(0, limite),
     totalAtrasados: atrasados.length,
     totalHoje: deHoje.length,
+    totalProximos: proximos.length,
+    totalEncerrados: encerrados ?? 0,
   };
 }
 
@@ -870,7 +920,7 @@ export async function reagendarFollowUpServer(
   await escopoComercial(supabase, userId);
   const { data, error } = await supabase
     .from("leads")
-    .update({ proximo_contato: dados.proximo_contato })
+    .update({ proximo_contato: dados.proximo_contato, cadencia_encerrada: false })
     .eq("id", dados.id)
     .select("id")
     .maybeSingle();
@@ -878,3 +928,135 @@ export async function reagendarFollowUpServer(
   if (!data) throw new Error("Lead não encontrado ou você não tem permissão.");
   return { id: data.id as string };
 }
+
+/** Pergunta a data seguinte à régua do banco (fonte única da cadência). */
+async function proximaData(
+  supabase: Sb,
+  estagio: LeadEstagio,
+  tentativas: number,
+): Promise<string | null> {
+  const { data, error } = await supabase.rpc("lead_proximo_follow_up", {
+    _estagio: estagio,
+    _tentativas: tentativas,
+  });
+  if (error) throw new Error(error.message);
+  return (data as string | null) ?? null;
+}
+
+const RESULTADO_LABEL: Record<string, string> = {
+  sem_resposta: "Sem resposta",
+  respondeu: "Respondeu",
+  adiar: "Adiado",
+};
+
+/**
+ * Registra o resultado de um toque de follow-up.
+ * A régua de datas vive no banco: aqui só decidimos tentativas e adiamentos.
+ */
+export async function registrarFollowUpServer(
+  supabase: Sb,
+  userId: string,
+  dados: z.infer<typeof registrarFollowUpSchema>,
+) {
+  await escopoComercial(supabase, userId);
+
+  const { data: lead, error: erroLead } = await supabase
+    .from("leads")
+    .select("id, estagio, follow_ups_feitos")
+    .eq("id", dados.lead_id)
+    .maybeSingle();
+  if (erroLead) throw new Error(erroLead.message);
+  if (!lead) throw new Error("Lead não encontrado ou você não tem permissão.");
+
+  const patch: Record<string, unknown> = { ultimo_contato_em: new Date().toISOString() };
+  let detalhe = "";
+
+  if (dados.resultado === "respondeu") {
+    if (!dados.novo_estagio) throw new Error("Informe o novo estágio do lead.");
+    // A trigger do banco zera as tentativas e recalcula a próxima data.
+    patch.estagio = dados.novo_estagio;
+    detalhe = `novo estágio: ${dados.novo_estagio}`;
+  } else if (dados.resultado === "adiar") {
+    if (!dados.adiar_dias) throw new Error("Informe em quantos dias adiar.");
+    // Adiar não gasta tentativa.
+    patch.proximo_contato = somarDias(hojeISO(), dados.adiar_dias);
+    patch.cadencia_encerrada = false;
+    detalhe = `adiado ${dados.adiar_dias} dia(s)`;
+  } else {
+    const tentativas = Number(lead.follow_ups_feitos ?? 0) + 1;
+    const proxima = await proximaData(supabase, lead.estagio as LeadEstagio, tentativas);
+    patch.follow_ups_feitos = tentativas;
+    patch.proximo_contato = proxima;
+    patch.cadencia_encerrada = proxima === null;
+    detalhe = proxima
+      ? `${tentativas}ª tentativa · próximo contato ${proxima}`
+      : `${tentativas}ª tentativa · cadência encerrada`;
+  }
+
+  const { data, error } = await supabase
+    .from("leads")
+    .update(patch)
+    .eq("id", dados.lead_id)
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Lead não encontrado ou você não tem permissão.");
+
+  await supabase.from("lead_atividades").insert({
+    lead_id: dados.lead_id,
+    autor_id: userId,
+    tipo: "contato",
+    para: dados.resultado,
+    corpo: [`${RESULTADO_LABEL[dados.resultado]} — ${detalhe}`, dados.nota ?? ""]
+      .filter(Boolean)
+      .join("\n"),
+  });
+
+  return { id: data.id as string };
+}
+
+/** Traz de volta um lead com a cadência encerrada, zerando as tentativas. */
+export async function reativarCadenciaServer(
+  supabase: Sb,
+  userId: string,
+  dados: z.infer<typeof reativarCadenciaSchema>,
+) {
+  await escopoComercial(supabase, userId);
+
+  const { data: lead, error: erroLead } = await supabase
+    .from("leads")
+    .select("id, estagio")
+    .eq("id", dados.lead_id)
+    .maybeSingle();
+  if (erroLead) throw new Error(erroLead.message);
+  if (!lead) throw new Error("Lead não encontrado ou você não tem permissão.");
+  if (ESTAGIOS_SEM_FOLLOW_UP.includes(lead.estagio as LeadEstagio)) {
+    throw new Error("Leads ganhos ou perdidos não recebem follow-up.");
+  }
+
+  const proxima = await proximaData(supabase, lead.estagio as LeadEstagio, 0);
+  const { data, error } = await supabase
+    .from("leads")
+    .update({
+      follow_ups_feitos: 0,
+      cadencia_encerrada: false,
+      proximo_contato: proxima,
+      ultimo_contato_em: new Date().toISOString(),
+    })
+    .eq("id", dados.lead_id)
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Lead não encontrado ou você não tem permissão.");
+
+  await supabase.from("lead_atividades").insert({
+    lead_id: dados.lead_id,
+    autor_id: userId,
+    tipo: "contato",
+    para: "reativado",
+    corpo: `Cadência reativada · próximo contato ${proxima ?? "—"}`,
+  });
+
+  return { id: data.id as string };
+}
+
