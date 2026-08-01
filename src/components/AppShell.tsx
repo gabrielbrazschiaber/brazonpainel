@@ -5,6 +5,8 @@ import { AvisosSino } from "@/components/AvisosSino";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ErroLimite } from "@/components/ErroLimite";
+import { PularParaConteudo } from "@/components/PularParaConteudo";
+
 import { useAuth } from "@/lib/auth";
 
 interface AppShellProps {
