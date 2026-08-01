@@ -39,8 +39,10 @@ import {
 } from "@/components/ui/table";
 
 import {
+  explicacaoCnpj,
   formatarCnpj,
   lerArquivo,
+
   normalizarChave,
   normalizarCnpj,
   normalizarDataBr,
