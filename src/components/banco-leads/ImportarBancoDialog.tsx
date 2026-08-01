@@ -58,6 +58,7 @@ import {
 } from "@/lib/banco-leads";
 import { formatarCnae, normalizarCnae, rotuloCnae, sugerirSegmentoPorCnae } from "@/lib/cnaes";
 import type { Cnae } from "@/lib/cnaes";
+import { opcoesUnicas } from "@/lib/escopo";
 import { LEAD_ORIGENS, ORIGEM_LABEL, type LeadOrigem } from "@/lib/leads";
 import {
   criarLoteBanco,
