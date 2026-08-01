@@ -114,7 +114,15 @@
   --shadow-primary: 0 8px 24px -6px oklch(0.487 0.158 287 / 0.35);
   --gradient-primary: linear-gradient(135deg, oklch(0.52 0.16 287), oklch(0.6 0.17 300));
   --gradient-surface: linear-gradient(180deg, oklch(0.99 0.004 285), oklch(0.965 0.008 285));
+
+  /* Espaçamento vertical padronizado (ritmo das telas) */
+  --gap-inline: 0.5rem;
+  --gap-campo: 0.375rem;
+  --gap-bloco: 1rem;
+  --gap-secao: 1.5rem;
+  --gap-pagina: 2rem;
 }
+
 
 .dark {
   --background: oklch(0.17 0.02 285);
