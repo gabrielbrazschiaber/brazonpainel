@@ -4,6 +4,7 @@ import {
   AVISO_CNPJ_COMPLETADO,
   AVISO_CNPJ_DIGITO,
   AVISO_CNPJ_INVALIDO,
+  avisoCriticoCnpj,
   explicacaoCnpj,
   formatarCnpj,
   normalizarCnpj,
