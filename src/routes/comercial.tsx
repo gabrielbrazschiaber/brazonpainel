@@ -60,6 +60,9 @@ import { ComercialDashboard } from "@/components/comercial/ComercialDashboard";
 import { LeadDetalheSheet } from "@/components/comercial/LeadDetalheSheet";
 import { LeadFormDialog } from "@/components/comercial/LeadFormDialog";
 import { FollowUpsPanel } from "@/components/comercial/FollowUpsPanel";
+import { ImportarLeadsDialog } from "@/components/comercial/ImportarLeadsDialog";
+import { CompletarLeadsDialog } from "@/components/comercial/CompletarLeadsDialog";
+import { Progress } from "@/components/ui/progress";
 
 import { formatCurrency, formatDate } from "@/lib/format";
 import { mapaWhatsApp } from "@/lib/whatsapp";
