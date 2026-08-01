@@ -20,10 +20,7 @@ export async function buscarPerfis(ids: (string | null | undefined)[]) {
 
   for (let i = 0; i < unicos.length; i += TAMANHO_LOTE) {
     const lote = unicos.slice(i, i + TAMANHO_LOTE);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id,nome,email")
-      .in("id", lote);
+    const { data, error } = await supabase.from("profiles").select("id,nome,email").in("id", lote);
     if (error) throw new Error(error.message);
     for (const p of data ?? []) mapa.set(p.id, p as PerfilBasico);
   }

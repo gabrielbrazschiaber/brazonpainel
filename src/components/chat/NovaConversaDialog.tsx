@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { criarConversaEquipe, listarContatosEquipe, type ContatoEquipe } from "@/lib/chat.functions";
+import {
+  criarConversaEquipe,
+  listarContatosEquipe,
+  type ContatoEquipe,
+} from "@/lib/chat.functions";
 import {
   Dialog,
   DialogContent,

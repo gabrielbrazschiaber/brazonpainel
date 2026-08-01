@@ -2,12 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { registrarAceiteTermos, statusAceiteTermos } from "@/lib/termos.functions";
-import {
-  TERMOS_ATUALIZADO_EM,
-  TERMOS_RODAPE,
-  TERMOS_SECOES,
-  TERMOS_VERSAO,
-} from "@/lib/termos";
+import { TERMOS_ATUALIZADO_EM, TERMOS_RODAPE, TERMOS_SECOES, TERMOS_VERSAO } from "@/lib/termos";
 import { useSair } from "@/lib/use-sair";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -76,8 +71,8 @@ export function TermosGate({ children }: { children: ReactNode }) {
           <DialogHeader className="border-b border-border px-6 pt-6 pb-4 text-left">
             <DialogTitle>Atualizamos nossos Termos de Uso</DialogTitle>
             <p className="text-sm text-muted-foreground">
-              Para continuar usando a plataforma, leia e aceite a versão {TERMOS_VERSAO}{" "}
-              (atualizada em {TERMOS_ATUALIZADO_EM}).
+              Para continuar usando a plataforma, leia e aceite a versão {TERMOS_VERSAO} (atualizada
+              em {TERMOS_ATUALIZADO_EM}).
             </p>
           </DialogHeader>
 
@@ -119,8 +114,8 @@ export function TermosGate({ children }: { children: ReactNode }) {
                 htmlFor="aceite-revalidacao"
                 className="text-sm font-normal leading-relaxed text-muted-foreground"
               >
-                Li e aceito a versão {TERMOS_VERSAO} dos Termos de Uso. O aceite será
-                registrado com data e hora.
+                Li e aceito a versão {TERMOS_VERSAO} dos Termos de Uso. O aceite será registrado com
+                data e hora.
               </Label>
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

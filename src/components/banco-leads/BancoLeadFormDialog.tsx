@@ -283,10 +283,7 @@ export function BancoLeadFormDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Reservar para o estado</Label>
-            <Select
-              value={form.reservado_estado}
-              onValueChange={(v) => set("reservado_estado", v)}
-            >
+            <Select value={form.reservado_estado} onValueChange={(v) => set("reservado_estado", v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Sem reserva" />
               </SelectTrigger>

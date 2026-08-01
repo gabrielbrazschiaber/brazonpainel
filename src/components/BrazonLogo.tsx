@@ -1,22 +1,11 @@
 import { cn } from "@/lib/utils";
 
 /** Símbolo "Z" da marca Brazon. */
-export function BrazonSymbol({
-  className,
-  mono = false,
-}: {
-  className?: string;
-  mono?: boolean;
-}) {
+export function BrazonSymbol({ className, mono = false }: { className?: string; mono?: boolean }) {
   const stroke = mono ? "currentColor" : "url(#bz-grad)";
   const dot = (c: string) => (mono ? "currentColor" : c);
   return (
-    <svg
-      viewBox="0 0 200 200"
-      className={className}
-      role="img"
-      aria-label="Brazon"
-    >
+    <svg viewBox="0 0 200 200" className={className} role="img" aria-label="Brazon">
       {!mono && (
         <defs>
           <linearGradient id="bz-grad" x1="0" y1="0" x2="1" y2="1">
@@ -55,12 +44,7 @@ export function BrazonLogo({
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
       <BrazonSymbol className={cn("h-8 w-8", symbolClassName)} />
-      <span
-        className={cn(
-          "text-xl font-bold tracking-tight text-foreground",
-          textClassName,
-        )}
-      >
+      <span className={cn("text-xl font-bold tracking-tight text-foreground", textClassName)}>
         BRA<span className="text-primary">Z</span>ON
       </span>
     </div>

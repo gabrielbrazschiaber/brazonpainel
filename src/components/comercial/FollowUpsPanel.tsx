@@ -23,7 +23,13 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { formatCurrency, formatDate } from "@/lib/format";
 import { ESTAGIO_LABEL, apenasDigitos, estagioClasse, type LeadEstagio } from "@/lib/leads";
@@ -147,7 +153,10 @@ function ItemFollowUp({
               </Badge>
             )}
             {item.cadencia_encerrada && (
-              <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400">
+              <Badge
+                variant="outline"
+                className="border-amber-500/40 text-amber-600 dark:text-amber-400"
+              >
                 Cadência encerrada
               </Badge>
             )}
@@ -174,7 +183,12 @@ function ItemFollowUp({
           )}
 
           {item.cadencia_encerrada ? (
-            <Button variant="outline" size="sm" disabled={ocupado} onClick={() => onReativar(item.id)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={ocupado}
+              onClick={() => onReativar(item.id)}
+            >
               <RotateCcw className="mr-1.5 h-4 w-4" /> Reativar cadência
             </Button>
           ) : (
@@ -252,9 +266,7 @@ export function FollowUpsPanel({
       setDados(d);
       setAba(d.totalAtrasados > 0 ? "atrasados" : d.totalHoje > 0 ? "hoje" : "proximos");
     } catch (err) {
-      setErro(
-        err instanceof Error ? err.message : "Não foi possível carregar os follow-ups.",
-      );
+      setErro(err instanceof Error ? err.message : "Não foi possível carregar os follow-ups.");
     } finally {
       setCarregando(false);
     }
@@ -295,9 +307,7 @@ export function FollowUpsPanel({
       await buscar();
       onAtualizado?.();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Não foi possível registrar o follow-up.",
-      );
+      toast.error(err instanceof Error ? err.message : "Não foi possível registrar o follow-up.");
     } finally {
       setOcupado(false);
     }
@@ -311,9 +321,7 @@ export function FollowUpsPanel({
       await buscar();
       onAtualizado?.();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Não foi possível reativar a cadência.",
-      );
+      toast.error(err instanceof Error ? err.message : "Não foi possível reativar a cadência.");
     } finally {
       setOcupado(false);
     }
@@ -379,8 +387,7 @@ export function FollowUpsPanel({
           variant={aba === "proximos" ? "default" : "outline"}
           onClick={() => setAba("proximos")}
         >
-          <CalendarDays className="mr-1.5 h-4 w-4" /> Próximos 7 dias (
-          {dados?.totalProximos ?? 0})
+          <CalendarDays className="mr-1.5 h-4 w-4" /> Próximos 7 dias ({dados?.totalProximos ?? 0})
         </Button>
         {(dados?.totalEncerrados ?? 0) > 0 && (
           <Badge

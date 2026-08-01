@@ -56,15 +56,10 @@ export const REUNIAO_LABEL: Record<ReuniaoStatus, string> = {
 };
 
 /** Não contam como pipeline aberto no dashboard. */
-export const ESTAGIOS_FECHADOS: readonly LeadEstagio[] = [
-  "ganho",
-  "perdido",
-  "nao_interessado",
-];
+export const ESTAGIOS_FECHADOS: readonly LeadEstagio[] = ["ganho", "perdido", "nao_interessado"];
 
 /** Únicos estágios sem follow-up: ganho deu certo, perdido o cliente não quer. */
 export const ESTAGIOS_SEM_FOLLOW_UP: readonly LeadEstagio[] = ["ganho", "perdido"];
-
 
 /** Estágios que exigem motivo da perda. */
 export const ESTAGIOS_COM_MOTIVO: readonly LeadEstagio[] = ["perdido", "nao_interessado"];

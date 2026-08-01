@@ -240,16 +240,12 @@ export function ImportarLeadsDialog({
   }
 
   function trocarAcao(id: string, acao: AcaoLinha) {
-    setLinhas((atuais) =>
-      atuais.map((l) => (l.id === id ? { ...l, acao, acaoManual: true } : l)),
-    );
+    setLinhas((atuais) => atuais.map((l) => (l.id === id ? { ...l, acao, acaoManual: true } : l)));
   }
 
   function ignorarComErro() {
     setLinhas((atuais) =>
-      atuais.map((l) =>
-        l.status === "erro" ? { ...l, acao: "ignorar", acaoManual: true } : l,
-      ),
+      atuais.map((l) => (l.status === "erro" ? { ...l, acao: "ignorar", acaoManual: true } : l)),
     );
     toast.success("Linhas com erro marcadas para ignorar.");
   }
@@ -364,7 +360,8 @@ export function ImportarLeadsDialog({
             </DialogTitle>
             <DialogDescription>
               {etapa === "envio" && "Envie o arquivo — nada é gravado antes da sua revisão."}
-              {etapa === "revisao" && "Confira o mapeamento e corrija o que precisar antes de gravar."}
+              {etapa === "revisao" &&
+                "Confira o mapeamento e corrija o que precisar antes de gravar."}
               {etapa === "resultado" && "Resumo da importação."}
             </DialogDescription>
           </DialogHeader>
@@ -537,7 +534,11 @@ export function ImportarLeadsDialog({
               {/* b) Resumo */}
               <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                 {[
-                  { label: "Prontos", valor: resumo.ok, classe: "text-emerald-600 dark:text-emerald-400" },
+                  {
+                    label: "Prontos",
+                    valor: resumo.ok,
+                    classe: "text-emerald-600 dark:text-emerald-400",
+                  },
                   { label: "Com erro", valor: resumo.erro, classe: "text-destructive" },
                   {
                     label: "Duplicados na planilha",
@@ -655,7 +656,10 @@ export function ImportarLeadsDialog({
                               <SelectItem value="criar" disabled={l.status === "erro"}>
                                 Criar
                               </SelectItem>
-                              <SelectItem value="atualizar" disabled={l.status !== "duplicado_base"}>
+                              <SelectItem
+                                value="atualizar"
+                                disabled={l.status !== "duplicado_base"}
+                              >
                                 Atualizar
                               </SelectItem>
                               <SelectItem value="ignorar">Ignorar</SelectItem>

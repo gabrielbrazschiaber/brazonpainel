@@ -295,7 +295,9 @@ export function montarLinhas(
       email: normalizarEmail(campos.email),
       segmento: canonizarSegmento(campos.segmento, segmentosExistentes),
       observacoes: (campos.observacoes ?? "").trim(),
-      valor_estimado: campos.valor_estimado?.trim() ? String(normalizarValor(campos.valor_estimado)) : "",
+      valor_estimado: campos.valor_estimado?.trim()
+        ? String(normalizarValor(campos.valor_estimado))
+        : "",
       status: "ok",
       erros: [],
       avisos: [],
@@ -336,7 +338,8 @@ export function reclassificar(
 
     const digitos = normalizarTelefone(l.telefone);
     if (!digitos) erros.push("Telefone obrigatório");
-    else if (!telefoneValido(digitos)) erros.push("Telefone deve ter DDD + número (10 ou 11 dígitos)");
+    else if (!telefoneValido(digitos))
+      erros.push("Telefone deve ter DDD + número (10 ou 11 dígitos)");
 
     if (l.email && !emailValido(l.email)) avisos.push("E-mail inválido, será ignorado");
     if (l.empresa.length > 120) avisos.push("Empresa muito longa, será cortada");
@@ -415,7 +418,16 @@ export function paraEnvio(linhas: LinhaImport[]) {
 export function baixarModelo(): void {
   const dados = [
     ["Nome", "Telefone", "Empresa", "Cargo", "E-mail", "Segmento", "Observações", "Valor"],
-    ["Maria Souza", "(11) 98765-4321", "Padaria Central", "Proprietária", "maria@exemplo.com", "Alimentação", "Indicada por cliente", "350,00"],
+    [
+      "Maria Souza",
+      "(11) 98765-4321",
+      "Padaria Central",
+      "Proprietária",
+      "maria@exemplo.com",
+      "Alimentação",
+      "Indicada por cliente",
+      "350,00",
+    ],
     ["João Lima", "(21) 99888-7766", "", "", "", "", "", ""],
   ];
   const ws = XLSX.utils.aoa_to_sheet(dados);

@@ -61,10 +61,11 @@ export const criarNovidade = createServerFn({ method: "POST" })
     return { ok: true, id: inserted?.id };
   });
 
-const atualizarSchema = baseSchema.extend({ id: z.string().uuid() }).refine(
-  (v) => v.publico_cliente || v.publico_vendedor || v.publico_admin,
-  { message: "Selecione ao menos um público-alvo." },
-);
+const atualizarSchema = baseSchema
+  .extend({ id: z.string().uuid() })
+  .refine((v) => v.publico_cliente || v.publico_vendedor || v.publico_admin, {
+    message: "Selecione ao menos um público-alvo.",
+  });
 
 export const atualizarNovidade = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -95,7 +96,6 @@ export const atualizarNovidade = createServerFn({ method: "POST" })
       publicado: data.publicado,
       ...(virandoPublicado ? { data_publicacao: new Date().toISOString() } : {}),
     };
-
 
     const { error } = await supabaseAdmin.from("novidades").update(update).eq("id", data.id);
     if (error) throw new Error(error.message);

@@ -71,9 +71,9 @@ function LoginPage() {
   if (mode === "forgot") {
     return (
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
-      <ThemeToggle className="fixed right-3 top-3 z-50 bg-card/70 backdrop-blur sm:right-4 sm:top-4" />
+        <ThemeToggle className="fixed right-3 top-3 z-50 bg-card/70 backdrop-blur sm:right-4 sm:top-4" />
         <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-40 right-1/4 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-40 right-1/4 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
         <Card className="fade-in-up relative w-full max-w-md rounded-2xl p-6 shadow-lg sm:p-8">
           <div className="mb-6 text-center">
             <BrazonLogo
@@ -206,7 +206,6 @@ function LoginPage() {
           </Link>
           .
         </p>
-
       </Card>
     </div>
   );

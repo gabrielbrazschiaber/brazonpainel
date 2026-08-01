@@ -89,11 +89,11 @@ export function MenuLateral() {
 
       {chatAberto && (
         <ChatSheet
-        aberto={chatAberto}
-        onOpenChange={(v) => {
-          setChatAberto(v);
-          if (!v) void atualizar();
-        }}
+          aberto={chatAberto}
+          onOpenChange={(v) => {
+            setChatAberto(v);
+            if (!v) void atualizar();
+          }}
           aoMudarNaoLidas={atualizar}
         />
       )}

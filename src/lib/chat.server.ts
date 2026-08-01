@@ -1,5 +1,6 @@
 /** Helpers server-only do chat interno. */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { ClienteSupabaseUsuario } from "@/lib/supabase-tipos";
 
 interface ClienteBasico {
   user_id: string;
@@ -37,12 +38,10 @@ export async function garantirParticipantes(
 
   for (const id of await adminsUserIds()) usuarios.add(id);
 
-  await supabaseAdmin
-    .from("conversa_participantes")
-    .upsert(
-      Array.from(usuarios).map((user_id) => ({ conversa_id: conversaId, user_id })),
-      { onConflict: "conversa_id,user_id", ignoreDuplicates: true },
-    );
+  await supabaseAdmin.from("conversa_participantes").upsert(
+    Array.from(usuarios).map((user_id) => ({ conversa_id: conversaId, user_id })),
+    { onConflict: "conversa_id,user_id", ignoreDuplicates: true },
+  );
 }
 
 /**
@@ -72,7 +71,6 @@ export async function criarAtendimento(
     message: error?.message ?? null,
   };
 }
-
 
 export interface ContatoEquipe {
   user_id: string;
@@ -127,7 +125,7 @@ export const JANELA_SEGUNDOS = 30;
  * Bloqueia envios acima de LIMITE_MENSAGENS em JANELA_SEGUNDOS.
  * Usa o client do usuário (RLS ativa) e conta só as mensagens dele.
  */
-export async function checarLimiteEnvio(supabase: any, userId: string) {
+export async function checarLimiteEnvio(supabase: ClienteSupabaseUsuario, userId: string) {
   const desde = new Date(Date.now() - JANELA_SEGUNDOS * 1000).toISOString();
 
   const { count, error } = await supabase

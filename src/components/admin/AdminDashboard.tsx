@@ -140,7 +140,6 @@ export function AdminDashboard() {
     return d;
   }, [periodoInicio, periodo]);
 
-
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data: cls }, { data: vds }, { data: pgs }] = await Promise.all([
@@ -163,10 +162,7 @@ export function AdminDashboard() {
 
     const userIds = [...crows.map((c) => c.user_id), ...vrows.map((v) => v.user_id)];
     if (userIds.length) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id,nome")
-        .in("id", userIds);
+      const { data: profs } = await supabase.from("profiles").select("id,nome").in("id", userIds);
       const map = new Map((profs ?? []).map((p) => [p.id, p.nome]));
       crows.forEach((c) => (c.nome = map.get(c.user_id) || undefined));
       vrows.forEach((v) => (v.nome = map.get(v.user_id) || undefined));
@@ -196,9 +192,7 @@ export function AdminDashboard() {
 
   /* ---------- KPIs (recalculados pelo período) ---------- */
   const kpi = useMemo(() => {
-    const novosPeriodo = clientes.filter(
-      (c) => new Date(c.created_at) >= periodoInicio,
-    ).length;
+    const novosPeriodo = clientes.filter((c) => new Date(c.created_at) >= periodoInicio).length;
 
     const mrr = clientes
       .filter((c) => c.status === "ativo")
@@ -243,7 +237,6 @@ export function AdminDashboard() {
     };
   }, [clientes, pagamentos, periodoInicio, periodoAnteriorInicio]);
 
-
   /* ---------- Alertas ---------- */
   const alertas = useMemo(() => {
     type Alerta = {
@@ -264,7 +257,10 @@ export function AdminDashboard() {
           tipo: "vencido",
           titulo: c.nome || "Cliente",
           sub: `há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? "dia" : "dias"}`,
-          badge: { label: "vencido", tone: "bg-destructive/15 text-destructive border-destructive/30" },
+          badge: {
+            label: "vencido",
+            tone: "bg-destructive/15 text-destructive border-destructive/30",
+          },
           prioridade: 0,
         });
       } else if (dias <= 5) {
@@ -272,7 +268,10 @@ export function AdminDashboard() {
           tipo: "vencendo",
           titulo: c.nome || "Cliente",
           sub: `vence em ${dias}d`,
-          badge: { label: `vence em ${dias}d`, tone: "bg-warning/20 text-warning-foreground border-warning/40" },
+          badge: {
+            label: `vence em ${dias}d`,
+            tone: "bg-warning/20 text-warning-foreground border-warning/40",
+          },
           prioridade: 1,
         });
       }
@@ -286,7 +285,10 @@ export function AdminDashboard() {
           tipo: "webhook",
           titulo: `Pagamento ${w.payment_id ?? "—"}`,
           sub: relativeDate(w.created_at),
-          badge: { label: "webhook falhou", tone: "bg-destructive/15 text-destructive border-destructive/30" },
+          badge: {
+            label: "webhook falhou",
+            tone: "bg-destructive/15 text-destructive border-destructive/30",
+          },
           prioridade: 2,
         });
       });
@@ -460,7 +462,6 @@ export function AdminDashboard() {
         />
       </div>
 
-
       {/* Alertas + Ranking */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card data-tour="dash-alertas" className="p-5">
@@ -519,9 +520,7 @@ export function AdminDashboard() {
                     variant="outline"
                     size="sm"
                     disabled={alertaPagina >= totalAlertaPaginas - 1}
-                    onClick={() =>
-                      setAlertaPagina((p) => Math.min(totalAlertaPaginas - 1, p + 1))
-                    }
+                    onClick={() => setAlertaPagina((p) => Math.min(totalAlertaPaginas - 1, p + 1))}
                   >
                     Próximo
                     <ArrowRight className="ml-1 h-3.5 w-3.5" />
@@ -581,7 +580,11 @@ export function AdminDashboard() {
                     <stop offset="95%" stopColor="hsl(217 91% 60%)" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border/40"
+                  vertical={false}
+                />
                 <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis
                   tickLine={false}
@@ -675,7 +678,9 @@ export function AdminDashboard() {
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
-                    <span className="text-sm font-medium tabular-nums">{formatCurrency(p.valor)}</span>
+                    <span className="text-sm font-medium tabular-nums">
+                      {formatCurrency(p.valor)}
+                    </span>
                     <StatusBadge status={p.status} />
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -709,7 +714,11 @@ export function AdminDashboard() {
                               }
                             }}
                           >
-                            {s === "pago" ? "Marcar como pago" : s === "pendente" ? "Marcar como pendente" : "Marcar como simulação"}
+                            {s === "pago"
+                              ? "Marcar como pago"
+                              : s === "pendente"
+                                ? "Marcar como pendente"
+                                : "Marcar como simulação"}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
@@ -877,7 +886,12 @@ function KpiCard({
   return (
     <Card className="card-interactive p-4 sm:p-5">
       <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
-        <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 sm:h-9 sm:w-9", valueTone)}>
+        <span
+          className={cn(
+            "grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 sm:h-9 sm:w-9",
+            valueTone,
+          )}
+        >
           <Icon className="h-4 w-4" />
         </span>
         <span className="min-w-0 text-xs font-medium leading-tight sm:text-sm">{label}</span>

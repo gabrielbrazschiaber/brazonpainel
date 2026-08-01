@@ -60,7 +60,20 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
-  head: () => ({ meta: [{ title: "Painel do vendedor" }] }),
+  head: () => ({
+    meta: [
+      { title: "Painel do vendedor | Brazon" },
+      {
+        name: "description",
+        content:
+          "Cadastre clientes, acompanhe assinaturas da sua carteira, comissões e indicações no painel do vendedor.",
+      },
+      { property: "og:title", content: "Painel do vendedor | Brazon" },
+      { property: "og:description", content: "Clientes, comissões e indicações da sua carteira." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: () => (
     <RequireRole role="vendedor">
       <VendedorArea />
@@ -155,7 +168,6 @@ function VendedorArea() {
     }
   }, []);
 
-
   useEffect(() => {
     load();
   }, [load]);
@@ -193,9 +205,10 @@ function VendedorArea() {
   /** Rola até a seção correspondente; o item ativo é simplesmente o último clicado. */
   function irParaSecao(value: string) {
     setSecaoAtiva(value);
-    document.getElementById(`secao-${value}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document
+      .getElementById(`secao-${value}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
-
 
   useTourDaTela("tela:vendedor", !loading);
 
@@ -221,158 +234,160 @@ function VendedorArea() {
         onClick: () => setDialogOpen(true),
       }}
     >
-
-        {/* Cabeçalho */}
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">Painel do vendedor</p>
-            <h1 className="truncate text-xl font-bold text-foreground sm:text-2xl">
-              {profile?.nome || profile?.email}
-            </h1>
-            <div className="mt-2 flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Código de afiliado:</span>
-              <button
-                onClick={() => copiar(vendedor?.codigo_indicacao ?? "", "Código copiado!")}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
-              >
-                {vendedor?.codigo_indicacao}
-                <Copy className="h-3.5 w-3.5" />
-              </button>
-            </div>
+      {/* Cabeçalho */}
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm text-muted-foreground">Painel do vendedor</p>
+          <h1 className="truncate text-xl font-bold text-foreground sm:text-2xl">
+            {profile?.nome || profile?.email}
+          </h1>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Código de afiliado:</span>
+            <button
+              onClick={() => copiar(vendedor?.codigo_indicacao ?? "", "Código copiado!")}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-sm font-bold text-primary transition-colors hover:bg-primary/20"
+            >
+              {vendedor?.codigo_indicacao}
+              <Copy className="h-3.5 w-3.5" />
+            </button>
           </div>
-        </header>
-
-        <MinhaContaVendedorDialog open={contaOpen} onOpenChange={setContaOpen} />
-
-        {/* Métricas */}
-        <section data-tour="vend-metricas" className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          <MetricCard icon={Users} label="Total de clientes" value={String(metrics.total)} />
-          <MetricCard
-            icon={CheckCircle2}
-            label="Ativos"
-            value={String(metrics.ativos)}
-            tone="text-success"
-          />
-          <MetricCard
-            icon={AlertTriangle}
-            label="Vencidos / inadimplentes"
-            value={String(metrics.vencendo + metrics.inadimplentes)}
-            tone="text-destructive"
-          />
-          <MetricCard
-            dataTour="vend-comissao"
-            icon={Wallet}
-            label="Comissão estimada/mês"
-            value={formatCurrency(metrics.comissao)}
-            tone="text-primary"
-          />
-        </section>
-
-        {/* Link de indicação */}
-        <section className="mt-6">
-          <Card className="p-5">
-            <h2 className="text-base font-semibold text-foreground">Seu link de indicação</h2>
-            <p className="text-sm text-muted-foreground">
-              Compartilhe para que novos clientes se cadastrem ligados a você.
-            </p>
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-              <Input readOnly value={linkIndicacao} className="font-mono text-xs" />
-              <Button variant="outline" onClick={() => copiar(linkIndicacao, "Link copiado!")}>
-                <Copy className="mr-2 h-4 w-4" />
-                Copiar link
-              </Button>
-            </div>
-          </Card>
-        </section>
-
-        {/* Indicações */}
-        <div id="secao-indicacoes" data-tour="secao-indicacoes">
-          <ReferralsCard />
         </div>
+      </header>
 
-        {/* Cupons do vendedor */}
-        <div id="secao-cupons" data-tour="secao-cupons">
-          <CuponsVendedor />
-        </div>
+      <MinhaContaVendedorDialog open={contaOpen} onOpenChange={setContaOpen} />
 
-        {/* Lista de clientes */}
-        <section id="secao-clientes" data-tour="secao-clientes" className="mt-8">
-          <h2 className="text-lg font-bold text-foreground">Meus clientes</h2>
-          <Card className="mt-4 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden text-right sm:table-cell">Ações</TableHead>
+      {/* Métricas */}
+      <section
+        data-tour="vend-metricas"
+        className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4"
+      >
+        <MetricCard icon={Users} label="Total de clientes" value={String(metrics.total)} />
+        <MetricCard
+          icon={CheckCircle2}
+          label="Ativos"
+          value={String(metrics.ativos)}
+          tone="text-success"
+        />
+        <MetricCard
+          icon={AlertTriangle}
+          label="Vencidos / inadimplentes"
+          value={String(metrics.vencendo + metrics.inadimplentes)}
+          tone="text-destructive"
+        />
+        <MetricCard
+          dataTour="vend-comissao"
+          icon={Wallet}
+          label="Comissão estimada/mês"
+          value={formatCurrency(metrics.comissao)}
+          tone="text-primary"
+        />
+      </section>
+
+      {/* Link de indicação */}
+      <section className="mt-6">
+        <Card className="p-5">
+          <h2 className="text-base font-semibold text-foreground">Seu link de indicação</h2>
+          <p className="text-sm text-muted-foreground">
+            Compartilhe para que novos clientes se cadastrem ligados a você.
+          </p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <Input readOnly value={linkIndicacao} className="font-mono text-xs" />
+            <Button variant="outline" onClick={() => copiar(linkIndicacao, "Link copiado!")}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copiar link
+            </Button>
+          </div>
+        </Card>
+      </section>
+
+      {/* Indicações */}
+      <div id="secao-indicacoes" data-tour="secao-indicacoes">
+        <ReferralsCard />
+      </div>
+
+      {/* Cupons do vendedor */}
+      <div id="secao-cupons" data-tour="secao-cupons">
+        <CuponsVendedor />
+      </div>
+
+      {/* Lista de clientes */}
+      <section id="secao-clientes" data-tour="secao-clientes" className="mt-8">
+        <h2 className="text-lg font-bold text-foreground">Meus clientes</h2>
+        <Card className="mt-4 overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Plano</TableHead>
+                <TableHead>Vencimento</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="hidden text-right sm:table-cell">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {clientes.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5 font-medium text-foreground">
+                      {c.nome ?? "—"}
+                      <WhatsAppIndicator telefone={c.telefone} size="sm" />
+                    </div>
+                    <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
+
+                    <div className="mt-2 flex flex-wrap gap-2 sm:hidden">
+                      <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setEditCliente(c)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar dados
+                      </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div>{c.planos?.nome ?? "—"}</div>
+                    {c.servico_extra && (
+                      <div className="text-xs text-muted-foreground">
+                        + {c.servico_extra} ({formatCurrency(c.servico_extra_valor ?? 0)})
+                      </div>
+                    )}
+                    {(c.planos?.valor || c.servico_extra_valor) && (
+                      <div className="text-xs font-semibold text-foreground">
+                        Total:{" "}
+                        {formatCurrency((c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0))}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>{formatDate(c.data_vencimento)}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={c.status} />
+                  </TableCell>
+                  <TableCell className="hidden text-right sm:table-cell">
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setEditCliente(c)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar dados
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {clientes.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5 font-medium text-foreground">
-                        {c.nome ?? "—"}
-                        <WhatsAppIndicator telefone={c.telefone} size="sm" />
-                      </div>
-                      <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
-
-                      <div className="mt-2 flex flex-wrap gap-2 sm:hidden">
-                        <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setEditCliente(c)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Editar dados
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>{c.planos?.nome ?? "—"}</div>
-                      {c.servico_extra && (
-                        <div className="text-xs text-muted-foreground">
-                          + {c.servico_extra} ({formatCurrency(c.servico_extra_valor ?? 0)})
-                        </div>
-                      )}
-                      {(c.planos?.valor || c.servico_extra_valor) && (
-                        <div className="text-xs font-semibold text-foreground">
-                          Total:{" "}
-                          {formatCurrency((c.planos?.valor ?? 0) + (c.servico_extra_valor ?? 0))}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>{formatDate(c.data_vencimento)}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={c.status} />
-                    </TableCell>
-                    <TableCell className="hidden text-right sm:table-cell">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          {c.mensagem_vendedor ? "Editar aviso" : "Enviar aviso"}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setEditCliente(c)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Editar dados
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {clientes.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
-                      Nenhum cliente cadastrado ainda.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </Card>
-        </section>
+              ))}
+              {clientes.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                    Nenhum cliente cadastrado ainda.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      </section>
 
       <ClienteFormDialog
         mode="criar"
@@ -396,7 +411,6 @@ function VendedorArea() {
         onSaved={load}
       />
     </AppShell>
-
   );
 }
 

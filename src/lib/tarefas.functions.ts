@@ -7,7 +7,6 @@ import {
   type TarefaStatusValor,
 } from "@/lib/tarefas-status";
 
-
 export type TarefaStatus =
   | "aberta"
   | "em_andamento"
@@ -64,7 +63,10 @@ export const listarTarefas = createServerFn({ method: "GET" })
     const { data: coments } = await context.supabase
       .from("tarefa_comentarios")
       .select("tarefa_id")
-      .in("tarefa_id", linhas.map((t) => t.id));
+      .in(
+        "tarefa_id",
+        linhas.map((t) => t.id),
+      );
 
     const contagem = new Map<string, number>();
     for (const c of coments ?? []) {
@@ -122,7 +124,8 @@ export const listarResponsaveis = createServerFn({ method: "GET" })
     const papelPorUsuario = new Map<string, "admin" | "vendedor">();
     for (const r of roles ?? []) {
       const atual = papelPorUsuario.get(r.user_id);
-      if (r.role === "admin" || !atual) papelPorUsuario.set(r.user_id, r.role as "admin" | "vendedor");
+      if (r.role === "admin" || !atual)
+        papelPorUsuario.set(r.user_id, r.role as "admin" | "vendedor");
     }
 
     return (perfis ?? [])
@@ -154,7 +157,10 @@ export const criarTarefa = createServerFn({ method: "POST" })
     if (titulo.length < 3) throw new Error("Descreva um título com pelo menos 3 caracteres.");
     if (titulo.length > 140) throw new Error("O título deve ter no máximo 140 caracteres.");
 
-    const descricao = String(input?.descricao ?? "").trim().slice(0, 2000) || null;
+    const descricao =
+      String(input?.descricao ?? "")
+        .trim()
+        .slice(0, 2000) || null;
     const prioridade = PRIORIDADES.includes(input?.prioridade as TarefaPrioridade)
       ? (input.prioridade as TarefaPrioridade)
       : "media";
@@ -258,8 +264,9 @@ export const atualizarTarefa = createServerFn({ method: "POST" })
       id,
       status: input?.status,
       prioridade: input?.prioridade,
-      responsavel_id: input?.responsavel_id === undefined ? undefined : (input.responsavel_id || null),
-      prazo: input?.prazo === undefined ? undefined : (input.prazo || null),
+      responsavel_id:
+        input?.responsavel_id === undefined ? undefined : input.responsavel_id || null,
+      prazo: input?.prazo === undefined ? undefined : input.prazo || null,
     };
   })
   .handler(async ({ data, context }) => {
@@ -296,7 +303,6 @@ export const atualizarTarefa = createServerFn({ method: "POST" })
     if (data.responsavel_id !== undefined) patch.responsavel_id = data.responsavel_id;
     if (data.prazo !== undefined) patch.prazo = data.prazo;
     if (Object.keys(patch).length === 0) return { ok: true };
-
 
     const { data: atualizada, error } = await supabase
       .from("tarefas")

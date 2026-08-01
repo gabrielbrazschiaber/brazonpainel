@@ -20,16 +20,16 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          A página que você procura não existe ou foi movida.
         </p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Voltar ao início
           </Link>
         </div>
       </div>
@@ -87,22 +87,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "- Brazon is a SaaS subscription management web application for clients, sellers, and administrators.",
+          "Brazon: plataforma de gestão de assinaturas com painéis para cliente, vendedor e administrador, cobranças recorrentes e acompanhamento comercial.",
       },
       { name: "author", content: "Brazon" },
       { property: "og:title", content: "Brazon — Gestão de Assinaturas" },
       {
         property: "og:description",
-        content:
-          "- Brazon is a SaaS subscription management web application for clients, sellers, and administrators.",
+        content: "Gestão de assinaturas, cobranças recorrentes e time comercial em um só painel.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Brazon — Gestão de Assinaturas" },
       {
         name: "twitter:description",
-        content:
-          "- Brazon is a SaaS subscription management web application for clients, sellers, and administrators.",
+        content: "Gestão de assinaturas, cobranças recorrentes e time comercial em um só painel.",
       },
       {
         property: "og:image",

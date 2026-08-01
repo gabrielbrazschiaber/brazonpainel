@@ -136,7 +136,10 @@ export function LeadFormDialog({
     if (d.length < 10 || d.length > 11) e.telefone = "Telefone com DDD (10 ou 11 dígitos)";
     if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
       e.email = "E-mail inválido";
-    if (Number(form.valor_estimado.replace(",", ".")) < 0 || Number.isNaN(Number(form.valor_estimado.replace(",", "."))))
+    if (
+      Number(form.valor_estimado.replace(",", ".")) < 0 ||
+      Number.isNaN(Number(form.valor_estimado.replace(",", ".")))
+    )
       e.valor_estimado = "Valor inválido";
     if (exigeMotivo && !form.motivo_perda.trim()) e.motivo_perda = "Informe o motivo da perda";
     setErros(e);
@@ -198,9 +201,7 @@ export function LeadFormDialog({
               value={form.nome_contato}
               onChange={(e) => campo("nome_contato")(e.target.value)}
             />
-            {erros.nome_contato && (
-              <p className="text-xs text-destructive">{erros.nome_contato}</p>
-            )}
+            {erros.nome_contato && <p className="text-xs text-destructive">{erros.nome_contato}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -232,16 +233,14 @@ export function LeadFormDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="email">E-mail</Label>
-            <Input
-              id="email"
-              value={form.email}
-              onChange={(e) => campo("email")(e.target.value)}
-            />
+            <Input id="email" value={form.email} onChange={(e) => campo("email")(e.target.value)} />
             {erros.email && <p className="text-xs text-destructive">{erros.email}</p>}
           </div>
 
           <div className="space-y-1.5">
-            <CampoComAjuda ajuda="lead.segmento" htmlFor="segmento">Segmento</CampoComAjuda>
+            <CampoComAjuda ajuda="lead.segmento" htmlFor="segmento">
+              Segmento
+            </CampoComAjuda>
             <Input
               id="segmento"
               list="segmentos-sugeridos"
@@ -295,7 +294,9 @@ export function LeadFormDialog({
           </div>
 
           <div className="space-y-1.5">
-            <CampoComAjuda ajuda="lead.valor_estimado" htmlFor="valor">Valor estimado (R$)</CampoComAjuda>
+            <CampoComAjuda ajuda="lead.valor_estimado" htmlFor="valor">
+              Valor estimado (R$)
+            </CampoComAjuda>
             <Input
               id="valor"
               inputMode="decimal"

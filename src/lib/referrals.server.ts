@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { ClienteSupabaseUsuario } from "@/lib/supabase-tipos";
 
-type SB = { from: (t: string) => any };
+type SB = ClienteSupabaseUsuario;
 
 export interface ReferralMetrics {
   visitantes: number;
@@ -78,7 +79,6 @@ export async function calcularReferrals(
   };
 }
 
-
 export interface ReferralLead {
   clienteId: string;
   nome: string;
@@ -106,7 +106,6 @@ export async function listarLeadsReferral(
     .order("created_at", { ascending: false });
   if (desde) qLeads = qLeads.gte("created_at", desde);
   const { data: leads } = await qLeads;
-
 
   const rows = leads ?? [];
   if (!rows.length) return [];

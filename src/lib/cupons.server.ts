@@ -41,14 +41,16 @@ export function normalizarCodigo(codigo: string): string {
 
 /** Busca o cupom ativo e dentro da validade/limite de usos. */
 export async function buscarCupomAtivo(
-  codigo: string
+  codigo: string,
 ): Promise<{ cupom: CupomValido } | { motivo: MotivoCupom }> {
   const cod = normalizarCodigo(codigo);
   if (!cod) return { motivo: "codigo_invalido" };
 
   const { data } = await supabaseAdmin
     .from("cupons")
-    .select("id, codigo, descricao, valor_desconto, apenas_primeira_mensalidade, ativo, validade, max_usos, usos")
+    .select(
+      "id, codigo, descricao, valor_desconto, apenas_primeira_mensalidade, ativo, validade, max_usos, usos",
+    )
     .eq("codigo", cod)
     .maybeSingle();
 
@@ -78,7 +80,7 @@ export async function buscarCupomAtivo(
  */
 export async function validarCupomParaCliente(
   codigo: string,
-  clienteId: string | null
+  clienteId: string | null,
 ): Promise<{ cupom: CupomValido } | { motivo: MotivoCupom }> {
   const base = await buscarCupomAtivo(codigo);
   if ("motivo" in base) return base;
@@ -171,7 +173,6 @@ export async function registrarUsoCupom(params: {
     console.error("[Cupom] Uso não registrado (provável duplicidade):", error.message);
     return false;
   }
-
 
   const { data: atual } = await supabaseAdmin
     .from("cupons")

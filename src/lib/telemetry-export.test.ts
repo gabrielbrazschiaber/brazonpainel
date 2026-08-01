@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { EventoExportado } from "@/lib/telemetry-export";
-import { _resetBufferParaTestes, tamanho as tamanhoInicial, flush as flushInicial } from "@/lib/telemetry-buffer";
+import {
+  _resetBufferParaTestes,
+  tamanho as tamanhoInicial,
+  flush as flushInicial,
+} from "@/lib/telemetry-buffer";
 
 /**
  * `VITE_TELEMETRY_EXPORT_URL` é lido uma única vez no topo do módulo (mesmo
@@ -58,7 +62,8 @@ describe("telemetry-export", () => {
   });
 
   it("enfileira o lote no buffer quando o fetch falha e drena num flush posterior", async () => {
-    const { exportarEventos, estadoExportacao, tamanho, flush } = await importarComEndpointConfigurado();
+    const { exportarEventos, estadoExportacao, tamanho, flush } =
+      await importarComEndpointConfigurado();
     const fetchMock = vi.fn().mockRejectedValue(new Error("rede fora do ar"));
     vi.stubGlobal("fetch", fetchMock);
 

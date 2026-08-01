@@ -7,9 +7,16 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Brazon — Gestão de Assinaturas" },
-      { name: "description", content: "- Brazon is a SaaS subscription management web application for clients, sellers, and administrators." },
+      {
+        name: "description",
+        content:
+          "Brazon: plataforma de gestão de assinaturas com painéis para cliente, vendedor e administrador, cobranças recorrentes e acompanhamento comercial.",
+      },
       { property: "og:title", content: "Brazon — Gestão de Assinaturas" },
-      { property: "og:description", content: "- Brazon is a SaaS subscription management web application for clients, sellers, and administrators." },
+      {
+        property: "og:description",
+        content: "Gestão de assinaturas, cobranças recorrentes e time comercial em um só painel.",
+      },
     ],
   }),
   component: Index,

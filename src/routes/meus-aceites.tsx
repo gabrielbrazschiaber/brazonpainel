@@ -114,8 +114,8 @@ function MeusAceitesPage() {
                 Meus aceites do Termo de Uso
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Histórico com a versão aceita, a data e hora do aceite e o texto integral
-                registrado no momento da confirmação.
+                Histórico com a versão aceita, a data e hora do aceite e o texto integral registrado
+                no momento da confirmação.
                 {versaoAtual ? ` Versão vigente: ${versaoAtual}.` : ""}
               </p>
             </div>

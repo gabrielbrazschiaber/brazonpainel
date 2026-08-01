@@ -216,9 +216,7 @@ export function BancoAdminPainel() {
                       <p className="font-medium">{l.fonte}</p>
                       <p className="text-xs text-muted-foreground">{l.arquivo_nome}</p>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {formatDate(l.created_at)}
-                    </TableCell>
+                    <TableCell className="whitespace-nowrap">{formatDate(l.created_at)}</TableCell>
                     <TableCell className="text-right">{l.entrados}</TableCell>
                     <TableCell className="text-right">{l.puxados}</TableCell>
                     <TableCell className="text-right">{l.ganhos}</TableCell>
@@ -241,8 +239,8 @@ export function BancoAdminPainel() {
       <Card className="p-4">
         <h2 className="text-base font-semibold text-foreground">Reserva por segmento</h2>
         <p className="mb-3 text-sm text-muted-foreground">
-          Segmentos e estados de cada vendedor. Leads reservados só ficam liberados para quem tem
-          o segmento (ou estado) no escopo durante as primeiras 48 horas.
+          Segmentos e estados de cada vendedor. Leads reservados só ficam liberados para quem tem o
+          segmento (ou estado) no escopo durante as primeiras 48 horas.
         </p>
         {escopos.length === 0 ? (
           <EmptyState

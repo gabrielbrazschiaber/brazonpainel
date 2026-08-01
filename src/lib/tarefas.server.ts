@@ -1,8 +1,9 @@
 /** Helpers server-only compartilhados pelo módulo de tarefas. */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { ClienteSupabaseUsuario } from "@/lib/supabase-tipos";
 
 /** Contexto do usuário atual dentro do módulo de tarefas. */
-export async function contexto(supabase: any, userId: string) {
+export async function contexto(supabase: ClienteSupabaseUsuario, userId: string) {
   const [{ data: isAdmin }, { data: vendedorId }] = await Promise.all([
     supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
     supabase.rpc("current_vendedor_id"),
@@ -19,10 +20,7 @@ export async function nomesDeUsuarios(ids: string[]): Promise<Map<string, string
   const mapa = new Map<string, string>();
   if (unicos.length === 0) return mapa;
 
-  const { data } = await supabaseAdmin
-    .from("profiles")
-    .select("id, nome, email")
-    .in("id", unicos);
+  const { data } = await supabaseAdmin.from("profiles").select("id, nome, email").in("id", unicos);
 
   for (const p of data ?? []) {
     mapa.set(p.id, (p.nome || "").trim() || p.email);

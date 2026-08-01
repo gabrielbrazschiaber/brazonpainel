@@ -192,7 +192,6 @@ export const obterOuCriarAtendimento = createServerFn({ method: "POST" })
       return { conversa_id: emCorrida };
     }
 
-
     await garantirParticipantes(context.supabase, context.userId, criada.id, cliente);
     return { conversa_id: criada.id };
   });
@@ -212,7 +211,9 @@ export const criarConversaEquipe = createServerFn({ method: "POST" })
       throw new Error("Somente administradores e vendedores podem criar conversas de equipe.");
     }
 
-    const convidados = Array.from(new Set(data.participantes)).filter((id) => id !== context.userId);
+    const convidados = Array.from(new Set(data.participantes)).filter(
+      (id) => id !== context.userId,
+    );
     if (convidados.length) {
       const papeis = await papeisDeUsuarios(convidados);
       const invalido = convidados.find((id) => {

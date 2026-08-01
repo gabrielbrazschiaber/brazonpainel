@@ -7,7 +7,13 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarPlus, Loader2, MessageSquarePlus, Phone } from "lucide-react";
 
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -109,7 +115,6 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
   useEffect(() => {
     if (aberto) setZap(statusWhatsApp(lead?.telefone));
   }, [aberto, lead?.telefone]);
-
 
   if (!lead) return null;
 
@@ -273,7 +278,6 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
                 </dd>
               </div>
 
-
               <div>
                 <dt className="text-muted-foreground">E-mail</dt>
                 <dd className="break-all">{lead.email || "—"}</dd>
@@ -381,9 +385,7 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
                     <Input
                       type="datetime-local"
                       value={formReuniao.nova_data}
-                      onChange={(e) =>
-                        setFormReuniao((f) => ({ ...f, nova_data: e.target.value }))
-                      }
+                      onChange={(e) => setFormReuniao((f) => ({ ...f, nova_data: e.target.value }))}
                     />
                   </div>
                 )}
@@ -470,7 +472,11 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
                 value={nota}
                 onChange={(e) => setNota(e.target.value)}
               />
-              <Button size="sm" onClick={() => void enviarNota()} disabled={ocupado || !nota.trim()}>
+              <Button
+                size="sm"
+                onClick={() => void enviarNota()}
+                disabled={ocupado || !nota.trim()}
+              >
                 <MessageSquarePlus className="mr-2 h-4 w-4" /> Adicionar nota
               </Button>
             </div>

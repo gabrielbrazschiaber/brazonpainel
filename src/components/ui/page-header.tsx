@@ -13,10 +13,7 @@ interface PageHeaderProps {
 export function PageHeader({ eyebrow, titulo, descricao, acoes, className }: PageHeaderProps) {
   return (
     <div
-      className={cn(
-        "flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between",
-        className,
-      )}
+      className={cn("flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between", className)}
     >
       <div className="min-w-0 space-y-1">
         {eyebrow && <p className="eyebrow">{eyebrow}</p>}

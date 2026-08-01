@@ -39,7 +39,7 @@ export function statusEhTransitorio(status: number): boolean {
 export async function enfileirarSincronizacao(
   clienteId: string,
   motivo: string,
-  tipo: TipoSync = "assinatura"
+  tipo: TipoSync = "assinatura",
 ): Promise<void> {
   const { data: existente } = await supabaseAdmin
     .from("asaas_sync_queue")
@@ -58,7 +58,7 @@ export async function enfileirarSincronizacao(
         status: "pendente",
         ultimo_erro: motivo,
         proxima_tentativa_em: new Date(
-          agora + calcularBackoffMs(existente.tentativas + 1)
+          agora + calcularBackoffMs(existente.tentativas + 1),
         ).toISOString(),
       })
       .eq("id", existente.id);
@@ -79,7 +79,7 @@ export async function enfileirarSincronizacao(
 /** Marca a fila do cliente como concluída (após um sync bem-sucedido). */
 export async function concluirSincronizacao(
   clienteId: string,
-  tipo: TipoSync = "assinatura"
+  tipo: TipoSync = "assinatura",
 ): Promise<void> {
   await supabaseAdmin
     .from("asaas_sync_queue")
@@ -110,9 +110,8 @@ export async function processarFilaAsaas(limite = 20): Promise<{
   const resumo = { processados: 0, concluidos: 0, reagendados: 0, falhados: 0 };
   if (!itens?.length) return resumo;
 
-  const { sincronizarAssinaturaCliente, provisionarClienteAsaas } = await import(
-    "@/lib/asaas.server"
-  );
+  const { sincronizarAssinaturaCliente, provisionarClienteAsaas } =
+    await import("@/lib/asaas.server");
 
   for (const item of itens) {
     // Lock otimista: só processa se ainda estiver pendente.

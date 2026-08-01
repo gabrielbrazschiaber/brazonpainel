@@ -222,8 +222,7 @@ function SolicitacoesConteudo({ home }: { home: string }) {
 
   const contagemAbas = useMemo(
     () => ({
-      abertas:
-        contadores.pendentes + contadores.andamento + contadores.aguardando,
+      abertas: contadores.pendentes + contadores.andamento + contadores.aguardando,
       concluidas: contadores.concluidas,
       canceladas: itens.filter((i) => i.status === "cancelada").length,
       todas: itens.length,
@@ -381,7 +380,10 @@ function SolicitacoesConteudo({ home }: { home: string }) {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-4 px-4 py-5">
-        <Card data-tour="solic-catalogo" className="flex flex-col gap-3 border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <Card
+          data-tour="solic-catalogo"
+          className="flex flex-col gap-3 border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+        >
           <div className="min-w-0">
             <p className="font-semibold">Sua assinatura renova sozinha.</p>
             <p className="text-sm text-muted-foreground">{AVISO_RENOVACAO}</p>
@@ -404,7 +406,11 @@ function SolicitacoesConteudo({ home }: { home: string }) {
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Contador titulo="Pendentes" valor={contadores.pendentes} icone={<Clock className="h-4 w-4 text-primary" />} />
+          <Contador
+            titulo="Pendentes"
+            valor={contadores.pendentes}
+            icone={<Clock className="h-4 w-4 text-primary" />}
+          />
           <Contador
             titulo="Em andamento"
             valor={contadores.andamento}
@@ -460,15 +466,14 @@ function SolicitacoesConteudo({ home }: { home: string }) {
 
                 {s.status === "aguardando_cliente" && (
                   <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-sm text-amber-800">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    A equipe precisa de uma resposta sua.
+                    <AlertCircle className="h-4 w-4 shrink-0" />A equipe precisa de uma resposta
+                    sua.
                   </div>
                 )}
 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs text-muted-foreground">
-                    Criada há{" "}
-                    {formatDistanceToNow(new Date(s.created_at), { locale: ptBR })}
+                    Criada há {formatDistanceToNow(new Date(s.created_at), { locale: ptBR })}
                   </p>
 
                   {(s.status === "aberta" || s.status === "aguardando_cliente") && (
@@ -531,7 +536,10 @@ function SolicitacoesConteudo({ home }: { home: string }) {
                       setRespostas({});
                     }}
                   >
-                    <IconeCatalogo nome={c.icone} className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <IconeCatalogo
+                      nome={c.icone}
+                      className="mt-0.5 h-5 w-5 shrink-0 text-primary"
+                    />
                     <span className="min-w-0">
                       <span className="block font-medium">{c.titulo}</span>
                       <span className="block text-xs text-muted-foreground">{c.descricao}</span>

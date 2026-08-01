@@ -137,9 +137,7 @@ function ProviderInterno({ children }: { children: React.ReactNode }) {
 
   const visto = React.useCallback(
     (chave: string) =>
-      itens.some(
-        (i) => i.chave === chave && (i.status === "concluido" || i.status === "pulado"),
-      ),
+      itens.some((i) => i.chave === chave && (i.status === "concluido" || i.status === "pulado")),
     [itens],
   );
 
@@ -200,7 +198,6 @@ function ProviderInterno({ children }: { children: React.ReactNode }) {
     [marcar, role, pode],
   );
 
-
   const registrarPasso = React.useCallback(
     (chave: string, passo: number) => {
       // Guarda onde o usuário está para não reiniciar do zero após recarregar.
@@ -245,7 +242,6 @@ function ProviderInterno({ children }: { children: React.ReactNode }) {
     },
     [tutorialDe, role, pode],
   );
-
 
   const tutorialAtivo = chaveAtiva ? tutorialDe(chaveAtiva) : undefined;
   const passoInicial = chaveAtiva

@@ -266,7 +266,9 @@ export function CuponsTab() {
           {form && (
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <CampoComAjuda ajuda="cupom.codigo" htmlFor="c-codigo">Código</CampoComAjuda>
+                <CampoComAjuda ajuda="cupom.codigo" htmlFor="c-codigo">
+                  Código
+                </CampoComAjuda>
                 <Input
                   id="c-codigo"
                   value={form.codigo}
@@ -286,7 +288,9 @@ export function CuponsTab() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <CampoComAjuda ajuda="cupom.desconto" htmlFor="c-valor">Valor do desconto (R$)</CampoComAjuda>
+                  <CampoComAjuda ajuda="cupom.desconto" htmlFor="c-valor">
+                    Valor do desconto (R$)
+                  </CampoComAjuda>
                   <Input
                     id="c-valor"
                     inputMode="decimal"
@@ -296,7 +300,9 @@ export function CuponsTab() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <CampoComAjuda ajuda="cupom.limite_usos" htmlFor="c-max">Limite de usos (vazio = ilimitado)</CampoComAjuda>
+                  <CampoComAjuda ajuda="cupom.limite_usos" htmlFor="c-max">
+                    Limite de usos (vazio = ilimitado)
+                  </CampoComAjuda>
                   <Input
                     id="c-max"
                     inputMode="numeric"
@@ -309,7 +315,9 @@ export function CuponsTab() {
                 </div>
               </div>
               <div className="grid gap-2">
-                <CampoComAjuda ajuda="cupom.validade" htmlFor="c-validade">Validade (opcional)</CampoComAjuda>
+                <CampoComAjuda ajuda="cupom.validade" htmlFor="c-validade">
+                  Validade (opcional)
+                </CampoComAjuda>
                 <Input
                   id="c-validade"
                   type="date"
@@ -461,15 +469,16 @@ function DetalheCupomDialog({
                             {formatCurrency(u.valor_desconto)}
                             {u.valor_original > 0 && (
                               <div className="text-xs text-muted-foreground">
-                                {formatCurrency(u.valor_original)} →{" "}
-                                {formatCurrency(u.valor_final)}
+                                {formatCurrency(u.valor_original)} → {formatCurrency(u.valor_final)}
                               </div>
                             )}
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             <div className="font-mono text-xs">{u.asaas_payment_id ?? "—"}</div>
                             <div className="text-xs text-muted-foreground">
-                              {u.pago_em ? `Pago em ${formatDate(u.pago_em)}` : "Aguardando pagamento"}
+                              {u.pago_em
+                                ? `Pago em ${formatDate(u.pago_em)}`
+                                : "Aguardando pagamento"}
                             </div>
                           </TableCell>
                           <TableCell className="hidden sm:table-cell">

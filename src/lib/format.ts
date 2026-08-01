@@ -5,14 +5,16 @@ export function formatCurrency(value: number | null | undefined): string {
 
 export function formatDate(date: string | Date | null | undefined): string {
   if (!date) return "—";
-  const d = typeof date === "string" ? new Date(date + (date.length === 10 ? "T00:00:00" : "")) : date;
+  const d =
+    typeof date === "string" ? new Date(date + (date.length === 10 ? "T00:00:00" : "")) : date;
   if (isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("pt-BR");
 }
 
 export function daysUntil(date: string | Date | null | undefined): number | null {
   if (!date) return null;
-  const d = typeof date === "string" ? new Date(date + (date.length === 10 ? "T00:00:00" : "")) : date;
+  const d =
+    typeof date === "string" ? new Date(date + (date.length === 10 ? "T00:00:00" : "")) : date;
   if (isNaN(d.getTime())) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);

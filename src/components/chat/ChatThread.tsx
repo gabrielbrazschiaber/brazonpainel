@@ -149,7 +149,9 @@ export function ChatThread({
     try {
       const res = await editar({ data: { id, corpo: texto } });
       setMensagens((m) =>
-        m.map((x) => (x.id === id ? { ...x, corpo: texto, updated_at: res.updated_at, editado: true } : x)),
+        m.map((x) =>
+          x.id === id ? { ...x, corpo: texto, updated_at: res.updated_at, editado: true } : x,
+        ),
       );
       setEditandoId(null);
       toast.success("Mensagem atualizada.");
@@ -222,7 +224,9 @@ export function ChatThread({
                         </AvatarFallback>
                       </Avatar>
 
-                      <div className={cn("max-w-[80%] space-y-1", propria && "items-end text-right")}>
+                      <div
+                        className={cn("max-w-[80%] space-y-1", propria && "items-end text-right")}
+                      >
                         <div
                           className={cn(
                             "flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground",

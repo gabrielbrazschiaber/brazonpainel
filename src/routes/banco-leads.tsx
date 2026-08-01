@@ -167,9 +167,10 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
   const [formAberto, setFormAberto] = useState(false);
   const [importAberto, setImportAberto] = useState(false);
   const [editando, setEditando] = useState<BancoLead | null>(null);
-  const [confirmacao, setConfirmacao] = useState<
-    { tipo: "devolver" | "arquivar" | "excluir"; lead: BancoLead } | null
-  >(null);
+  const [confirmacao, setConfirmacao] = useState<{
+    tipo: "devolver" | "arquivar" | "excluir";
+    lead: BancoLead;
+  } | null>(null);
 
   const status: BancoLeadStatus | undefined =
     aba === "disponiveis" ? "disponivel" : aba === "meus" ? "puxado" : undefined;
@@ -389,14 +390,17 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
                     : `Volta ao total às ${horaRenovacao(saldo?.renova_em ?? null)}`}
                 </p>
               </div>
-              <Progress
-                value={limite > 0 ? (restante / limite) * 100 : 0}
-                className="mt-3 h-2"
-              />
+              <Progress value={limite > 0 ? (restante / limite) * 100 : 0} className="mt-3 h-2" />
             </Card>
           ) : null}
 
-          <Tabs value={aba} onValueChange={(v) => { setAba(v as Aba); setPagina(0); }}>
+          <Tabs
+            value={aba}
+            onValueChange={(v) => {
+              setAba(v as Aba);
+              setPagina(0);
+            }}
+          >
             <TabsList className="w-full justify-start overflow-x-auto">
               {isAdmin ? <TabsTrigger value="admin">Visão geral</TabsTrigger> : null}
               <TabsTrigger value="disponiveis">Disponíveis</TabsTrigger>
@@ -597,10 +601,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
                               </TableCell>
                               <TableCell>
                                 <div className="flex flex-col gap-1">
-                                  <Badge
-                                    variant="outline"
-                                    className={bancoStatusClasse(l.status)}
-                                  >
+                                  <Badge variant="outline" className={bancoStatusClasse(l.status)}>
                                     {BANCO_STATUS_LABEL[l.status]}
                                   </Badge>
                                   {l.reservado_segmento || l.reservado_estado ? (
@@ -648,9 +649,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() =>
-                                        setConfirmacao({ tipo: "devolver", lead: l })
-                                      }
+                                      onClick={() => setConfirmacao({ tipo: "devolver", lead: l })}
                                       title="Devolver ao banco"
                                     >
                                       <Undo2 className="h-3.5 w-3.5" />
@@ -672,9 +671,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() =>
-                                          setConfirmacao({ tipo: "excluir", lead: l })
-                                        }
+                                        onClick={() => setConfirmacao({ tipo: "excluir", lead: l })}
                                         title="Remover do banco"
                                       >
                                         <Trash2 className="h-3.5 w-3.5 text-destructive" />

@@ -13,7 +13,6 @@ import { supabase } from "@/integrations/supabase/client";
 import type { AppPermission } from "@/lib/permissions";
 import { iniciarMedicao, registrarAuthTelemetria, type MotivoCarga } from "@/lib/auth-telemetry";
 
-
 export type AppRole = "cliente" | "vendedor" | "admin";
 
 /**
@@ -71,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPermissoes([]);
   }, []);
 
-
   const loadUserData = useCallback(async (userId: string, motivo: MotivoCarga = "auth_event") => {
     const id = ++cargaAtual.current;
     const medir = iniciarMedicao();
@@ -113,9 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .select("permission")
           .in("role", roleList);
         if (!aindaValido()) return;
-        setPermissoes(
-          Array.from(new Set((perms ?? []).map((p) => p.permission as AppPermission))),
-        );
+        setPermissoes(Array.from(new Set((perms ?? []).map((p) => p.permission as AppPermission))));
       } else if (aindaValido()) {
         setPermissoes([]);
       }
@@ -251,10 +247,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [session, profile, role, estadoPapel, permissoes, loading, signOut, refresh],
   );
 
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
 
 export function useAuth() {
   const ctx = useContext(AuthContext);

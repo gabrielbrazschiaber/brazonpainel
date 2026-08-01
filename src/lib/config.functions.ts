@@ -26,9 +26,6 @@ export const obterWebhookToken = createServerFn({ method: "POST" })
     };
   });
 
-
-
-
 /** Mascara a chave da API, revelando apenas os últimos 4 caracteres. */
 function mascararChave(chave: string | null | undefined): string {
   if (!chave) return "";

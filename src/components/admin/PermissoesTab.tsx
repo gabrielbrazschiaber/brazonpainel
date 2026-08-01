@@ -7,10 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  listarPermissoesPapeis,
-  definirPermissoesPapel,
-} from "@/lib/permissions.functions";
+import { listarPermissoesPapeis, definirPermissoesPapel } from "@/lib/permissions.functions";
 import {
   CATALOGO_PERMISSOES,
   PAPEIS_EDITAVEIS,
@@ -87,8 +84,8 @@ export function PermissoesTab() {
       <div className="space-y-1">
         <h2 className="text-lg font-semibold text-foreground">Permissões por papel</h2>
         <p className="text-sm text-muted-foreground">
-          Defina o que cada papel pode fazer. As regras valem para todos os usuários daquele papel
-          e são revalidadas no servidor a cada ação.
+          Defina o que cada papel pode fazer. As regras valem para todos os usuários daquele papel e
+          são revalidadas no servidor a cada ação.
         </p>
       </div>
 
@@ -130,9 +127,7 @@ export function PermissoesTab() {
                                 </Badge>
                               )}
                             </Label>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              {item.descricao}
-                            </p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">{item.descricao}</p>
                           </div>
                           <Switch
                             id={`perm-${p}-${item.permissao}`}

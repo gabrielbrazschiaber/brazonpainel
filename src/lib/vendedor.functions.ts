@@ -4,7 +4,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ensurePermission } from "@/lib/permissions.guard";
 import { TERMOS_TEXTO, TERMOS_VERSAO } from "@/lib/termos";
 
-
 /** Gera uma senha aleatória e segura de 12 caracteres usando RNG criptográfico. */
 function gerarSenhaAleatoria(): string {
   const charset = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789@#!";
@@ -47,7 +46,6 @@ const novoClienteSchema = z.object({
     .nullable()
     .or(z.literal("")),
 });
-
 
 // Vendedor logado cadastra um novo cliente (cria o login de acesso).
 export const criarCliente = createServerFn({ method: "POST" })
@@ -110,20 +108,24 @@ export const criarCliente = createServerFn({ method: "POST" })
       }
     }
 
-    const { data: novoCliente, error: cliErr } = await supabaseAdmin.from("clientes").insert({
-      user_id: newUserId,
-      vendedor_id: vend.id,
-      plano_id: data.plano_id ?? null,
-      data_vencimento: data.data_vencimento,
-      mensagem_vendedor: data.mensagem_vendedor ?? null,
-      anotacoes: data.anotacoes ?? null,
-      servico_extra: data.servico_extra ?? null,
-      servico_extra_valor: data.servico_extra_valor ?? 0,
-      cpf_cnpj: data.cpf_cnpj ?? null,
-      telefone: data.telefone ?? null,
-      cupom_pendente_id: cupomPendenteId,
-      status: "ativo",
-    }).select("id").maybeSingle();
+    const { data: novoCliente, error: cliErr } = await supabaseAdmin
+      .from("clientes")
+      .insert({
+        user_id: newUserId,
+        vendedor_id: vend.id,
+        plano_id: data.plano_id ?? null,
+        data_vencimento: data.data_vencimento,
+        mensagem_vendedor: data.mensagem_vendedor ?? null,
+        anotacoes: data.anotacoes ?? null,
+        servico_extra: data.servico_extra ?? null,
+        servico_extra_valor: data.servico_extra_valor ?? 0,
+        cpf_cnpj: data.cpf_cnpj ?? null,
+        telefone: data.telefone ?? null,
+        cupom_pendente_id: cupomPendenteId,
+        status: "ativo",
+      })
+      .select("id")
+      .maybeSingle();
     if (cliErr) {
       await supabaseAdmin.auth.admin.deleteUser(newUserId);
       throw new Error("Falha ao cadastrar o cliente.");
@@ -169,7 +171,6 @@ export const criarCliente = createServerFn({ method: "POST" })
     return { ok: true, integracao, cupom_aplicado: cupomCodigo, cupom_invalido: cupomAviso };
   });
 
-
 const cadastroPublicoSchema = novoClienteSchema
   .omit({ mensagem_vendedor: true, anotacoes: true, data_vencimento: true })
   .extend({
@@ -187,7 +188,6 @@ const cadastroPublicoSchema = novoClienteSchema
     aceite_termos: z.literal(true),
     termos_versao: z.string().trim().min(1).max(40),
   });
-
 
 /** Vencimento inicial do cadastro público: sempre calculado no servidor (30 dias). */
 function vencimentoPadrao(): string {
@@ -260,14 +260,19 @@ export const cadastroPublico = createServerFn({ method: "POST" })
     if (createErr || !created.user) {
       console.error("[cadastroPublico] Falha ao criar usuário:", createErr?.message);
       const msg = (createErr?.message ?? "").toLowerCase();
-      if (msg.includes("already been registered") || msg.includes("already registered") || msg.includes("email_exists")) {
+      if (
+        msg.includes("already been registered") ||
+        msg.includes("already registered") ||
+        msg.includes("email_exists")
+      ) {
         throw new Error(
-          "Este e-mail já possui uma conta. Faça login ou use \"Esqueci minha senha\" para acessar.",
+          'Este e-mail já possui uma conta. Faça login ou use "Esqueci minha senha" para acessar.',
         );
       }
-      throw new Error("Não foi possível concluir o cadastro. Verifique os dados e tente novamente.");
+      throw new Error(
+        "Não foi possível concluir o cadastro. Verifique os dados e tente novamente.",
+      );
     }
-
 
     const newUserId = created.user.id;
 
@@ -306,7 +311,8 @@ export const cadastroPublico = createServerFn({ method: "POST" })
 
     // Cria o customer na plataforma de pagamento e guarda o identificador,
     // para que a cobrança possa ser iniciada depois. Falha aqui não bloqueia o cadastro.
-    const { provisionarClienteAsaas, criarCobrancaInicialCadastro } = await import("./asaas.server");
+    const { provisionarClienteAsaas, criarCobrancaInicialCadastro } =
+      await import("./asaas.server");
     const provisionamento = await provisionarClienteAsaas(clienteCriado.id);
 
     // Com o customer provisionado e o plano escolhido, já cria a assinatura/cobrança
@@ -345,10 +351,6 @@ export const cadastroPublico = createServerFn({ method: "POST" })
         desconto_aplicado: cobranca.descontoAplicado ?? 0,
       },
     };
-
-
-
-
   });
 
 const mensagemSchema = z.object({
@@ -456,7 +458,8 @@ export const atualizarCliente = createServerFn({ method: "POST" })
       cli.user_id,
       authUpdate,
     );
-    if (authErr) throw new Error(authErr.message ?? "Não foi possível atualizar o login do cliente.");
+    if (authErr)
+      throw new Error(authErr.message ?? "Não foi possível atualizar o login do cliente.");
 
     const { error: profErr } = await supabaseAdmin
       .from("profiles")

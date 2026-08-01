@@ -44,7 +44,8 @@ export const Route = createFileRoute("/cadastro")({
       { property: "og:title", content: "Criar conta e assinar — Brazon" },
       {
         property: "og:description",
-        content: "Assine em minutos, sem intervenção humana. Cupom 100OFF: R$ 100 off na 1ª mensalidade.",
+        content:
+          "Assine em minutos, sem intervenção humana. Cupom 100OFF: R$ 100 off na 1ª mensalidade.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -140,7 +141,6 @@ function CadastroPage() {
       .catch(() => {});
   }, [ref]);
 
-
   useEffect(() => {
     supabase
       .from("planos")
@@ -170,7 +170,9 @@ function CadastroPage() {
         valor_desconto: res.valor_desconto,
         apenas_primeira_mensalidade: res.apenas_primeira_mensalidade,
       });
-      toast.success(`Cupom ${res.codigo} aplicado: ${formatCurrency(res.valor_desconto)} de desconto.`);
+      toast.success(
+        `Cupom ${res.codigo} aplicado: ${formatCurrency(res.valor_desconto)} de desconto.`,
+      );
     } catch {
       toast.error("Não foi possível validar o cupom agora.");
     } finally {
@@ -225,17 +227,15 @@ function CadastroPage() {
         planoNome: plano?.nome ?? null,
         faturaUrl: res?.cobranca?.invoice_url ?? null,
         faturaValor: res?.cobranca?.valor ?? null,
-
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       toast.error(
         msg && !msg.toLowerCase().includes("fetch") && !msg.startsWith("[")
           ? msg
-          : "Não foi possível concluir o cadastro. Tente novamente."
+          : "Não foi possível concluir o cadastro. Tente novamente.",
       );
       setCooldown(60);
-
     } finally {
       setSaving(false);
     }
@@ -244,15 +244,13 @@ function CadastroPage() {
   if (done) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
-      <ThemeToggle className="fixed right-3 top-3 z-50 bg-card/70 backdrop-blur sm:right-4 sm:top-4" />
+        <ThemeToggle className="fixed right-3 top-3 z-50 bg-card/70 backdrop-blur sm:right-4 sm:top-4" />
         <Card className="max-w-md p-8 text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
           <h1 className="mt-4 text-xl font-bold text-foreground">Cadastro concluído!</h1>
           {done.cupom && (
             <div className="mt-4 rounded-lg border border-success/40 bg-success/10 p-3 text-left text-sm">
-              <p className="font-semibold text-foreground">
-                Cupom {done.cupom.codigo} aplicado
-              </p>
+              <p className="font-semibold text-foreground">Cupom {done.cupom.codigo} aplicado</p>
               <p className="mt-1 text-muted-foreground">
                 {formatCurrency(done.cupom.valor_desconto)} de desconto na primeira mensalidade
                 {done.planoNome ? ` do plano ${done.planoNome}` : ""}.
@@ -309,9 +307,6 @@ function CadastroPage() {
             ? "Você foi indicado por um vendedor."
             : "Cadastro rápido: escolha o plano e ative sua assinatura na hora."}
         </p>
-
-
-
 
         <div className="mt-6 grid gap-4">
           <div className="grid gap-2">
@@ -418,7 +413,10 @@ function CadastroPage() {
               onCheckedChange={(v) => setAceite(v === true)}
               className="mt-0.5"
             />
-            <Label htmlFor="aceite" className="text-sm font-normal leading-relaxed text-muted-foreground">
+            <Label
+              htmlFor="aceite"
+              className="text-sm font-normal leading-relaxed text-muted-foreground"
+            >
               Li e aceito os{" "}
               <Link
                 to="/termos-de-uso"
@@ -431,7 +429,11 @@ function CadastroPage() {
             </Label>
           </div>
           <Button onClick={submit} disabled={saving || cooldown > 0 || !aceite}>
-            {saving ? "Enviando..." : cooldown > 0 ? `Aguarde ${cooldown}s...` : "Criar conta e assinar"}
+            {saving
+              ? "Enviando..."
+              : cooldown > 0
+                ? `Aguarde ${cooldown}s...`
+                : "Criar conta e assinar"}
           </Button>
         </div>
 

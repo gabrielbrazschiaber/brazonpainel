@@ -171,10 +171,7 @@ export function ImportarBancoDialog({
   const [lendo, setLendo] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
-  const linhas = useMemo(
-    () => (arquivo ? prepararLinhas(arquivo, mapa) : []),
-    [arquivo, mapa],
-  );
+  const linhas = useMemo(() => (arquivo ? prepararLinhas(arquivo, mapa) : []), [arquivo, mapa]);
   const validas = useMemo(() => linhas.filter((l) => !l.erro), [linhas]);
   const comErro = linhas.length - validas.length;
   const faltamObrigatorios = CAMPOS.filter((c) => c.obrigatorio && !mapa.includes(c.campo));
@@ -348,9 +345,7 @@ export function ImportarBancoDialog({
                 <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                   {validas.length} pronta(s)
                 </Badge>
-                {comErro > 0 ? (
-                  <Badge variant="destructive">{comErro} com erro</Badge>
-                ) : null}
+                {comErro > 0 ? <Badge variant="destructive">{comErro} com erro</Badge> : null}
               </div>
 
               {faltamObrigatorios.length > 0 ? (
@@ -431,9 +426,7 @@ export function ImportarBancoDialog({
           </Button>
           <Button
             onClick={() => void importar()}
-            disabled={
-              salvando || !arquivo || validas.length === 0 || faltamObrigatorios.length > 0
-            }
+            disabled={salvando || !arquivo || validas.length === 0 || faltamObrigatorios.length > 0}
           >
             {salvando ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -63,13 +63,15 @@ export const validarMeuCupom = createServerFn({ method: "POST" })
     };
   });
 
-function formatarDestaque(data: {
-  codigo: string;
-  descricao: string | null;
-  valor_desconto: number | string;
-  apenas_primeira_mensalidade: boolean;
-  validade: string | null;
-} | null) {
+function formatarDestaque(
+  data: {
+    codigo: string;
+    descricao: string | null;
+    valor_desconto: number | string;
+    apenas_primeira_mensalidade: boolean;
+    validade: string | null;
+  } | null,
+) {
   if (!data) return null;
   if (data.validade && new Date(data.validade).getTime() <= Date.now()) return null;
   return {

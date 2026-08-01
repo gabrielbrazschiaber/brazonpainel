@@ -131,7 +131,8 @@ export async function listarBancoLeadsServer(
   if (filtros.lote_id) q = q.eq("lote_id", filtros.lote_id);
   if (isAdmin && filtros.vendedor_id) q = q.eq("puxado_por", filtros.vendedor_id);
   if (filtros.meus) {
-    if (!vendedorId) return { itens: [], total: 0, pagina, por_pagina: porPagina, prazo_devolucao: PRAZO_PADRAO };
+    if (!vendedorId)
+      return { itens: [], total: 0, pagina, por_pagina: porPagina, prazo_devolucao: PRAZO_PADRAO };
     q = q.eq("puxado_por", vendedorId);
   }
   if (filtros.busca) {

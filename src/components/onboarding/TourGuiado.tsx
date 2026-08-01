@@ -168,11 +168,7 @@ export function TourGuiado({
   const estiloBalao = posicionarBalao(rect, passo.posicao);
 
   return (
-    <div
-      className="fixed inset-0 z-[70]"
-      data-tour-overlay={tutorial.chave}
-      aria-live="polite"
-    >
+    <div className="fixed inset-0 z-[70]" data-tour-overlay={tutorial.chave} aria-live="polite">
       {/* Fundo escuro com recorte no alvo */}
       {rect ? (
         <div
@@ -253,7 +249,13 @@ function posicionarBalao(
   const ehMobile = window.innerWidth < 640;
   if (ehMobile || !rect) {
     if (!rect && !ehMobile) {
-      return { top: "50%", left: "50%", right: "auto", bottom: "auto", transform: "translate(-50%, -50%)" };
+      return {
+        top: "50%",
+        left: "50%",
+        right: "auto",
+        bottom: "auto",
+        transform: "translate(-50%, -50%)",
+      };
     }
     return {};
   }

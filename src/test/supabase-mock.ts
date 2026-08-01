@@ -30,15 +30,13 @@ export function criarSupabaseMock() {
   let respostas: Respostas = {};
 
   function builder(tabela: string) {
-    const resultado = () =>
-      (respostas[tabela] ?? (async () => ({ data: [], error: null })))();
+    const resultado = () => (respostas[tabela] ?? (async () => ({ data: [], error: null })))();
     const obj = {
       select: () => obj,
       eq: () => obj,
       in: () => obj,
       maybeSingle: () => resultado(),
-      then: (res: unknown, rej: unknown) =>
-        resultado().then(res as never, rej as never),
+      then: (res: unknown, rej: unknown) => resultado().then(res as never, rej as never),
     };
     return obj as never;
   }
@@ -46,12 +44,10 @@ export function criarSupabaseMock() {
   const supabase = {
     auth: {
       getSession: vi.fn(async () => ({ data: { session: sessaoAtual } })),
-      onAuthStateChange: vi.fn(
-        (cb: (evento: string, session: Session | null) => void) => {
-          listeners.push(cb);
-          return { data: { subscription: { unsubscribe: () => {} } } };
-        },
-      ),
+      onAuthStateChange: vi.fn((cb: (evento: string, session: Session | null) => void) => {
+        listeners.push(cb);
+        return { data: { subscription: { unsubscribe: () => {} } } };
+      }),
       signOut: vi.fn(async () => ({ error: null })),
     },
     from: vi.fn((tabela: string) => builder(tabela)),
@@ -73,10 +69,12 @@ export function criarSupabaseMock() {
   };
 }
 
-export const perfilOk = (userId: string): RespostaTabela => async () => ({
-  data: { id: userId, email: `${userId}@brazon.test`, nome: "Teste" },
-  error: null,
-});
+export const perfilOk =
+  (userId: string): RespostaTabela =>
+  async () => ({
+    data: { id: userId, email: `${userId}@brazon.test`, nome: "Teste" },
+    error: null,
+  });
 
 export const papeis =
   (roles: string[], atrasoMs = 0): RespostaTabela =>

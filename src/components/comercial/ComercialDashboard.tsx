@@ -10,7 +10,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 
 import { formatCurrency } from "@/lib/format";
@@ -137,7 +145,9 @@ export function ComercialDashboard({
         />
         <Card className="flex flex-wrap items-center justify-between gap-2 p-4">
           <div>
-            <p data-tour="comercial-incompletos" className="eyebrow">Leads incompletos</p>
+            <p data-tour="comercial-incompletos" className="eyebrow">
+              Leads incompletos
+            </p>
             <p className="text-xl font-semibold text-foreground">{dados.incompletos}</p>
             <p className="text-xs text-muted-foreground">
               faltam empresa, cargo, e-mail ou segmento
@@ -150,9 +160,6 @@ export function ComercialDashboard({
           )}
         </Card>
       </div>
-
-
-
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <Card data-tour="comercial-funil" className="space-y-4 p-4 sm:p-5">

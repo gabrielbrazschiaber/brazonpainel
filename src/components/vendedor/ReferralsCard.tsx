@@ -70,15 +70,19 @@ export function ReferralsCard() {
 
   const aplicaFiltro = useCallback(
     (l: Lead) =>
-      filtro === "todos" ||
-      (filtro === "pagos" ? l.status === "pago" : l.status !== "pago"),
+      filtro === "todos" || (filtro === "pagos" ? l.status === "pago" : l.status !== "pago"),
     [filtro],
   );
 
   const visiveis = leads?.filter(aplicaFiltro) ?? null;
 
   const cards: { chave: Filtro | "visitantes"; label: string; valor?: number; hint: string }[] = [
-    { chave: "visitantes", label: "Visitantes", valor: m?.visitantes, hint: "Cliques únicos no link" },
+    {
+      chave: "visitantes",
+      label: "Visitantes",
+      valor: m?.visitantes,
+      hint: "Cliques únicos no link",
+    },
     { chave: "todos", label: "Leads", valor: m?.leads, hint: "Cadastros pelo link" },
     { chave: "pendentes", label: "Pendentes", valor: m?.pendentes, hint: "Ainda sem pagamento" },
     { chave: "pagos", label: "Pagos", valor: m?.conversoes, hint: "Primeira cobrança paga" },
@@ -122,18 +126,14 @@ export function ReferralsCard() {
               ].join(" ")}
             >
               <p className="text-xs font-medium text-muted-foreground">{c.label}</p>
-              <p className="mt-1 text-2xl font-bold text-foreground">
-                {m ? c.valor : "—"}
-              </p>
+              <p className="mt-1 text-2xl font-bold text-foreground">{m ? c.valor : "—"}</p>
               <p className="mt-1 text-xs text-muted-foreground">{c.hint}</p>
             </Card>
           );
         })}
       </div>
 
-      <h3 className="mt-6 text-base font-semibold text-foreground">
-        Jornada dos leads
-      </h3>
+      <h3 className="mt-6 text-base font-semibold text-foreground">Jornada dos leads</h3>
       <p className="text-sm text-muted-foreground">
         {filtro === "todos"
           ? "Todos os leads do período."
