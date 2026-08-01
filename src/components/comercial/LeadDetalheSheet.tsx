@@ -256,7 +256,7 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
                   href={linkWhatsApp(lead.telefone)}
                   target="_blank"
                   rel="noreferrer"
-                  title={WHATSAPP_MENSAGEM[zap]}
+                  title={mensagemTooltipWhatsApp(lead.telefone)}
                 >
                   WhatsApp
                 </a>
