@@ -401,8 +401,6 @@ export async function salvarReuniaoServer(
   userId: string,
   dados: z.infer<typeof salvarReuniaoSchema>,
 ) {
-  await escopoComercial(supabase, userId);
-
   // A trigger do banco define vendedor_id a partir do lead; enviamos o próprio
   // vendedor apenas para satisfazer o NOT NULL / WITH CHECK da RLS.
   const escopo = await escopoComercial(supabase, userId);
