@@ -2,7 +2,16 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Pencil, Target, Trash2, UserPlus } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Loader2,
+  Pencil,
+  RefreshCw,
+  Target,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
 
 import { useAuth, roleHome } from "@/lib/auth";
 import { TermosGate } from "@/components/TermosGate";
@@ -11,6 +20,8 @@ import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AvisosSino } from "@/components/AvisosSino";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LeadsSkeletonCards, LeadsSkeletonRows } from "@/components/comercial/LeadsSkeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -125,6 +136,24 @@ function ComercialPage() {
 
 const POR_PAGINA = 25;
 
+/** Cabeçalho da tabela de leads (compartilhado com o skeleton). */
+function CabecalhoLeads() {
+  return (
+    <TableHeader>
+      <TableRow>
+        <TableHead>Contato</TableHead>
+        <TableHead>Telefone</TableHead>
+        <TableHead>Segmento</TableHead>
+        <TableHead>Estágio</TableHead>
+        <TableHead className="text-right">Valor</TableHead>
+        <TableHead className="text-right">Reuniões</TableHead>
+        <TableHead>Próximo contato</TableHead>
+        <TableHead className="text-right">Ações</TableHead>
+      </TableRow>
+    </TableHeader>
+  );
+}
+
 function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }) {
   const carregarLeads = useServerFn(listarLeads);
   const carregarDashboard = useServerFn(dashboardComercial);
@@ -144,6 +173,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const [total, setTotal] = useState(0);
   const [temMais, setTemMais] = useState(false);
   const [carregandoMais, setCarregandoMais] = useState(false);
+  const [erroLista, setErroLista] = useState<string | null>(null);
+  const [erroMais, setErroMais] = useState<string | null>(null);
   const sentinela = useRef<HTMLDivElement | null>(null);
 
   const [busca, setBusca] = useState("");
@@ -175,6 +206,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
 
   const recarregar = useCallback(async () => {
     setCarregando(true);
+    setErroLista(null);
+    setErroMais(null);
     try {
       const [d, l] = await Promise.all([
         carregarDashboard({
@@ -188,7 +221,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       setTemMais(l.temMais);
       setPagina(0);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Não foi possível carregar os dados.");
+      setErroLista(err instanceof Error ? err.message : "Não foi possível carregar os leads.");
     } finally {
       setCarregando(false);
     }
@@ -199,6 +232,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     if (carregandoMais || !temMais) return;
     const proxima = pagina + 1;
     setCarregandoMais(true);
+    setErroMais(null);
     try {
       const l = await carregarLeads({
         data: { ...filtrosLeads, pagina: proxima, por_pagina: POR_PAGINA },
@@ -211,7 +245,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       setTemMais(l.temMais);
       setPagina(proxima);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Não foi possível carregar mais leads.");
+      setErroMais(err instanceof Error ? err.message : "Não foi possível carregar mais leads.");
     } finally {
       setCarregandoMais(false);
     }
@@ -224,7 +258,9 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   // Infinite scroll: observa a sentinela no fim da lista.
   useEffect(() => {
     const alvo = sentinela.current;
-    if (!alvo || !temMais) return;
+    // Com erro pendente o carregamento automático para: o usuário decide
+    // quando tentar novamente, evitando loop de requisições que falham.
+    if (!alvo || !temMais || erroMais) return;
     const obs = new IntersectionObserver(
       (entradas) => {
         if (entradas.some((e) => e.isIntersecting)) void carregarMais();
@@ -233,12 +269,16 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     );
     obs.observe(alvo);
     return () => obs.disconnect();
-  }, [carregarMais, temMais]);
+  }, [carregarMais, temMais, erroMais]);
 
   useEffect(() => {
-    void carregarSegmentos({}).then(setSegmentos).catch(() => undefined);
+    void carregarSegmentos({})
+      .then(setSegmentos)
+      .catch(() => undefined);
     if (isAdmin) {
-      void carregarVendedores({}).then(setVendedores).catch(() => undefined);
+      void carregarVendedores({})
+        .then(setVendedores)
+        .catch(() => undefined);
     }
   }, [carregarSegmentos, carregarVendedores, isAdmin]);
 
@@ -388,7 +428,35 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             </Label>
           </div>
 
-          {leads.length === 0 ? (
+          {carregando ? (
+            <>
+              <LeadsSkeletonCards />
+              <div className="hidden sm:block">
+                <Table>
+                  <CabecalhoLeads />
+                  <TableBody>
+                    <LeadsSkeletonRows />
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          ) : erroLista ? (
+            <div
+              role="alert"
+              className="flex flex-col items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-10 text-center"
+            >
+              <AlertCircle className="h-6 w-6 text-destructive" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  Não foi possível carregar os leads.
+                </p>
+                <p className="text-xs text-muted-foreground">{erroLista}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => void recarregar()}>
+                <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+              </Button>
+            </div>
+          ) : leads.length === 0 ? (
             <EmptyState
               icon={Target}
               titulo="Nenhum lead ainda. Cadastre o primeiro contato do dia."
@@ -435,25 +503,10 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
               {/* Desktop: tabela */}
               <div className="hidden sm:block">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Contato</TableHead>
-                      <TableHead>Telefone</TableHead>
-                      <TableHead>Segmento</TableHead>
-                      <TableHead>Estágio</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead className="text-right">Reuniões</TableHead>
-                      <TableHead>Próximo contato</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <CabecalhoLeads />
                   <TableBody>
                     {leads.map((l) => (
-                      <TableRow
-                        key={l.id}
-                        className="cursor-pointer"
-                        onClick={() => setDetalhe(l)}
-                      >
+                      <TableRow key={l.id} className="cursor-pointer" onClick={() => setDetalhe(l)}>
                         <TableCell>
                           <p className="font-medium">{l.nome_contato}</p>
                           <p className="text-xs text-muted-foreground">
@@ -511,14 +564,34 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                 ref={sentinela}
                 className="flex flex-col items-center gap-2 pt-2 text-xs text-muted-foreground"
               >
-                <span>
+                <span aria-live="polite">
                   Mostrando {leads.length} de {total} lead{total === 1 ? "" : "s"}
                 </span>
-                {carregandoMais && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-                {temMais && !carregandoMais && (
+
+                {carregandoMais && (
+                  <div className="w-full space-y-2" aria-hidden="true">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                )}
+
+                {erroMais && !carregandoMais && (
+                  <div role="alert" className="flex flex-col items-center gap-2">
+                    <p className="text-destructive">{erroMais}</p>
+                    <Button variant="outline" size="sm" onClick={() => void carregarMais()}>
+                      <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+                    </Button>
+                  </div>
+                )}
+
+                {temMais && !carregandoMais && !erroMais && (
                   <Button variant="outline" size="sm" onClick={() => void carregarMais()}>
                     Carregar mais
                   </Button>
+                )}
+
+                {!temMais && !carregandoMais && !erroMais && leads.length > 0 && (
+                  <span>Todos os leads deste filtro foram carregados.</span>
                 )}
               </div>
             </>
