@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificacoes:
+    name: Lint, tipos e testes unitários
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      # Inclui as regressões de gate de papel (carregando → erro → sem papel)
+      # e de troca de conta.
+      - run: bun run test
+
+  e2e-auth:
+    name: E2E auth (rede afunilada e troca de conta)
+    runs-on: ubuntu-latest
+    env:
+      # A ausência de sessão não invalida o teste: o cenário anônimo continua
+      # falhando o build se qualquer texto de bloqueio piscar.
+      LOVABLE_BROWSER_SUPABASE_STORAGE_KEY: ${{ secrets.E2E_SUPABASE_STORAGE_KEY }}
+      LOVABLE_BROWSER_SUPABASE_SESSION_JSON: ${{ secrets.E2E_SUPABASE_SESSION_JSON }}
+      LOVABLE_BROWSER_SUPABASE_SESSION_JSON_2: ${{ secrets.E2E_SUPABASE_SESSION_JSON_2 }}
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+      VITE_APP_VERSION: ${{ github.sha }}
+    steps
+      : []
