@@ -40,7 +40,10 @@ export const Route = createFileRoute("/api/public/hooks/lembretes-vencimento")({
           console.error("[Lembretes] Nenhum token de acionamento configurado.");
           return json({ error: "Endpoint indisponível" }, 503);
         }
-        if (!aceitos.includes(enviado)) return json({ error: "Não autorizado" }, 401);
+        const { algumSegredoConfere } = await import("@/lib/token-compare.server");
+        if (!algumSegredoConfere(enviado, aceitos)) {
+          return json({ error: "Não autorizado" }, 401);
+        }
 
         try {
           const { gerarLembretesVencimento } = await import("@/lib/lembretes.server");
