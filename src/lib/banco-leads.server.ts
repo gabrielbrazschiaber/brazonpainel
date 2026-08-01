@@ -1,7 +1,8 @@
 /** Lógica server-only do Banco de Leads (repositório central de leads). */
 import type { z } from "zod";
 import { escopoComercial } from "@/lib/leads.server";
-import { apenasDigitos, type LeadOrigem } from "@/lib/leads";
+import { apenasDigitos, SEGMENTOS_SUGERIDOS, type LeadOrigem } from "@/lib/leads";
+import { opcoesUnicas, ordenarPtBr } from "@/lib/escopo";
 import { normalizarCnpj } from "@/lib/leads-import";
 import { HORAS_RESERVA_PADRAO, type BancoLeadStatus } from "@/lib/banco-leads";
 import type {
@@ -824,4 +825,43 @@ export async function listarEscoposVendedoresServer(
       cnaes: l.cnaes ?? [],
     }))
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
+
+export interface OpcoesEscopo {
+  /** Segmentos sugeridos do sistema + os que já existem no banco e no catálogo de CNAEs. */
+  segmentos: string[];
+  /** CNAEs ativos do catálogo, para reserva e escopo. */
+  cnaes: { codigo: string; descricao: string | null; segmento_sugerido: string | null }[];
+}
+
+/**
+ * Opções reais para os selects de reserva e para o escopo do vendedor.
+ * Sem isso, o admin só via "Sem reserva" — não havia lista para comparar.
+ */
+export async function opcoesEscopoServer(supabase: Sb, userId: string): Promise<OpcoesEscopo> {
+  await exigirAdmin(supabase, userId);
+
+  const [resBanco, resCnaes] = await Promise.all([
+    supabase.from("banco_leads").select("segmento").not("segmento", "is", null).limit(2000),
+    supabase
+      .from("cnaes")
+      .select("codigo, descricao, segmento_sugerido")
+      .eq("ativo", true)
+      .order("total_leads", { ascending: false })
+      .limit(1000),
+  ]);
+
+  const cnaes = ((resCnaes.data ?? []) as OpcoesEscopo["cnaes"]).map((c) => ({
+    codigo: c.codigo,
+    descricao: c.descricao ?? null,
+    segmento_sugerido: c.segmento_sugerido ?? null,
+  }));
+
+  const brutos = [
+    ...SEGMENTOS_SUGERIDOS,
+    ...((resBanco.data ?? []) as { segmento: string | null }[]).map((l) => l.segmento),
+    ...cnaes.map((c) => c.segmento_sugerido),
+  ];
+
+  return { segmentos: ordenarPtBr(opcoesUnicas(brutos)), cnaes };
 }

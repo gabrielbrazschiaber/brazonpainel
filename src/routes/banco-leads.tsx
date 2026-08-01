@@ -99,6 +99,9 @@ import {
 } from "@/lib/banco-leads.functions";
 import { listarSegmentos } from "@/lib/leads.functions";
 import { listarCnaes } from "@/lib/cnaes.functions";
+import { opcoesEscopo } from "@/lib/banco-leads.functions";
+import { opcoesUnicas, ordenarPtBr } from "@/lib/escopo";
+import { formatarCnae } from "@/lib/cnaes";
 import type { Cnae } from "@/lib/cnaes.functions";
 import { HORAS_RESERVA_PADRAO } from "@/lib/banco-leads";
 
@@ -159,6 +162,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
   const buscarSaldo = useServerFn(saldoPuxadas);
   const buscarSegmentos = useServerFn(listarSegmentos);
   const buscarCnaes = useServerFn(listarCnaes);
+  const buscarOpcoes = useServerFn(opcoesEscopo);
   const puxar = useServerFn(puxarLeads);
   const devolver = useServerFn(devolverLead);
   const arquivar = useServerFn(arquivarBancoLead);
@@ -169,6 +173,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
   const [saldo, setSaldo] = useState<SaldoPuxadas | null>(null);
   const [segmentos, setSegmentos] = useState<string[]>([]);
   const [cnaes, setCnaes] = useState<Cnae[]>([]);
+  const [segmentosEscopo, setSegmentosEscopo] = useState<string[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [pagina, setPagina] = useState(0);
   const [busca, setBusca] = useState("");
@@ -252,6 +257,24 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
       }
     })();
   }, [buscarCnaes]);
+
+  // Opções de reserva: segmentos do sistema + banco + catálogo de CNAEs (só admin).
+  useEffect(() => {
+    if (!isAdmin) return;
+    void (async () => {
+      try {
+        const o = await buscarOpcoes({});
+        setSegmentosEscopo(o.segmentos);
+      } catch {
+        setSegmentosEscopo([]);
+      }
+    })();
+  }, [buscarOpcoes, isAdmin]);
+
+  const segmentosReserva = useMemo(
+    () => ordenarPtBr(opcoesUnicas([...segmentosEscopo, ...segmentos])),
+    [segmentosEscopo, segmentos],
+  );
 
   useTourDaTela("tela:banco-leads", !carregando);
 
@@ -631,12 +654,23 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
                                   <Badge variant="outline" className={bancoStatusClasse(l.status)}>
                                     {BANCO_STATUS_LABEL[l.status]}
                                   </Badge>
-                                  {l.reservado_segmento || l.reservado_estado ? (
+                                  {l.reservado_segmento || l.reservado_estado || l.reservado_cnae ? (
                                     <span className="text-[11px] text-muted-foreground">
                                       Reserva:{" "}
-                                      {[l.reservado_segmento, l.reservado_estado]
+                                      {[
+                                        l.reservado_segmento,
+                                        l.reservado_estado,
+                                        l.reservado_cnae ? formatarCnae(l.reservado_cnae) : null,
+                                      ]
                                         .filter(Boolean)
                                         .join(" / ")}
+                                      {isAdmin && l.bloqueado_ate ? (
+                                        <span className="block">
+                                          {new Date(l.bloqueado_ate).getTime() > Date.now()
+                                            ? `Exclusiva até ${formatDate(l.bloqueado_ate)}`
+                                            : "Reserva expirada — aberta a todos"}
+                                        </span>
+                                      ) : null}
                                     </span>
                                   ) : null}
                                 </div>
@@ -750,7 +784,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
         <ImportarBancoDialog
           aberto={importAberto}
           onOpenChange={setImportAberto}
-          segmentos={segmentos}
+          segmentos={segmentosReserva}
           cnaes={cnaes}
           horasReservaPadrao={HORAS_RESERVA_PADRAO}
           onConcluido={() => void carregar()}

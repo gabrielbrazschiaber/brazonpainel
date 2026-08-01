@@ -23,6 +23,10 @@ export interface VendedorRow {
   nome?: string;
   email?: string;
   clientes_count?: number;
+  /** Escopo de atuação (vazio = sem restrição) usado pela reserva do banco de leads. */
+  segmentos?: string[] | null;
+  estados?: string[] | null;
+  cnaes?: string[] | null;
 }
 
 export interface ClienteRow {
