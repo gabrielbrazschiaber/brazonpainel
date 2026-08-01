@@ -299,12 +299,17 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
     <TelaShell
       voltarPara={home}
       area={equipe ? "Tarefas" : "Minhas solicitações"}
+      trilha={[
+        { rotulo: "Painel", para: home },
+        { rotulo: equipe ? "Tarefas" : "Minhas solicitações" },
+      ]}
       headerExtra={
         <Suspense fallback={null}>
           <AjudaDaTela chave="tela:tarefas" />
         </Suspense>
       }
     >
+
       <PageHeader
         eyebrow={equipe ? "Operação" : "Atendimento"}
         eyebrowIcon={ClipboardList}
