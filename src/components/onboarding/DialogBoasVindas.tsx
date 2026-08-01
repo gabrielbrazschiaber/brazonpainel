@@ -69,8 +69,9 @@ export function DialogBoasVindas({ tutorial, papel, onComecar, onAgoraNao }: Pro
 
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={onAgoraNao} data-onboarding-acao="agora-nao">
-            Agora não
+            Não quero ver
           </Button>
+
           <Button onClick={onComecar} data-onboarding-acao="comecar">
             Começar tour
           </Button>
