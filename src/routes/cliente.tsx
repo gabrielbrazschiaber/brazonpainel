@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AppShell } from "@/components/AppShell";
 import { useTourDaTela } from "@/components/onboarding/OnboardingProvider";
-import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
+const AjudaDaTela = lazy(() =>
+  import("@/components/onboarding/AjudaDaTela").then((m) => ({ default: m.AjudaDaTela })),
+);
 import type { AppNavItem } from "@/components/AppSidebar";
 
 import { Card } from "@/components/ui/card";
@@ -262,7 +264,9 @@ function ClienteArea() {
       larguraMax="max-w-5xl"
       headerExtra={
         <>
-          <AjudaDaTela chave="tela:cliente" />
+          <Suspense fallback={null}>
+            <AjudaDaTela chave="tela:cliente" />
+          </Suspense>
           <StatusBadge status={headerTone()} />
         </>
       }

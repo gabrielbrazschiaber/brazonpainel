@@ -1,6 +1,6 @@
 import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
@@ -8,11 +8,19 @@ import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AppShell } from "@/components/AppShell";
 import { useTourDaTela } from "@/components/onboarding/OnboardingProvider";
-import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
+const AjudaDaTela = lazy(() =>
+  import("@/components/onboarding/AjudaDaTela").then((m) => ({ default: m.AjudaDaTela })),
+);
 import type { AppNavItem } from "@/components/AppSidebar";
 
 import { atualizarMensagemCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
-import { ClienteFormDialog } from "@/components/vendedor/ClienteFormDialog";
+import { MontarQuandoAberto } from "@/components/MontarQuandoAberto";
+
+const ClienteFormDialog = lazy(() =>
+  import("@/components/vendedor/ClienteFormDialog").then((m) => ({
+    default: m.ClienteFormDialog,
+  })),
+);
 import { CuponsVendedor } from "@/components/vendedor/CuponsVendedor";
 import { ReferralsCard } from "@/components/vendedor/ReferralsCard";
 import { Card } from "@/components/ui/card";
@@ -227,7 +235,11 @@ function VendedorArea() {
       tab={secaoAtiva}
       onTab={irParaSecao}
       onConta={() => setContaOpen(true)}
-      headerExtra={<AjudaDaTela chave="tela:vendedor" />}
+      headerExtra={
+        <Suspense fallback={null}>
+          <AjudaDaTela chave="tela:vendedor" />
+        </Suspense>
+      }
       acaoPrincipal={{
         label: "Cadastrar cliente",
         icon: UserPlus,
@@ -389,13 +401,15 @@ function VendedorArea() {
         </Card>
       </section>
 
-      <ClienteFormDialog
-        mode="criar"
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        planos={planos}
-        onSaved={load}
-      />
+      <MontarQuandoAberto aberto={dialogOpen}>
+        <ClienteFormDialog
+          mode="criar"
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          planos={planos}
+          onSaved={load}
+        />
+      </MontarQuandoAberto>
 
       <MensagemDialog
         cliente={msgCliente}
@@ -403,13 +417,15 @@ function VendedorArea() {
         onSaved={load}
       />
 
-      <ClienteFormDialog
-        mode="editar"
-        cliente={editCliente}
-        planos={planos}
-        onOpenChange={(v: boolean) => !v && setEditCliente(null)}
-        onSaved={load}
-      />
+      <MontarQuandoAberto aberto={Boolean(editCliente)}>
+        <ClienteFormDialog
+          mode="editar"
+          cliente={editCliente}
+          planos={planos}
+          onOpenChange={(v: boolean) => !v && setEditCliente(null)}
+          onSaved={load}
+        />
+      </MontarQuandoAberto>
     </AppShell>
   );
 }

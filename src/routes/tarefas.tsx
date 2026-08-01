@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ArrowLeft, ClipboardList, Plus, Loader2 } from "lucide-react";
@@ -15,7 +15,9 @@ import {
 
 import { TermosGate } from "@/components/TermosGate";
 import { OnboardingProvider, useTourDaTela } from "@/components/onboarding/OnboardingProvider";
-import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
+const AjudaDaTela = lazy(() =>
+  import("@/components/onboarding/AjudaDaTela").then((m) => ({ default: m.AjudaDaTela })),
+);
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -314,7 +316,9 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
             </Link>
           </Button>
-          <AjudaDaTela chave="tela:tarefas" />
+          <Suspense fallback={null}>
+            <AjudaDaTela chave="tela:tarefas" />
+          </Suspense>
           <ThemeToggle />
           <AvisosSino />
           <SairButton />
