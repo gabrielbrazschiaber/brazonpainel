@@ -463,10 +463,11 @@ export function ImportarBancoDialog({
                 cnpjCompletado: _cc,
                 cnpjCientifico: _ci,
                 cnpjExplicacao: _ce,
-
+                critico: _cr,
                 ...campos
               }) => campos,
             ),
+
           },
         });
         enviados += bloco.length;
