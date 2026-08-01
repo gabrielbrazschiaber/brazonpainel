@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Pencil, Target, Trash2, UserPlus } from "lucide-react";
@@ -123,6 +123,8 @@ function ComercialPage() {
   );
 }
 
+const POR_PAGINA = 25;
+
 function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }) {
   const carregarLeads = useServerFn(listarLeads);
   const carregarDashboard = useServerFn(dashboardComercial);
@@ -138,6 +140,11 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const [dados, setDados] = useState<DashboardComercial | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [pagina, setPagina] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [temMais, setTemMais] = useState(false);
+  const [carregandoMais, setCarregandoMais] = useState(false);
+  const sentinela = useRef<HTMLDivElement | null>(null);
 
   const [busca, setBusca] = useState("");
   const [estagio, setEstagio] = useState<LeadEstagio | "todos">("todos");
@@ -153,6 +160,19 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
 
   const filtroVendedor = isAdmin && vendedorId !== "todos" ? vendedorId : undefined;
 
+  const filtrosLeads = useMemo(
+    () => ({
+      dias,
+      ...(filtroVendedor ? { vendedor_id: filtroVendedor } : {}),
+      ...(estagio !== "todos" ? { estagio } : {}),
+      ...(origem !== "todas" ? { origem } : {}),
+      ...(segmento !== "todos" ? { segmento } : {}),
+      ...(busca.trim() ? { busca: busca.trim() } : {}),
+      ...(followUp ? { apenas_follow_up: true } : {}),
+    }),
+    [dias, filtroVendedor, estagio, origem, segmento, busca, followUp],
+  );
+
   const recarregar = useCallback(async () => {
     setCarregando(true);
     try {
@@ -160,40 +180,60 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         carregarDashboard({
           data: { dias, ...(filtroVendedor ? { vendedor_id: filtroVendedor } : {}) },
         }),
-        carregarLeads({
-          data: {
-            dias,
-            ...(filtroVendedor ? { vendedor_id: filtroVendedor } : {}),
-            ...(estagio !== "todos" ? { estagio } : {}),
-            ...(origem !== "todas" ? { origem } : {}),
-            ...(segmento !== "todos" ? { segmento } : {}),
-            ...(busca.trim() ? { busca: busca.trim() } : {}),
-            ...(followUp ? { apenas_follow_up: true } : {}),
-          },
-        }),
+        carregarLeads({ data: { ...filtrosLeads, pagina: 0, por_pagina: POR_PAGINA } }),
       ]);
       setDados(d);
-      setLeads(l);
+      setLeads(l.leads);
+      setTotal(l.total);
+      setTemMais(l.temMais);
+      setPagina(0);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível carregar os dados.");
     } finally {
       setCarregando(false);
     }
-  }, [
-    carregarDashboard,
-    carregarLeads,
-    dias,
-    filtroVendedor,
-    estagio,
-    origem,
-    segmento,
-    busca,
-    followUp,
-  ]);
+  }, [carregarDashboard, carregarLeads, dias, filtroVendedor, filtrosLeads]);
+
+  /** Próxima página: acrescenta ao final da lista já carregada. */
+  const carregarMais = useCallback(async () => {
+    if (carregandoMais || !temMais) return;
+    const proxima = pagina + 1;
+    setCarregandoMais(true);
+    try {
+      const l = await carregarLeads({
+        data: { ...filtrosLeads, pagina: proxima, por_pagina: POR_PAGINA },
+      });
+      setLeads((atuais) => {
+        const vistos = new Set(atuais.map((x) => x.id));
+        return [...atuais, ...l.leads.filter((x) => !vistos.has(x.id))];
+      });
+      setTotal(l.total);
+      setTemMais(l.temMais);
+      setPagina(proxima);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível carregar mais leads.");
+    } finally {
+      setCarregandoMais(false);
+    }
+  }, [carregarLeads, carregandoMais, filtrosLeads, pagina, temMais]);
 
   useEffect(() => {
     void recarregar();
   }, [recarregar]);
+
+  // Infinite scroll: observa a sentinela no fim da lista.
+  useEffect(() => {
+    const alvo = sentinela.current;
+    if (!alvo || !temMais) return;
+    const obs = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) void carregarMais();
+      },
+      { rootMargin: "200px" },
+    );
+    obs.observe(alvo);
+    return () => obs.disconnect();
+  }, [carregarMais, temMais]);
 
   useEffect(() => {
     void carregarSegmentos({}).then(setSegmentos).catch(() => undefined);
@@ -465,6 +505,21 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+
+              <div
+                ref={sentinela}
+                className="flex flex-col items-center gap-2 pt-2 text-xs text-muted-foreground"
+              >
+                <span>
+                  Mostrando {leads.length} de {total} lead{total === 1 ? "" : "s"}
+                </span>
+                {carregandoMais && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                {temMais && !carregandoMais && (
+                  <Button variant="outline" size="sm" onClick={() => void carregarMais()}>
+                    Carregar mais
+                  </Button>
+                )}
               </div>
             </>
           )}
