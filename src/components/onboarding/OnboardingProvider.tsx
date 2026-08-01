@@ -8,11 +8,7 @@ import {
   tutoriaisVisiveis,
   type Tutorial,
 } from "@/lib/onboarding";
-import {
-  marcarTutorial,
-  meuProgressoOnboarding,
-  reiniciarOnboarding,
-} from "@/lib/onboarding.functions";
+import { marcarTutorial, meuProgressoOnboarding } from "@/lib/onboarding.functions";
 import { TourGuiado } from "@/components/onboarding/TourGuiado";
 import { DialogBoasVindas } from "@/components/onboarding/DialogBoasVindas";
 
@@ -94,7 +90,6 @@ function ProviderInterno({ children }: { children: React.ReactNode }) {
   const { user, role, roleResolvido, can } = useAuth();
   const carregar = useServerFn(meuProgressoOnboarding);
   const marcar = useServerFn(marcarTutorial);
-  const reiniciarFn = useServerFn(reiniciarOnboarding);
 
   const [itens, setItens] = React.useState<ItemProgresso[]>([]);
   const [carregado, setCarregado] = React.useState(false);
