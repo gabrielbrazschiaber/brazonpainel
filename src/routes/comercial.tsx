@@ -743,11 +743,12 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         onOpenChange={setImportarAberto}
         isAdmin={isAdmin}
         vendedores={vendedores}
-        onImportado={(loteImportado) => {
-          setLoteId(loteImportado);
+        segmentos={listaSegmentos}
+        onConcluido={() => void recarregar()}
+        onVerLote={(importacaoId) => {
+          setLoteId(importacaoId);
           setIncompletos(true);
           setOrdem("completude");
-          void recarregar();
         }}
       />
 
