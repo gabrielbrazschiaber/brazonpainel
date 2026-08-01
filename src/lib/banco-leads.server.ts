@@ -1,5 +1,4 @@
 /** Lógica server-only do Banco de Leads (repositório central de leads). */
-import type { ClienteSupabaseUsuario } from "@/lib/supabase-tipos";
 import type { z } from "zod";
 import { escopoComercial } from "@/lib/leads.server";
 import { apenasDigitos, type LeadOrigem } from "@/lib/leads";
@@ -13,7 +12,8 @@ import type {
 } from "@/lib/banco-leads.schemas";
 
 // Cliente tipado do usuário logado (RLS ativa). Tipo frouxo de propósito.
-type Sb = ClienteSupabaseUsuario;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Sb = any;
 
 const CHUNK = 200;
 const PRAZO_PADRAO = 7;
