@@ -365,6 +365,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     }
   }
 
+  useTourDaTela("tela:comercial", !carregando && Boolean(dados));
+
   return (
     <div className="min-h-screen bg-background">
       <header className="glass-header sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border/60 px-3 pt-[env(safe-area-inset-top)] sm:px-6">

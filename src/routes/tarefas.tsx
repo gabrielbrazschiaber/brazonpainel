@@ -287,6 +287,8 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
   }
 
 
+  useTourDaTela("tela:tarefas", !carregando);
+
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
