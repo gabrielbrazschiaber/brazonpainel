@@ -52,8 +52,10 @@ export function DialogBoasVindas({ tutorial, papel, onComecar, onAgoraNao }: Pro
           </div>
           <DialogTitle>{tutorial.titulo}</DialogTitle>
           <DialogDescription>
-            Em menos de um minuto mostramos onde fica cada coisa. Você pode sair a qualquer momento.
+            Em menos de um minuto mostramos onde fica cada coisa. Se preferir não ver, os tours
+            deixam de aparecer — você pode reativá-los em "Rever tutoriais".
           </DialogDescription>
+
         </DialogHeader>
 
         <ul className="space-y-2 text-sm text-muted-foreground">
@@ -67,8 +69,9 @@ export function DialogBoasVindas({ tutorial, papel, onComecar, onAgoraNao }: Pro
 
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={onAgoraNao} data-onboarding-acao="agora-nao">
-            Agora não
+            Não quero ver
           </Button>
+
           <Button onClick={onComecar} data-onboarding-acao="comecar">
             Começar tour
           </Button>
