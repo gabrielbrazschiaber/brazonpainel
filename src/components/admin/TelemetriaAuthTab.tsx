@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { AlertTriangle, RefreshCw } from "lucide-react";
-import { formatarDataHora } from "@/lib/format";
+
 
 interface LinhaResumo {
   app_version: string;
@@ -199,7 +199,7 @@ export function TelemetriaAuthTab() {
                 <td className="px-3 py-2 text-right">{l.p50_ms} ms</td>
                 <td className="px-3 py-2 text-right">{l.p95_ms} ms</td>
                 <td className="px-3 py-2 text-muted-foreground">
-                  {formatarDataHora(l.ultima)}
+                  {new Date(l.ultima).toLocaleString("pt-BR")}
                 </td>
               </tr>
             ))}
