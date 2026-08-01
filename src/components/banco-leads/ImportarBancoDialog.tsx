@@ -265,6 +265,8 @@ function prepararLinhas(
       avisos,
       cnpjCompletado: completado,
       cnpjCientifico: cientifico,
+      cnpjExplicacao: explicacaoCnpj(normalizado),
+
     };
   });
 }
