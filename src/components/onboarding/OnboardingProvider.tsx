@@ -222,21 +222,35 @@ function ProviderInterno({ children }: { children: React.ReactNode }) {
     [marcar],
   );
 
+  /**
+   * "Rever tutoriais" é SEMPRE manual: abre o tour agora, na hora, mas NÃO
+   * apaga o progresso no servidor. Assim o tutorial não volta a aparecer
+   * sozinho no próximo login — só quando o usuário pedir de novo.
+   */
   const reiniciar = React.useCallback(
     async (chave?: string) => {
       // Reiniciar só o que este usuário pode ver: sem isso um vendedor sem
-      // permissão apagaria o progresso de um tutorial que nunca abriria.
+      // permissão tentaria abrir um tutorial que nunca existiria para ele.
       if (chave && !tutorialDe(chave)) return false;
+      if (!chave && tutoriaisVisiveis(role, pode).length === 0) return false;
 
-      await reiniciarFn({ data: { chave: chave ?? null } });
-      setItens((atuais) => (chave ? atuais.filter((i) => i.chave !== chave) : []));
+      // Zera o passo salvo apenas em memória, para o tour recomeçar do início.
+      setItens((atuais) =>
+        atuais.map((i) =>
+          (chave ? i.chave === chave : true) && i.status === "em_andamento"
+            ? { ...i, passo_parou: 0 }
+            : i,
+        ),
+      );
+
       setChaveAtiva(null);
       if (!chave || chave === CHAVE_BOAS_VINDAS) setBoasVindasAberto(true);
       else setChaveAtiva(chave);
       return true;
     },
-    [reiniciarFn, tutorialDe],
+    [tutorialDe, role, pode],
   );
+
 
   const tutorialAtivo = chaveAtiva ? tutorialDe(chaveAtiva) : undefined;
   const passoInicial = chaveAtiva
