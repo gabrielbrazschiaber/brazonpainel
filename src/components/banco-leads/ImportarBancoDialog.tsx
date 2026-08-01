@@ -708,51 +708,103 @@ export function ImportarBancoDialog({
                 </div>
               ) : null}
 
+              <div className="rounded-md border border-border bg-muted/40 p-3 text-xs">
+                <p className="font-medium text-foreground">
+                  Mapeamento automático · {ROTULO_NIVEL[confianca.nivel]} ({confianca.media}%)
+                </p>
+                <p className="text-muted-foreground">
+                  {confianca.reconhecidas} coluna(s) reconhecida(s) pelo cabeçalho ·{" "}
+                  {confianca.ignoradas} ignorada(s).{" "}
+                  {confianca.faltando.length > 0
+                    ? `Ajuste manualmente: falta ${confianca.faltando.join(" e ")}.`
+                    : "Confira abaixo antes de importar."}
+                </p>
+              </div>
+
               <div className="overflow-x-auto rounded-md border border-border">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Coluna da planilha</TableHead>
                       <TableHead>Vai para</TableHead>
-                      <TableHead>Exemplo</TableHead>
+                      <TableHead>Confiança</TableHead>
+                      <TableHead className="hidden md:table-cell">Exemplo</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {arquivo.cabecalhos.map((h, i) => (
-                      <TableRow key={`${h}-${i}`}>
-                        <TableCell className="font-medium">{h}</TableCell>
-                        <TableCell>
-                          <Select
-                            value={valorSelect(mapa[i], IGNORAR_COLUNA)}
-                            onValueChange={(v) =>
-                              setMapa((atual) => {
-                                const novo = [...atual];
-                                novo[i] = valorDoSelect(v, IGNORAR_COLUNA) as Campo | "";
-                                return novo;
-                              })
-                            }
-                          >
-                            <SelectTrigger className="h-9 w-full sm:min-w-[170px]">
-                              <SelectValue placeholder="Ignorar coluna" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-72">
-                              <SelectItem value={IGNORAR_COLUNA}>Ignorar coluna</SelectItem>
-                              {opcoesCampos.map((c) => (
-                                <SelectItem key={c.value} value={c.value}>
-                                  {c.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="max-w-[180px] truncate text-muted-foreground">
-                          {arquivo.matriz[0]?.[i] ?? "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {arquivo.cabecalhos.map((h, i) => {
+                      const s = sugestoes[i];
+                      const alterado = Boolean(s) && s.destino !== mapa[i];
+                      return (
+                        <TableRow key={`${h}-${i}`}>
+                          <TableCell className="font-medium">{h}</TableCell>
+                          <TableCell>
+                            <Select
+                              value={valorSelect(mapa[i], IGNORAR_COLUNA)}
+                              onValueChange={(v) =>
+                                setMapa((atual) => {
+                                  const novo = [...atual];
+                                  novo[i] = valorDoSelect(v, IGNORAR_COLUNA) as Campo | "";
+                                  return novo;
+                                })
+                              }
+                            >
+                              <SelectTrigger className="h-9 w-full sm:min-w-[170px]">
+                                <SelectValue placeholder="Ignorar coluna" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-72">
+                                <SelectItem value={IGNORAR_COLUNA}>Ignorar coluna</SelectItem>
+                                {opcoesCampos.map((c) => (
+                                  <SelectItem key={c.value} value={c.value}>
+                                    {c.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="align-middle">
+                            {alterado ? (
+                              <Badge variant="secondary">Ajustado por você</Badge>
+                            ) : s && s.destino ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button type="button" className="cursor-help">
+                                      <Badge
+                                        variant="outline"
+                                        className={
+                                          s.nivel === "alta"
+                                            ? "border-emerald-400/60 text-emerald-700 dark:text-emerald-300"
+                                            : s.nivel === "media"
+                                              ? "border-sky-400/60 text-sky-700 dark:text-sky-300"
+                                              : "border-amber-400/60 text-amber-700 dark:text-amber-300"
+                                        }
+                                      >
+                                        {s.confianca}%
+                                      </Badge>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs">
+                                    {ROTULO_NIVEL[s.nivel]} — {s.motivo}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                Sem correspondência
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden max-w-[180px] truncate text-muted-foreground md:table-cell">
+                            {arquivo.matriz[0]?.[i] ?? "—"}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
+
 
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
