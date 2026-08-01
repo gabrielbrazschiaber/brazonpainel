@@ -60,6 +60,9 @@ import { LeadFormDialog } from "@/components/comercial/LeadFormDialog";
 import { FollowUpsPanel } from "@/components/comercial/FollowUpsPanel";
 
 import { formatCurrency, formatDate } from "@/lib/format";
+import { mapaWhatsApp } from "@/lib/whatsapp";
+import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
+
 import {
   ESTAGIO_LABEL,
   LEAD_ESTAGIOS,
@@ -284,6 +287,9 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   }, [carregarSegmentos, carregarVendedores, isAdmin]);
 
   const listaSegmentos = useMemo(() => segmentos, [segmentos]);
+  /** Status de WhatsApp calculado uma vez por carregamento da lista. */
+  const statusZap = useMemo(() => mapaWhatsApp(leads), [leads]);
+
 
   async function confirmarExclusao() {
     if (!excluindo) return;
@@ -491,7 +497,15 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                       </Badge>
                     </div>
                     <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                      <span>{l.telefone}</span>
+                      <span className="flex items-center gap-1.5">
+                        {l.telefone}
+                        <WhatsAppIndicator
+                          telefone={l.telefone}
+                          status={statusZap.get(l.id)}
+                          size="sm"
+                        />
+                      </span>
+
                       <span className="text-right">{formatCurrency(l.valor_estimado)}</span>
                       <span>{l.segmento || "Sem segmento"}</span>
                       <span className="text-right">
@@ -521,7 +535,17 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                             {isAdmin && l.vendedor_nome ? ` · ${l.vendedor_nome}` : ""}
                           </p>
                         </TableCell>
-                        <TableCell>{l.telefone}</TableCell>
+                        <TableCell>
+                          <span className="flex items-center gap-1.5 whitespace-nowrap">
+                            {l.telefone}
+                            <WhatsAppIndicator
+                              telefone={l.telefone}
+                              status={statusZap.get(l.id)}
+                              size="sm"
+                            />
+                          </span>
+                        </TableCell>
+
                         <TableCell>{l.segmento || "—"}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={estagioClasse(l.estagio)}>
