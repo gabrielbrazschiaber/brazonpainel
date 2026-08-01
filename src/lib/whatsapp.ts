@@ -9,9 +9,9 @@ import { apenasDigitos } from "@/lib/leads";
 export type WhatsAppStatus = "ativo" | "incerto" | "invalido";
 
 export const WHATSAPP_MENSAGEM: Record<WhatsAppStatus, string> = {
-  ativo: "Cliente possui WhatsApp ativo — clique para abrir a conversa",
-  incerto: "Número fixo: não foi possível confirmar WhatsApp",
-  invalido: "Informe o telefone com DDD para verificar o WhatsApp",
+  ativo: "Número de celular válido — WhatsApp ativo",
+  incerto: "Número de telefone fixo — WhatsApp não confirmado",
+  invalido: "Número incompleto ou inválido — WhatsApp ausente",
 };
 
 export const WHATSAPP_CORES: Record<WhatsAppStatus, string> = {
@@ -39,6 +39,30 @@ export function statusWhatsApp(telefone: string | null | undefined): WhatsAppSta
 
 export function temWhatsApp(telefone: string | null | undefined): boolean {
   return statusWhatsApp(telefone) === "ativo";
+}
+
+/**
+ * Mensagem padronizada para o tooltip do indicador, explicando:
+ * - se o número é celular válido (DDD + 9 dígitos);
+ * - se o WhatsApp está ativo ou ausente/incerto.
+ */
+export function mensagemTooltipWhatsApp(telefone: string | null | undefined): string {
+  const st = statusWhatsApp(telefone);
+  const numero = telefoneNacional(telefone);
+
+  if (st === "ativo") {
+    return `Número de celular válido (${numero.slice(0, 2)} ${numero.slice(2, 3)} ${numero.slice(3, 7)}-${numero.slice(7)}) — WhatsApp ativo`;
+  }
+
+  if (st === "incerto") {
+    return `Número de telefone fixo (${numero.slice(0, 2)} ${numero.slice(2, 6)}-${numero.slice(6)}) — WhatsApp não confirmado`;
+  }
+
+  if (!telefone || telefoneNacional(telefone).length === 0) {
+    return "Telefone não informado — WhatsApp ausente";
+  }
+
+  return `Número incompleto ou inválido (${telefone.trim()}) — WhatsApp ausente`;
 }
 
 /**
