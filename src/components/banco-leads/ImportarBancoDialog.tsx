@@ -39,10 +39,12 @@ import {
 } from "@/components/ui/table";
 
 import {
+  AVISO_CNPJ_CIENTIFICO,
+  AVISO_CNPJ_DIGITO,
+  AVISO_CNPJ_INVALIDO,
   explicacaoCnpj,
   formatarCnpj,
   lerArquivo,
-
   normalizarChave,
   normalizarCnpj,
   normalizarDataBr,
@@ -52,6 +54,19 @@ import {
   telefoneValido,
   type ArquivoLido,
 } from "@/lib/leads-import";
+import {
+  ROTULO_NIVEL,
+  resumirConfianca,
+  sugerirComConfianca,
+  type SugestaoColuna,
+} from "@/lib/import-mapeamento";
+import {
+  baixarCsvRelatorio,
+  imprimirRelatorioPdf,
+  type CabecalhoRelatorio,
+  type LinhaRelatorio,
+} from "@/lib/import-relatorio";
+
 import {
   BLOCO_IMPORT_BANCO,
   ESTADOS_BR,
