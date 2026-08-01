@@ -291,28 +291,81 @@ export async function lerArquivo(file: File, opcoes: OpcoesLeitura = {}): Promis
 // Dados de empresa (planilhas de CNPJ / Receita)
 // ---------------------------------------------------------------------------
 
+export const AVISO_CNPJ_CIENTIFICO =
+  "CNPJ corrompido pelo Excel (notação científica) — reexporte com a coluna como texto";
+export const AVISO_CNPJ_COMPLETADO = "CNPJ completado com zeros à esquerda";
+export const AVISO_CNPJ_INVALIDO = "CNPJ inválido";
+export const AVISO_CNPJ_DIGITO = "CNPJ com dígito verificador inválido";
+
 export interface CnpjNormalizado {
-  cnpj: string;
+  /** CNPJ com 14 dígitos, ou null quando não há valor aproveitável. */
+  cnpj: string | null;
+  /** Mensagem para a revisão (informativa; nunca bloqueia a linha). */
+  aviso: string | null;
   /** true quando a célula veio em notação científica (dígitos perdidos). */
   cientifico: boolean;
+  /** true quando zeros à esquerda foram acrescentados. */
+  completado: boolean;
+}
+
+/** Dígitos verificadores do CNPJ (módulo 11). */
+export function cnpjDigitosValidos(cnpj: string): boolean {
+  const d = (cnpj ?? "").replace(/\D/g, "");
+  if (d.length !== 14) return false;
+  const calc = (tamanho: number) => {
+    let soma = 0;
+    let peso = tamanho - 7;
+    for (let i = 0; i < tamanho; i += 1) {
+      soma += Number(d[i]) * peso;
+      peso -= 1;
+      if (peso < 2) peso = 9;
+    }
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+  return calc(12) === Number(d[12]) && calc(13) === Number(d[13]);
 }
 
 /**
- * CNPJ de planilha é um campo traiçoeiro: quando a coluna está formatada como
- * número, o Excel entrega "1,23457E+13" e os dígitos finais JÁ SE PERDERAM.
- * Nesse caso devolvemos cnpj vazio e sinalizamos para a revisão avisar o admin,
- * em vez de gravar um CNPJ falso no banco.
+ * CNPJ de planilha é um campo traiçoeiro e o Excel cria dois problemas opostos:
+ *
+ * - Notação científica ("2,31947E+11"): dígitos JÁ SE PERDERAM. Nada a fazer —
+ *   devolvemos vazio, porque completar com zeros geraria um CNPJ falso.
+ * - Zeros à esquerda removidos ("231947000103"): nenhum dígito significativo
+ *   se perdeu; basta completar à esquerda até 14.
  */
 export function normalizarCnpj(valor: string | null | undefined): CnpjNormalizado {
   const bruto = (valor ?? "").toString().trim();
-  if (!bruto) return { cnpj: "", cientifico: false };
-  if (/^[\d.,]+\s*[eE]\s*\+?\d+$/.test(bruto)) return { cnpj: "", cientifico: true };
+  if (!bruto) return { cnpj: null, aviso: null, cientifico: false, completado: false };
 
+  // 1) Notação científica ANTES de qualquer outra coisa.
+  if (/^\d+[,.]\d+\s*E\s*\+?\d+$/i.test(bruto)) {
+    return { cnpj: null, aviso: AVISO_CNPJ_CIENTIFICO, cientifico: true, completado: false };
+  }
+
+  // 2) Só dígitos.
   const d = bruto.replace(/\D/g, "");
-  if (!d) return { cnpj: "", cientifico: false };
-  if (d.length > 14) return { cnpj: d.slice(0, 14), cientifico: false };
-  return { cnpj: d.padStart(14, "0"), cientifico: false };
+  if (!d) return { cnpj: null, aviso: AVISO_CNPJ_INVALIDO, cientifico: false, completado: false };
+
+  // 3) Decide pelo comprimento.
+  if (d.length > 14 || d.length < 8) {
+    return { cnpj: null, aviso: AVISO_CNPJ_INVALIDO, cientifico: false, completado: false };
+  }
+  const completado = d.length < 14;
+  const cnpj = d.padStart(14, "0");
+
+  // 4) Dígito verificador: avisa, mas grava.
+  if (!cnpjDigitosValidos(cnpj)) {
+    return { cnpj, aviso: AVISO_CNPJ_DIGITO, cientifico: false, completado };
+  }
+  return {
+    cnpj,
+    aviso: completado ? AVISO_CNPJ_COMPLETADO : null,
+    cientifico: false,
+    completado,
+  };
 }
+
 
 export function formatarCnpj(valor: string | null | undefined): string {
   const d = (valor ?? "").replace(/\D/g, "");
