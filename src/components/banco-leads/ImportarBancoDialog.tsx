@@ -333,15 +333,107 @@ export function ImportarBancoDialog({
   const [cnpjEditado, setCnpjEditado] = useState<Record<number, string>>({});
   /** Prévia filtrada só nas linhas com erro ou aviso. */
   const [soProblemas, setSoProblemas] = useState(false);
+  /** Sugestões do auto-mapeamento (com confiança) da última leitura. */
+  const [sugestoes, setSugestoes] = useState<SugestaoColuna<Campo>[]>([]);
+  /** Números de linha removidos da confirmação pelo admin. */
+  const [excluidas, setExcluidas] = useState<number[]>([]);
 
-  const linhas = useMemo(
+  const todasLinhas = useMemo(
     () => (arquivo ? prepararLinhas(arquivo, mapa, cnaes, cnpjEditado) : []),
     [arquivo, mapa, cnaes, cnpjEditado],
   );
-  const validas = useMemo(() => linhas.filter((l) => !l.erro), [linhas]);
-  const comErro = linhas.length - validas.length;
+  const linhas = todasLinhas;
+  const foraSet = useMemo(() => new Set(excluidas), [excluidas]);
+  const validas = useMemo(
+    () => linhas.filter((l) => !l.erro && !foraSet.has(l.linha)),
+    [linhas, foraSet],
+  );
+  const comErro = linhas.filter((l) => Boolean(l.erro)).length;
   const faltamObrigatorios = CAMPOS.filter((c) => c.obrigatorio && !mapa.includes(c.campo));
   const semNome = !mapa.includes("nome_contato") && !mapa.includes("socios");
+
+  /** Contadores do impacto da confirmação, recalculados a cada ajuste do mapa. */
+  const contadores = useMemo(() => {
+    const consideradas = linhas.filter((l) => !foraSet.has(l.linha));
+    return {
+      total: linhas.length,
+      validas: consideradas.filter((l) => !l.erro).length,
+      comAvisos: consideradas.filter((l) => !l.erro && l.avisos.length > 0).length,
+      comCriticos: consideradas.filter((l) => l.critico && !l.erro).length,
+      comErros: consideradas.filter((l) => Boolean(l.erro)).length,
+      excluidas: excluidas.length,
+    };
+  }, [linhas, foraSet, excluidas]);
+
+  const confianca = useMemo(
+    () =>
+      resumirConfianca(
+        sugestoes,
+        CAMPOS.filter((c) => c.obrigatorio && !mapa.includes(c.campo)).map((c) => c.label),
+      ),
+    [sugestoes, mapa],
+  );
+
+  /** Linhas que a exclusão automática removeria (erro ou aviso crítico). */
+  const aExcluirCriticas = useMemo(
+    () => linhas.filter((l) => (l.critico || Boolean(l.erro)) && !foraSet.has(l.linha)).length,
+    [linhas, foraSet],
+  );
+
+  function excluirCriticas() {
+    const alvo = linhas.filter((l) => l.critico || Boolean(l.erro)).map((l) => l.linha);
+    setExcluidas((atual) => Array.from(new Set([...atual, ...alvo])));
+    toast.success(`${alvo.length} linha(s) removida(s) da confirmação.`);
+  }
+
+  function cabecalhoRelatorio(): CabecalhoRelatorio {
+    return {
+      arquivo: arquivo?.nome ?? "importacao",
+      fonte: fonte.trim(),
+      geradoEm: new Date(),
+      total: contadores.total,
+      validas: contadores.validas,
+      comAvisos: contadores.comAvisos,
+      comCriticos: contadores.comCriticos,
+      comErros: contadores.comErros,
+    };
+  }
+
+  function linhasRelatorio(): LinhaRelatorio[] {
+    return linhas
+      .filter((l) => Boolean(l.erro) || l.avisos.length > 0 || foraSet.has(l.linha))
+      .map((l) => ({
+        linha: l.linha,
+        contato: l.nome_contato || l.razao_social || l.nome_fantasia || "—",
+        telefone: l.telefone,
+        cnpj: formatarCnpj(l.cnpj),
+        situacao: l.erro ? "Com erro" : l.critico ? "Aviso crítico" : "Com aviso",
+        erro: l.erro,
+        avisos: l.avisos,
+        critico: l.critico,
+        excluida: foraSet.has(l.linha),
+      }));
+  }
+
+  function baixarCsv() {
+    const dados = linhasRelatorio();
+    if (dados.length === 0) {
+      toast.info("Nenhum aviso ou erro nesta prévia — relatório dispensável.");
+      return;
+    }
+    baixarCsvRelatorio(cabecalhoRelatorio(), dados);
+  }
+
+  function baixarPdf() {
+    const dados = linhasRelatorio();
+    if (dados.length === 0) {
+      toast.info("Nenhum aviso ou erro nesta prévia — relatório dispensável.");
+      return;
+    }
+    if (!imprimirRelatorioPdf(cabecalhoRelatorio(), dados)) {
+      toast.error("O navegador bloqueou a janela de impressão. Libere pop-ups e tente de novo.");
+    }
+  }
 
   /** CNAEs da planilha que ainda não existem no catálogo. */
   const cnaesNovos = useMemo(() => {
@@ -380,6 +472,8 @@ export function ImportarBancoDialog({
   function limpar() {
     setArquivo(null);
     setMapa([]);
+    setSugestoes([]);
+    setExcluidas([]);
     setCnpjEditado({});
     setFonte("");
     setReservaSegmento(SEM_RESERVA);
@@ -390,6 +484,7 @@ export function ImportarBancoDialog({
     setEtapa("");
     if (inputRef.current) inputRef.current.value = "";
   }
+
 
   async function aoEscolher(file: File | undefined) {
     if (!file) return;
