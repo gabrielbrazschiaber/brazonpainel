@@ -272,6 +272,7 @@ function prepararLinhas(
 }
 
 const SEM_RESERVA = "__sem__";
+const IGNORAR_COLUNA = "__ignorar__";
 
 /** Importa uma planilha para o Banco de Leads (só admin). */
 export function ImportarBancoDialog({
