@@ -1100,3 +1100,27 @@ export async function reativarCadenciaServer(
   return { id: data.id as string };
 }
 
+
+/** Contador leve para o badge da sidebar: atrasados + de hoje. */
+export async function contarFollowUpsServer(supabase: Sb, userId: string) {
+  const escopo = await escopoComercial(supabase, userId).catch(() => null);
+  if (!escopo) return { atrasados: 0, hoje: 0, total: 0 };
+  const hoje = hojeISO();
+  const semFollowUp = `(${ESTAGIOS_SEM_FOLLOW_UP.join(",")})`;
+  const contar = (aplicar: (q: unknown) => unknown) => {
+    const q = supabase
+      .from("leads")
+      .select("id", { count: "exact", head: true })
+      .not("estagio", "in", semFollowUp);
+    return aplicar(q) as Promise<{ count: number | null }>;
+  };
+  const [atrasados, deHoje] = await Promise.all([
+    contar((q) =>
+      (q as Sb).not("proximo_contato", "is", null).lt("proximo_contato", hoje),
+    ),
+    contar((q) => (q as Sb).eq("proximo_contato", hoje)),
+  ]);
+  const a = atrasados.count ?? 0;
+  const h = deHoje.count ?? 0;
+  return { atrasados: a, hoje: h, total: a + h };
+}

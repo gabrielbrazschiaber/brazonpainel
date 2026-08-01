@@ -142,3 +142,10 @@ export const reativarCadencia = createServerFn({ method: "POST" })
     const { reativarCadenciaServer } = await import("@/lib/leads.server");
     return reativarCadenciaServer(context.supabase, context.userId, data);
   });
+
+export const contarFollowUps = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { contarFollowUpsServer } = await import("@/lib/leads.server");
+    return contarFollowUpsServer(context.supabase, context.userId);
+  });
