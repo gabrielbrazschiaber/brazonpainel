@@ -738,6 +738,28 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         onSalvo={() => void recarregar()}
       />
 
+      <ImportarLeadsDialog
+        aberto={importarAberto}
+        onOpenChange={setImportarAberto}
+        isAdmin={isAdmin}
+        vendedores={vendedores}
+        onImportado={(loteImportado) => {
+          setLoteId(loteImportado);
+          setIncompletos(true);
+          setOrdem("completude");
+          void recarregar();
+        }}
+      />
+
+      <CompletarLeadsDialog
+        aberto={completarAberto}
+        onOpenChange={setCompletarAberto}
+        leads={leads.filter((l) => l.completude < 100)}
+        segmentos={listaSegmentos}
+        onAtualizado={() => void recarregar()}
+      />
+
+
       <LeadDetalheSheet
         lead={detalhe}
         aberto={Boolean(detalhe)}
