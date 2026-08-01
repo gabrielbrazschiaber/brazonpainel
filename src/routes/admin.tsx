@@ -280,6 +280,7 @@ function AdminArea() {
     permissoes: () => <PermissoesTab />,
     geral: () => <ConfigTab config={config} onSaved={load} />,
     auditoria: () => <AuditoriaTab />,
+    telemetria: () => <TelemetriaAuthTab />,
   };
 
   const secoesConfig: SecaoConfiguracao[] = SECOES_CONFIG_META.map((meta) => ({
