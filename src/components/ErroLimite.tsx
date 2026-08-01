@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
 import { traceId } from "@/lib/telemetry-trace";
+import { explicacaoErroSelect } from "@/lib/select-import";
 
 interface Props {
   /** Nome da área protegida — aparece no relatório de erro. */
@@ -55,6 +56,9 @@ export class ErroLimite extends Component<Props, State> {
             <h2 className="text-sm font-semibold text-foreground">
               Não foi possível carregar esta parte da tela
             </h2>
+            {explicacaoErroSelect(erro) ? (
+              <p className="text-sm text-foreground">{explicacaoErroSelect(erro)}</p>
+            ) : null}
             <p className="text-sm text-muted-foreground">
               O restante do painel continua funcionando. Tente de novo — se persistir, envie o
               código abaixo para o suporte.

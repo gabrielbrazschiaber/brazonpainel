@@ -60,7 +60,13 @@ import {
 } from "@/lib/banco-leads";
 import { formatarCnae, normalizarCnae, rotuloCnae, sugerirSegmentoPorCnae } from "@/lib/cnaes";
 import type { Cnae } from "@/lib/cnaes";
-import { opcoesUnicas } from "@/lib/escopo";
+import {
+  IGNORAR_COLUNA,
+  SEM_RESERVA,
+  opcoesSelectSeguras,
+  valorDoSelect,
+  valorSelect,
+} from "@/lib/select-import";
 import { LEAD_ORIGENS, ORIGEM_LABEL, type LeadOrigem } from "@/lib/leads";
 import {
   criarLoteBanco,
@@ -271,8 +277,8 @@ function prepararLinhas(
   });
 }
 
-const SEM_RESERVA = "__sem__";
-const IGNORAR_COLUNA = "__ignorar__";
+/** Linhas exibidas na prévia antes de confirmar a importação. */
+const LIMITE_PREVIA = 25;
 
 /** Importa uma planilha para o Banco de Leads (só admin). */
 export function ImportarBancoDialog({
@@ -310,6 +316,8 @@ export function ImportarBancoDialog({
   const [salvando, setSalvando] = useState(false);
 
   const [cnpjEditado, setCnpjEditado] = useState<Record<number, string>>({});
+  /** Prévia filtrada só nas linhas com erro ou aviso. */
+  const [soProblemas, setSoProblemas] = useState(false);
 
   const linhas = useMemo(
     () => (arquivo ? prepararLinhas(arquivo, mapa, cnaes, cnpjEditado) : []),
@@ -338,6 +346,21 @@ export function ImportarBancoDialog({
   const semCnpj = validas.filter((l) => !l.cnpj).length;
   const cnpjCompletados = validas.filter((l) => l.cnpjCompletado).length;
   const cnpjCientificos = linhas.filter((l) => l.cnpjCientifico).length;
+
+  /** Linhas com algo a conferir: erro que bloqueia ou aviso informativo. */
+  const comProblema = useMemo(
+    () => linhas.filter((l) => Boolean(l.erro) || l.avisos.length > 0),
+    [linhas],
+  );
+  const totalAvisos = useMemo(
+    () => linhas.reduce((soma, l) => soma + l.avisos.length, 0),
+    [linhas],
+  );
+  const previa = useMemo(
+    () => (soProblemas ? comProblema : linhas).slice(0, LIMITE_PREVIA),
+    [soProblemas, comProblema, linhas],
+  );
+  const totalFiltrado = soProblemas ? comProblema.length : linhas.length;
 
   function limpar() {
     setArquivo(null);
@@ -452,21 +475,19 @@ export function ImportarBancoDialog({
     }
   }
 
-  // Segmentos/CNAEs válidos para reserva: sem vazios e sem duplicados
-  // (o valor vazio duplicava a linha "Sem reserva" no select).
-  const opcoesSegmentos = useMemo(
-    () => opcoesUnicas(segmentos).filter((sg) => sg !== SEM_RESERVA),
-    [segmentos],
+  // Toda opção de select passa por opcoesSelectSeguras: sem valor vazio (que
+  // quebra o Radix e derruba a tela), sem duplicados e sem colidir com os
+  // sentinelas "Sem reserva"/"Ignorar coluna".
+  const opcoesSegmentos = useMemo(() => opcoesSelectSeguras(segmentos), [segmentos]);
+  const opcoesCnaes = useMemo(
+    () => opcoesSelectSeguras(cnaes.map((c) => ({ value: c.codigo, label: rotuloCnae(c) }))),
+    [cnaes],
   );
-  const opcoesCnaes = useMemo(() => {
-    const vistos = new Set<string>();
-    return cnaes.filter((c) => {
-      const cod = (c.codigo ?? "").trim();
-      if (!cod || cod === SEM_RESERVA || vistos.has(cod)) return false;
-      vistos.add(cod);
-      return true;
-    });
-  }, [cnaes]);
+  const opcoesEstados = useMemo(() => opcoesSelectSeguras(ESTADOS_BR), []);
+  const opcoesCampos = useMemo(
+    () => opcoesSelectSeguras(CAMPOS.map((c) => ({ value: c.campo, label: c.label }))),
+    [],
+  );
 
   return (
     <Dialog
@@ -547,8 +568,8 @@ export function ImportarBancoDialog({
                     </div>
                   ) : null}
                   {opcoesSegmentos.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -562,9 +583,9 @@ export function ImportarBancoDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={SEM_RESERVA}>Sem reserva</SelectItem>
-                  {ESTADOS_BR.map((uf) => (
-                    <SelectItem key={uf} value={uf}>
-                      {uf}
+                  {opcoesEstados.map((uf) => (
+                    <SelectItem key={uf.value} value={uf.value}>
+                      {uf.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -584,8 +605,8 @@ export function ImportarBancoDialog({
                     </div>
                   ) : null}
                   {opcoesCnaes.map((c) => (
-                    <SelectItem key={c.codigo} value={c.codigo}>
-                      {rotuloCnae(c)}
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -687,11 +708,11 @@ export function ImportarBancoDialog({
                         <TableCell className="font-medium">{h}</TableCell>
                         <TableCell>
                           <Select
-                            value={mapa[i] ? mapa[i] : IGNORAR_COLUNA}
+                            value={valorSelect(mapa[i], IGNORAR_COLUNA)}
                             onValueChange={(v) =>
                               setMapa((atual) => {
                                 const novo = [...atual];
-                                novo[i] = v === IGNORAR_COLUNA ? "" : (v as Campo);
+                                novo[i] = valorDoSelect(v, IGNORAR_COLUNA) as Campo | "";
                                 return novo;
                               })
                             }
@@ -701,8 +722,8 @@ export function ImportarBancoDialog({
                             </SelectTrigger>
                             <SelectContent className="max-h-72">
                               <SelectItem value={IGNORAR_COLUNA}>Ignorar coluna</SelectItem>
-                              {CAMPOS.map((c) => (
-                                <SelectItem key={c.campo} value={c.campo}>
+                              {opcoesCampos.map((c) => (
+                                <SelectItem key={c.value} value={c.value}>
                                   {c.label}
                                 </SelectItem>
                               ))}
@@ -718,10 +739,29 @@ export function ImportarBancoDialog({
                 </Table>
               </div>
 
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-foreground">
+                  Prévia da importação
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    {comProblema.length} linha(s) a conferir · {totalAvisos} aviso(s)
+                  </span>
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={soProblemas ? "default" : "outline"}
+                  onClick={() => setSoProblemas((v) => !v)}
+                  disabled={comProblema.length === 0}
+                >
+                  {soProblemas ? "Mostrar todas as linhas" : "Só linhas com aviso ou erro"}
+                </Button>
+              </div>
+
               <div className="overflow-x-auto rounded-md border border-border">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="hidden w-16 md:table-cell">Linha</TableHead>
                       <TableHead>Contato</TableHead>
                       <TableHead className="hidden sm:table-cell">Telefone</TableHead>
                       <TableHead>CNPJ</TableHead>
@@ -731,12 +771,31 @@ export function ImportarBancoDialog({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {linhas.slice(0, 15).map((l) => (
+                    {previa.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-sm text-muted-foreground">
+                          {soProblemas
+                            ? "Nenhuma linha com aviso ou erro — tudo pronto para importar."
+                            : "Nenhuma linha para mostrar."}
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                    {previa.map((l) => (
                       <TableRow key={l.linha}>
+                        <TableCell className="hidden text-xs text-muted-foreground md:table-cell">
+                          {l.linha}
+                        </TableCell>
                         <TableCell>
                           <p className="font-medium">{l.nome_contato || "—"}</p>
                           <p className="text-xs text-muted-foreground">
                             {l.razao_social ?? l.nome_fantasia ?? "—"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {[l.cidade, l.estado].filter(Boolean).join(" · ") || "Sem localidade"}
+                            {l.segmento ? ` · ${l.segmento}` : ""}
+                          </p>
+                          <p className="text-xs text-muted-foreground md:hidden">
+                            Linha {l.linha}
                           </p>
                           <p className="text-xs text-muted-foreground sm:hidden">
                             {l.telefone || "—"}
@@ -830,9 +889,11 @@ export function ImportarBancoDialog({
 
                 </Table>
               </div>
-              {linhas.length > 15 ? (
+              {totalFiltrado > LIMITE_PREVIA ? (
                 <p className="text-xs text-muted-foreground">
-                  Mostrando as 15 primeiras linhas de {linhas.length}.
+                  Mostrando as {LIMITE_PREVIA} primeiras de {totalFiltrado} linha(s)
+                  {soProblemas ? " com aviso ou erro" : ""}. Os avisos valem para todas as linhas —
+                  a validação final acontece no servidor ao confirmar.
                 </p>
               ) : null}
             </div>
