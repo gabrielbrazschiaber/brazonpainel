@@ -162,6 +162,37 @@ function CabecalhoLeads() {
   );
 }
 
+/**
+ * Data do próximo contato colorida pela urgência:
+ * vermelho atrasado, âmbar hoje, cinza futuro; traço quando a cadência acabou.
+ */
+function ProximoContatoCell({ lead }: { lead: Lead }) {
+  if (!lead.proximo_contato) {
+    return (
+      <span
+        className="text-muted-foreground"
+        title={lead.cadencia_encerrada ? "Cadência encerrada" : "Sem follow-up agendado"}
+      >
+        —
+      </span>
+    );
+  }
+  const hoje = new Date();
+  const hojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(
+    hoje.getDate(),
+  ).padStart(2, "0")}`;
+  const cor =
+    lead.proximo_contato < hojeISO
+      ? "text-destructive font-medium"
+      : lead.proximo_contato === hojeISO
+        ? "text-amber-600 dark:text-amber-400 font-medium"
+        : "text-muted-foreground";
+  return (
+    <span className={`whitespace-nowrap ${cor}`}>{formatDate(lead.proximo_contato)}</span>
+  );
+}
+
+
 function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }) {
   const carregarLeads = useServerFn(listarLeads);
   const carregarDashboard = useServerFn(dashboardComercial);
