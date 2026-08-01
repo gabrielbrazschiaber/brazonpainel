@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AppShell } from "@/components/AppShell";
+import { useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import type { AppNavItem } from "@/components/AppSidebar";
 
 import { atualizarMensagemCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
@@ -193,6 +195,8 @@ function VendedorArea() {
   }
 
 
+  useTourDaTela("tela:vendedor", !loading);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -208,6 +212,7 @@ function VendedorArea() {
       tab={secaoAtiva}
       onTab={irParaSecao}
       onConta={() => setContaOpen(true)}
+      headerExtra={<AjudaDaTela chave="tela:vendedor" />}
       acaoPrincipal={{
         label: "Cadastrar cliente",
         icon: UserPlus,

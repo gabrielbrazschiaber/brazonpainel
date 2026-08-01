@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { SairButton } from "@/components/SairButton";
 import { AppShell } from "@/components/AppShell";
+import { useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -270,6 +272,16 @@ function AdminArea() {
 
   const navItems = ADMIN_NAV_ITEMS;
 
+  const chaveTour =
+    tab === "config"
+      ? "tela:admin-configuracoes"
+      : tab === "clientes"
+        ? "tela:admin-clientes"
+        : tab === "dashboard"
+          ? "tela:admin-dashboard"
+          : "";
+  useTourDaTela(chaveTour, !loading && chaveTour !== "");
+
   const renderSecao: Record<string, () => React.ReactNode> = {
     cupons: () => <CuponsTab />,
     planos: () => <PlanosTab planos={planos} onChanged={load} />,
@@ -293,6 +305,7 @@ function AdminArea() {
       tab={tab}
       onTab={setTab}
       onConta={() => setContaOpen(true)}
+      headerExtra={chaveTour ? <AjudaDaTela chave={chaveTour} /> : undefined}
     >
       <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
 

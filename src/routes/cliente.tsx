@@ -5,6 +5,8 @@ import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AppShell } from "@/components/AppShell";
+import { useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import type { AppNavItem } from "@/components/AppSidebar";
 
 import { Card } from "@/components/ui/card";
@@ -226,6 +228,8 @@ function ClienteArea() {
   }
 
 
+  useTourDaTela("tela:cliente", !loading);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -239,7 +243,12 @@ function ClienteArea() {
       contexto="Minha assinatura"
       items={navItems}
       larguraMax="max-w-5xl"
-      headerExtra={<StatusBadge status={headerTone()} />}
+      headerExtra={
+        <>
+          <AjudaDaTela chave="tela:cliente" />
+          <StatusBadge status={headerTone()} />
+        </>
+      }
     >
       <div>
         {/* Boas-vindas */}
