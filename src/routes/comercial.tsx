@@ -421,7 +421,15 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : (
-          dados && <ComercialDashboard dados={dados} />
+          dados && (
+            <ComercialDashboard
+              dados={dados}
+              onVerIncompletos={() => {
+                setIncompletos(true);
+                setOrdem("completude");
+              }}
+            />
+          )
         )}
 
         <Card className="space-y-4 p-4 sm:p-5">
