@@ -5,6 +5,8 @@ import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AppShell } from "@/components/AppShell";
+import { useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import type { AppNavItem } from "@/components/AppSidebar";
 
 import { Card } from "@/components/ui/card";
@@ -226,6 +228,8 @@ function ClienteArea() {
   }
 
 
+  useTourDaTela("tela:cliente", !loading);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -239,7 +243,12 @@ function ClienteArea() {
       contexto="Minha assinatura"
       items={navItems}
       larguraMax="max-w-5xl"
-      headerExtra={<StatusBadge status={headerTone()} />}
+      headerExtra={
+        <>
+          <AjudaDaTela chave="tela:cliente" />
+          <StatusBadge status={headerTone()} />
+        </>
+      }
     >
       <div>
         {/* Boas-vindas */}
@@ -294,7 +303,7 @@ function ClienteArea() {
                   : `${dias} dia(s) restantes`}
             </p>
           </Card>
-          <Card className="card-interactive p-4 sm:p-5">
+          <Card data-tour="cli-plano" className="card-interactive p-4 sm:p-5">
             <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary sm:h-9 sm:w-9">
                 <CreditCard className="h-4 w-4" />
@@ -318,7 +327,7 @@ function ClienteArea() {
               </p>
             )}
           </Card>
-          <Card className="card-interactive p-4 sm:p-5 min-[420px]:col-span-2 lg:col-span-1">
+          <Card data-tour="cli-status" className="card-interactive p-4 sm:p-5 min-[420px]:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary sm:h-9 sm:w-9">
                 <BadgeCheck className="h-4 w-4" />
@@ -475,7 +484,7 @@ function ClienteArea() {
         </section>
 
         {/* Histórico de pagamentos */}
-        <section className="mt-10">
+        <section data-tour="cli-historico" className="mt-10">
           <h2 className="text-lg font-bold text-foreground">Histórico de pagamentos</h2>
           <Card className="mt-4 overflow-hidden">
             <Table>

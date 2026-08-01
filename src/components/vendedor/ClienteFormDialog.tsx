@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { CampoComAjuda } from "@/components/onboarding/CampoComAjuda";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -353,7 +354,7 @@ export function ClienteFormDialog({
 
             <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
               <div className="grid gap-2">
-                <Label htmlFor={`${p}cpf`}>CPF ou CNPJ *</Label>
+                <CampoComAjuda ajuda="cliente.cpf_cnpj" htmlFor={`${p}cpf`}>CPF ou CNPJ *</CampoComAjuda>
                 <Input
                   id={`${p}cpf`}
                   inputMode="numeric"
@@ -365,7 +366,7 @@ export function ClienteFormDialog({
                 <Erro campo="cpfCnpj" />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor={`${p}tel`}>Telefone (opcional)</Label>
+                <CampoComAjuda ajuda="cliente.telefone" htmlFor={`${p}tel`}>Telefone (opcional)</CampoComAjuda>
                 <div className="flex items-center gap-2">
                   <Input
                     id={`${p}tel`}
@@ -418,7 +419,7 @@ export function ClienteFormDialog({
             </div>
 
             <div className="grid gap-2 rounded-md border border-border p-3">
-              <Label htmlFor={`${p}serv`}>Serviço extra (opcional)</Label>
+              <CampoComAjuda ajuda="cliente.servico_extra" htmlFor={`${p}serv`}>Serviço extra (opcional)</CampoComAjuda>
               <Input
                 id={`${p}serv`}
                 value={values.servicoExtra}
@@ -451,7 +452,7 @@ export function ClienteFormDialog({
           {!editando && (
             <>
               <div className="grid gap-2 rounded-md border border-primary/30 bg-primary/5 p-3">
-                <Label htmlFor={`${p}cupom`}>Cupom de desconto (opcional)</Label>
+                <CampoComAjuda ajuda="cliente.cupom" htmlFor={`${p}cupom`}>Cupom de desconto (opcional)</CampoComAjuda>
                 {destaque && !cupomAplicado && (
                   <button
                     type="button"
@@ -512,7 +513,7 @@ export function ClienteFormDialog({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor={`${p}venc`}>Primeiro vencimento *</Label>
+                <CampoComAjuda ajuda="cliente.primeiro_vencimento" htmlFor={`${p}venc`}>Primeiro vencimento *</CampoComAjuda>
                 <Input
                   id={`${p}venc`}
                   type="date"
@@ -536,7 +537,7 @@ export function ClienteFormDialog({
           )}
 
           <div className="grid gap-2">
-            <Label htmlFor={`${p}anot`}>Anotações sobre o cliente (opcional)</Label>
+            <CampoComAjuda ajuda="cliente.anotacoes" htmlFor={`${p}anot`}>Anotações sobre o cliente (opcional)</CampoComAjuda>
             <Textarea
               id={`${p}anot`}
               value={values.anotacoes}

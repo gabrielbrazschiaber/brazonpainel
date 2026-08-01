@@ -153,7 +153,7 @@ export function ConfiguracoesPage({
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
         {/* Navegação desktop */}
-        <Card className="hidden h-fit p-2 lg:block">
+        <Card data-tour="config-secoes" className="hidden h-fit p-2 lg:block">
           <nav className="flex flex-col gap-1">
             {visiveis.map((s) => {
               const ativo = s.value === secaoAtual.value;
@@ -161,6 +161,7 @@ export function ConfiguracoesPage({
                 <button
                   key={s.value}
                   type="button"
+                  data-tour={`config-secao-${s.value}`}
                   onClick={() => setAtiva(s.value)}
                   aria-current={ativo ? "page" : undefined}
                   className={cn(

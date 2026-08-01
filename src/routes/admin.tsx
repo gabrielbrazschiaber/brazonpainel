@@ -5,6 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { SairButton } from "@/components/SairButton";
 import { AppShell } from "@/components/AppShell";
+import { useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { ReverTutoriais } from "@/components/onboarding/ReverTutoriais";
+import {
+  useProgressoEquipe,
+  BadgeOnboarding,
+} from "@/components/onboarding/ProgressoEquipe";
+import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -270,6 +277,16 @@ function AdminArea() {
 
   const navItems = ADMIN_NAV_ITEMS;
 
+  const chaveTour =
+    tab === "config"
+      ? "tela:admin-configuracoes"
+      : tab === "clientes"
+        ? "tela:admin-clientes"
+        : tab === "dashboard"
+          ? "tela:admin-dashboard"
+          : "";
+  useTourDaTela(chaveTour, !loading && chaveTour !== "");
+
   const renderSecao: Record<string, () => React.ReactNode> = {
     cupons: () => <CuponsTab />,
     planos: () => <PlanosTab planos={planos} onChanged={load} />,
@@ -293,6 +310,7 @@ function AdminArea() {
       tab={tab}
       onTab={setTab}
       onConta={() => setContaOpen(true)}
+      headerExtra={chaveTour ? <AjudaDaTela chave={chaveTour} /> : undefined}
     >
       <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
 
@@ -611,6 +629,7 @@ function VendedoresTab({
   vendedores: VendedorRow[];
   onChanged: () => void;
 }) {
+  const { concluidos, carregado: progressoCarregado } = useProgressoEquipe();
   const criar = useServerFn(criarVendedor);
   const atualizar = useServerFn(atualizarVendedor);
   const excluir = useServerFn(excluirVendedor);
@@ -753,6 +772,11 @@ function VendedoresTab({
                 <TableCell>
                   <div className="font-medium text-foreground">{v.nome ?? "—"}</div>
                   <div className="text-xs text-muted-foreground">{v.email ?? ""}</div>
+                  {progressoCarregado && (
+                    <div className="mt-1">
+                      <BadgeOnboarding concluido={concluidos.has(v.user_id)} />
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell className="font-mono text-sm">{v.codigo_indicacao}</TableCell>
                 <TableCell>{v.percentual_comissao}%</TableCell>
@@ -1147,7 +1171,7 @@ function ClientesTab({
 
   return (
     <div className="space-y-4">
-      <Card className="p-3 sm:p-4">
+      <Card data-tour="clientes-filtros" className="p-3 sm:p-4">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <div className="relative sm:col-span-2 lg:col-span-1">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -1213,7 +1237,7 @@ function ClientesTab({
         </div>
       </Card>
 
-      <Card className="overflow-x-auto">
+      <Card data-tour="clientes-lista" className="overflow-x-auto">
         <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow>
@@ -1454,7 +1478,17 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
   }
 
   return (
-    <Card className="max-w-2xl p-6">
+    <div className="max-w-2xl space-y-4">
+    <Card className="p-6">
+      <p className="section-title">Tutoriais do sistema</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Reinicie os tutoriais guiados para revê-los desde o começo.
+      </p>
+      <div className="mt-3">
+        <ReverTutoriais />
+      </div>
+    </Card>
+    <Card className="p-6">
       <div className="grid gap-4">
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="grid gap-2">
@@ -1663,6 +1697,7 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
         </div>
       </div>
     </Card>
+    </div>
   );
 }
 

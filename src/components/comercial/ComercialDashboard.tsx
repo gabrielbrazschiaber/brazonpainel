@@ -137,7 +137,7 @@ export function ComercialDashboard({
         />
         <Card className="flex flex-wrap items-center justify-between gap-2 p-4">
           <div>
-            <p className="eyebrow">Leads incompletos</p>
+            <p data-tour="comercial-incompletos" className="eyebrow">Leads incompletos</p>
             <p className="text-xl font-semibold text-foreground">{dados.incompletos}</p>
             <p className="text-xs text-muted-foreground">
               faltam empresa, cargo, e-mail ou segmento
@@ -155,7 +155,7 @@ export function ComercialDashboard({
 
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <Card className="space-y-4 p-4 sm:p-5">
+        <Card data-tour="comercial-funil" className="space-y-4 p-4 sm:p-5">
           <p className="section-title">Funil de vendas</p>
           {etapas.map((e) => (
             <div key={e.label} className="space-y-1.5">
@@ -202,7 +202,7 @@ export function ComercialDashboard({
         </Card>
       </div>
 
-      <div className="space-y-2">
+      <div data-tour="comercial-reunioes" className="space-y-2">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Kpi titulo="Reuniões marcadas" valor={String(reunioes.marcadas)} />
           <Kpi titulo="Realizadas" valor={String(reunioes.realizadas)} />

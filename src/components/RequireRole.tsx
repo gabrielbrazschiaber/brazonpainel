@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth, roleHome, type AppRole } from "@/lib/auth";
 import { TermosGate } from "@/components/TermosGate";
+import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import {
   GateDependenteDePapel,
   GateFalhaConexao,
@@ -28,7 +29,9 @@ export function RequireRole({ role, children }: { role: AppRole; children: React
 
   return (
     <GateDependenteDePapel pronto={userRole === role}>
-      <TermosGate>{children}</TermosGate>
+      <TermosGate>
+        <OnboardingProvider>{children}</OnboardingProvider>
+      </TermosGate>
     </GateDependenteDePapel>
   );
 }

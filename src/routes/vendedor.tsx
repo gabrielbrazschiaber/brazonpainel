@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AppShell } from "@/components/AppShell";
+import { useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import type { AppNavItem } from "@/components/AppSidebar";
 
 import { atualizarMensagemCliente, atualizarMeuPerfilVendedor } from "@/lib/vendedor.functions";
@@ -193,6 +195,8 @@ function VendedorArea() {
   }
 
 
+  useTourDaTela("tela:vendedor", !loading);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -208,6 +212,7 @@ function VendedorArea() {
       tab={secaoAtiva}
       onTab={irParaSecao}
       onConta={() => setContaOpen(true)}
+      headerExtra={<AjudaDaTela chave="tela:vendedor" />}
       acaoPrincipal={{
         label: "Cadastrar cliente",
         icon: UserPlus,
@@ -238,7 +243,7 @@ function VendedorArea() {
         <MinhaContaVendedorDialog open={contaOpen} onOpenChange={setContaOpen} />
 
         {/* Métricas */}
-        <section className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <section data-tour="vend-metricas" className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <MetricCard icon={Users} label="Total de clientes" value={String(metrics.total)} />
           <MetricCard
             icon={CheckCircle2}
@@ -253,6 +258,7 @@ function VendedorArea() {
             tone="text-destructive"
           />
           <MetricCard
+            dataTour="vend-comissao"
             icon={Wallet}
             label="Comissão estimada/mês"
             value={formatCurrency(metrics.comissao)}
@@ -278,17 +284,17 @@ function VendedorArea() {
         </section>
 
         {/* Indicações */}
-        <div id="secao-indicacoes">
+        <div id="secao-indicacoes" data-tour="secao-indicacoes">
           <ReferralsCard />
         </div>
 
         {/* Cupons do vendedor */}
-        <div id="secao-cupons">
+        <div id="secao-cupons" data-tour="secao-cupons">
           <CuponsVendedor />
         </div>
 
         {/* Lista de clientes */}
-        <section id="secao-clientes" className="mt-8">
+        <section id="secao-clientes" data-tour="secao-clientes" className="mt-8">
           <h2 className="text-lg font-bold text-foreground">Meus clientes</h2>
           <Card className="mt-4 overflow-x-auto">
             <Table>
@@ -397,14 +403,16 @@ function MetricCard({
   label,
   value,
   tone = "text-foreground",
+  dataTour,
 }: {
   icon: typeof Users;
   label: string;
   value: string;
   tone?: string;
+  dataTour?: string;
 }) {
   return (
-    <Card className="card-interactive p-4 sm:p-5">
+    <Card data-tour={dataTour} className="card-interactive p-4 sm:p-5">
       <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
         <span
           className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 sm:h-9 sm:w-9 ${tone}`}

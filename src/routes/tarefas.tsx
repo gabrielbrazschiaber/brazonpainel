@@ -14,6 +14,8 @@ import {
 } from "@/lib/tarefas-status";
 
 import { TermosGate } from "@/components/TermosGate";
+import { OnboardingProvider, useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -130,7 +132,9 @@ function TarefasPage() {
   return (
     <GateDependenteDePapel pronto={pronto}>
       <TermosGate>
-        <TarefasConteudo home={roleHome(role)} isAdmin={role === "admin"} />
+        <OnboardingProvider>
+          <TarefasConteudo home={roleHome(role)} isAdmin={role === "admin"} />
+        </OnboardingProvider>
       </TermosGate>
     </GateDependenteDePapel>
   );
@@ -283,6 +287,8 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
   }
 
 
+  useTourDaTela("tela:tarefas", !carregando);
+
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
@@ -303,6 +309,7 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
             </Link>
           </Button>
+          <AjudaDaTela chave="tela:tarefas" />
           <ThemeToggle />
           <AvisosSino />
           <SairButton />
@@ -320,7 +327,7 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div data-tour="tarefas-filtros" className="flex flex-wrap items-center gap-2">
           <Select value={filtro} onValueChange={(v) => setFiltro(v as TarefaStatus | "todas")}>
             <SelectTrigger className="w-full sm:w-56">
               <SelectValue placeholder="Filtrar por status" />
@@ -357,7 +364,7 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
             }
           />
         ) : (
-          <div className="space-y-3">
+          <div data-tour="tarefas-lista" className="space-y-3">
             {visiveis.map((t) => (
               <Card key={t.id} className="p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

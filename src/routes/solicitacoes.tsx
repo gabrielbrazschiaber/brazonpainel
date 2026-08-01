@@ -21,6 +21,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
 import { GateDependenteDePapel } from "@/components/GateEstado";
 import { TermosGate } from "@/components/TermosGate";
+import { OnboardingProvider, useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -138,7 +140,9 @@ function SolicitacoesPage() {
   return (
     <GateDependenteDePapel pronto={Boolean(role)}>
       <TermosGate>
-        <SolicitacoesConteudo home={roleHome(role)} />
+        <OnboardingProvider>
+          <SolicitacoesConteudo home={roleHome(role)} />
+        </OnboardingProvider>
       </TermosGate>
     </GateDependenteDePapel>
   );
@@ -349,6 +353,8 @@ function SolicitacoesConteudo({ home }: { home: string }) {
     );
   }
 
+  useTourDaTela("tela:solicitacoes", !carregando);
+
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
@@ -367,6 +373,7 @@ function SolicitacoesConteudo({ home }: { home: string }) {
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
             </Link>
           </Button>
+          <AjudaDaTela chave="tela:solicitacoes" />
           <ThemeToggle />
           <AvisosSino />
           <SairButton />
@@ -374,7 +381,7 @@ function SolicitacoesConteudo({ home }: { home: string }) {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-4 px-4 py-5">
-        <Card className="flex flex-col gap-3 border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <Card data-tour="solic-catalogo" className="flex flex-col gap-3 border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="font-semibold">Sua assinatura renova sozinha.</p>
             <p className="text-sm text-muted-foreground">{AVISO_RENOVACAO}</p>
@@ -437,7 +444,7 @@ function SolicitacoesConteudo({ home }: { home: string }) {
             acao={<Button onClick={abrirCatalogo}>Fazer uma solicitação</Button>}
           />
         ) : (
-          <div className="space-y-3">
+          <div data-tour="solic-lista" className="space-y-3">
             {visiveis.map((s) => (
               <Card key={s.id} className="space-y-2 p-4">
                 <div className="flex flex-wrap items-center gap-2">

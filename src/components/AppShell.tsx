@@ -58,7 +58,9 @@ export function AppShell({
             <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
               {headerExtra}
               <ThemeToggle />
-              <AvisosSino />
+              <span data-tour="avisos" className="inline-flex">
+                <AvisosSino />
+              </span>
               <SairButton variante="icone" />
             </div>
           </header>

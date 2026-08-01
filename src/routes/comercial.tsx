@@ -18,6 +18,8 @@ import {
 import { useAuth, roleHome } from "@/lib/auth";
 import { GateDependenteDePapel } from "@/components/GateEstado";
 import { TermosGate } from "@/components/TermosGate";
+import { OnboardingProvider, useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -135,7 +137,9 @@ function ComercialPage() {
   return (
     <GateDependenteDePapel pronto={Boolean(role) && permitido}>
       <TermosGate>
-        <ComercialConteudo isAdmin={role === "admin"} home={roleHome(role)} />
+        <OnboardingProvider>
+          <ComercialConteudo isAdmin={role === "admin"} home={roleHome(role)} />
+        </OnboardingProvider>
       </TermosGate>
     </GateDependenteDePapel>
   );
@@ -361,6 +365,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     }
   }
 
+  useTourDaTela("tela:comercial", !carregando && Boolean(dados));
+
   return (
     <div className="min-h-screen bg-background">
       <header className="glass-header sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border/60 px-3 pt-[env(safe-area-inset-top)] sm:px-6">
@@ -372,6 +378,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         </Button>
         <BrazonLogo className="hidden h-7 sm:block" />
         <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
+          <AjudaDaTela chave="tela:comercial" />
           <ThemeToggle />
           <AvisosSino />
           <SairButton variante="icone" />
@@ -390,7 +397,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setImportarAberto(true)}>
+            <Button data-tour="comercial-importar" variant="outline" onClick={() => setImportarAberto(true)}>
               <Upload className="mr-2 h-4 w-4" /> Importar planilha
             </Button>
             <Button
@@ -404,6 +411,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
               <ListChecks className="mr-2 h-4 w-4" /> Completar leads
             </Button>
             <Button
+              data-tour="comercial-novo-lead"
               onClick={() => {
                 setEditando(null);
                 setFormAberto(true);
@@ -442,7 +450,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
           )}
         </div>
 
-        <div id="follow-ups">
+        <div id="follow-ups" data-tour="comercial-followups">
           <FollowUpsPanel
             isAdmin={isAdmin}
             vendedorId={filtroVendedor}
