@@ -3,7 +3,7 @@ import type { z } from "zod";
 import { escopoComercial } from "@/lib/leads.server";
 import { apenasDigitos, SEGMENTOS_SUGERIDOS, type LeadOrigem } from "@/lib/leads";
 import { opcoesUnicas, ordenarPtBr } from "@/lib/escopo";
-import { normalizarCnpj } from "@/lib/leads-import";
+import { avisoCriticoCnpj, normalizarCnpj } from "@/lib/leads-import";
 import { HORAS_RESERVA_PADRAO, type BancoLeadStatus } from "@/lib/banco-leads";
 import type {
   listarBancoLeadsSchema,
@@ -419,6 +419,13 @@ export async function importarBlocoBancoServer(
     vistos.add(tel);
 
     // Revalidação de CNPJ no servidor: nunca confiamos no que vem do cliente.
+    // Validação final do lote: aviso crítico não entra no banco.
+    const critico = avisoCriticoCnpj(l.cnpj);
+    if (critico) {
+      erros.push({ linha: l.linha, motivo: critico });
+      ignorados += 1;
+      continue;
+    }
     const { cnpj } = normalizarCnpj(l.cnpj);
     const cnae = (l.cnae_codigo ?? "").replace(/\D/g, "");
 

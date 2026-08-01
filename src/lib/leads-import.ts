@@ -368,6 +368,22 @@ export function normalizarCnpj(valor: string | null | undefined): CnpjNormalizad
 
 
 /**
+ * Aviso CRÍTICO de CNPJ: valor foi preenchido, mas não é aproveitável ou não
+ * confere. Usado na validação final do servidor para impedir a gravação da
+ * linha. CNPJ em branco NÃO é crítico (a planilha pode simplesmente não ter).
+ */
+export function avisoCriticoCnpj(valor: string | null | undefined): string | null {
+  const bruto = (valor ?? "").toString().trim();
+  if (!bruto) return null;
+  const n = normalizarCnpj(bruto);
+  if (n.cientifico) return AVISO_CNPJ_CIENTIFICO;
+  if (n.aviso === AVISO_CNPJ_INVALIDO) return AVISO_CNPJ_INVALIDO;
+  if (n.aviso === AVISO_CNPJ_DIGITO) return AVISO_CNPJ_DIGITO;
+  return null;
+}
+
+
+/**
  * Máscara única do CNPJ: 00.000.000/0000-00.
  * Valores parciais (durante a digitação) recebem a mesma máscara, aplicada
  * progressivamente, para o campo nunca mudar de formato.
