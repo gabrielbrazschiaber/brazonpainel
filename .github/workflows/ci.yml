@@ -21,7 +21,7 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - run: bun run lint
-      # Inclui as regressões de gate de papel (carregando → erro → sem papel)
+      # Inclui as regressões dos gates de papel (carregando → erro → sem papel)
       # e de troca de conta.
       - run: bun run test
 
@@ -29,8 +29,8 @@ jobs:
     name: E2E auth (rede afunilada e troca de conta)
     runs-on: ubuntu-latest
     env:
-      # A ausência de sessão não invalida o teste: o cenário anônimo continua
-      # falhando o build se qualquer texto de bloqueio piscar.
+      # Sem sessão nos secrets o cenário anônimo ainda roda e continua falhando
+      # o build se qualquer texto de bloqueio piscar.
       LOVABLE_BROWSER_SUPABASE_STORAGE_KEY: ${{ secrets.E2E_SUPABASE_STORAGE_KEY }}
       LOVABLE_BROWSER_SUPABASE_SESSION_JSON: ${{ secrets.E2E_SUPABASE_SESSION_JSON }}
       LOVABLE_BROWSER_SUPABASE_SESSION_JSON_2: ${{ secrets.E2E_SUPABASE_SESSION_JSON_2 }}
@@ -38,5 +38,44 @@ jobs:
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
       VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
       VITE_APP_VERSION: ${{ github.sha }}
-    steps
-      : []
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: bun install --frozen-lockfile
+
+      - name: Instalar Playwright (Chromium)
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Subir o app
+        run: |
+          bun run dev --port 8080 > /tmp/dev-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:8080/ && exit 0
+            sleep 2
+          done
+          echo "dev server não respondeu"; cat /tmp/dev-server.log; exit 1
+
+      # Falha o build em QUALQUER ocorrência dos textos de bloqueio
+      # ("Acesso não liberado" / "Falha de conexão") durante o carregamento.
+      - name: Gates de auth sob rede afunilada e troca de conta
+        run: bun run test:e2e:auth
+
+      - name: Evidências (vídeo, screenshot e HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-auth-evidencias
+          path: |
+            tests/e2e/artifacts/**
+            /tmp/dev-server.log
+          if-no-files-found: ignore
+          retention-days: 14
