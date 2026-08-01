@@ -185,7 +185,10 @@ interface LinhaPreparada {
   cnpjCientifico: boolean;
   /** Explicação da regra de CNPJ aplicada nesta linha (tooltip). */
   cnpjExplicacao: string | null;
+  /** Aviso crítico: CNPJ corrompido, irreconhecível ou com dígito inválido. */
+  critico: boolean;
 }
+
 
 
 function texto(valor: string | undefined, max = 120): string | null {
