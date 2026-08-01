@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { DoisFatoresCard } from "@/components/conta/DoisFatoresCard";
 export function MinhaContaDialog({
   open,
   onOpenChange,
@@ -94,6 +95,7 @@ export function MinhaContaDialog({
               placeholder="Deixe em branco para manter"
             />
           </div>
+          <DoisFatoresCard />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>

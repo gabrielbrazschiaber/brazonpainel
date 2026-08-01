@@ -51,6 +51,7 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { buscarPerfis } from "@/lib/profiles";
 
 import { toast } from "sonner";
+import { DoisFatoresCard } from "@/components/conta/DoisFatoresCard";
 import {
   Users,
   CheckCircle2,
@@ -560,6 +561,7 @@ function MinhaContaVendedorDialog({
               placeholder="Deixe em branco para manter"
             />
           </div>
+          <DoisFatoresCard />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>

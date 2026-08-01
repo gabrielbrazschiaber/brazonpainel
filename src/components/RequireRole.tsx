@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth, roleHome, type AppRole } from "@/lib/auth";
 import { TermosGate } from "@/components/TermosGate";
+import { MfaGate } from "@/components/MfaGate";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import {
   GateDependenteDePapel,
@@ -30,7 +31,10 @@ export function RequireRole({ role, children }: { role: AppRole; children: React
   return (
     <GateDependenteDePapel pronto={userRole === role}>
       <TermosGate>
-        <OnboardingProvider>{children}</OnboardingProvider>
+        {/* 2FA vem depois do aceite dos termos e vale para todas as telas. */}
+        <MfaGate>
+          <OnboardingProvider>{children}</OnboardingProvider>
+        </MfaGate>
       </TermosGate>
     </GateDependenteDePapel>
   );

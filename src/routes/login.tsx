@@ -1,13 +1,17 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
+import { usarCodigoRecuperacaoMfa } from "@/lib/mfa.functions";
+import { lerNivelSeguranca, listarFatoresTotp, mensagemErroMfa, verificarCodigoTotp } from "@/lib/mfa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Card } from "@/components/ui/card";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { toast } from "sonner";
@@ -32,23 +36,95 @@ function LoginPage() {
   const [mode, setMode] = useState<"login" | "forgot">("login");
   const [resetSent, setResetSent] = useState(false);
 
+  // Segunda etapa (2FA): guardamos o fator verificado da conta.
+  const [fatorPendente, setFatorPendente] = useState<string | null>(null);
+  const [otp, setOtp] = useState("");
+  const [modoRecuperacao, setModoRecuperacao] = useState(false);
+  const [codigoRecuperacao, setCodigoRecuperacao] = useState("");
+  const usarCodigo = useServerFn(usarCodigoRecuperacaoMfa);
+
   useEffect(() => {
     // Aguarda o papel resolver para não mandar o usuário ao painel errado.
-    if (!loading && session && roleResolvido) {
+    // Enquanto o segundo fator estiver pendente, ninguém entra no painel.
+    if (!loading && session && roleResolvido && !fatorPendente) {
       navigate({ to: roleHome(role) });
     }
-  }, [loading, session, role, roleResolvido, navigate]);
+  }, [loading, session, role, roleResolvido, fatorPendente, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setSubmitting(false);
     if (error) {
+      setSubmitting(false);
       toast.error("E-mail ou senha incorretos.");
       return;
     }
+
+    try {
+      const nivel = await lerNivelSeguranca();
+      if (nivel.precisaSegundoFator) {
+        const fatores = await listarFatoresTotp();
+        const verificado = fatores.find((f) => f.verificado);
+        if (verificado) {
+          setFatorPendente(verificado.id);
+          setOtp("");
+          setSubmitting(false);
+          return;
+        }
+      }
+    } catch {
+      // Se não conseguirmos ler o nível, o MfaGate ainda protege o painel.
+    }
+    setSubmitting(false);
     toast.success("Bem-vindo de volta!");
+  }
+
+  async function confirmarSegundoFator(e: React.FormEvent) {
+    e.preventDefault();
+    if (!fatorPendente || otp.replace(/\D/g, "").length < 6) {
+      toast.error("Digite o código de 6 dígitos do app autenticador.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await verificarCodigoTotp(fatorPendente, otp);
+      setFatorPendente(null);
+      toast.success("Bem-vindo de volta!");
+    } catch (err) {
+      toast.error(mensagemErroMfa(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function confirmarRecuperacao(e: React.FormEvent) {
+    e.preventDefault();
+    if (codigoRecuperacao.trim().length < 4) {
+      toast.error("Informe um código de recuperação.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await usarCodigo({ data: { codigo: codigoRecuperacao } });
+      await supabase.auth.refreshSession();
+      setCodigoRecuperacao("");
+      setModoRecuperacao(false);
+      setFatorPendente(null);
+      toast.success("Acesso liberado. Cadastre a verificação em duas etapas novamente.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Código de recuperação inválido.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function cancelarSegundoFator() {
+    setFatorPendente(null);
+    setOtp("");
+    setModoRecuperacao(false);
+    setCodigoRecuperacao("");
+    await supabase.auth.signOut();
   }
 
   async function handleForgot(e: React.FormEvent) {
@@ -66,6 +142,95 @@ function LoginPage() {
     }
     setResetSent(true);
     toast.success("Link enviado! Verifique seu e-mail.");
+  }
+
+  if (fatorPendente) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
+        <ThemeToggle className="fixed right-3 top-3 z-50 bg-card/70 backdrop-blur sm:right-4 sm:top-4" />
+        <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+        <Card className="fade-in-up relative w-full max-w-md rounded-2xl p-6 shadow-lg sm:p-8">
+          <div className="mb-6 text-center">
+            <BrazonLogo
+              className="mb-4 justify-center"
+              symbolClassName="h-10 w-10"
+              textClassName="text-2xl"
+            />
+            <h1 className="text-2xl font-bold text-foreground">Verificação em duas etapas</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {modoRecuperacao
+                ? "Informe um dos códigos de recuperação que você guardou."
+                : "Digite o código de 6 dígitos do seu app autenticador."}
+            </p>
+          </div>
+
+          {modoRecuperacao ? (
+            <form onSubmit={confirmarRecuperacao} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-recuperacao">Código de recuperação</Label>
+                <Input
+                  id="login-recuperacao"
+                  autoComplete="one-time-code"
+                  value={codigoRecuperacao}
+                  onChange={(e) => setCodigoRecuperacao(e.target.value.toUpperCase())}
+                  placeholder="XXXX-XXXX"
+                />
+                <p className="text-xs text-muted-foreground">
+                  O código só pode ser usado uma vez. A verificação em duas etapas será desativada e
+                  você deverá cadastrá-la novamente.
+                </p>
+              </div>
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {submitting ? "Validando..." : "Usar código"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => setModoRecuperacao(false)}
+                disabled={submitting}
+              >
+                Voltar
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={confirmarSegundoFator} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-otp">Código do app</Label>
+                <InputOTP id="login-otp" maxLength={6} value={otp} onChange={setOtp}>
+                  <InputOTPGroup>
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <InputOTPSlot key={i} index={i} />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {submitting ? "Verificando..." : "Confirmar"}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setModoRecuperacao(true)}
+                className="w-full text-xs text-primary underline-offset-2 hover:underline"
+              >
+                Perdi o acesso ao app — usar código de recuperação
+              </button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => void cancelarSegundoFator()}
+                disabled={submitting}
+              >
+                Cancelar e voltar ao login
+              </Button>
+            </form>
+          )}
+        </Card>
+      </div>
+    );
   }
 
   if (mode === "forgot") {
