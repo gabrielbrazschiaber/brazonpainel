@@ -950,6 +950,33 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_progresso: {
+        Row: {
+          chave: string
+          created_at: string
+          id: string
+          passo_parou: number | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          id?: string
+          passo_parou?: number | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          id?: string
+          passo_parou?: number | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pagamentos: {
         Row: {
           asaas_payment_id: string | null
