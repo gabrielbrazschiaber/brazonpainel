@@ -289,6 +289,11 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const listaSegmentos = useMemo(() => segmentos, [segmentos]);
   /** Status de WhatsApp calculado uma vez por carregamento da lista. */
   const statusZap = useMemo(() => mapaWhatsApp(leads), [leads]);
+  /** Filtro local: mostra apenas contatos com WhatsApp ativo. */
+  const leadsVisiveis = useMemo(
+    () => (soZap ? leads.filter((l) => statusZap.get(l.id) === "ativo") : leads),
+    [leads, soZap, statusZap],
+  );
 
 
   async function confirmarExclusao() {
