@@ -427,20 +427,17 @@ function SolicitacoesConteudo({ home }: { home: string }) {
         </Tabs>
 
         {carregando ? (
-          <div className="flex justify-center py-16">
+          <div className="flex flex-col items-center gap-2 py-16">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Carregando solicitações...</p>
           </div>
         ) : visiveis.length === 0 ? (
-          <Card className="flex flex-col items-center gap-2 p-10 text-center">
-            <Inbox className="h-8 w-8 text-muted-foreground" />
-            <p className="font-medium">Nenhuma solicitação ainda</p>
-            <p className="text-sm text-muted-foreground">
-              É só escolher o que você precisa. A gente cuida do resto.
-            </p>
-            <Button className="mt-2" onClick={abrirCatalogo}>
-              Fazer uma solicitação
-            </Button>
-          </Card>
+          <EmptyState
+            icon={Inbox}
+            titulo="Nenhuma solicitação ainda"
+            descricao="É só escolher o que você precisa. A gente cuida do resto."
+            acao={<Button onClick={abrirCatalogo}>Fazer uma solicitação</Button>}
+          />
         ) : (
           <div className="space-y-3">
             {visiveis.map((s) => (

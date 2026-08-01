@@ -46,22 +46,26 @@ export function AppShell({
         />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="glass-header sticky top-0 z-30 flex h-14 items-center gap-1 border-b border-border/60 px-2 pt-[env(safe-area-inset-top)] sm:gap-2 sm:px-4">
+          <header className="glass-header sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border/60 px-2 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-5">
             <SidebarTrigger className="h-10 w-10 shrink-0" aria-label="Abrir menu" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">{contexto}</p>
-              <h1 className="truncate text-sm font-semibold text-foreground sm:text-base">
+              <p className="eyebrow truncate">{contexto}</p>
+              <h1 className="truncate text-sm font-semibold leading-tight text-foreground sm:text-base">
                 {profile?.nome || profile?.email}
               </h1>
             </div>
-            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
               {headerExtra}
               <AvisosSino />
               <SairButton variante="icone" />
             </div>
           </header>
 
-          <div className={`mx-auto w-full ${larguraMax} px-3 py-5 sm:px-4 sm:py-6`}>{children}</div>
+          <div
+            className={`mx-auto w-full ${larguraMax} space-y-5 px-4 py-6 sm:space-y-6 sm:px-6 sm:py-8`}
+          >
+            {children}
+          </div>
         </div>
       </div>
     </SidebarProvider>
