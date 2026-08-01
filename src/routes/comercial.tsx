@@ -393,11 +393,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             <span className="hidden sm:ml-2 sm:inline">Painel</span>
           </Link>
         </Button>
-        <BrazonLogo
-          className="hidden sm:flex"
-          symbolClassName="h-7 w-7"
-          textClassName="text-lg"
-        />
+        <BrazonLogo className="hidden sm:flex" symbolClassName="h-7 w-7" textClassName="text-lg" />
         <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
           <Suspense fallback={null}>
             <AjudaDaTela chave="tela:comercial" />
