@@ -24,6 +24,10 @@ jobs:
       # Inclui as regressões dos gates de papel (carregando → erro → sem papel)
       # e de troca de conta.
       - run: bun run test
+      # Contrato de exportação: todo evento precisa levar trace_id, versão e rota
+      # com os mesmos campos esperados pelo destino externo. Falha antes do deploy.
+      - name: Validar contrato da telemetria exportada
+        run: bun run validar:telemetria
 
   e2e-auth:
     name: E2E auth (rede afunilada e troca de conta)
@@ -70,6 +74,9 @@ jobs:
       # ("Acesso não liberado" / "Falha de conexão") durante o carregamento.
       - name: Gates de auth (rotas críticas por papel e tipo de navegação)
         run: bun run test:e2e:auth
+
+      - name: Tours de onboarding (primeira visita, conclusão e mobile)
+        run: bun run test:e2e:onboarding
 
       - name: Evidências (vídeo, screenshot e HTML)
         if: always()
