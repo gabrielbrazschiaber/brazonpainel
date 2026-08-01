@@ -15,12 +15,9 @@ export function useDadosAdmin() {
   const cliente = useQueryClient();
   const { data } = useSuspenseQuery(adminPainelQuery());
 
-  const recarregar = useCallback(
-    async () => {
-      await cliente.invalidateQueries({ queryKey: chavesPainel.admin });
-    },
-    [cliente],
-  );
+  const recarregar = useCallback(async () => {
+    await cliente.invalidateQueries({ queryKey: chavesPainel.admin });
+  }, [cliente]);
 
   return { ...data, carregando: false, recarregar };
 }

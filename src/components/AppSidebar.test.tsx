@@ -19,7 +19,6 @@ vi.mock("@tanstack/react-router", () => ({
   useRouter: () => ({ preloadRoute: vi.fn(() => Promise.resolve()) }),
 }));
 
-
 vi.mock("@/lib/use-tarefas-abertas", () => ({
   useTarefasAbertas: () => ({ abertas: 3, atualizar: vi.fn() }),
 }));
@@ -55,7 +54,6 @@ function Harness({ onTab = vi.fn(), onConta = vi.fn() }) {
     </QueryClientProvider>
   );
 }
-
 
 /** O drawer mobile é um dialog do Radix; no desktop a sidebar é estática. */
 function drawer() {

@@ -24,10 +24,7 @@ import { useChatNaoLidas } from "@/lib/use-chat-nao-lidas";
 import { useTarefasAbertas } from "@/lib/use-tarefas-abertas";
 import { useFollowUpsPendentes } from "@/lib/use-follow-ups-pendentes";
 import { useAuth } from "@/lib/auth";
-import {
-  usePrefetchIntencao,
-  usePrefetchQuandoVisivel,
-} from "@/lib/use-prefetch-intencao";
+import { usePrefetchIntencao, usePrefetchQuandoVisivel } from "@/lib/use-prefetch-intencao";
 import { toast } from "sonner";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 
