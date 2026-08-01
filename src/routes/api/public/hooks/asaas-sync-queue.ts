@@ -44,7 +44,8 @@ export const Route = createFileRoute("/api/public/hooks/asaas-sync-queue")({
           return json({ error: "Endpoint indisponível" }, 503);
         }
 
-        if (!aceitos.includes(enviado)) {
+        const { algumSegredoConfere } = await import("@/lib/token-compare.server");
+        if (!algumSegredoConfere(enviado, aceitos)) {
           return json({ error: "Não autorizado" }, 401);
         }
 
