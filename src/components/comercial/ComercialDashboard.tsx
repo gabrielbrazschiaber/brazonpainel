@@ -60,7 +60,13 @@ function Kpi({
   );
 }
 
-export function ComercialDashboard({ dados }: { dados: DashboardComercial }) {
+export function ComercialDashboard({
+  dados,
+  onVerIncompletos,
+}: {
+  dados: DashboardComercial;
+  onVerIncompletos?: () => void;
+}) {
   const { funil, anterior, reunioes, segmentos, serie, ranking } = dados;
   const total = funil.contatados || 1;
 
@@ -102,6 +108,22 @@ export function ComercialDashboard({ dados }: { dados: DashboardComercial }) {
           hint="chamadas necessárias para fechar 1"
         />
       </div>
+
+      <Card className="flex flex-wrap items-center justify-between gap-2 p-4">
+        <div>
+          <p className="eyebrow">Leads incompletos</p>
+          <p className="text-xl font-semibold text-foreground">{dados.incompletos}</p>
+          <p className="text-xs text-muted-foreground">
+            faltam empresa, cargo, e-mail ou segmento
+          </p>
+        </div>
+        {onVerIncompletos && (
+          <Button variant="outline" size="sm" onClick={onVerIncompletos}>
+            Ver incompletos
+          </Button>
+        )}
+      </Card>
+
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <Card className="space-y-4 p-4 sm:p-5">
