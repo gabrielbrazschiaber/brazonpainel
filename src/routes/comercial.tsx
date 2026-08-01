@@ -390,7 +390,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setImportarAberto(true)}>
+            <Button data-tour="comercial-importar" variant="outline" onClick={() => setImportarAberto(true)}>
               <Upload className="mr-2 h-4 w-4" /> Importar planilha
             </Button>
             <Button
@@ -404,6 +404,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
               <ListChecks className="mr-2 h-4 w-4" /> Completar leads
             </Button>
             <Button
+              data-tour="comercial-novo-lead"
               onClick={() => {
                 setEditando(null);
                 setFormAberto(true);
@@ -442,7 +443,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
           )}
         </div>
 
-        <div id="follow-ups">
+        <div id="follow-ups" data-tour="comercial-followups">
           <FollowUpsPanel
             isAdmin={isAdmin}
             vendedorId={filtroVendedor}
