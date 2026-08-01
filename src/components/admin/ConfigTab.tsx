@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ReverTutoriais } from "@/components/onboarding/ReverTutoriais";
+import { DoisFatoresEquipeCard } from "@/components/admin/DoisFatoresEquipeCard";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
 import { gerarLembretesAgora, ultimaExecucaoLembretes } from "@/lib/lembretes.functions";
@@ -161,6 +162,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
           <ReverTutoriais />
         </div>
       </Card>
+      <DoisFatoresEquipeCard />
       <Card className="p-6">
         <div className="grid gap-4">
           <div className="grid gap-2 sm:grid-cols-2">
