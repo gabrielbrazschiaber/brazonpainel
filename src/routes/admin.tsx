@@ -248,7 +248,6 @@ function AdminArea() {
           nome_app: "",
           dominio: "",
           dias_aviso_vencimento: 5,
-      dias_devolver_lead: 7,
           dias_devolver_lead: 7,
           percentual_comissao_padrao: 10,
           asaas_webhook_url: "",
