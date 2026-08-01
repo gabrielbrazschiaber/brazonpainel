@@ -61,10 +61,15 @@ export const criarVendedor = createServerFn({ method: "POST" })
       throw new Error("Falha ao definir o perfil do vendedor.");
     }
 
+    const escopo = await normalizarEscopo(supabaseAdmin, data);
+
     const { error: vendErr } = await supabaseAdmin.from("vendedores").insert({
       user_id: newUserId,
       codigo_indicacao: data.codigo_indicacao,
       percentual_comissao: data.percentual_comissao,
+      segmentos: escopo.segmentos,
+      estados: escopo.estados,
+      cnaes: escopo.cnaes,
       ativo: true,
     });
     if (vendErr) {
@@ -146,6 +151,57 @@ export const atualizarMeuPerfil = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Escopo de atuação do vendedor. Lista vazia = sem restrição na dimensão.
+ * Usado pela reserva do banco de leads (`public.pode_ver_banco_lead`).
+ */
+const escopoVendedorSchema = {
+  segmentos: z.array(z.string().trim().min(1).max(120)).max(40).optional(),
+  estados: z.array(z.string().trim().length(2)).max(27).optional(),
+  cnaes: z.array(z.string().trim().regex(/^\d{7}$/)).max(200).optional(),
+};
+
+type EscopoEntrada = {
+  segmentos?: string[];
+  estados?: string[];
+  cnaes?: string[];
+};
+
+/** Normaliza (trim/upper/dedupe) e valida estados e CNAEs contra os dados reais. */
+async function normalizarEscopo(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabaseAdmin: any,
+  entrada: EscopoEntrada,
+): Promise<{ segmentos: string[]; estados: string[]; cnaes: string[] }> {
+  const { opcoesUnicas } = await import("@/lib/escopo");
+  const { ESTADOS_BR } = await import("@/lib/banco-leads");
+
+  const segmentos = opcoesUnicas(entrada.segmentos ?? []);
+  const estados = opcoesUnicas((entrada.estados ?? []).map((e) => e.toUpperCase()));
+  const cnaes = opcoesUnicas(entrada.cnaes ?? []);
+
+  const ufsValidas = new Set<string>(ESTADOS_BR as readonly string[]);
+  const ufInvalida = estados.find((e) => !ufsValidas.has(e));
+  if (ufInvalida) throw new Error(`Estado inválido no escopo: ${ufInvalida}.`);
+
+  if (cnaes.length > 0) {
+    const { data } = await supabaseAdmin
+      .from("cnaes")
+      .select("codigo")
+      .in("codigo", cnaes)
+      .eq("ativo", true);
+    const existentes = new Set(((data ?? []) as { codigo: string }[]).map((c) => c.codigo));
+    const faltando = cnaes.filter((c) => !existentes.has(c));
+    if (faltando.length > 0) {
+      throw new Error(
+        `CNAE não encontrado ou inativo no catálogo: ${faltando.slice(0, 3).join(", ")}.`,
+      );
+    }
+  }
+
+  return { segmentos, estados, cnaes };
+}
+
 const editarVendedorSchema = z.object({
   vendedor_id: z.string().uuid(),
   nome: z.string().trim().min(2).max(120),
@@ -153,6 +209,7 @@ const editarVendedorSchema = z.object({
   codigo_indicacao: z.string().trim().min(2).max(60),
   percentual_comissao: z.number().min(0).max(100),
   senha: z.string().min(6).max(72).optional().or(z.literal("")),
+  ...escopoVendedorSchema,
 });
 
 // Admin edita um vendedor: nome, e-mail, código, comissão e (opcionalmente) senha.
@@ -200,11 +257,16 @@ export const atualizarVendedor = createServerFn({ method: "POST" })
       .eq("id", vend.user_id);
     if (profErr) throw new Error("Falha ao atualizar os dados do vendedor.");
 
+    const escopo = await normalizarEscopo(supabaseAdmin, data);
+
     const { error: vendErr } = await supabaseAdmin
       .from("vendedores")
       .update({
         codigo_indicacao: data.codigo_indicacao,
         percentual_comissao: data.percentual_comissao,
+        segmentos: escopo.segmentos,
+        estados: escopo.estados,
+        cnaes: escopo.cnaes,
       })
       .eq("id", data.vendedor_id);
     if (vendErr) throw new Error("Falha ao atualizar o vendedor.");
@@ -219,6 +281,9 @@ export const atualizarVendedor = createServerFn({ method: "POST" })
       detalhes: {
         codigo_indicacao: data.codigo_indicacao,
         percentual_comissao: data.percentual_comissao,
+        segmentos: escopo.segmentos,
+        estados: escopo.estados,
+        cnaes: escopo.cnaes,
       },
     });
 
