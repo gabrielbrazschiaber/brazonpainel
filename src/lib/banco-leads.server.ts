@@ -87,8 +87,11 @@ export function mascararEmail(valor: string | null | undefined): string | null {
   return "e-mail oculto";
 }
 
-async function prazoDevolucao(supabase: Sb): Promise<number> {
-  const { data } = await supabase
+async function prazoDevolucao(): Promise<number> {
+  // Lido com credencial de servidor: `configuracoes` guarda segredos e por RLS
+  // só admin lê. O vendedor recebe apenas este número já tratado.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
     .from("configuracoes")
     .select("dias_devolver_lead")
     .limit(1)
@@ -171,11 +174,18 @@ export async function listarBancoLeadsServer(
   const loteIds = Array.from(new Set(linhas.map((l) => l.lote_id).filter(Boolean))) as string[];
   const fontes = new Map<string, string>();
   if (loteIds.length > 0) {
-    const { data: lotes } = await supabase
+    // Lotes só são legíveis por admin (RLS). Para o vendedor buscamos com
+    // credencial de servidor e devolvemos somente o rótulo da fonte —
+    // nome do arquivo e metadados de importação nunca saem daqui.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const leitor = isAdmin ? supabase : supabaseAdmin;
+    const { data: lotes } = await leitor
       .from("banco_leads_lotes")
       .select("id, fonte, arquivo_nome")
       .in("id", loteIds);
-    for (const l of lotes ?? []) fontes.set(l.id, l.fonte || l.arquivo_nome);
+    for (const l of lotes ?? []) {
+      fontes.set(l.id, isAdmin ? l.fonte || l.arquivo_nome : l.fonte || "Importação");
+    }
   }
 
   const itens = linhas.map((l) => {
@@ -197,7 +207,7 @@ export async function listarBancoLeadsServer(
     total: count ?? itens.length,
     pagina,
     por_pagina: porPagina,
-    prazo_devolucao: await prazoDevolucao(supabase),
+    prazo_devolucao: await prazoDevolucao(),
   };
 }
 
@@ -275,8 +285,9 @@ function chunks<T>(lista: T[], tamanho: number): T[][] {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
 /** Horas de reserva configuradas (padrão 48h, entre 1 e 720). */
-async function horasReserva(supabase: Sb): Promise<number> {
-  const { data } = await supabase
+async function horasReserva(): Promise<number> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
     .from("configuracoes")
     .select("horas_reserva_lote")
     .limit(1)
@@ -308,7 +319,7 @@ export async function criarLoteBancoServer(
   const reservaEstado = dados.reservado_estado ? dados.reservado_estado.toUpperCase() : null;
   const reservaCnae = dados.reservado_cnae ?? null;
   const temReserva = Boolean(reservaSegmento || reservaEstado || reservaCnae);
-  const horas = dados.horas_reserva ?? (await horasReserva(supabase));
+  const horas = dados.horas_reserva ?? (await horasReserva());
   const bloqueadoAte = temReserva
     ? new Date(Date.now() + horas * 60 * 60 * 1000).toISOString()
     : null;
