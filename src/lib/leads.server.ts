@@ -1,4 +1,5 @@
 /** Lógica server-only do módulo comercial (leads, reuniões e dashboard). */
+import type { ClienteSupabaseUsuario } from "@/lib/supabase-tipos";
 import {
   ESTAGIOS_FECHADOS,
   ESTAGIOS_SEM_FOLLOW_UP,
@@ -22,8 +23,7 @@ import type {
 } from "@/lib/leads.schemas";
 
 // Cliente tipado do usuário logado (RLS ativa). Tipo frouxo de propósito.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Sb = any;
+type Sb = ClienteSupabaseUsuario;
 
 export interface Escopo {
   isAdmin: boolean;
