@@ -357,14 +357,29 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
               Cadastre seus leads, registre reuniões e acompanhe sua conversão.
             </p>
           </div>
-          <Button
-            onClick={() => {
-              setEditando(null);
-              setFormAberto(true);
-            }}
-          >
-            <UserPlus className="mr-2 h-4 w-4" /> Novo lead
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setImportarAberto(true)}>
+              <Upload className="mr-2 h-4 w-4" /> Importar planilha
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIncompletos(true);
+                setOrdem("completude");
+                setCompletarAberto(true);
+              }}
+            >
+              <ListChecks className="mr-2 h-4 w-4" /> Completar leads
+            </Button>
+            <Button
+              onClick={() => {
+                setEditando(null);
+                setFormAberto(true);
+              }}
+            >
+              <UserPlus className="mr-2 h-4 w-4" /> Novo lead
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
