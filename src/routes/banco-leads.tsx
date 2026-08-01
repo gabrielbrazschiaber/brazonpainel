@@ -232,7 +232,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
 
   useTourDaTela("tela:banco-leads", !carregando);
 
-  const itens = lista?.itens ?? [];
+  const itens = useMemo(() => lista?.itens ?? [], [lista]);
   const prazo = lista?.prazo_devolucao ?? 7;
   const total = lista?.total ?? 0;
   const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
@@ -245,6 +245,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
     () => itens.filter((l) => l.status === "disponivel").map((l) => l.id),
     [itens],
   );
+
 
   function alternar(id: string) {
     setSelecionados((atual) =>
