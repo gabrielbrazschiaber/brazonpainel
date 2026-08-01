@@ -14,7 +14,10 @@ vi.mock("@tanstack/react-router", () => ({
   ),
   useRouterState: () => "/admin",
   useNavigate: () => vi.fn(),
+  // O prefetch por intenção usa o router para pré-carregar rotas no hover.
+  useRouter: () => ({ preloadRoute: vi.fn(() => Promise.resolve()) }),
 }));
+
 
 vi.mock("@/lib/use-tarefas-abertas", () => ({
   useTarefasAbertas: () => ({ abertas: 3, atualizar: vi.fn() }),
