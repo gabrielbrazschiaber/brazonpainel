@@ -180,8 +180,12 @@ export type Database = {
           bloqueado_ate: string | null
           cargo: string | null
           cidade: string | null
+          cnae_codigo: string | null
+          cnae_descricao: string | null
+          cnpj: string | null
           created_at: string
           criado_por_id: string
+          data_abertura: string | null
           email: string | null
           empresa: string | null
           estado: string | null
@@ -189,13 +193,18 @@ export type Database = {
           lead_id: string | null
           lote_id: string | null
           nome_contato: string
+          nome_fantasia: string | null
           observacoes: string | null
           origem: Database["public"]["Enums"]["lead_origem"]
+          porte: string | null
           puxado_em: string | null
           puxado_por: string | null
+          razao_social: string | null
+          reservado_cnae: string | null
           reservado_estado: string | null
           reservado_segmento: string | null
           segmento: string | null
+          socios: string | null
           status: Database["public"]["Enums"]["banco_lead_status"]
           telefone: string
           updated_at: string
@@ -205,8 +214,12 @@ export type Database = {
           bloqueado_ate?: string | null
           cargo?: string | null
           cidade?: string | null
+          cnae_codigo?: string | null
+          cnae_descricao?: string | null
+          cnpj?: string | null
           created_at?: string
           criado_por_id: string
+          data_abertura?: string | null
           email?: string | null
           empresa?: string | null
           estado?: string | null
@@ -214,13 +227,18 @@ export type Database = {
           lead_id?: string | null
           lote_id?: string | null
           nome_contato: string
+          nome_fantasia?: string | null
           observacoes?: string | null
           origem?: Database["public"]["Enums"]["lead_origem"]
+          porte?: string | null
           puxado_em?: string | null
           puxado_por?: string | null
+          razao_social?: string | null
+          reservado_cnae?: string | null
           reservado_estado?: string | null
           reservado_segmento?: string | null
           segmento?: string | null
+          socios?: string | null
           status?: Database["public"]["Enums"]["banco_lead_status"]
           telefone: string
           updated_at?: string
@@ -230,8 +248,12 @@ export type Database = {
           bloqueado_ate?: string | null
           cargo?: string | null
           cidade?: string | null
+          cnae_codigo?: string | null
+          cnae_descricao?: string | null
+          cnpj?: string | null
           created_at?: string
           criado_por_id?: string
+          data_abertura?: string | null
           email?: string | null
           empresa?: string | null
           estado?: string | null
@@ -239,13 +261,18 @@ export type Database = {
           lead_id?: string | null
           lote_id?: string | null
           nome_contato?: string
+          nome_fantasia?: string | null
           observacoes?: string | null
           origem?: Database["public"]["Enums"]["lead_origem"]
+          porte?: string | null
           puxado_em?: string | null
           puxado_por?: string | null
+          razao_social?: string | null
+          reservado_cnae?: string | null
           reservado_estado?: string | null
           reservado_segmento?: string | null
           segmento?: string | null
+          socios?: string | null
           status?: Database["public"]["Enums"]["banco_lead_status"]
           telefone?: string
           updated_at?: string
@@ -281,9 +308,11 @@ export type Database = {
           autor_id: string
           created_at: string
           fonte: string | null
+          horas_reserva: number | null
           id: string
           ignorados: number
           importados: number
+          reservado_cnae: string | null
           reservado_estado: string | null
           reservado_segmento: string | null
           total_linhas: number
@@ -293,9 +322,11 @@ export type Database = {
           autor_id: string
           created_at?: string
           fonte?: string | null
+          horas_reserva?: number | null
           id?: string
           ignorados?: number
           importados?: number
+          reservado_cnae?: string | null
           reservado_estado?: string | null
           reservado_segmento?: string | null
           total_linhas?: number
@@ -305,9 +336,11 @@ export type Database = {
           autor_id?: string
           created_at?: string
           fonte?: string | null
+          horas_reserva?: number | null
           id?: string
           ignorados?: number
           importados?: number
+          reservado_cnae?: string | null
           reservado_estado?: string | null
           reservado_segmento?: string | null
           total_linhas?: number
@@ -399,6 +432,39 @@ export type Database = {
           },
         ]
       }
+      cnaes: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          segmento_sugerido: string | null
+          total_leads: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          segmento_sugerido?: string | null
+          total_leads?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          segmento_sugerido?: string | null
+          total_leads?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       configuracoes: {
         Row: {
           asaas_ambiente: Database["public"]["Enums"]["asaas_ambiente"]
@@ -409,6 +475,7 @@ export type Database = {
           dias_aviso_vencimento: number
           dias_devolver_lead: number
           dominio: string | null
+          horas_reserva_lote: number
           id: string
           mfa_obrigatorio_admin: boolean
           mfa_obrigatorio_vendedor: boolean
@@ -425,6 +492,7 @@ export type Database = {
           dias_aviso_vencimento?: number
           dias_devolver_lead?: number
           dominio?: string | null
+          horas_reserva_lote?: number
           id?: string
           mfa_obrigatorio_admin?: boolean
           mfa_obrigatorio_vendedor?: boolean
@@ -441,6 +509,7 @@ export type Database = {
           dias_aviso_vencimento?: number
           dias_devolver_lead?: number
           dominio?: string | null
+          horas_reserva_lote?: number
           id?: string
           mfa_obrigatorio_admin?: boolean
           mfa_obrigatorio_vendedor?: boolean
@@ -1562,6 +1631,7 @@ export type Database = {
       vendedores: {
         Row: {
           ativo: boolean
+          cnaes: string[]
           codigo_indicacao: string
           created_at: string
           estados: string[]
@@ -1573,6 +1643,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          cnaes?: string[]
           codigo_indicacao: string
           created_at?: string
           estados?: string[]
@@ -1584,6 +1655,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          cnaes?: string[]
           codigo_indicacao?: string
           created_at?: string
           estados?: string[]
@@ -1680,7 +1752,11 @@ export type Database = {
         Returns: string
       }
       pode_ver_banco_lead: {
-        Args: { _reservado_estado: string; _reservado_segmento: string }
+        Args: {
+          _reservado_cnae: string
+          _reservado_estado: string
+          _reservado_segmento: string
+        }
         Returns: boolean
       }
       pode_ver_conversa: { Args: { _conversa_id: string }; Returns: boolean }
