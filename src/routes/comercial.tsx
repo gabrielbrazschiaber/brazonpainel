@@ -5,11 +5,13 @@ import { toast } from "sonner";
 import {
   AlertCircle,
   ArrowLeft,
+  ListChecks,
   Loader2,
   Pencil,
   RefreshCw,
   Target,
   Trash2,
+  Upload,
   UserPlus,
 } from "lucide-react";
 
@@ -58,6 +60,9 @@ import { ComercialDashboard } from "@/components/comercial/ComercialDashboard";
 import { LeadDetalheSheet } from "@/components/comercial/LeadDetalheSheet";
 import { LeadFormDialog } from "@/components/comercial/LeadFormDialog";
 import { FollowUpsPanel } from "@/components/comercial/FollowUpsPanel";
+import { ImportarLeadsDialog } from "@/components/comercial/ImportarLeadsDialog";
+import { CompletarLeadsDialog } from "@/components/comercial/CompletarLeadsDialog";
+import { Progress } from "@/components/ui/progress";
 
 import { formatCurrency, formatDate } from "@/lib/format";
 import { mapaWhatsApp } from "@/lib/whatsapp";
@@ -149,6 +154,7 @@ function CabecalhoLeads() {
         <TableHead>Telefone</TableHead>
         <TableHead>Segmento</TableHead>
         <TableHead>Estágio</TableHead>
+        <TableHead className="w-28">Completude</TableHead>
         <TableHead className="text-right">Valor</TableHead>
         <TableHead className="text-right">Reuniões</TableHead>
         <TableHead>Próximo contato</TableHead>
@@ -187,8 +193,15 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const [origem, setOrigem] = useState<LeadOrigem | "todas">("todas");
   const [followUp, setFollowUp] = useState(false);
   const [soZap, setSoZap] = useState(false);
+  /** Aba/filtro de leads com dados faltando. */
+  const [incompletos, setIncompletos] = useState(false);
+  const [ordem, setOrdem] = useState<"recentes" | "completude">("recentes");
+  /** Filtro por lote de importação (vem do resultado da importação). */
+  const [loteId, setLoteId] = useState<string | null>(null);
 
   const [formAberto, setFormAberto] = useState(false);
+  const [importarAberto, setImportarAberto] = useState(false);
+  const [completarAberto, setCompletarAberto] = useState(false);
   const [editando, setEditando] = useState<Lead | null>(null);
   const [detalhe, setDetalhe] = useState<Lead | null>(null);
   const [excluindo, setExcluindo] = useState<Lead | null>(null);
@@ -205,9 +218,13 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       ...(segmento !== "todos" ? { segmento } : {}),
       ...(busca.trim() ? { busca: busca.trim() } : {}),
       ...(followUp ? { apenas_follow_up: true } : {}),
+      ...(incompletos ? { apenas_incompletos: true } : {}),
+      ...(loteId ? { importacao_id: loteId } : {}),
+      ordem,
     }),
-    [dias, filtroVendedor, estagio, origem, segmento, busca, followUp],
+    [dias, filtroVendedor, estagio, origem, segmento, busca, followUp, incompletos, loteId, ordem],
   );
+
 
   const recarregar = useCallback(async () => {
     setCarregando(true);
@@ -340,14 +357,29 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
               Cadastre seus leads, registre reuniões e acompanhe sua conversão.
             </p>
           </div>
-          <Button
-            onClick={() => {
-              setEditando(null);
-              setFormAberto(true);
-            }}
-          >
-            <UserPlus className="mr-2 h-4 w-4" /> Novo lead
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setImportarAberto(true)}>
+              <Upload className="mr-2 h-4 w-4" /> Importar planilha
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIncompletos(true);
+                setOrdem("completude");
+                setCompletarAberto(true);
+              }}
+            >
+              <ListChecks className="mr-2 h-4 w-4" /> Completar leads
+            </Button>
+            <Button
+              onClick={() => {
+                setEditando(null);
+                setFormAberto(true);
+              }}
+            >
+              <UserPlus className="mr-2 h-4 w-4" /> Novo lead
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -389,7 +421,15 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : (
-          dados && <ComercialDashboard dados={dados} />
+          dados && (
+            <ComercialDashboard
+              dados={dados}
+              onVerIncompletos={() => {
+                setIncompletos(true);
+                setOrdem("completude");
+              }}
+            />
+          )
         )}
 
         <Card className="space-y-4 p-4 sm:p-5">
@@ -453,6 +493,33 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                 Só com WhatsApp ativo
               </Label>
             </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="so-incompletos"
+                checked={incompletos}
+                onCheckedChange={(v) => {
+                  setIncompletos(v);
+                  setOrdem(v ? "completude" : "recentes");
+                }}
+              />
+              <Label htmlFor="so-incompletos" className="text-sm">
+                Só incompletos
+              </Label>
+            </div>
+            <Select value={ordem} onValueChange={(v) => setOrdem(v as "recentes" | "completude")}>
+              <SelectTrigger className="w-full sm:w-52">
+                <SelectValue placeholder="Ordenar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recentes">Mais recentes primeiro</SelectItem>
+                <SelectItem value="completude">Menos completos primeiro</SelectItem>
+              </SelectContent>
+            </Select>
+            {loteId && (
+              <Button variant="ghost" size="sm" onClick={() => setLoteId(null)}>
+                Limpar filtro de lote
+              </Button>
+            )}
           </div>
 
 
@@ -576,6 +643,12 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                             {ESTAGIO_LABEL[l.estagio]}
                           </Badge>
                         </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Progress value={l.completude} className="h-1.5 w-14" />
+                            <span className="text-xs text-muted-foreground">{l.completude}%</span>
+                          </div>
+                        </TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(l.valor_estimado)}
                         </TableCell>
@@ -664,6 +737,29 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         isAdmin={isAdmin}
         onSalvo={() => void recarregar()}
       />
+
+      <ImportarLeadsDialog
+        aberto={importarAberto}
+        onOpenChange={setImportarAberto}
+        isAdmin={isAdmin}
+        vendedores={vendedores}
+        segmentos={listaSegmentos}
+        onConcluido={() => void recarregar()}
+        onVerLote={(importacaoId) => {
+          setLoteId(importacaoId);
+          setIncompletos(true);
+          setOrdem("completude");
+        }}
+      />
+
+      <CompletarLeadsDialog
+        aberto={completarAberto}
+        onOpenChange={setCompletarAberto}
+        leads={leads.filter((l) => l.completude < 100)}
+        segmentos={listaSegmentos}
+        onAtualizado={() => void recarregar()}
+      />
+
 
       <LeadDetalheSheet
         lead={detalhe}

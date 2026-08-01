@@ -28,7 +28,7 @@ export interface Escopo {
 }
 
 const CAMPOS_LEAD =
-  "id, vendedor_id, nome_contato, empresa, cargo, telefone, email, segmento, origem, estagio, valor_estimado, motivo_perda, observacoes, proximo_contato, cliente_id, contatado_em, fechado_em, created_at, updated_at";
+  "id, vendedor_id, nome_contato, empresa, cargo, telefone, email, segmento, origem, estagio, valor_estimado, motivo_perda, observacoes, proximo_contato, cliente_id, contatado_em, fechado_em, importacao_id, completude, created_at, updated_at";
 
 export interface Lead {
   id: string;
@@ -48,6 +48,9 @@ export interface Lead {
   cliente_id: string | null;
   contatado_em: string;
   fechado_em: string | null;
+  importacao_id: string | null;
+  /** 0 a 4: empresa, cargo, e-mail e segmento preenchidos. */
+  completude: number;
   created_at: string;
   updated_at: string;
   reunioes_count: number;
@@ -156,10 +159,16 @@ export async function listarLeadsServer(
 
   let query = supabase
     .from("leads")
-    .select(CAMPOS_LEAD, { count: "exact" })
-    .order("created_at", { ascending: false })
-    // Busca 1 registro extra para saber se existe próxima página.
-    .range(inicio, inicio + porPagina);
+    .select(CAMPOS_LEAD, { count: "exact" });
+
+  // Ordenação: mais recentes (padrão) ou mais incompletos primeiro.
+  query =
+    filtros.ordem === "completude"
+      ? query.order("completude", { ascending: true }).order("created_at", { ascending: false })
+      : query.order("created_at", { ascending: false });
+
+  // Busca 1 registro extra para saber se existe próxima página.
+  query = query.range(inicio, inicio + porPagina);
 
   // Vendedor: a RLS já limita aos seus; o vendedor_id recebido é ignorado.
   if (escopo.isAdmin && filtros.vendedor_id) {
@@ -168,6 +177,8 @@ export async function listarLeadsServer(
   if (filtros.estagio) query = query.eq("estagio", filtros.estagio);
   if (filtros.origem) query = query.eq("origem", filtros.origem);
   if (filtros.segmento) query = query.eq("segmento", filtros.segmento);
+  if (filtros.importacao_id) query = query.eq("importacao_id", filtros.importacao_id);
+  if (filtros.apenas_incompletos) query = query.lt("completude", 4);
 
   const limite = dataLimite(filtros.dias);
   if (limite) query = query.gte("contatado_em", limite);
@@ -215,6 +226,7 @@ export async function listarLeadsServer(
     leads: leads.map((l) => ({
       ...l,
       valor_estimado: Number(l.valor_estimado ?? 0),
+      completude: Number(l.completude ?? 0),
       reunioes_count: contagem.get(l.id) ?? 0,
       vendedor_nome: nomes.get(l.vendedor_id) ?? null,
     })),
@@ -697,8 +709,17 @@ export async function dashboardComercialServer(
       .sort((a, b) => b.ganhos - a.ganhos || (b.taxa ?? 0) - (a.taxa ?? 0));
   }
 
+  // Card extra: leads com dados faltando. Não entra em nenhuma outra métrica.
+  let qIncompletos = supabase
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .lt("completude", 4);
+  if (vendedorFiltro) qIncompletos = qIncompletos.eq("vendedor_id", vendedorFiltro);
+  const { count: incompletos } = await qIncompletos;
+
   return {
     isAdmin: escopo.isAdmin,
+    incompletos: incompletos ?? 0,
     dias: dias ?? 0,
     funil,
     anterior: funilAnterior,
