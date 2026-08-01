@@ -1362,6 +1362,7 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
       nome_app: "",
       dominio: "",
       dias_aviso_vencimento: 5,
+      dias_devolver_lead: 7,
       percentual_comissao_padrao: 10,
       asaas_webhook_url: "",
       asaas_ambiente: "sandbox",
