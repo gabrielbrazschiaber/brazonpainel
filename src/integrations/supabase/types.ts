@@ -564,6 +564,50 @@ export type Database = {
           },
         ]
       }
+      lead_importacoes: {
+        Row: {
+          arquivo_nome: string
+          atualizados: number
+          autor_id: string
+          created_at: string
+          id: string
+          ignorados: number
+          importados: number
+          total_linhas: number
+          vendedor_id: string
+        }
+        Insert: {
+          arquivo_nome: string
+          atualizados?: number
+          autor_id: string
+          created_at?: string
+          id?: string
+          ignorados?: number
+          importados?: number
+          total_linhas?: number
+          vendedor_id: string
+        }
+        Update: {
+          arquivo_nome?: string
+          atualizados?: number
+          autor_id?: string
+          created_at?: string
+          id?: string
+          ignorados?: number
+          importados?: number
+          total_linhas?: number
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_importacoes_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_reunioes: {
         Row: {
           agendada_para: string
@@ -626,6 +670,7 @@ export type Database = {
         Row: {
           cargo: string | null
           cliente_id: string | null
+          completude: number | null
           contatado_em: string
           created_at: string
           email: string | null
@@ -633,6 +678,7 @@ export type Database = {
           estagio: Database["public"]["Enums"]["lead_estagio"]
           fechado_em: string | null
           id: string
+          importacao_id: string | null
           motivo_perda: string | null
           nome_contato: string
           observacoes: string | null
@@ -647,6 +693,7 @@ export type Database = {
         Insert: {
           cargo?: string | null
           cliente_id?: string | null
+          completude?: number | null
           contatado_em?: string
           created_at?: string
           email?: string | null
@@ -654,6 +701,7 @@ export type Database = {
           estagio?: Database["public"]["Enums"]["lead_estagio"]
           fechado_em?: string | null
           id?: string
+          importacao_id?: string | null
           motivo_perda?: string | null
           nome_contato: string
           observacoes?: string | null
@@ -668,6 +716,7 @@ export type Database = {
         Update: {
           cargo?: string | null
           cliente_id?: string | null
+          completude?: number | null
           contatado_em?: string
           created_at?: string
           email?: string | null
@@ -675,6 +724,7 @@ export type Database = {
           estagio?: Database["public"]["Enums"]["lead_estagio"]
           fechado_em?: string | null
           id?: string
+          importacao_id?: string | null
           motivo_perda?: string | null
           nome_contato?: string
           observacoes?: string | null
@@ -692,6 +742,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_importacao_id_fkey"
+            columns: ["importacao_id"]
+            isOneToOne: false
+            referencedRelation: "lead_importacoes"
             referencedColumns: ["id"]
           },
           {
