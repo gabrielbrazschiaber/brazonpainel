@@ -144,7 +144,7 @@ describe("avisoCriticoCnpj (validação final do lote)", () => {
 
   it("aceita CNPJ válido e CNPJ completado com zeros", () => {
     expect(avisoCriticoCnpj("11.222.333/0001-81")).toBeNull();
-    expect(avisoCriticoCnpj("1222333000181")).toBeNull();
+    expect(avisoCriticoCnpj("1222333000128")).toBeNull();
   });
 
   it("bloqueia notação científica, valor irreconhecível e dígito inválido", () => {
