@@ -13,6 +13,7 @@ import {
   TicketPercent,
   UserCircle,
   Users,
+  Database,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { AppPermission, AppRole } from "@/lib/permissions";
@@ -31,6 +32,7 @@ export const ADMIN_NAV_ITEMS: readonly AdminNavItem[] = [
   { value: "clientes", label: "Clientes", icon: UserCircle },
   { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
   { value: "comercial", label: "Comercial", icon: Target, to: "/comercial" },
+  { value: "banco-leads", label: "Banco de Leads", icon: Database, to: "/banco-leads" },
   { value: "novidades", label: "Novidades", icon: Megaphone },
   { value: "config", label: "Configurações", icon: Settings },
 ];
