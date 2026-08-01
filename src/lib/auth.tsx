@@ -11,6 +11,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppPermission } from "@/lib/permissions";
+import { iniciarMedicao, registrarAuthTelemetria, type MotivoCarga } from "@/lib/auth-telemetry";
 
 
 export type AppRole = "cliente" | "vendedor" | "admin";
@@ -71,8 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
 
-  const loadUserData = useCallback(async (userId: string) => {
+  const loadUserData = useCallback(async (userId: string, motivo: MotivoCarga = "auth_event") => {
     const id = ++cargaAtual.current;
+    const medir = iniciarMedicao();
+    registrarAuthTelemetria({ tipo: "papel_inicio", userId, motivo });
     const aindaValido = () => montado.current && cargaAtual.current === id;
     // Papel volta a "não resolvido" antes da consulta: nenhum consumidor pode
     // reaproveitar o estado anterior durante a transição.
@@ -95,6 +98,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const papel = priority.find((p) => roleList.includes(p)) ?? null;
       setRole(papel);
       setEstadoPapel(papel ? "resolvido" : "sem_papel");
+      const duracaoMs = medir();
+      registrarAuthTelemetria(
+        papel
+          ? { tipo: "papel_resolvido", userId, papel, duracaoMs, motivo }
+          : { tipo: "papel_sem_papel", userId, duracaoMs, motivo },
+      );
 
       // Permissões do(s) papel(éis) — usadas só para desenhar a interface.
       // A autorização real é sempre revalidada no servidor a cada chamada.
@@ -111,12 +120,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPermissoes([]);
       }
       usuarioCarregado.current = userId;
-    } catch {
+    } catch (erro) {
       // Falha de rede fica em estado de erro (com opção de tentar novamente),
       // nunca como "sem papel".
       if (aindaValido()) {
         usuarioCarregado.current = null;
         setEstadoPapel("erro");
+        registrarAuthTelemetria({
+          tipo: "papel_erro",
+          userId,
+          duracaoMs: medir(),
+          motivo,
+          erro: erro instanceof Error ? erro.message : String(erro),
+        });
       }
     }
   }, []);
@@ -127,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessaoResolvida(true);
     if (data.session?.user) {
       usuarioCarregado.current = null;
-      await loadUserData(data.session.user.id);
+      await loadUserData(data.session.user.id, "retry");
     } else {
       limparDadosUsuario();
     }
@@ -135,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     montado.current = true;
+    const medirSessao = iniciarMedicao();
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!montado.current) return;
@@ -153,14 +170,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Troca de conta: invalida o papel antigo imediatamente, ainda dentro do
       // callback, para que ninguém decida com base nele.
-      if (usuarioCarregado.current !== null) limparDadosUsuario();
+      const trocaDeConta = usuarioCarregado.current !== null;
+      if (trocaDeConta) {
+        registrarAuthTelemetria({
+          tipo: "troca_de_conta",
+          deUserId: usuarioCarregado.current,
+          paraUserId: newSession.user.id,
+        });
+        limparDadosUsuario();
+      }
       setEstadoPapel("carregando");
 
       const userId = newSession.user.id;
       // setTimeout(0): não fazer chamadas ao Supabase dentro do callback de auth.
       setTimeout(() => {
         if (!montado.current) return;
-        void loadUserData(userId);
+        void loadUserData(userId, trocaDeConta ? "troca_de_conta" : "auth_event");
       }, 0);
     });
 
@@ -171,10 +196,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Marca a sessão como resolvida junto com o papel pendente, para que
         // `loading` nunca fique false com o papel ainda em voo.
         setSessaoResolvida(true);
-        await loadUserData(data.session.user.id);
+        registrarAuthTelemetria({
+          tipo: "sessao_resolvida",
+          comSessao: true,
+          duracaoMs: medirSessao(),
+        });
+        await loadUserData(data.session.user.id, "inicial");
       } else {
         if (!data.session) limparDadosUsuario();
         setSessaoResolvida(true);
+        registrarAuthTelemetria({
+          tipo: "sessao_resolvida",
+          comSessao: Boolean(data.session),
+          duracaoMs: medirSessao(),
+        });
       }
     });
 

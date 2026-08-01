@@ -6,6 +6,7 @@ import { ArrowLeft, ClipboardList, Plus, Loader2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
+import { GateDependenteDePapel } from "@/components/GateEstado";
 import {
   transicaoPermitida,
   transicoesPermitidas,
@@ -124,18 +125,14 @@ function TarefasPage() {
     }
   }, [loading, session, role, roleResolvido, navigate]);
 
-  if (loading || !session || !roleResolvido || !role || role === "cliente") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  const pronto = Boolean(role) && role !== "cliente";
 
   return (
-    <TermosGate>
-      <TarefasConteudo home={roleHome(role)} isAdmin={role === "admin"} />
-    </TermosGate>
+    <GateDependenteDePapel pronto={pronto}>
+      <TermosGate>
+        <TarefasConteudo home={roleHome(role)} isAdmin={role === "admin"} />
+      </TermosGate>
+    </GateDependenteDePapel>
   );
 }
 

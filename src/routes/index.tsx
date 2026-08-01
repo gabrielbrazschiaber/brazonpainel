@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth, roleHome } from "@/lib/auth";
+import { GateFalhaConexao, GateSpinner } from "@/components/GateEstado";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const navigate = useNavigate();
-  const { loading, session, role, roleResolvido } = useAuth();
+  const { loading, session, role, roleResolvido, estadoPapel } = useAuth();
 
   useEffect(() => {
     if (loading) return;
@@ -28,9 +29,7 @@ function Index() {
     if (roleResolvido) navigate({ to: roleHome(role) });
   }, [loading, session, role, roleResolvido, navigate]);
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-    </div>
-  );
+  // Mesma experiência dos outros gates quando a consulta de papel falha.
+  if (session && estadoPapel === "erro") return <GateFalhaConexao />;
+  return <GateSpinner />;
 }
