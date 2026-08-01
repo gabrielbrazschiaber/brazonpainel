@@ -113,20 +113,45 @@ export function ComercialDashboard({
         />
       </div>
 
-      <Card className="flex flex-wrap items-center justify-between gap-2 p-4">
-        <div>
-          <p className="eyebrow">Leads incompletos</p>
-          <p className="text-xl font-semibold text-foreground">{dados.incompletos}</p>
-          <p className="text-xs text-muted-foreground">
-            faltam empresa, cargo, e-mail ou segmento
-          </p>
-        </div>
-        {onVerIncompletos && (
-          <Button variant="outline" size="sm" onClick={onVerIncompletos}>
-            Ver incompletos
-          </Button>
-        )}
-      </Card>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Kpi
+          titulo="Follow-ups atrasados"
+          valor={String(dados.follow_ups_atrasados)}
+          hint={`${dados.follow_ups_hoje} para hoje · ${dados.cadencias_encerradas} com cadência encerrada`}
+          rodape={
+            onVerFollowUps && (
+              <Button variant="outline" size="sm" className="mt-1" onClick={onVerFollowUps}>
+                Ver fila
+              </Button>
+            )
+          }
+        />
+        <Kpi
+          titulo="Toques até fechar"
+          valor={
+            dados.media_tentativas_ate_ganho === null
+              ? "sem dados suficientes"
+              : dados.media_tentativas_ate_ganho.toFixed(1)
+          }
+          hint="média de tentativas nos leads ganhos"
+        />
+        <Card className="flex flex-wrap items-center justify-between gap-2 p-4">
+          <div>
+            <p className="eyebrow">Leads incompletos</p>
+            <p className="text-xl font-semibold text-foreground">{dados.incompletos}</p>
+            <p className="text-xs text-muted-foreground">
+              faltam empresa, cargo, e-mail ou segmento
+            </p>
+          </div>
+          {onVerIncompletos && (
+            <Button variant="outline" size="sm" onClick={onVerIncompletos}>
+              Ver incompletos
+            </Button>
+          )}
+        </Card>
+      </div>
+
+
 
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
