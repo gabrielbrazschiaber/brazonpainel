@@ -417,7 +417,7 @@ export function AdminDashboard() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div data-tour="dash-kpis" className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <KpiCard
           icon={Users}
           label="Clientes ativos"
@@ -463,7 +463,7 @@ export function AdminDashboard() {
 
       {/* Alertas + Ranking */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="p-5">
+        <Card data-tour="dash-alertas" className="p-5">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 text-primary" />
@@ -532,7 +532,7 @@ export function AdminDashboard() {
           )}
         </Card>
 
-        <Card className="p-5">
+        <Card data-tour="dash-ranking" className="p-5">
           <div className="mb-3 flex items-center gap-2">
             <Trophy className="h-4 w-4 text-primary" />
             <h3 className="font-semibold">Ranking de vendedores</h3>
@@ -565,7 +565,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Gráficos */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div data-tour="dash-graficos" className="grid gap-4 sm:grid-cols-2">
         <Card className="p-5">
           <h3 className="mb-3 font-semibold">Receita mensal (MRR)</h3>
           {!temDadosMrr ? (
@@ -721,7 +721,7 @@ export function AdminDashboard() {
           )}
         </Card>
 
-        <Card className="p-5">
+        <Card data-tour="dash-webhooks" className="p-5">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Webhook className="h-4 w-4 text-primary" />

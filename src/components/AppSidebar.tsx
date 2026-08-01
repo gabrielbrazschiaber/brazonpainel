@@ -121,6 +121,7 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
+                    data-tour="acao-principal"
                     onClick={() => {
                       fecharSeMobile();
                       acaoPrincipal.onClick();
@@ -146,6 +147,7 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
                   {item.to ? (
                     <SidebarMenuButton
                       asChild
+                      data-tour={`nav-${item.value}`}
                       isActive={pathname === item.to}
                       tooltip={item.label}
                       className="h-10 md:h-8"
@@ -171,6 +173,7 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
                     </SidebarMenuButton>
                   ) : (
                     <SidebarMenuButton
+                      data-tour={`nav-${item.value}`}
                       isActive={tab === item.value}
                       onClick={() => {
                         onTab?.(item.value);
@@ -195,6 +198,7 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  data-tour="nav-chat"
                   onClick={() => {
                     fecharSeMobile();
                     setChatAberto(true);
@@ -221,6 +225,7 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
           {onConta && (
             <SidebarMenuItem>
               <SidebarMenuButton
+                data-tour="nav-conta"
                 onClick={() => {
                   onConta();
                   fecharSeMobile();
