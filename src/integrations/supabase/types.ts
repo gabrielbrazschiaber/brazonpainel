@@ -523,6 +523,186 @@ export type Database = {
           },
         ]
       }
+      lead_atividades: {
+        Row: {
+          autor_id: string
+          corpo: string | null
+          created_at: string
+          de: string | null
+          id: string
+          lead_id: string
+          para: string | null
+          tipo: string
+        }
+        Insert: {
+          autor_id: string
+          corpo?: string | null
+          created_at?: string
+          de?: string | null
+          id?: string
+          lead_id: string
+          para?: string | null
+          tipo: string
+        }
+        Update: {
+          autor_id?: string
+          corpo?: string | null
+          created_at?: string
+          de?: string | null
+          id?: string
+          lead_id?: string
+          para?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_atividades_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_reunioes: {
+        Row: {
+          agendada_para: string
+          created_at: string
+          id: string
+          lead_id: string
+          notas: string | null
+          remarcada_de: string | null
+          status: Database["public"]["Enums"]["reuniao_status"]
+          updated_at: string
+          vendedor_id: string
+        }
+        Insert: {
+          agendada_para: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          notas?: string | null
+          remarcada_de?: string | null
+          status?: Database["public"]["Enums"]["reuniao_status"]
+          updated_at?: string
+          vendedor_id: string
+        }
+        Update: {
+          agendada_para?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          notas?: string | null
+          remarcada_de?: string | null
+          status?: Database["public"]["Enums"]["reuniao_status"]
+          updated_at?: string
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_reunioes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_reunioes_remarcada_de_fkey"
+            columns: ["remarcada_de"]
+            isOneToOne: false
+            referencedRelation: "lead_reunioes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_reunioes_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          cargo: string | null
+          cliente_id: string | null
+          contatado_em: string
+          created_at: string
+          email: string | null
+          empresa: string | null
+          estagio: Database["public"]["Enums"]["lead_estagio"]
+          fechado_em: string | null
+          id: string
+          motivo_perda: string | null
+          nome_contato: string
+          observacoes: string | null
+          origem: Database["public"]["Enums"]["lead_origem"]
+          proximo_contato: string | null
+          segmento: string | null
+          telefone: string
+          updated_at: string
+          valor_estimado: number
+          vendedor_id: string
+        }
+        Insert: {
+          cargo?: string | null
+          cliente_id?: string | null
+          contatado_em?: string
+          created_at?: string
+          email?: string | null
+          empresa?: string | null
+          estagio?: Database["public"]["Enums"]["lead_estagio"]
+          fechado_em?: string | null
+          id?: string
+          motivo_perda?: string | null
+          nome_contato: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["lead_origem"]
+          proximo_contato?: string | null
+          segmento?: string | null
+          telefone: string
+          updated_at?: string
+          valor_estimado?: number
+          vendedor_id: string
+        }
+        Update: {
+          cargo?: string | null
+          cliente_id?: string | null
+          contatado_em?: string
+          created_at?: string
+          email?: string | null
+          empresa?: string | null
+          estagio?: Database["public"]["Enums"]["lead_estagio"]
+          fechado_em?: string | null
+          id?: string
+          motivo_perda?: string | null
+          nome_contato?: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["lead_origem"]
+          proximo_contato?: string | null
+          segmento?: string | null
+          telefone?: string
+          updated_at?: string
+          valor_estimado?: number
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lembretes_vencimento: {
         Row: {
           cliente_id: string
@@ -1127,7 +1307,27 @@ export type Database = {
       asaas_ambiente: "producao" | "sandbox"
       cliente_status: "ativo" | "vencido" | "inadimplente" | "cancelado"
       conversa_tipo: "equipe" | "atendimento"
+      lead_estagio:
+        | "contatado"
+        | "interessado"
+        | "nao_interessado"
+        | "em_negociacao"
+        | "ganho"
+        | "perdido"
+      lead_origem:
+        | "prospeccao_ativa"
+        | "indicacao"
+        | "inbound"
+        | "evento"
+        | "rede_social"
+        | "outro"
       pagamento_status: "pago" | "pendente" | "vencido" | "simulacao"
+      reuniao_status:
+        | "marcada"
+        | "realizada"
+        | "remarcada"
+        | "no_show"
+        | "cancelada"
       tarefa_origem: "plano" | "solicitacao_cliente" | "manual"
       tarefa_prioridade: "baixa" | "media" | "alta"
       tarefa_status:
@@ -1285,7 +1485,30 @@ export const Constants = {
       asaas_ambiente: ["producao", "sandbox"],
       cliente_status: ["ativo", "vencido", "inadimplente", "cancelado"],
       conversa_tipo: ["equipe", "atendimento"],
+      lead_estagio: [
+        "contatado",
+        "interessado",
+        "nao_interessado",
+        "em_negociacao",
+        "ganho",
+        "perdido",
+      ],
+      lead_origem: [
+        "prospeccao_ativa",
+        "indicacao",
+        "inbound",
+        "evento",
+        "rede_social",
+        "outro",
+      ],
       pagamento_status: ["pago", "pendente", "vencido", "simulacao"],
+      reuniao_status: [
+        "marcada",
+        "realizada",
+        "remarcada",
+        "no_show",
+        "cancelada",
+      ],
       tarefa_origem: ["plano", "solicitacao_cliente", "manual"],
       tarefa_prioridade: ["baixa", "media", "alta"],
       tarefa_status: [
