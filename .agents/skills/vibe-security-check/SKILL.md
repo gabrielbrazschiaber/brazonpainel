@@ -1,6 +1,6 @@
 ---
 name: Vibe Security Check
-description: Auditoria completa de segurança com 15 módulos cobrindo OWASP Top 10: varre o projeto detectando segredos expostos, falhas de autenticação, JWT mal configurado, uploads sem validação, dependências vulneráveis e muito mais. Corrige automaticamente as vulnerabilidades encontradas e gera um relatório detalhado com o que foi resolvido e o que ainda precisa de atenção manual.
+description: "Auditoria completa de segurança com 15 módulos cobrindo OWASP Top 10: varre o projeto detectando segredos expostos, falhas de autenticação, JWT mal configurado, uploads sem validação, dependências vulneráveis e muito mais. Corrige automaticamente as vulnerabilidades encontradas e gera um relatório detalhado com o que foi resolvido e o que ainda precisa de atenção manual."
 ---
 
 Run the Vibe Security Check on this project.
