@@ -14,6 +14,8 @@ import type {
   mudarEstagioSchema,
   salvarReuniaoSchema,
   dashboardSchema,
+  followUpsSchema,
+  reagendarFollowUpSchema,
 } from "@/lib/leads.schemas";
 
 // Cliente tipado do usuário logado (RLS ativa). Tipo frouxo de propósito.
@@ -708,3 +710,146 @@ export async function dashboardComercialServer(
 }
 
 export type DashboardComercial = Awaited<ReturnType<typeof dashboardComercialServer>>;
+
+/* ------------------------------------------------------------------ *
+ * Follow-ups: atrasados e de hoje, priorizados
+ * ------------------------------------------------------------------ */
+
+export interface FollowUp {
+  id: string;
+  nome_contato: string;
+  empresa: string | null;
+  telefone: string;
+  email: string | null;
+  segmento: string | null;
+  origem: LeadOrigem;
+  estagio: LeadEstagio;
+  valor_estimado: number;
+  proximo_contato: string;
+  observacoes: string | null;
+  vendedor_id: string;
+  vendedor_nome?: string | null;
+  /** Dias de atraso (0 = follow-up é hoje). */
+  atraso: number;
+  /** Pontuação de prioridade (maior = mais urgente). */
+  prioridade: number;
+}
+
+export interface PainelFollowUps {
+  isAdmin: boolean;
+  hojeISO: string;
+  atrasados: FollowUp[];
+  hoje: FollowUp[];
+  totalAtrasados: number;
+  totalHoje: number;
+}
+
+/** Peso do estágio na priorização: quanto mais perto do fechamento, mais urgente. */
+const PESO_ESTAGIO: Record<string, number> = {
+  em_negociacao: 40,
+  interessado: 25,
+  contatado: 10,
+};
+
+function diasEntre(deISO: string, ateISO: string): number {
+  const a = new Date(`${deISO}T00:00:00`).getTime();
+  const b = new Date(`${ateISO}T00:00:00`).getTime();
+  return Math.round((b - a) / 86400000);
+}
+
+/** Prioridade = atraso + estágio + valor estimado (com teto), tudo em pontos. */
+function pontuar(atraso: number, estagio: LeadEstagio, valor: number): number {
+  const pAtraso = Math.min(atraso, 30) * 4;
+  const pEstagio = PESO_ESTAGIO[estagio] ?? 0;
+  const pValor = Math.min(valor / 100, 30);
+  return Math.round(pAtraso + pEstagio + pValor);
+}
+
+export async function followUpsServer(
+  supabase: Sb,
+  userId: string,
+  filtros: z.infer<typeof followUpsSchema>,
+): Promise<PainelFollowUps> {
+  const escopo = await escopoComercial(supabase, userId);
+  const hoje = hojeISO();
+  const limite = filtros.limite ?? 50;
+
+  let query = supabase
+    .from("leads")
+    .select(
+      "id, vendedor_id, nome_contato, empresa, telefone, email, segmento, origem, estagio, valor_estimado, observacoes, proximo_contato",
+    )
+    .not("proximo_contato", "is", null)
+    .lte("proximo_contato", hoje)
+    .not("estagio", "in", `(${ESTAGIOS_FECHADOS.join(",")})`)
+    .order("proximo_contato", { ascending: true })
+    .limit(300);
+
+  // Vendedor: a RLS já restringe aos leads dele; o filtro é só para o admin.
+  if (escopo.isAdmin && filtros.vendedor_id) {
+    query = query.eq("vendedor_id", filtros.vendedor_id);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  const nomes = escopo.isAdmin
+    ? await nomesVendedores((data ?? []).map((l: { vendedor_id: string }) => l.vendedor_id))
+    : new Map<string, string>();
+
+  const itens: FollowUp[] = (data ?? []).map((l: Record<string, unknown>) => {
+    const proximo = String(l.proximo_contato);
+    const atraso = Math.max(0, diasEntre(proximo, hoje));
+    const valor = Number(l.valor_estimado ?? 0);
+    return {
+      id: String(l.id),
+      nome_contato: String(l.nome_contato),
+      empresa: (l.empresa as string | null) ?? null,
+      telefone: String(l.telefone ?? ""),
+      email: (l.email as string | null) ?? null,
+      segmento: (l.segmento as string | null) ?? null,
+      origem: l.origem as LeadOrigem,
+      estagio: l.estagio as LeadEstagio,
+      valor_estimado: valor,
+      proximo_contato: proximo,
+      observacoes: (l.observacoes as string | null) ?? null,
+      vendedor_id: String(l.vendedor_id),
+      vendedor_nome: nomes.get(String(l.vendedor_id)) ?? null,
+      atraso,
+      prioridade: pontuar(atraso, l.estagio as LeadEstagio, valor),
+    };
+  });
+
+  const ordenar = (a: FollowUp, b: FollowUp) =>
+    b.prioridade - a.prioridade || b.valor_estimado - a.valor_estimado;
+
+  const atrasados = itens.filter((i) => i.atraso > 0).sort(ordenar);
+  const deHoje = itens.filter((i) => i.atraso === 0).sort(ordenar);
+
+  return {
+    isAdmin: escopo.isAdmin,
+    hojeISO: hoje,
+    atrasados: atrasados.slice(0, limite),
+    hoje: deHoje.slice(0, limite),
+    totalAtrasados: atrasados.length,
+    totalHoje: deHoje.length,
+  };
+}
+
+/** Reagenda o próximo contato do lead (RLS garante o escopo). */
+export async function reagendarFollowUpServer(
+  supabase: Sb,
+  userId: string,
+  dados: z.infer<typeof reagendarFollowUpSchema>,
+) {
+  await escopoComercial(supabase, userId);
+  const { data, error } = await supabase
+    .from("leads")
+    .update({ proximo_contato: dados.proximo_contato })
+    .eq("id", dados.id)
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Lead não encontrado ou você não tem permissão.");
+  return { id: data.id as string };
+}
