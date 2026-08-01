@@ -1488,8 +1488,7 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
         <ReverTutoriais />
       </div>
     </Card>
-    (
-    <Card className="max-w-2xl p-6">
+    <Card className="p-6">
       <div className="grid gap-4">
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="grid gap-2">
