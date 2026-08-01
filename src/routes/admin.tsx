@@ -1568,6 +1568,23 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
           </div>
 
           <div className="grid gap-2">
+            <Label htmlFor="cdevolver">Dias até devolver lead</Label>
+            <Input
+              id="cdevolver"
+              type="number"
+              min={3}
+              max={30}
+              value={form.dias_devolver_lead ?? 7}
+              onChange={(e) => set("dias_devolver_lead", Number(e.target.value))}
+            />
+            <p className="text-xs text-muted-foreground">
+              Leads puxados do Banco de Leads e não trabalhados voltam ao banco depois desse
+              prazo (entre 3 e 30 dias). O vendedor é avisado um dia antes. A rotina roda todos os
+              dias às 8h (horário de Brasília).
+            </p>
+          </div>
+
+          <div className="grid gap-2">
             <Label htmlFor="ccom">Comissão padrão (%)</Label>
             <Input
               id="ccom"
