@@ -439,11 +439,14 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
           )}
         </div>
 
-        <FollowUpsPanel
-          isAdmin={isAdmin}
-          vendedorId={filtroVendedor}
-          onAtualizado={() => void recarregar()}
-        />
+        <div id="follow-ups">
+          <FollowUpsPanel
+            isAdmin={isAdmin}
+            vendedorId={filtroVendedor}
+            onAtualizado={() => void recarregar()}
+            abaInicial={abaFollowUp}
+          />
+        </div>
 
         {carregando && !dados ? (
           <div className="flex justify-center py-16">
@@ -456,6 +459,12 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
               onVerIncompletos={() => {
                 setIncompletos(true);
                 setOrdem("completude");
+              }}
+              onVerFollowUps={() => {
+                setAbaFollowUp("atrasados");
+                document
+                  .getElementById("follow-ups")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
             />
           )
