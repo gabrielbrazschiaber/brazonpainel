@@ -22,6 +22,7 @@ import { useSair } from "@/lib/use-sair";
 import { ChatSheet } from "@/components/chat/ChatSheet";
 import { useChatNaoLidas } from "@/lib/use-chat-nao-lidas";
 import { useTarefasAbertas } from "@/lib/use-tarefas-abertas";
+import { useFollowUpsPendentes } from "@/lib/use-follow-ups-pendentes";
 import { useAuth } from "@/lib/auth";
 
 export interface AppNavItem {
@@ -69,6 +70,10 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
     ativo: role === "admin",
     aoAbrirTarefas: () => void navigate({ to: "/tarefas" }),
   });
+  const { pendentes: followUps } = useFollowUpsPendentes({
+    ativo: role === "admin" || role === "vendedor",
+  });
+
 
   const pathname = useRouterState({ select: (r) => r.location.pathname });
 
@@ -153,6 +158,15 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
                             {abertas > 99 ? "99+" : abertas}
                           </span>
                         )}
+                        {item.to === "/comercial" && followUps > 0 && (
+                          <span
+                            className="ml-auto rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground"
+                            title="Follow-ups atrasados e de hoje"
+                          >
+                            {followUps > 99 ? "99+" : followUps}
+                          </span>
+                        )}
+
                       </Link>
                     </SidebarMenuButton>
                   ) : (

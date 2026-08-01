@@ -668,6 +668,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          cadencia_encerrada: boolean
           cargo: string | null
           cliente_id: string | null
           completude: number | null
@@ -677,6 +678,7 @@ export type Database = {
           empresa: string | null
           estagio: Database["public"]["Enums"]["lead_estagio"]
           fechado_em: string | null
+          follow_ups_feitos: number
           id: string
           importacao_id: string | null
           motivo_perda: string | null
@@ -686,11 +688,13 @@ export type Database = {
           proximo_contato: string | null
           segmento: string | null
           telefone: string
+          ultimo_contato_em: string | null
           updated_at: string
           valor_estimado: number
           vendedor_id: string
         }
         Insert: {
+          cadencia_encerrada?: boolean
           cargo?: string | null
           cliente_id?: string | null
           completude?: number | null
@@ -700,6 +704,7 @@ export type Database = {
           empresa?: string | null
           estagio?: Database["public"]["Enums"]["lead_estagio"]
           fechado_em?: string | null
+          follow_ups_feitos?: number
           id?: string
           importacao_id?: string | null
           motivo_perda?: string | null
@@ -709,11 +714,13 @@ export type Database = {
           proximo_contato?: string | null
           segmento?: string | null
           telefone: string
+          ultimo_contato_em?: string | null
           updated_at?: string
           valor_estimado?: number
           vendedor_id: string
         }
         Update: {
+          cadencia_encerrada?: boolean
           cargo?: string | null
           cliente_id?: string | null
           completude?: number | null
@@ -723,6 +730,7 @@ export type Database = {
           empresa?: string | null
           estagio?: Database["public"]["Enums"]["lead_estagio"]
           fechado_em?: string | null
+          follow_ups_feitos?: number
           id?: string
           importacao_id?: string | null
           motivo_perda?: string | null
@@ -732,6 +740,7 @@ export type Database = {
           proximo_contato?: string | null
           segmento?: string | null
           telefone?: string
+          ultimo_contato_em?: string | null
           updated_at?: string
           valor_estimado?: number
           vendedor_id?: string
@@ -1339,6 +1348,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      lead_proximo_follow_up: {
+        Args: {
+          _base?: string
+          _estagio: Database["public"]["Enums"]["lead_estagio"]
+          _tentativas: number
+        }
+        Returns: string
       }
       pode_ver_conversa: { Args: { _conversa_id: string }; Returns: boolean }
     }
