@@ -629,6 +629,7 @@ function VendedoresTab({
   vendedores: VendedorRow[];
   onChanged: () => void;
 }) {
+  const { concluidos, carregado: progressoCarregado } = useProgressoEquipe();
   const criar = useServerFn(criarVendedor);
   const atualizar = useServerFn(atualizarVendedor);
   const excluir = useServerFn(excluirVendedor);
