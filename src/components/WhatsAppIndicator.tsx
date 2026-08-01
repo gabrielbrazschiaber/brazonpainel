@@ -1,7 +1,13 @@
 import { MessageCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { apenasDigitos, linkWhatsApp } from "@/lib/leads";
+import { linkWhatsApp } from "@/lib/leads";
+import {
+  WHATSAPP_CORES,
+  WHATSAPP_MENSAGEM,
+  statusWhatsApp,
+  type WhatsAppStatus,
+} from "@/lib/whatsapp";
 import {
   Tooltip,
   TooltipContent,
@@ -9,53 +15,40 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-type Status = "ativo" | "incerto" | "invalido";
+export { statusWhatsApp, type WhatsAppStatus };
 
-/**
- * Heurística de WhatsApp: o número só é tratado como ativo quando é celular
- * brasileiro válido (DDD + 9 dígitos iniciando em 9). Fixos e números
- * incompletos não recebem o destaque verde.
- */
-export function statusWhatsApp(telefone: string | null | undefined): Status {
-  const d = apenasDigitos(telefone);
-  const nacional = d.startsWith("55") && d.length > 11 ? d.slice(2) : d;
-  if (nacional.length === 11 && nacional[2] === "9") return "ativo";
-  if (nacional.length === 10) return "incerto";
-  return "invalido";
-}
-
-const mensagem: Record<Status, string> = {
-  ativo: "Cliente possui WhatsApp ativo — clique para abrir a conversa",
-  incerto: "Número fixo: não foi possível confirmar WhatsApp",
-  invalido: "Informe o telefone com DDD para verificar o WhatsApp",
-};
-
-const cores: Record<Status, string> = {
-  ativo: "border-emerald-500/40 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
-  incerto: "border-border bg-muted text-muted-foreground",
-  invalido: "border-border bg-muted text-muted-foreground/60",
-};
+const tamanhos = {
+  sm: "h-6 w-6 [&_svg]:h-3.5 [&_svg]:w-3.5",
+  md: "h-9 w-9 [&_svg]:h-4 [&_svg]:w-4",
+} as const;
 
 export function WhatsAppIndicator({
   telefone,
+  status,
+  size = "md",
   className,
 }: {
   telefone: string | null | undefined;
+  /** Status pré-calculado no carregamento da lista (evita recomputar por linha). */
+  status?: WhatsAppStatus;
+  size?: keyof typeof tamanhos;
   className?: string;
 }) {
-  const status = statusWhatsApp(telefone);
-  const ativo = status === "ativo";
+  const st = status ?? statusWhatsApp(telefone);
+  const ativo = st === "ativo";
+  const mensagem = WHATSAPP_MENSAGEM[st];
 
   const icone = (
     <span
       className={cn(
-        "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors",
-        cores[status],
+        "inline-flex shrink-0 items-center justify-center rounded-md border transition-colors",
+        tamanhos[size],
+        WHATSAPP_CORES[st],
         className,
       )}
-      aria-label={mensagem[status]}
+      aria-label={mensagem}
     >
-      <MessageCircle className="h-4 w-4" aria-hidden />
+      <MessageCircle aria-hidden />
     </span>
   );
 
@@ -69,6 +62,7 @@ export function WhatsAppIndicator({
               target="_blank"
               rel="noreferrer noopener"
               className="inline-flex"
+              onClick={(e) => e.stopPropagation()}
             >
               {icone}
             </a>
@@ -76,7 +70,7 @@ export function WhatsAppIndicator({
             <span className="inline-flex">{icone}</span>
           )}
         </TooltipTrigger>
-        <TooltipContent>{mensagem[status]}</TooltipContent>
+        <TooltipContent>{mensagem}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
