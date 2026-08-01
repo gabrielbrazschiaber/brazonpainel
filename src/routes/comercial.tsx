@@ -440,12 +440,21 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             </Select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Switch id="follow-up" checked={followUp} onCheckedChange={setFollowUp} />
-            <Label htmlFor="follow-up" className="text-sm">
-              Só follow-up de hoje
-            </Label>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <div className="flex items-center gap-2">
+              <Switch id="follow-up" checked={followUp} onCheckedChange={setFollowUp} />
+              <Label htmlFor="follow-up" className="text-sm">
+                Só follow-up de hoje
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="so-whatsapp" checked={soZap} onCheckedChange={setSoZap} />
+              <Label htmlFor="so-whatsapp" className="text-sm">
+                Só com WhatsApp ativo
+              </Label>
+            </div>
           </div>
+
 
           {carregando ? (
             <>
