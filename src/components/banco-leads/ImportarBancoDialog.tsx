@@ -686,11 +686,11 @@ export function ImportarBancoDialog({
                         <TableCell className="font-medium">{h}</TableCell>
                         <TableCell>
                           <Select
-                            value={mapa[i] ?? ""}
+                            value={mapa[i] ? mapa[i] : IGNORAR_COLUNA}
                             onValueChange={(v) =>
                               setMapa((atual) => {
                                 const novo = [...atual];
-                                novo[i] = v === "" ? "" : (v as Campo);
+                                novo[i] = v === IGNORAR_COLUNA ? "" : (v as Campo);
                                 return novo;
                               })
                             }
@@ -699,7 +699,7 @@ export function ImportarBancoDialog({
                               <SelectValue placeholder="Ignorar coluna" />
                             </SelectTrigger>
                             <SelectContent className="max-h-72">
-                              <SelectItem value="">Ignorar coluna</SelectItem>
+                              <SelectItem value={IGNORAR_COLUNA}>Ignorar coluna</SelectItem>
                               {CAMPOS.map((c) => (
                                 <SelectItem key={c.campo} value={c.campo}>
                                   {c.label}
