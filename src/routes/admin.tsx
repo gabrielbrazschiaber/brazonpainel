@@ -1,3 +1,4 @@
+import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -1230,8 +1231,12 @@ function ClientesTab({
             {clientesFiltrados.map((c) => (
               <TableRow key={c.id}>
                 <TableCell>
-                  <div className="font-medium text-foreground">{c.nome ?? "—"}</div>
+                  <div className="flex items-center gap-1.5 font-medium text-foreground">
+                    {c.nome ?? "—"}
+                    <WhatsAppIndicator telefone={c.telefone} size="sm" />
+                  </div>
                   <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
+
                 </TableCell>
                 <TableCell>{c.vendedor_id ? (vmap.get(c.vendedor_id) ?? "—") : "—"}</TableCell>
                 <TableCell>{c.planos?.nome ?? "—"}</TableCell>

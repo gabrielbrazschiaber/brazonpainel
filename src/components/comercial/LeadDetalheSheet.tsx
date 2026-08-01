@@ -1,3 +1,4 @@
+import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -246,13 +247,18 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
                   WhatsApp
                 </a>
               </Button>
+              <WhatsAppIndicator telefone={lead.telefone} />
             </div>
 
             <dl className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <dt className="text-muted-foreground">Telefone</dt>
-                <dd>{lead.telefone}</dd>
+                <dd className="flex items-center gap-1.5">
+                  {lead.telefone}
+                  <WhatsAppIndicator telefone={lead.telefone} size="sm" />
+                </dd>
               </div>
+
               <div>
                 <dt className="text-muted-foreground">E-mail</dt>
                 <dd className="break-all">{lead.email || "—"}</dd>
