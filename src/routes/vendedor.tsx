@@ -178,6 +178,7 @@ function VendedorArea() {
   const navItems: AppNavItem[] = [
     { value: "painel", label: "Painel", icon: LayoutDashboard, to: "/vendedor" },
     { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
+    { value: "comercial", label: "Comercial", icon: Target, to: "/comercial" },
     { value: "indicacoes", label: "Indicações", icon: Share2 },
     { value: "cupons", label: "Meus cupons", icon: Ticket },
     { value: "clientes", label: "Meus clientes", icon: Users },
