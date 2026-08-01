@@ -171,6 +171,7 @@ interface Config {
   nome_app: string | null;
   dominio: string | null;
   dias_aviso_vencimento: number | null;
+  dias_devolver_lead: number | null;
   percentual_comissao_padrao: number | null;
   asaas_webhook_url: string | null;
   asaas_ambiente: "producao" | "sandbox" | null;
@@ -247,6 +248,8 @@ function AdminArea() {
           nome_app: "",
           dominio: "",
           dias_aviso_vencimento: 5,
+      dias_devolver_lead: 7,
+          dias_devolver_lead: 7,
           percentual_comissao_padrao: 10,
           asaas_webhook_url: "",
           asaas_ambiente: "sandbox",
@@ -1470,6 +1473,7 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
           nome_app: form.nome_app ?? "",
           dominio: form.dominio ?? "",
           dias_aviso_vencimento: Number(form.dias_aviso_vencimento) || 0,
+          dias_devolver_lead: Math.min(30, Math.max(3, Number(form.dias_devolver_lead) || 7)),
           percentual_comissao_padrao: Number(form.percentual_comissao_padrao) || 0,
           asaas_webhook_url: form.asaas_webhook_url ?? "",
           asaas_ambiente: form.asaas_ambiente ?? "sandbox",

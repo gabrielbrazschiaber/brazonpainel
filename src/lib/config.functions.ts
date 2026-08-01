@@ -51,7 +51,7 @@ export const obterConfiguracoes = createServerFn({ method: "GET" })
     const { data } = await supabaseAdmin
       .from("configuracoes")
       .select(
-        "id,nome_app,dominio,dias_aviso_vencimento,percentual_comissao_padrao,asaas_api_key,asaas_webhook_url,asaas_ambiente",
+        "id,nome_app,dominio,dias_aviso_vencimento,dias_devolver_lead,percentual_comissao_padrao,asaas_api_key,asaas_webhook_url,asaas_ambiente",
       )
       .limit(1)
       .maybeSingle();
@@ -61,6 +61,7 @@ export const obterConfiguracoes = createServerFn({ method: "GET" })
       nome_app: data?.nome_app ?? "",
       dominio: data?.dominio ?? "",
       dias_aviso_vencimento: data?.dias_aviso_vencimento ?? 5,
+      dias_devolver_lead: data?.dias_devolver_lead ?? 7,
       percentual_comissao_padrao: data?.percentual_comissao_padrao ?? 10,
       asaas_webhook_url: data?.asaas_webhook_url ?? "",
       asaas_ambiente: (data?.asaas_ambiente ?? "sandbox") as "producao" | "sandbox",
@@ -73,6 +74,8 @@ const salvarConfigSchema = z.object({
   nome_app: z.string().trim().max(120).optional().nullable(),
   dominio: z.string().trim().max(200).optional().nullable(),
   dias_aviso_vencimento: z.number().int().min(0).max(365),
+  /** Prazo para devolver ao Banco de Leads um lead não trabalhado. */
+  dias_devolver_lead: z.number().int().min(3).max(30),
   percentual_comissao_padrao: z.number().min(0).max(100),
   asaas_webhook_url: z.string().trim().max(500).optional().nullable(),
   asaas_ambiente: z.enum(["producao", "sandbox"]),
@@ -106,6 +109,7 @@ export const salvarConfiguracoes = createServerFn({ method: "POST" })
       nome_app: data.nome_app ?? "",
       dominio: data.dominio ?? "",
       dias_aviso_vencimento: data.dias_aviso_vencimento,
+      dias_devolver_lead: data.dias_devolver_lead,
       percentual_comissao_padrao: data.percentual_comissao_padrao,
       asaas_webhook_url: data.asaas_webhook_url ?? "",
       asaas_ambiente: data.asaas_ambiente,
