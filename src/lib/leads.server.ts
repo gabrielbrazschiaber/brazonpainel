@@ -10,7 +10,6 @@ import {
 } from "@/lib/leads";
 import type { z } from "zod";
 import type {
-import type { ClienteSupabaseUsuario } from "@/lib/supabase-tipos";
   listarLeadsSchema,
   salvarLeadSchema,
   mudarEstagioSchema,
@@ -23,7 +22,8 @@ import type { ClienteSupabaseUsuario } from "@/lib/supabase-tipos";
 } from "@/lib/leads.schemas";
 
 // Cliente tipado do usuário logado (RLS ativa). Tipo frouxo de propósito.
-type Sb = ClienteSupabaseUsuario;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Sb = any;
 
 export interface Escopo {
   isAdmin: boolean;

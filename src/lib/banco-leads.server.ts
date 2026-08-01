@@ -4,7 +4,6 @@ import { escopoComercial } from "@/lib/leads.server";
 import { apenasDigitos, type LeadOrigem } from "@/lib/leads";
 import type { BancoLeadStatus } from "@/lib/banco-leads";
 import type {
-import type { ClienteSupabaseUsuario } from "@/lib/supabase-tipos";
   listarBancoLeadsSchema,
   salvarBancoLeadSchema,
   importarBancoLeadsSchema,
@@ -13,7 +12,8 @@ import type { ClienteSupabaseUsuario } from "@/lib/supabase-tipos";
 } from "@/lib/banco-leads.schemas";
 
 // Cliente tipado do usuário logado (RLS ativa). Tipo frouxo de propósito.
-type Sb = ClienteSupabaseUsuario;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Sb = any;
 
 const CHUNK = 200;
 const PRAZO_PADRAO = 7;
