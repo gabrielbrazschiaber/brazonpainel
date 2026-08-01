@@ -5,6 +5,8 @@ import {
   dashboardSchema,
   followUpsSchema,
   reagendarFollowUpSchema,
+  registrarFollowUpSchema,
+  reativarCadenciaSchema,
   idSchema,
   leadIdSchema,
   listarLeadsSchema,
