@@ -246,7 +246,6 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
     [itens],
   );
 
-
   function alternar(id: string) {
     setSelecionados((atual) =>
       atual.includes(id) ? atual.filter((i) => i !== id) : [...atual, id],
