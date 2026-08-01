@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar, type AppNavItem, type AppAcaoPrincipal } from "@/components/AppSidebar";
 import { AvisosSino } from "@/components/AvisosSino";
 import { SairButton } from "@/components/SairButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/lib/auth";
 
 interface AppShellProps {
@@ -56,6 +57,7 @@ export function AppShell({
             </div>
             <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
               {headerExtra}
+              <ThemeToggle />
               <AvisosSino />
               <SairButton variante="icone" />
             </div>
