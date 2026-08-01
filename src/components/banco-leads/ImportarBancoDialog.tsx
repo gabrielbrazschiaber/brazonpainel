@@ -441,6 +441,22 @@ export function ImportarBancoDialog({
     }
   }
 
+  // Segmentos/CNAEs válidos para reserva: sem vazios e sem duplicados
+  // (o valor vazio duplicava a linha "Sem reserva" no select).
+  const opcoesSegmentos = useMemo(
+    () => opcoesUnicas(segmentos).filter((sg) => sg !== SEM_RESERVA),
+    [segmentos],
+  );
+  const opcoesCnaes = useMemo(() => {
+    const vistos = new Set<string>();
+    return cnaes.filter((c) => {
+      const cod = (c.codigo ?? "").trim();
+      if (!cod || cod === SEM_RESERVA || vistos.has(cod)) return false;
+      vistos.add(cod);
+      return true;
+    });
+  }, [cnaes]);
+
   return (
     <Dialog
       open={aberto}
@@ -514,7 +530,12 @@ export function ImportarBancoDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={SEM_RESERVA}>Sem reserva</SelectItem>
-                  {segmentos.map((s) => (
+                  {opcoesSegmentos.length === 0 ? (
+                    <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                      Nenhum segmento cadastrado ainda.
+                    </div>
+                  ) : null}
+                  {opcoesSegmentos.map((s) => (
                     <SelectItem key={s} value={s}>
                       {s}
                     </SelectItem>
@@ -546,7 +567,12 @@ export function ImportarBancoDialog({
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
                   <SelectItem value={SEM_RESERVA}>Sem reserva</SelectItem>
-                  {cnaes.map((c) => (
+                  {opcoesCnaes.length === 0 ? (
+                    <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                      Nenhum CNAE ativo no catálogo.
+                    </div>
+                  ) : null}
+                  {opcoesCnaes.map((c) => (
                     <SelectItem key={c.codigo} value={c.codigo}>
                       {rotuloCnae(c)}
                     </SelectItem>
