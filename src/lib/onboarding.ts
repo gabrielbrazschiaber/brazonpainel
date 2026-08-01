@@ -321,6 +321,7 @@ const TELA_ADMIN_CONFIG: Tutorial = {
     },
     {
       alvo: '[data-tour="config-secao-cupons"]',
+      permissao: "cupons.gerenciar",
       titulo: "Cupons",
       corpo:
         "Crie e bloqueie descontos e veja o histórico de uso. O desconto vale só na primeira mensalidade.",
@@ -328,6 +329,7 @@ const TELA_ADMIN_CONFIG: Tutorial = {
     },
     {
       alvo: '[data-tour="config-secao-planos"]',
+      permissao: "planos.gerenciar",
       titulo: "Planos",
       corpo:
         "Valores e disponibilidade. Mudar o valor de um plano muda a cobrança recorrente de quem o assina.",
@@ -335,12 +337,14 @@ const TELA_ADMIN_CONFIG: Tutorial = {
     },
     {
       alvo: '[data-tour="config-secao-admins"]',
+      permissao: "vendedores.ler",
       titulo: "Admins",
       corpo: "Quem tem acesso administrativo. Mexa aqui só ao dar ou tirar acesso total.",
       posicao: "bottom",
     },
     {
       alvo: '[data-tour="config-secao-vendedores"]',
+      permissao: "vendedores.ler",
       titulo: "Vendedores",
       corpo:
         "Cadastre a equipe de vendas, ajuste comissão e veja quem já concluiu o tutorial do sistema.",
@@ -348,6 +352,7 @@ const TELA_ADMIN_CONFIG: Tutorial = {
     },
     {
       alvo: '[data-tour="config-secao-permissoes"]',
+      permissao: "configuracoes.gerenciar",
       titulo: "Permissões",
       corpo:
         "Define o que cada papel pode fazer. Use quando um vendedor precisar (ou deixar de precisar) de algo.",
@@ -355,6 +360,7 @@ const TELA_ADMIN_CONFIG: Tutorial = {
     },
     {
       alvo: '[data-tour="config-secao-geral"]',
+      permissao: "configuracoes.gerenciar",
       titulo: "Geral e integrações",
       corpo:
         "Dados do app, dias de aviso de vencimento, chave do Asaas e URL do webhook. Chave errada derruba a cobrança.",
@@ -362,6 +368,7 @@ const TELA_ADMIN_CONFIG: Tutorial = {
     },
     {
       alvo: '[data-tour="config-secao-auditoria"]',
+      permissao: "auditoria.ler",
       titulo: "Auditoria",
       corpo:
         "Histórico de alterações sensíveis: quem mudou o quê e quando. Consulte ao investigar um problema.",
@@ -369,6 +376,7 @@ const TELA_ADMIN_CONFIG: Tutorial = {
     },
     {
       alvo: '[data-tour="config-secao-telemetria"]',
+      permissao: "auditoria.ler",
       titulo: "Acesso e sessão",
       corpo:
         "Métricas de login e de resolução de papel, por versão e rota. Serve para identificar regressões.",
@@ -608,6 +616,45 @@ export function tutorialPara(chave: string, papel: AppRole | null): Tutorial | u
 export function tutoriaisDoPapel(papel: AppRole | null): readonly Tutorial[] {
   if (!papel) return [];
   return TUTORIAIS.filter((t) => t.papeis.includes(papel));
+}
+
+/** Função de checagem de permissão (o `can` do useAuth). */
+export type PodePermissao = (permissao: string) => boolean;
+
+/**
+ * Remove os passos que exigem uma permissão que o usuário não tem.
+ * Sem isso o tour apontaria para seções de Configurações que aquele usuário
+ * nem vê, e o balão ficaria explicando algo inacessível.
+ */
+export function passosVisiveis(tutorial: Tutorial, pode: PodePermissao): PassoTutorial[] {
+  return tutorial.passos.filter((p) => !p.permissao || pode(p.permissao));
+}
+
+/**
+ * Tutorial já ajustado ao papel E às permissões do usuário.
+ * Devolve `undefined` quando não sobra nenhum passo — assim nada é reiniciado
+ * nem disparado à toa.
+ */
+export function tutorialVisivel(
+  chave: string,
+  papel: AppRole | null,
+  pode: PodePermissao,
+): Tutorial | undefined {
+  const base = tutorialPara(chave, papel);
+  if (!base) return undefined;
+  const passos = passosVisiveis(base, pode);
+  if (passos.length === 0) return undefined;
+  return passos.length === base.passos.length ? base : { ...base, passos };
+}
+
+/** Tutoriais que este usuário realmente pode rever (papel + permissões). */
+export function tutoriaisVisiveis(
+  papel: AppRole | null,
+  pode: PodePermissao,
+): readonly Tutorial[] {
+  return tutoriaisDoPapel(papel)
+    .map((t) => tutorialVisivel(t.chave, papel, pode))
+    .filter((t): t is Tutorial => Boolean(t));
 }
 
 /* ------------------------------------------------------------------ */

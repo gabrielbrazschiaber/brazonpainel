@@ -100,12 +100,21 @@ export const progressoEquipe = createServerFn({ method: "GET" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [{ data: linhas, error }, { data: perfis }] = await Promise.all([
+    const [
+      { data: linhas, error },
+      { data: perfis },
+      { data: papeis },
+      { data: vendedores },
+      { data: clientes },
+    ] = await Promise.all([
       supabaseAdmin
         .from("onboarding_progresso")
         .select("user_id,chave,status,created_at")
         .order("created_at", { ascending: false }),
       supabaseAdmin.from("profiles").select("id,nome,email"),
+      supabaseAdmin.from("user_roles").select("user_id,role"),
+      supabaseAdmin.from("vendedores").select("id,user_id"),
+      supabaseAdmin.from("clientes").select("user_id,vendedor_id"),
     ]);
 
     if (error) {
@@ -113,26 +122,85 @@ export const progressoEquipe = createServerFn({ method: "GET" })
       throw new Error("Não foi possível carregar o progresso da equipe.");
     }
 
-    const mapa = new Map<string, { nome: string | null; email: string | null }>();
-    (perfis ?? []).forEach((p) => mapa.set(p.id, { nome: p.nome, email: p.email }));
+    const perfilPorId = new Map<string, { nome: string | null; email: string | null }>();
+    (perfis ?? []).forEach((p) => perfilPorId.set(p.id, { nome: p.nome, email: p.email }));
+
+    // Papel "mais alto" prevalece quando o usuário tem mais de um.
+    const PESO_PAPEL: Record<string, number> = { admin: 3, vendedor: 2, cliente: 1 };
+    const papelPorUsuario = new Map<string, string>();
+    (papeis ?? []).forEach((p) => {
+      const atual = papelPorUsuario.get(p.user_id);
+      if (!atual || (PESO_PAPEL[p.role] ?? 0) > (PESO_PAPEL[atual] ?? 0)) {
+        papelPorUsuario.set(p.user_id, p.role);
+      }
+    });
+
+    // vendedores.id -> user_id do vendedor (para achar o nome dele)
+    const vendedorIdParaUserId = new Map<string, string>();
+    (vendedores ?? []).forEach((v) => vendedorIdParaUserId.set(v.id, v.user_id));
+
+    // cliente user_id -> vendedores.id responsável
+    const clienteParaVendedorId = new Map<string, string | null>();
+    (clientes ?? []).forEach((c) => clienteParaVendedorId.set(c.user_id, c.vendedor_id));
+
+    function vendedorResponsavelDe(
+      uid: string,
+      papel: string,
+    ): { id: string | null; nome: string | null } {
+      if (papel === "vendedor") {
+        const vend = (vendedores ?? []).find((v) => v.user_id === uid);
+        return { id: vend?.id ?? null, nome: perfilPorId.get(uid)?.nome ?? null };
+      }
+      if (papel === "cliente") {
+        const vendedorId = clienteParaVendedorId.get(uid) ?? null;
+        if (!vendedorId) return { id: null, nome: null };
+        const vendedorUserId = vendedorIdParaUserId.get(vendedorId) ?? null;
+        return {
+          id: vendedorId,
+          nome: vendedorUserId ? (perfilPorId.get(vendedorUserId)?.nome ?? null) : null,
+        };
+      }
+      return { id: null, nome: null };
+    }
+
+    interface ItemTutorial {
+      chave: string;
+      status: string;
+      em: string;
+    }
 
     const porUsuario = new Map<
       string,
-      { user_id: string; nome: string | null; email: string | null; chaves: string[]; boasVindas: boolean }
+      {
+        user_id: string;
+        nome: string | null;
+        email: string | null;
+        papel: string;
+        vendedor_id: string | null;
+        vendedor_nome: string | null;
+        chaves: string[];
+        boasVindas: boolean;
+        itens: ItemTutorial[];
+      }
     >();
 
     (linhas ?? []).forEach((l) => {
-      const atual =
-        porUsuario.get(l.user_id) ??
-        {
-          user_id: l.user_id,
-          nome: mapa.get(l.user_id)?.nome ?? null,
-          email: mapa.get(l.user_id)?.email ?? null,
-          chaves: [] as string[],
-          boasVindas: false,
-        };
+      const papel = papelPorUsuario.get(l.user_id) ?? "cliente";
+      const responsavel = vendedorResponsavelDe(l.user_id, papel);
+      const atual = porUsuario.get(l.user_id) ?? {
+        user_id: l.user_id,
+        nome: perfilPorId.get(l.user_id)?.nome ?? null,
+        email: perfilPorId.get(l.user_id)?.email ?? null,
+        papel,
+        vendedor_id: responsavel.id,
+        vendedor_nome: responsavel.nome,
+        chaves: [] as string[],
+        boasVindas: false,
+        itens: [] as ItemTutorial[],
+      };
       atual.chaves.push(l.chave);
       if (l.chave === "boas_vindas") atual.boasVindas = true;
+      atual.itens.push({ chave: l.chave, status: l.status, em: l.created_at });
       porUsuario.set(l.user_id, atual);
     });
 

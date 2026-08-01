@@ -22,6 +22,7 @@ import { PermissoesTab } from "@/components/admin/PermissoesTab";
 import { CuponsTab } from "@/components/admin/CuponsTab";
 import { ConfiguracoesPage, type SecaoConfiguracao } from "@/components/admin/ConfiguracoesPage";
 import { TelemetriaAuthTab } from "@/components/admin/TelemetriaAuthTab";
+import { AuditoriaTutoriaisTab } from "@/components/admin/AuditoriaTutoriaisTab";
 import { AvisosSino } from "@/components/AvisosSino";
 import { ADMIN_NAV_ITEMS, SECOES_CONFIG_META, abasInternas } from "@/lib/admin-nav";
 
@@ -296,6 +297,7 @@ function AdminArea() {
     geral: () => <ConfigTab config={config} onSaved={load} />,
     auditoria: () => <AuditoriaTab />,
     telemetria: () => <TelemetriaAuthTab />,
+    tutoriais: () => <AuditoriaTutoriaisTab />,
   };
 
   const secoesConfig: SecaoConfiguracao[] = SECOES_CONFIG_META.map((meta) => ({

@@ -13,7 +13,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e:auth": "python3 tests/e2e/auth_gates_reload.py",
-    "test:e2e:auth:full": "E2E_ROTAS=todas python3 tests/e2e/auth_gates_reload.py"
+    "test:e2e:auth:full": "E2E_ROTAS=todas python3 tests/e2e/auth_gates_reload.py",
+    "validar:telemetria": "bun scripts/validar-telemetria.mjs",
+    "test:e2e:onboarding": "python3 tests/e2e/onboarding_tours.py"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
