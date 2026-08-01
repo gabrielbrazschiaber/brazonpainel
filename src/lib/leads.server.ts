@@ -586,7 +586,9 @@ export async function dashboardComercialServer(
   const base = () => {
     let q = supabase
       .from("leads")
-      .select("estagio, segmento, valor_estimado, contatado_em, vendedor_id")
+      .select(
+        "estagio, segmento, valor_estimado, contatado_em, vendedor_id, follow_ups_feitos",
+      )
       .limit(5000);
     if (vendedorFiltro) q = q.eq("vendedor_id", vendedorFiltro);
     return q;
