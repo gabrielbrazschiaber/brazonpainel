@@ -721,6 +721,33 @@ export async function dashboardComercialServer(
   if (vendedorFiltro) qIncompletos = qIncompletos.eq("vendedor_id", vendedorFiltro);
   const { count: incompletos } = await qIncompletos;
 
+  // Cadência: contadores independentes do período (é operação do dia a dia).
+  const hoje = hojeISO();
+  const semFollowUp = `(${ESTAGIOS_SEM_FOLLOW_UP.join(",")})`;
+  const contarCadencia = (
+    aplicar: (q: ReturnType<typeof supabase.from>) => unknown,
+  ) => {
+    let q = supabase
+      .from("leads")
+      .select("id", { count: "exact", head: true })
+      .not("estagio", "in", semFollowUp);
+    if (vendedorFiltro) q = q.eq("vendedor_id", vendedorFiltro);
+    return aplicar(q) as Promise<{ count: number | null }>;
+  };
+
+  const [atrasadosRes, hojeRes, encerradasRes] = await Promise.all([
+    contarCadencia((q) => q.not("proximo_contato", "is", null).lt("proximo_contato", hoje)),
+    contarCadencia((q) => q.eq("proximo_contato", hoje)),
+    contarCadencia((q) => q.eq("cadencia_encerrada", true)),
+  ]);
+
+  // "Toques até fechar": média de tentativas dos leads ganhos no período.
+  const ganhos = leadsAtuais.filter((l) => l.estagio === "ganho");
+  const media_tentativas_ate_ganho = razao(
+    ganhos.reduce((s, l) => s + Number(l.follow_ups_feitos ?? 0), 0),
+    ganhos.length,
+  );
+
   return {
     isAdmin: escopo.isAdmin,
     incompletos: incompletos ?? 0,
@@ -731,7 +758,12 @@ export async function dashboardComercialServer(
     segmentos,
     serie: meses,
     ranking,
+    follow_ups_atrasados: atrasadosRes.count ?? 0,
+    follow_ups_hoje: hojeRes.count ?? 0,
+    cadencias_encerradas: encerradasRes.count ?? 0,
+    media_tentativas_ate_ganho,
   };
+
 }
 
 export type DashboardComercial = Awaited<ReturnType<typeof dashboardComercialServer>>;
