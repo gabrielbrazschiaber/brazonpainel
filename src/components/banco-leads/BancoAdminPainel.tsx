@@ -112,6 +112,15 @@ function LinhaEscopo({ escopo, onSalvo }: { escopo: EscopoVendedor; onSalvo: () 
           aria-label={`Estados de ${escopo.nome}`}
         />
       </TableCell>
+      <TableCell className="hidden md:table-cell">
+        <Input
+          value={cnaes}
+          onChange={(e) => setCnaes(e.target.value)}
+          placeholder="Ex.: 1091102, 4712100"
+          className="h-9 w-full sm:w-auto sm:min-w-[150px]"
+          aria-label={`CNAEs de ${escopo.nome}`}
+        />
+      </TableCell>
       <TableCell className="text-right">
         <Button size="sm" variant="outline" onClick={() => void enviar()} disabled={salvando}>
           {salvando ? (
@@ -244,8 +253,9 @@ export function BancoAdminPainel() {
       <Card className="p-4">
         <h2 className="text-base font-semibold text-foreground">Reserva por segmento</h2>
         <p className="mb-3 text-sm text-muted-foreground">
-          Segmentos e estados de cada vendedor. Leads reservados só ficam liberados para quem tem o
-          segmento (ou estado) no escopo durante as primeiras 48 horas.
+          Segmentos, estados e CNAEs de cada vendedor. Leads reservados só ficam liberados para
+          quem tem o segmento, o estado ou o CNAE no escopo durante a janela de reserva definida em
+          Configurações.
         </p>
         {escopos.length === 0 ? (
           <EmptyState
@@ -260,6 +270,7 @@ export function BancoAdminPainel() {
                   <TableHead>Vendedor</TableHead>
                   <TableHead>Segmentos</TableHead>
                   <TableHead>Estados (UF)</TableHead>
+                  <TableHead className="hidden md:table-cell">CNAEs</TableHead>
                   <TableHead className="w-24 text-right">Ação</TableHead>
                 </TableRow>
               </TableHeader>
