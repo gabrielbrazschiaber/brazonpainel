@@ -550,7 +550,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                 <Table>
                   <CabecalhoLeads />
                   <TableBody>
-                    {leads.map((l) => (
+                    {leadsVisiveis.map((l) => (
                       <TableRow key={l.id} className="cursor-pointer" onClick={() => setDetalhe(l)}>
                         <TableCell>
                           <p className="font-medium">{l.nome_contato}</p>
