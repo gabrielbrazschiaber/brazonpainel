@@ -24,12 +24,11 @@ import { MontarQuandoAberto } from "@/components/MontarQuandoAberto";
 const AjudaDaTela = lazy(() =>
   import("@/components/onboarding/AjudaDaTela").then((m) => ({ default: m.AjudaDaTela })),
 );
-import { BrazonLogo } from "@/components/BrazonLogo";
 import { useJanelaVirtual } from "@/lib/use-janela-virtual";
-import { SairButton } from "@/components/SairButton";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { AvisosSino } from "@/components/AvisosSino";
+import { TelaShell } from "@/components/TelaShell";
+import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { LeadsSkeletonCards, LeadsSkeletonRows } from "@/components/comercial/LeadsSkeleton";
 import { Card } from "@/components/ui/card";
@@ -385,37 +384,22 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   useTourDaTela("tela:comercial", !carregando && Boolean(dados));
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="glass-header sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border/60 px-3 pt-[env(safe-area-inset-top)] sm:px-6">
-        <Button asChild variant="ghost" size="sm" className="h-10 w-10 p-0 sm:w-auto sm:px-3">
-          <Link to={home} aria-label="Voltar ao painel">
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:ml-2 sm:inline">Painel</span>
-          </Link>
-        </Button>
-        <BrazonLogo className="hidden sm:flex" symbolClassName="h-7 w-7" textClassName="text-lg" />
-        <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
-          <Suspense fallback={null}>
-            <AjudaDaTela chave="tela:comercial" />
-          </Suspense>
-          <ThemeToggle />
-          <AvisosSino />
-          <SairButton variante="icone" />
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 sm:px-6 sm:py-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="eyebrow flex items-center gap-1.5">
-              <Target className="h-3.5 w-3.5" /> Comercial
-            </p>
-            <h1 className="text-xl font-semibold text-foreground sm:text-2xl">Gestão comercial</h1>
-            <p className="text-sm text-muted-foreground">
-              Cadastre seus leads, registre reuniões e acompanhe sua conversão.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+    <TelaShell
+      voltarPara={home}
+      area="Gestão comercial"
+      headerExtra={
+        <Suspense fallback={null}>
+          <AjudaDaTela chave="tela:comercial" />
+        </Suspense>
+      }
+    >
+      <PageHeader
+        eyebrow="Comercial"
+        eyebrowIcon={Target}
+        titulo="Gestão comercial"
+        descricao="Cadastre seus leads, registre reuniões e acompanhe sua conversão."
+        acoes={
+          <>
             <Button
               data-tour="comercial-importar"
               variant="outline"
@@ -442,383 +426,380 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             >
               <UserPlus className="mr-2 h-4 w-4" /> Novo lead
             </Button>
-          </div>
-        </div>
+          </>
+        }
+      />
 
-        <div className="flex flex-wrap items-center gap-2">
-          {PERIODOS.map((p) => (
-            <Button
-              key={p.valor}
-              size="sm"
-              variant={dias === p.valor ? "default" : "outline"}
-              onClick={() => setDias(p.valor)}
-            >
-              {p.label}
-            </Button>
-          ))}
-          {isAdmin && (
-            <Select value={vendedorId} onValueChange={setVendedorId}>
-              <SelectTrigger className="w-full sm:w-56">
-                <SelectValue placeholder="Vendedor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os vendedores</SelectItem>
-                {vendedores.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-
-        <div id="follow-ups" data-tour="comercial-followups">
-          <FollowUpsPanel
-            isAdmin={isAdmin}
-            vendedorId={filtroVendedor}
-            onAtualizado={() => void recarregar()}
-            abaInicial={abaFollowUp}
-          />
-        </div>
-
-        {carregando && !dados ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        ) : (
-          dados && (
-            <Suspense
-              fallback={
-                <div className="flex justify-center py-16">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              }
-            >
-              <ComercialDashboard
-                dados={dados}
-                onVerIncompletos={() => {
-                  setIncompletos(true);
-                  setOrdem("completude");
-                }}
-                onVerFollowUps={() => {
-                  setAbaFollowUp("atrasados");
-                  document
-                    .getElementById("follow-ups")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-              />
-            </Suspense>
-          )
+      <div className="flex flex-wrap items-center gap-2">
+        {PERIODOS.map((p) => (
+          <Button
+            key={p.valor}
+            size="sm"
+            variant={dias === p.valor ? "default" : "outline"}
+            onClick={() => setDias(p.valor)}
+          >
+            {p.label}
+          </Button>
+        ))}
+        {isAdmin && (
+          <Select value={vendedorId} onValueChange={setVendedorId}>
+            <SelectTrigger className="w-full sm:w-56">
+              <SelectValue placeholder="Vendedor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os vendedores</SelectItem>
+              {vendedores.map((v) => (
+                <SelectItem key={v.id} value={v.id}>
+                  {v.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
+      </div>
 
-        <Card className="space-y-4 p-4 sm:p-5">
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <Input
-              placeholder="Buscar por nome, empresa ou telefone"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
+      <div id="follow-ups" data-tour="comercial-followups">
+        <FollowUpsPanel
+          isAdmin={isAdmin}
+          vendedorId={filtroVendedor}
+          onAtualizado={() => void recarregar()}
+          abaInicial={abaFollowUp}
+        />
+      </div>
+
+      {carregando && !dados ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      ) : (
+        dados && (
+          <Suspense
+            fallback={
+              <div className="flex justify-center py-16">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            }
+          >
+            <ComercialDashboard
+              dados={dados}
+              onVerIncompletos={() => {
+                setIncompletos(true);
+                setOrdem("completude");
+              }}
+              onVerFollowUps={() => {
+                setAbaFollowUp("atrasados");
+                document
+                  .getElementById("follow-ups")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
             />
-            <Select value={estagio} onValueChange={(v) => setEstagio(v as LeadEstagio | "todos")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Estágio" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os estágios</SelectItem>
-                {LEAD_ESTAGIOS.map((e) => (
-                  <SelectItem key={e} value={e}>
-                    {ESTAGIO_LABEL[e]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={segmento} onValueChange={setSegmento}>
-              <SelectTrigger>
-                <SelectValue placeholder="Segmento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os segmentos</SelectItem>
-                {listaSegmentos.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={origem} onValueChange={(v) => setOrigem(v as LeadOrigem | "todas")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Origem" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas as origens</SelectItem>
-                {LEAD_ORIGENS.map((o) => (
-                  <SelectItem key={o} value={o}>
-                    {ORIGEM_LABEL[o]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          </Suspense>
+        )
+      )}
 
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <div className="flex items-center gap-2">
-              <Switch id="follow-up" checked={followUp} onCheckedChange={setFollowUp} />
-              <Label htmlFor="follow-up" className="text-sm">
-                Só follow-up de hoje
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch id="so-whatsapp" checked={soZap} onCheckedChange={setSoZap} />
-              <Label htmlFor="so-whatsapp" className="text-sm">
-                Só com WhatsApp ativo
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="so-incompletos"
-                checked={incompletos}
-                onCheckedChange={(v) => {
-                  setIncompletos(v);
-                  setOrdem(v ? "completude" : "recentes");
-                }}
-              />
-              <Label htmlFor="so-incompletos" className="text-sm">
-                Só incompletos
-              </Label>
-            </div>
-            <Select value={ordem} onValueChange={(v) => setOrdem(v as "recentes" | "completude")}>
-              <SelectTrigger className="w-full sm:w-52">
-                <SelectValue placeholder="Ordenar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recentes">Mais recentes primeiro</SelectItem>
-                <SelectItem value="completude">Menos completos primeiro</SelectItem>
-              </SelectContent>
-            </Select>
-            {loteId && (
-              <Button variant="ghost" size="sm" onClick={() => setLoteId(null)}>
-                Limpar filtro de lote
-              </Button>
-            )}
-          </div>
+      <Card className="space-y-4 p-4 sm:p-5">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <Input
+            placeholder="Buscar por nome, empresa ou telefone"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+          <Select value={estagio} onValueChange={(v) => setEstagio(v as LeadEstagio | "todos")}>
+            <SelectTrigger>
+              <SelectValue placeholder="Estágio" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os estágios</SelectItem>
+              {LEAD_ESTAGIOS.map((e) => (
+                <SelectItem key={e} value={e}>
+                  {ESTAGIO_LABEL[e]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={segmento} onValueChange={setSegmento}>
+            <SelectTrigger>
+              <SelectValue placeholder="Segmento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os segmentos</SelectItem>
+              {listaSegmentos.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={origem} onValueChange={(v) => setOrigem(v as LeadOrigem | "todas")}>
+            <SelectTrigger>
+              <SelectValue placeholder="Origem" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas as origens</SelectItem>
+              {LEAD_ORIGENS.map((o) => (
+                <SelectItem key={o} value={o}>
+                  {ORIGEM_LABEL[o]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          {carregando ? (
-            <>
-              <LeadsSkeletonCards />
-              <div className="hidden sm:block">
-                <Table>
-                  <CabecalhoLeads />
-                  <TableBody>
-                    <LeadsSkeletonRows />
-                  </TableBody>
-                </Table>
-              </div>
-            </>
-          ) : erroLista ? (
-            <div
-              role="alert"
-              className="flex flex-col items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-10 text-center"
-            >
-              <AlertCircle className="h-6 w-6 text-destructive" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-foreground">
-                  Não foi possível carregar os leads.
-                </p>
-                <p className="text-xs text-muted-foreground">{erroLista}</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => void recarregar()}>
-                <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
-              </Button>
-            </div>
-          ) : leadsVisiveis.length === 0 ? (
-            <EmptyState
-              icon={Target}
-              titulo={
-                soZap
-                  ? "Nenhum lead com WhatsApp ativo nos filtros atuais."
-                  : "Nenhum lead ainda. Cadastre o primeiro contato do dia."
-              }
-              descricao={
-                soZap
-                  ? "Confira se os telefones estão cadastrados com DDD e número de celular."
-                  : "Cada lead cadastrado alimenta o funil e as taxas de conversão desta página."
-              }
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <div className="flex items-center gap-2">
+            <Switch id="follow-up" checked={followUp} onCheckedChange={setFollowUp} />
+            <Label htmlFor="follow-up" className="text-sm">
+              Só follow-up de hoje
+            </Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch id="so-whatsapp" checked={soZap} onCheckedChange={setSoZap} />
+            <Label htmlFor="so-whatsapp" className="text-sm">
+              Só com WhatsApp ativo
+            </Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="so-incompletos"
+              checked={incompletos}
+              onCheckedChange={(v) => {
+                setIncompletos(v);
+                setOrdem(v ? "completude" : "recentes");
+              }}
             />
-          ) : (
-            <>
-              {/* Mobile: cards empilhados */}
-              <div className="space-y-3 sm:hidden" ref={janelaCards.ref}>
-                <div style={{ height: janelaCards.antes }} aria-hidden />
-                {cardsVisiveis.map((l) => (
-                  <Card
-                    key={l.id}
-                    className="cursor-pointer space-y-2 p-4"
-                    onClick={() => setDetalhe(l)}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{l.nome_contato}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {[l.empresa, l.cargo].filter(Boolean).join(" · ") || "—"}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className={estagioClasse(l.estagio)}>
-                        {ESTAGIO_LABEL[l.estagio]}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        {l.telefone}
-                        <WhatsAppIndicator
-                          telefone={l.telefone}
-                          status={statusZap.get(l.id)}
-                          size="sm"
-                        />
-                      </span>
-
-                      <span className="text-right">{formatCurrency(l.valor_estimado)}</span>
-                      <span>{l.segmento || "Sem segmento"}</span>
-                      <span className="text-right">
-                        {l.reunioes_count} reuniã{l.reunioes_count === 1 ? "o" : "es"}
-                      </span>
-                      <span className="col-span-2">
-                        Próximo contato: <ProximoContatoCell lead={l} />
-                      </span>
-                    </div>
-                  </Card>
-                ))}
-                <div style={{ height: janelaCards.depois }} aria-hidden />
-              </div>
-
-              {/* Desktop: tabela */}
-              <div className="hidden sm:block" ref={janelaLinhas.ref}>
-                <Table>
-                  <CabecalhoLeads />
-                  <TableBody>
-                    {janelaLinhas.antes > 0 && (
-                      <TableRow aria-hidden>
-                        <TableCell colSpan={9} style={{ height: janelaLinhas.antes, padding: 0 }} />
-                      </TableRow>
-                    )}
-                    {linhasVisiveis.map((l) => (
-                      <TableRow key={l.id} className="cursor-pointer" onClick={() => setDetalhe(l)}>
-                        <TableCell>
-                          <p className="font-medium">{l.nome_contato}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {[l.empresa, l.cargo].filter(Boolean).join(" · ") || "—"}
-                            {isAdmin && l.vendedor_nome ? ` · ${l.vendedor_nome}` : ""}
-                          </p>
-                        </TableCell>
-                        <TableCell>
-                          <span className="flex items-center gap-1.5 whitespace-nowrap">
-                            {l.telefone}
-                            <WhatsAppIndicator
-                              telefone={l.telefone}
-                              status={statusZap.get(l.id)}
-                              size="sm"
-                            />
-                          </span>
-                        </TableCell>
-
-                        <TableCell>{l.segmento || "—"}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={estagioClasse(l.estagio)}>
-                            {ESTAGIO_LABEL[l.estagio]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Progress value={l.completude} className="h-1.5 w-14" />
-                            <span className="text-xs text-muted-foreground">{l.completude}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(l.valor_estimado)}
-                        </TableCell>
-                        <TableCell className="text-right">{l.reunioes_count}</TableCell>
-                        <TableCell>
-                          <ProximoContatoCell lead={l} />
-                        </TableCell>
-
-                        <TableCell className="text-right">
-                          <div
-                            className="flex justify-end gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              aria-label="Editar lead"
-                              onClick={() => {
-                                setEditando(l);
-                                setFormAberto(true);
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              aria-label="Excluir lead"
-                              onClick={() => setExcluindo(l)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {janelaLinhas.depois > 0 && (
-                      <TableRow aria-hidden>
-                        <TableCell
-                          colSpan={9}
-                          style={{ height: janelaLinhas.depois, padding: 0 }}
-                        />
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div
-                ref={sentinela}
-                className="flex flex-col items-center gap-2 pt-2 text-xs text-muted-foreground"
-              >
-                <span aria-live="polite">
-                  Mostrando {leadsVisiveis.length} de {total} lead{total === 1 ? "" : "s"}
-                  {soZap ? " (só com WhatsApp ativo)" : ""}
-                </span>
-
-                {carregandoMais && (
-                  <div className="w-full space-y-2" aria-hidden="true">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                )}
-
-                {erroMais && !carregandoMais && (
-                  <div role="alert" className="flex flex-col items-center gap-2">
-                    <p className="text-destructive">{erroMais}</p>
-                    <Button variant="outline" size="sm" onClick={() => void carregarMais()}>
-                      <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
-                    </Button>
-                  </div>
-                )}
-
-                {temMais && !carregandoMais && !erroMais && (
-                  <Button variant="outline" size="sm" onClick={() => void carregarMais()}>
-                    Carregar mais
-                  </Button>
-                )}
-
-                {!temMais && !carregandoMais && !erroMais && leads.length > 0 && (
-                  <span>Todos os leads deste filtro foram carregados.</span>
-                )}
-              </div>
-            </>
+            <Label htmlFor="so-incompletos" className="text-sm">
+              Só incompletos
+            </Label>
+          </div>
+          <Select value={ordem} onValueChange={(v) => setOrdem(v as "recentes" | "completude")}>
+            <SelectTrigger className="w-full sm:w-52">
+              <SelectValue placeholder="Ordenar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recentes">Mais recentes primeiro</SelectItem>
+              <SelectItem value="completude">Menos completos primeiro</SelectItem>
+            </SelectContent>
+          </Select>
+          {loteId && (
+            <Button variant="ghost" size="sm" onClick={() => setLoteId(null)}>
+              Limpar filtro de lote
+            </Button>
           )}
-        </Card>
-      </main>
+        </div>
+
+        {carregando ? (
+          <>
+            <LeadsSkeletonCards />
+            <div className="hidden sm:block">
+              <Table>
+                <CabecalhoLeads />
+                <TableBody>
+                  <LeadsSkeletonRows />
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        ) : erroLista ? (
+          <div
+            role="alert"
+            className="flex flex-col items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-10 text-center"
+          >
+            <AlertCircle className="h-6 w-6 text-destructive" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">
+                Não foi possível carregar os leads.
+              </p>
+              <p className="text-xs text-muted-foreground">{erroLista}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => void recarregar()}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+            </Button>
+          </div>
+        ) : leadsVisiveis.length === 0 ? (
+          <EmptyState
+            icon={Target}
+            titulo={
+              soZap
+                ? "Nenhum lead com WhatsApp ativo nos filtros atuais."
+                : "Nenhum lead ainda. Cadastre o primeiro contato do dia."
+            }
+            descricao={
+              soZap
+                ? "Confira se os telefones estão cadastrados com DDD e número de celular."
+                : "Cada lead cadastrado alimenta o funil e as taxas de conversão desta página."
+            }
+          />
+        ) : (
+          <>
+            {/* Mobile: cards empilhados */}
+            <div className="space-y-3 sm:hidden" ref={janelaCards.ref}>
+              <div style={{ height: janelaCards.antes }} aria-hidden />
+              {cardsVisiveis.map((l) => (
+                <Card
+                  key={l.id}
+                  className="cursor-pointer space-y-2 p-4"
+                  onClick={() => setDetalhe(l)}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{l.nome_contato}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {[l.empresa, l.cargo].filter(Boolean).join(" · ") || "—"}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className={estagioClasse(l.estagio)}>
+                      {ESTAGIO_LABEL[l.estagio]}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      {l.telefone}
+                      <WhatsAppIndicator
+                        telefone={l.telefone}
+                        status={statusZap.get(l.id)}
+                        size="sm"
+                      />
+                    </span>
+
+                    <span className="text-right">{formatCurrency(l.valor_estimado)}</span>
+                    <span>{l.segmento || "Sem segmento"}</span>
+                    <span className="text-right">
+                      {l.reunioes_count} reuniã{l.reunioes_count === 1 ? "o" : "es"}
+                    </span>
+                    <span className="col-span-2">
+                      Próximo contato: <ProximoContatoCell lead={l} />
+                    </span>
+                  </div>
+                </Card>
+              ))}
+              <div style={{ height: janelaCards.depois }} aria-hidden />
+            </div>
+
+            {/* Desktop: tabela */}
+            <div className="hidden sm:block" ref={janelaLinhas.ref}>
+              <Table>
+                <CabecalhoLeads />
+                <TableBody>
+                  {janelaLinhas.antes > 0 && (
+                    <TableRow aria-hidden>
+                      <TableCell colSpan={9} style={{ height: janelaLinhas.antes, padding: 0 }} />
+                    </TableRow>
+                  )}
+                  {linhasVisiveis.map((l) => (
+                    <TableRow key={l.id} className="cursor-pointer" onClick={() => setDetalhe(l)}>
+                      <TableCell>
+                        <p className="font-medium">{l.nome_contato}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {[l.empresa, l.cargo].filter(Boolean).join(" · ") || "—"}
+                          {isAdmin && l.vendedor_nome ? ` · ${l.vendedor_nome}` : ""}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <span className="flex items-center gap-1.5 whitespace-nowrap">
+                          {l.telefone}
+                          <WhatsAppIndicator
+                            telefone={l.telefone}
+                            status={statusZap.get(l.id)}
+                            size="sm"
+                          />
+                        </span>
+                      </TableCell>
+
+                      <TableCell>{l.segmento || "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={estagioClasse(l.estagio)}>
+                          {ESTAGIO_LABEL[l.estagio]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Progress value={l.completude} className="h-1.5 w-14" />
+                          <span className="text-xs text-muted-foreground">{l.completude}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(l.valor_estimado)}
+                      </TableCell>
+                      <TableCell className="text-right">{l.reunioes_count}</TableCell>
+                      <TableCell>
+                        <ProximoContatoCell lead={l} />
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        <div
+                          className="flex justify-end gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label="Editar lead"
+                            onClick={() => {
+                              setEditando(l);
+                              setFormAberto(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label="Excluir lead"
+                            onClick={() => setExcluindo(l)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {janelaLinhas.depois > 0 && (
+                    <TableRow aria-hidden>
+                      <TableCell colSpan={9} style={{ height: janelaLinhas.depois, padding: 0 }} />
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div
+              ref={sentinela}
+              className="flex flex-col items-center gap-2 pt-2 text-xs text-muted-foreground"
+            >
+              <span aria-live="polite">
+                Mostrando {leadsVisiveis.length} de {total} lead{total === 1 ? "" : "s"}
+                {soZap ? " (só com WhatsApp ativo)" : ""}
+              </span>
+
+              {carregandoMais && (
+                <div className="w-full space-y-2" aria-hidden="true">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              )}
+
+              {erroMais && !carregandoMais && (
+                <div role="alert" className="flex flex-col items-center gap-2">
+                  <p className="text-destructive">{erroMais}</p>
+                  <Button variant="outline" size="sm" onClick={() => void carregarMais()}>
+                    <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+                  </Button>
+                </div>
+              )}
+
+              {temMais && !carregandoMais && !erroMais && (
+                <Button variant="outline" size="sm" onClick={() => void carregarMais()}>
+                  Carregar mais
+                </Button>
+              )}
+
+              {!temMais && !carregandoMais && !erroMais && leads.length > 0 && (
+                <span>Todos os leads deste filtro foram carregados.</span>
+              )}
+            </div>
+          </>
+        )}
+      </Card>
 
       <LeadFormDialog
         aberto={formAberto}
@@ -882,6 +863,6 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </TelaShell>
   );
 }

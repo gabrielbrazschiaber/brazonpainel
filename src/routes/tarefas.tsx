@@ -18,10 +18,9 @@ import { OnboardingProvider, useTourDaTela } from "@/components/onboarding/Onboa
 const AjudaDaTela = lazy(() =>
   import("@/components/onboarding/AjudaDaTela").then((m) => ({ default: m.AjudaDaTela })),
 );
-import { BrazonLogo } from "@/components/BrazonLogo";
-import { SairButton } from "@/components/SairButton";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { AvisosSino } from "@/components/AvisosSino";
+import { TelaShell } from "@/components/TelaShell";
+import { PageHeader } from "@/components/ui/page-header";
+
 import { ComentariosTarefa } from "@/components/tarefas/ComentariosTarefa";
 import { formatDate } from "@/lib/format";
 import { buscarPerfis } from "@/lib/profiles";
@@ -297,35 +296,27 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
   useTourDaTela("tela:tarefas", !carregando);
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-          <BrazonLogo className="shrink-0" symbolClassName="h-7 w-7" textClassName="text-lg" />
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base font-semibold sm:text-lg">
-              {equipe ? "Tarefas" : "Minhas solicitações"}
-            </h1>
-            <p className="truncate text-xs text-muted-foreground">
-              {equipe
-                ? "Ativações de plano, solicitações de clientes e direcionamento de responsáveis."
-                : "Peça um atendimento e acompanhe o andamento com o seu vendedor."}
-            </p>
-          </div>
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link to={home}>
-              <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
-            </Link>
-          </Button>
-          <Suspense fallback={null}>
-            <AjudaDaTela chave="tela:tarefas" />
-          </Suspense>
-          <ThemeToggle />
-          <AvisosSino />
-          <SairButton />
-        </div>
-      </header>
+    <TelaShell
+      voltarPara={home}
+      area={equipe ? "Tarefas" : "Minhas solicitações"}
+      headerExtra={
+        <Suspense fallback={null}>
+          <AjudaDaTela chave="tela:tarefas" />
+        </Suspense>
+      }
+    >
+      <PageHeader
+        eyebrow={equipe ? "Operação" : "Atendimento"}
+        eyebrowIcon={ClipboardList}
+        titulo={equipe ? "Tarefas" : "Minhas solicitações"}
+        descricao={
+          equipe
+            ? "Ativações de plano, solicitações de clientes e direcionamento de responsáveis."
+            : "Peça um atendimento e acompanhe o andamento com o seu vendedor."
+        }
+      />
 
-      <main className="mx-auto max-w-6xl space-y-4 px-4 py-5">
+      <div className="space-y-4">
         {equipe && (
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
             <Resumo titulo="Abertas" valor={resumo.abertas} />
@@ -465,7 +456,7 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       <Dialog open={aberto} onOpenChange={setAberto}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
@@ -596,7 +587,7 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </TelaShell>
   );
 }
 
