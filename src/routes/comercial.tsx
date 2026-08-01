@@ -2,7 +2,16 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Pencil, Target, Trash2, UserPlus } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Loader2,
+  Pencil,
+  RefreshCw,
+  Target,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
 
 import { useAuth, roleHome } from "@/lib/auth";
 import { TermosGate } from "@/components/TermosGate";
@@ -129,6 +138,24 @@ function ComercialPage() {
 }
 
 const POR_PAGINA = 25;
+
+/** Cabeçalho da tabela de leads (compartilhado com o skeleton). */
+function CabecalhoLeads() {
+  return (
+    <TableHeader>
+      <TableRow>
+        <TableHead>Contato</TableHead>
+        <TableHead>Telefone</TableHead>
+        <TableHead>Segmento</TableHead>
+        <TableHead>Estágio</TableHead>
+        <TableHead className="text-right">Valor</TableHead>
+        <TableHead className="text-right">Reuniões</TableHead>
+        <TableHead>Próximo contato</TableHead>
+        <TableHead className="text-right">Ações</TableHead>
+      </TableRow>
+    </TableHeader>
+  );
+}
 
 function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }) {
   const carregarLeads = useServerFn(listarLeads);
@@ -404,7 +431,35 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             </Label>
           </div>
 
-          {leads.length === 0 ? (
+          {carregando ? (
+            <>
+              <LeadsSkeletonCards />
+              <div className="hidden sm:block">
+                <Table>
+                  <CabecalhoLeads />
+                  <TableBody>
+                    <LeadsSkeletonRows />
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          ) : erroLista ? (
+            <div
+              role="alert"
+              className="flex flex-col items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-10 text-center"
+            >
+              <AlertCircle className="h-6 w-6 text-destructive" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  Não foi possível carregar os leads.
+                </p>
+                <p className="text-xs text-muted-foreground">{erroLista}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => void recarregar()}>
+                <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+              </Button>
+            </div>
+          ) : leads.length === 0 ? (
             <EmptyState
               icon={Target}
               titulo="Nenhum lead ainda. Cadastre o primeiro contato do dia."
@@ -451,18 +506,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
               {/* Desktop: tabela */}
               <div className="hidden sm:block">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Contato</TableHead>
-                      <TableHead>Telefone</TableHead>
-                      <TableHead>Segmento</TableHead>
-                      <TableHead>Estágio</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead className="text-right">Reuniões</TableHead>
-                      <TableHead>Próximo contato</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <CabecalhoLeads />
                   <TableBody>
                     {leads.map((l) => (
                       <TableRow
@@ -527,14 +571,34 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                 ref={sentinela}
                 className="flex flex-col items-center gap-2 pt-2 text-xs text-muted-foreground"
               >
-                <span>
+                <span aria-live="polite">
                   Mostrando {leads.length} de {total} lead{total === 1 ? "" : "s"}
                 </span>
-                {carregandoMais && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-                {temMais && !carregandoMais && (
+
+                {carregandoMais && (
+                  <div className="w-full space-y-2" aria-hidden="true">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                )}
+
+                {erroMais && !carregandoMais && (
+                  <div role="alert" className="flex flex-col items-center gap-2">
+                    <p className="text-destructive">{erroMais}</p>
+                    <Button variant="outline" size="sm" onClick={() => void carregarMais()}>
+                      <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+                    </Button>
+                  </div>
+                )}
+
+                {temMais && !carregandoMais && !erroMais && (
                   <Button variant="outline" size="sm" onClick={() => void carregarMais()}>
                     Carregar mais
                   </Button>
+                )}
+
+                {!temMais && !carregandoMais && !erroMais && leads.length > 0 && (
+                  <span>Todos os leads deste filtro foram carregados.</span>
                 )}
               </div>
             </>
