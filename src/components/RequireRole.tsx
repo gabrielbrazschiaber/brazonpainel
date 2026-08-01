@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth, roleHome, type AppRole } from "@/lib/auth";
 import { TermosGate } from "@/components/TermosGate";
@@ -32,23 +32,53 @@ function SemPapel() {
   );
 }
 
+/** Falha de rede ao consultar o papel: nunca confundir com ausência de perfil. */
+function FalhaConexao() {
+  const { refresh } = useAuth();
+  const [tentando, setTentando] = useState(false);
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md space-y-4 text-center">
+        <h1 className="text-xl font-semibold text-foreground">Falha de conexão</h1>
+        <p className="text-sm text-muted-foreground">
+          Não conseguimos verificar seu perfil de acesso agora. Confira sua conexão e
+          tente novamente.
+        </p>
+        <Button
+          disabled={tentando}
+          onClick={() => {
+            setTentando(true);
+            void refresh().finally(() => setTentando(false));
+          }}
+        >
+          {tentando ? "Tentando..." : "Tentar novamente"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function RequireRole({ role, children }: { role: AppRole; children: ReactNode }) {
-  const { loading, session, role: userRole } = useAuth();
+  const { loading, session, role: userRole, estadoPapel, roleResolvido } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (loading) return;
     if (!session) {
       void navigate({ to: "/login", replace: true });
-    } else if (userRole && userRole !== role) {
+      // Só redireciona por papel diferente quando o papel está resolvido.
+    } else if (roleResolvido && userRole && userRole !== role) {
       void navigate({ to: roleHome(userRole), replace: true });
     }
-  }, [loading, session, userRole, role, navigate]);
+  }, [loading, session, roleResolvido, userRole, role, navigate]);
 
   // Enquanto carrega, sem sessão ou papel incorreto: mostra apenas spinner.
-  // NUNCA renderiza o conteúdo protegido antes da verificação ser concluída.
+  // NUNCA renderiza o conteúdo protegido, nem tela de bloqueio, antes da
+  // verificação do papel ser concluída.
   if (loading || !session) return <Spinner />;
-  if (!userRole) return <SemPapel />;
+  if (estadoPapel === "erro") return <FalhaConexao />;
+  if (!roleResolvido) return <Spinner />;
+  if (estadoPapel === "sem_papel") return <SemPapel />;
   if (userRole !== role) return <Spinner />;
 
   return <TermosGate>{children}</TermosGate>;
