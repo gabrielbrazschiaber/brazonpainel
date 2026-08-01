@@ -74,18 +74,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUserData = useCallback(async (userId: string) => {
     const id = ++cargaAtual.current;
     const aindaValido = () => montado.current && cargaAtual.current === id;
+    // Papel volta a "não resolvido" antes da consulta: nenhum consumidor pode
+    // reaproveitar o estado anterior durante a transição.
+    setEstadoPapel("carregando");
 
     try {
-      const [{ data: prof }, { data: roles }] = await Promise.all([
-        supabase.from("profiles").select("id,email,nome").eq("id", userId).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", userId),
-      ]);
+      const [{ data: prof, error: erroProf }, { data: roles, error: erroRoles }] =
+        await Promise.all([
+          supabase.from("profiles").select("id,email,nome").eq("id", userId).maybeSingle(),
+          supabase.from("user_roles").select("role").eq("user_id", userId),
+        ]);
       if (!aindaValido()) return;
+      // Erro na consulta de papel NÃO é ausência de papel.
+      if (erroRoles) throw erroRoles;
+      if (erroProf) throw erroProf;
 
       setProfile(prof ?? null);
       const roleList = (roles ?? []).map((r) => r.role as AppRole);
       const priority: AppRole[] = ["admin", "vendedor", "cliente"];
-      setRole(priority.find((p) => roleList.includes(p)) ?? null);
+      const papel = priority.find((p) => roleList.includes(p)) ?? null;
+      setRole(papel);
+      setEstadoPapel(papel ? "resolvido" : "sem_papel");
 
       // Permissões do(s) papel(éis) — usadas só para desenhar a interface.
       // A autorização real é sempre revalidada no servidor a cada chamada.
@@ -103,15 +112,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       usuarioCarregado.current = userId;
     } catch {
-      // Falha de rede não pode deixar o app preso no spinner: mantém o que
-      // já existe e permite nova tentativa no próximo evento de auth.
-      if (aindaValido()) usuarioCarregado.current = null;
+      // Falha de rede fica em estado de erro (com opção de tentar novamente),
+      // nunca como "sem papel".
+      if (aindaValido()) {
+        usuarioCarregado.current = null;
+        setEstadoPapel("erro");
+      }
     }
   }, []);
 
   const refresh = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
     setSession(data.session);
+    setSessaoResolvida(true);
     if (data.session?.user) {
       usuarioCarregado.current = null;
       await loadUserData(data.session.user.id);
@@ -126,10 +139,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!montado.current) return;
       setSession(newSession);
+      setSessaoResolvida(true);
 
       if (!newSession?.user) {
         limparDadosUsuario();
-        setLoading(false);
         return;
       }
       // Só recarrega quando muda de usuário ou quando ainda não há dados.
@@ -138,28 +151,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (usuarioCarregado.current === newSession.user.id) return;
 
+      // Troca de conta: invalida o papel antigo imediatamente, ainda dentro do
+      // callback, para que ninguém decida com base nele.
+      if (usuarioCarregado.current !== null) limparDadosUsuario();
+      setEstadoPapel("carregando");
+
       const userId = newSession.user.id;
       // setTimeout(0): não fazer chamadas ao Supabase dentro do callback de auth.
       setTimeout(() => {
         if (!montado.current) return;
-        void loadUserData(userId).finally(() => {
-          if (montado.current) setLoading(false);
-        });
+        void loadUserData(userId);
       }, 0);
     });
 
-    void supabase.auth
-      .getSession()
-      .then(async ({ data }) => {
-        if (!montado.current) return;
-        setSession(data.session);
-        if (data.session?.user && usuarioCarregado.current !== data.session.user.id) {
-          await loadUserData(data.session.user.id);
-        }
-      })
-      .finally(() => {
-        if (montado.current) setLoading(false);
-      });
+    void supabase.auth.getSession().then(async ({ data }) => {
+      if (!montado.current) return;
+      setSession(data.session);
+      if (data.session?.user && usuarioCarregado.current !== data.session.user.id) {
+        // Marca a sessão como resolvida junto com o papel pendente, para que
+        // `loading` nunca fique false com o papel ainda em voo.
+        setSessaoResolvida(true);
+        await loadUserData(data.session.user.id);
+      } else {
+        if (!data.session) limparDadosUsuario();
+        setSessaoResolvida(true);
+      }
+    });
 
     return () => {
       montado.current = false;
@@ -175,8 +192,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cargaAtual.current++;
       limparDadosUsuario();
       setSession(null);
+      setSessaoResolvida(true);
     }
   }, [limparDadosUsuario]);
+
+  // Carregando enquanto a sessão OU o papel ainda estiverem em voo.
+  const loading = !sessaoResolvida || (Boolean(session) && estadoPapel === "carregando");
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -184,14 +205,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       profile,
       role,
+      estadoPapel,
+      roleResolvido: estadoPapel === "resolvido" || estadoPapel === "sem_papel",
       permissoes,
       can: (permissao: AppPermission) => permissoes.includes(permissao),
       loading,
       signOut,
       refresh,
     }),
-    [session, profile, role, permissoes, loading, signOut, refresh],
+    [session, profile, role, estadoPapel, permissoes, loading, signOut, refresh],
   );
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
