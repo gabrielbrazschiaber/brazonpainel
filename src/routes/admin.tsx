@@ -268,6 +268,16 @@ function AdminArea() {
   // Hooks precisam vir antes de qualquer retorno condicional.
   const { secao: secaoBuscada } = Route.useSearch();
 
+  const chaveTour =
+    tab === "config"
+      ? "tela:admin-configuracoes"
+      : tab === "clientes"
+        ? "tela:admin-clientes"
+        : tab === "dashboard"
+          ? "tela:admin-dashboard"
+          : "";
+  useTourDaTela(chaveTour, !loading && chaveTour !== "");
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -278,15 +288,6 @@ function AdminArea() {
 
   const navItems = ADMIN_NAV_ITEMS;
 
-  const chaveTour =
-    tab === "config"
-      ? "tela:admin-configuracoes"
-      : tab === "clientes"
-        ? "tela:admin-clientes"
-        : tab === "dashboard"
-          ? "tela:admin-dashboard"
-          : "";
-  useTourDaTela(chaveTour, !loading && chaveTour !== "");
 
   const renderSecao: Record<string, () => React.ReactNode> = {
     cupons: () => <CuponsTab />,
