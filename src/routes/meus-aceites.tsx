@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ChevronLeft, FileCheck2 } from "lucide-react";
@@ -90,6 +91,7 @@ function MeusAceitesPage() {
 
   return (
     <div className="min-h-screen bg-background px-4 py-8 md:py-12">
+      <ThemeToggle className="fixed right-3 top-3 z-50 bg-card/70 backdrop-blur sm:right-4 sm:top-4" />
       <div className="mx-auto max-w-3xl">
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <Link to={roleHome(role)}>

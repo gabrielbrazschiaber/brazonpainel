@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -243,6 +244,7 @@ function CadastroPage() {
   if (done) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <ThemeToggle className="fixed right-3 top-3 z-50 bg-card/70 backdrop-blur sm:right-4 sm:top-4" />
         <Card className="max-w-md p-8 text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
           <h1 className="mt-4 text-xl font-bold text-foreground">Cadastro concluído!</h1>
@@ -298,6 +300,7 @@ function CadastroPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <ThemeToggle className="fixed right-3 top-3 z-50 bg-card/70 backdrop-blur sm:right-4 sm:top-4" />
       <Card className="w-full max-w-md p-6 sm:p-8">
         <BrazonLogo className="mb-5" />
         <h1 className="text-xl font-bold text-foreground">Crie sua conta e assine</h1>
