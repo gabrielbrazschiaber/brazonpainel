@@ -653,9 +653,22 @@ export function ImportarBancoDialog({
                 <span className="font-medium">{arquivo.nome}</span>
                 <Badge variant="secondary">{linhas.length} linha(s)</Badge>
                 <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
-                  {validas.length} pronta(s)
+                  {validas.length} válida(s)
                 </Badge>
+                {contadores.comAvisos > 0 ? (
+                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                    {contadores.comAvisos} com aviso
+                  </Badge>
+                ) : null}
+                {contadores.comCriticos > 0 ? (
+                  <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
+                    {contadores.comCriticos} com aviso crítico
+                  </Badge>
+                ) : null}
                 {comErro > 0 ? <Badge variant="destructive">{comErro} com erro</Badge> : null}
+                {excluidas.length > 0 ? (
+                  <Badge variant="outline">{excluidas.length} excluída(s)</Badge>
+                ) : null}
                 {semCnpj > 0 ? <Badge variant="outline">{semCnpj} sem CNPJ</Badge> : null}
                 {cnpjCompletados > 0 ? (
                   <Badge className="bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
@@ -663,6 +676,7 @@ export function ImportarBancoDialog({
                   </Badge>
                 ) : null}
               </div>
+
 
               {faltamObrigatorios.length > 0 ? (
                 <p className="flex items-center gap-2 text-sm text-destructive">
