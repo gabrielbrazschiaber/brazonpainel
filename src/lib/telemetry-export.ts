@@ -16,6 +16,13 @@
  * Falhas de rede são silenciosas — telemetria jamais quebra a aplicação.
  */
 
+import { validarLoteExportado } from "@/lib/telemetry-schema";
+import {
+  enfileirar as enfileirarNoBuffer,
+  registrarEnviador,
+  tamanho as tamanhoBuffer,
+} from "@/lib/telemetry-buffer";
+
 const env = import.meta.env as unknown as Record<string, string | undefined>;
 
 const URL_GENERICA = env["VITE_TELEMETRY_EXPORT_URL"];
@@ -74,20 +81,58 @@ function paraPayload(eventos: EventoExportado[]) {
   }));
 }
 
-/** Envia um lote para todos os destinos configurados. Nunca lança. */
-export async function exportarEventos(eventos: EventoExportado[]): Promise<void> {
-  if (eventos.length === 0) return;
+/** Filtra eventos inválidos (fora do contrato), avisando no console. */
+function filtrarValidos(eventos: EventoExportado[]): EventoExportado[] {
+  const resultado = validarLoteExportado(eventos);
+  if (resultado.ok) return eventos;
+
+  const indicesInvalidos = new Set(resultado.invalidos.map((i) => i.indice));
+  for (const item of resultado.invalidos) {
+    console.warn(
+      "[telemetria] evento exportado inválido descartado",
+      { faltando: item.faltando, invalidos: item.invalidos },
+      eventos[item.indice],
+    );
+  }
+  return eventos.filter((_, indice) => !indicesInvalidos.has(indice));
+}
+
+/** Envia (sem retry) um lote para todos os destinos. Lança se algum falhar. */
+async function enviarParaDestinos(eventos: EventoExportado[]): Promise<void> {
   const alvos = destinos();
   if (alvos.length === 0) return;
 
   const body = JSON.stringify(paraPayload(eventos));
-  await Promise.all(
-    alvos.map(async ({ url, headers }) => {
-      try {
-        await fetch(url, { method: "POST", headers, body, keepalive: true, mode: "cors" });
-      } catch {
-        /* silencioso por design */
-      }
-    }),
+  const resultados = await Promise.allSettled(
+    alvos.map(({ url, headers }) =>
+      fetch(url, { method: "POST", headers, body, keepalive: true, mode: "cors" }).then((r) => {
+        if (!r.ok) throw new Error(`telemetria: destino respondeu ${r.status}`);
+      }),
+    ),
   );
+
+  const falhou = resultados.some((r) => r.status === "rejected");
+  if (falhou) throw new Error("telemetria: falha ao enviar para um ou mais destinos");
+}
+
+/** Envia um lote para todos os destinos configurados. Nunca lança. */
+export async function exportarEventos(eventos: EventoExportado[]): Promise<void> {
+  if (eventos.length === 0) return;
+  const validos = filtrarValidos(eventos);
+  if (validos.length === 0) return;
+  if (destinos().length === 0) return;
+
+  try {
+    await enviarParaDestinos(validos);
+  } catch {
+    // Falha de rede/HTTP: preserva o lote no buffer durável em vez de perder.
+    enfileirarNoBuffer(validos);
+    // Reenvio fica a cargo do buffer (backoff exponencial + volta de rede/foco).
+    registrarEnviador(enviarParaDestinos);
+  }
+}
+
+/** Estado da exportação de telemetria, para diagnóstico (painéis internos, debug). */
+export function estadoExportacao(): { ativo: boolean; pendentes: number } {
+  return { ativo: exportacaoExternaAtiva(), pendentes: tamanhoBuffer() };
 }

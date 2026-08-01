@@ -1,6 +1,7 @@
 import {
   Activity,
   ClipboardList,
+  GraduationCap,
   KeyRound,
   LayoutDashboard,
   Megaphone,
@@ -109,6 +110,14 @@ export const SECOES_CONFIG_META: readonly SecaoConfigMeta[] = [
     label: "Acesso e sessão",
     descricao: "Métricas de login e regressões",
     icon: Activity,
+    permissao: "auditoria.ler",
+    roles: ["admin"],
+  },
+  {
+    value: "tutoriais",
+    label: "Tutoriais",
+    descricao: "Auditoria do onboarding da equipe",
+    icon: GraduationCap,
     permissao: "auditoria.ler",
     roles: ["admin"],
   },

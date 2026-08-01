@@ -1,5 +1,6 @@
 import * as React from "react";
-import { HelpCircle } from "lucide-react";
+import { toast } from "sonner";
+import { HelpCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -18,7 +19,9 @@ import { ReverTutoriais } from "@/components/onboarding/ReverTutoriais";
  */
 export function AjudaDaTela({ chave }: { chave: string }) {
   const [aberto, setAberto] = React.useState(false);
-  const { reiniciar } = useOnboarding();
+  const { reiniciar, temTutorial } = useOnboarding();
+  const [reiniciando, setReiniciando] = React.useState(false);
+  const temTourDaTela = temTutorial(chave);
   const resumo = RESUMOS_TELA[chave];
 
   if (!resumo) return null;
@@ -52,15 +55,35 @@ export function AjudaDaTela({ chave }: { chave: string }) {
           </ul>
 
           <div className="mt-6 space-y-3 border-t border-border pt-4">
-            <Button
-              className="w-full"
-              onClick={async () => {
-                setAberto(false);
-                await reiniciar(chave);
-              }}
-            >
-              Rever tutorial desta tela
-            </Button>
+            {temTourDaTela && (
+              <Button
+                className="w-full"
+                disabled={reiniciando}
+                onClick={async () => {
+                  // Reinicia SOMENTE a chave desta tela; os outros tutoriais
+                  // permanecem como estão.
+                  setReiniciando(true);
+                  try {
+                    const feito = await reiniciar(chave);
+                    if (feito) {
+                      setAberto(false);
+                      toast.success("Tutorial desta tela reiniciado.");
+                    } else {
+                      toast.info("Esta tela não tem tutorial disponível para o seu acesso.");
+                    }
+                  } catch (e) {
+                    toast.error(
+                      e instanceof Error ? e.message : "Não foi possível reiniciar o tutorial.",
+                    );
+                  } finally {
+                    setReiniciando(false);
+                  }
+                }}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                {reiniciando ? "Reiniciando..." : "Rever tutorial desta tela"}
+              </Button>
+            )}
             <ReverTutoriais compacto onFeito={() => setAberto(false)} />
           </div>
         </SheetContent>

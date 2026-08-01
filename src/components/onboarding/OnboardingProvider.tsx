@@ -4,8 +4,8 @@ import { useAuth } from "@/lib/auth";
 import type { AppRole } from "@/lib/permissions";
 import {
   CHAVE_BOAS_VINDAS,
-  tutorialPara,
-  tutoriaisDoPapel,
+  tutorialVisivel,
+  tutoriaisVisiveis,
   type Tutorial,
 } from "@/lib/onboarding";
 import {
@@ -25,7 +25,14 @@ interface OnboardingCtx {
   iniciar: (chave: string) => void;
   concluir: (chave: string) => void;
   pular: (chave: string, passo?: number) => void;
-  reiniciar: (chave?: string) => Promise<void>;
+  /**
+   * Reinicia UM tutorial (ou todos, sem chave). Devolve false quando o
+   * tutorial não existe para o papel/permissões do usuário — nesse caso nada
+   * é apagado no servidor.
+   */
+  reiniciar: (chave?: string) => Promise<boolean>;
+  /** Existe tutorial desta tela para este usuário (papel + permissões)? */
+  temTutorial: (chave: string) => boolean;
   /** Algum tutorial (ou o dialog de boas-vindas) está na tela. */
   ocupado: boolean;
   tutoriais: readonly Tutorial[];
@@ -44,7 +51,8 @@ export function useOnboarding(): OnboardingCtx {
     iniciar: () => {},
     concluir: () => {},
     pular: () => {},
-    reiniciar: async () => {},
+    reiniciar: async () => false,
+    temTutorial: () => false,
     ocupado: false,
     tutoriais: [],
   };
@@ -55,17 +63,19 @@ export function useOnboarding(): OnboardingCtx {
  * `pronto` deve ser false enquanto houver skeleton/spinner na tela.
  */
 export function useTourDaTela(chave: string, pronto: boolean) {
-  const { carregado, visto, iniciar, ocupado } = useOnboarding();
+  const { carregado, visto, iniciar, ocupado, temTutorial } = useOnboarding();
   const disparado = React.useRef(false);
 
   React.useEffect(() => {
     if (disparado.current) return;
     if (!carregado || !pronto || ocupado) return;
+    // Sem tutorial visível para este papel/permissões não há o que abrir.
+    if (!temTutorial(chave)) return;
     if (visto(chave)) return;
     disparado.current = true;
     const t = window.setTimeout(() => iniciar(chave), 450);
     return () => window.clearTimeout(t);
-  }, [carregado, pronto, ocupado, chave, visto, iniciar]);
+  }, [carregado, pronto, ocupado, chave, visto, iniciar, temTutorial]);
 }
 
 interface ItemProgresso {
@@ -81,7 +91,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 }
 
 function ProviderInterno({ children }: { children: React.ReactNode }) {
-  const { user, role, roleResolvido } = useAuth();
+  const { user, role, roleResolvido, can } = useAuth();
   const carregar = useServerFn(meuProgressoOnboarding);
   const marcar = useServerFn(marcarTutorial);
   const reiniciarFn = useServerFn(reiniciarOnboarding);
@@ -92,6 +102,17 @@ function ProviderInterno({ children }: { children: React.ReactNode }) {
   const [boasVindasAberto, setBoasVindasAberto] = React.useState(false);
 
   const userId = user?.id ?? null;
+
+  // `can` vem do AuthProvider e muda quando as permissões carregam.
+  const pode = React.useCallback(
+    (permissao: string) => can(permissao as Parameters<typeof can>[0]),
+    [can],
+  );
+
+  const tutorialDe = React.useCallback(
+    (chave: string) => tutorialVisivel(chave, role, pode),
+    [role, pode],
+  );
 
   React.useEffect(() => {
     let ativo = true;
@@ -176,16 +197,21 @@ function ProviderInterno({ children }: { children: React.ReactNode }) {
 
   const reiniciar = React.useCallback(
     async (chave?: string) => {
+      // Reiniciar só o que este usuário pode ver: sem isso um vendedor sem
+      // permissão apagaria o progresso de um tutorial que nunca abriria.
+      if (chave && !tutorialDe(chave)) return false;
+
       await reiniciarFn({ data: { chave: chave ?? null } });
       setItens((atuais) => (chave ? atuais.filter((i) => i.chave !== chave) : []));
       setChaveAtiva(null);
       if (!chave || chave === CHAVE_BOAS_VINDAS) setBoasVindasAberto(true);
       else setChaveAtiva(chave);
+      return true;
     },
-    [reiniciarFn],
+    [reiniciarFn, tutorialDe],
   );
 
-  const tutorialAtivo = chaveAtiva ? tutorialPara(chaveAtiva, role) : undefined;
+  const tutorialAtivo = chaveAtiva ? tutorialDe(chaveAtiva) : undefined;
   const passoInicial = chaveAtiva
     ? (itens.find((i) => i.chave === chaveAtiva && i.status === "em_andamento")?.passo_parou ?? 0)
     : 0;
@@ -199,13 +225,26 @@ function ProviderInterno({ children }: { children: React.ReactNode }) {
       concluir,
       pular,
       reiniciar,
+      temTutorial: (chave: string) => Boolean(tutorialDe(chave)),
       ocupado: boasVindasAberto || chaveAtiva !== null,
-      tutoriais: tutoriaisDoPapel(role),
+      tutoriais: tutoriaisVisiveis(role, pode),
     }),
-    [carregado, role, visto, iniciar, concluir, pular, reiniciar, boasVindasAberto, chaveAtiva],
+    [
+      carregado,
+      role,
+      visto,
+      iniciar,
+      concluir,
+      pular,
+      reiniciar,
+      tutorialDe,
+      pode,
+      boasVindasAberto,
+      chaveAtiva,
+    ],
   );
 
-  const tutorialBoasVindas = tutorialPara(CHAVE_BOAS_VINDAS, role);
+  const tutorialBoasVindas = tutorialDe(CHAVE_BOAS_VINDAS);
 
   return (
     <Ctx.Provider value={valor}>

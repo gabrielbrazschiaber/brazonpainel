@@ -1406,6 +1406,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auth_telemetria_alertas: {
+        Args: {
+          _base_horas?: number
+          _janela_horas?: number
+          _minimo_incidentes?: number
+        }
+        Returns: {
+          app_version: string
+          eventos_base: number
+          eventos_janela: number
+          fator: number
+          incidentes_base: number
+          incidentes_janela: number
+          rota: string
+          severidade: string
+          taxa_base: number
+          taxa_janela: number
+          ultima: string
+          ultimo_erro: string
+        }[]
+      }
       auth_telemetria_resumo: {
         Args: { _dias?: number }
         Returns: {
@@ -1418,6 +1439,21 @@ export type Database = {
           tipo: string
           total: number
           ultima: string
+        }[]
+      }
+      auth_telemetria_trace: {
+        Args: { _trace_id: string }
+        Returns: {
+          app_version: string
+          created_at: string
+          duracao_ms: number
+          erro: string
+          id: string
+          motivo: string
+          papel: string
+          rota: string
+          tipo: string
+          user_id: string
         }[]
       }
       current_vendedor_id: { Args: never; Returns: string }

@@ -33,10 +33,12 @@ export function ReverTutoriais({
   async function aplicar(chave?: string) {
     setSalvando(true);
     try {
-      await reiniciar(chave);
-      toast.success(
-        chave ? "Tutorial reiniciado." : "Todos os tutoriais foram reiniciados.",
-      );
+      const feito = await reiniciar(chave);
+      if (!feito) {
+        toast.info("Este tutorial não está disponível para o seu acesso.");
+        return;
+      }
+      toast.success(chave ? "Tutorial reiniciado." : "Todos os tutoriais foram reiniciados.");
       onFeito?.();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível reiniciar.");
