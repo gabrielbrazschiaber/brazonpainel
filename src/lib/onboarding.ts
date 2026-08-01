@@ -594,6 +594,28 @@ const TELA_SOLICITACOES: Tutorial = {
   ],
 };
 
+const TELA_BANCO_LEADS: Tutorial = {
+  chave: "tela:banco-leads",
+  titulo: "Banco de Leads",
+  papeis: ["admin", "vendedor"],
+  passos: [
+    {
+      alvo: '[data-tour="banco-leads"]',
+      titulo: "O repositório central",
+      corpo:
+        "Só o admin abastece o Banco de Leads. Os vendedores puxam leads daqui para a própria carteira em Gestão comercial.",
+      posicao: "bottom",
+    },
+    {
+      alvo: '[data-tour="banco-cota"]',
+      titulo: "Sua cota da hora",
+      corpo:
+        "São até 20 leads por hora. O contador mostra quanto resta e a que horas a cota volta ao total.",
+      posicao: "bottom",
+    },
+  ],
+};
+
 export const TUTORIAIS: readonly Tutorial[] = [
   BOAS_VINDAS_ADMIN,
   BOAS_VINDAS_VENDEDOR,
@@ -602,6 +624,7 @@ export const TUTORIAIS: readonly Tutorial[] = [
   TELA_ADMIN_CLIENTES,
   TELA_ADMIN_CONFIG,
   TELA_COMERCIAL,
+  TELA_BANCO_LEADS,
   TELA_TAREFAS,
   TELA_VENDEDOR,
   TELA_CLIENTE,
