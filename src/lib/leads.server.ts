@@ -1,6 +1,7 @@
 /** Lógica server-only do módulo comercial (leads, reuniões e dashboard). */
 import {
   ESTAGIOS_FECHADOS,
+  ESTAGIOS_SEM_FOLLOW_UP,
   apenasDigitos,
   razao,
   type LeadEstagio,
@@ -16,7 +17,10 @@ import type {
   dashboardSchema,
   followUpsSchema,
   reagendarFollowUpSchema,
+  registrarFollowUpSchema,
+  reativarCadenciaSchema,
 } from "@/lib/leads.schemas";
+
 
 // Cliente tipado do usuário logado (RLS ativa). Tipo frouxo de propósito.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
