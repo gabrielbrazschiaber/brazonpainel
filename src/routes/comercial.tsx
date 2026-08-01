@@ -387,6 +387,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     <TelaShell
       voltarPara={home}
       area="Gestão comercial"
+      trilha={[{ rotulo: "Painel", para: home }, { rotulo: "Gestão comercial" }]}
+
       headerExtra={
         <Suspense fallback={null}>
           <AjudaDaTela chave="tela:comercial" />
