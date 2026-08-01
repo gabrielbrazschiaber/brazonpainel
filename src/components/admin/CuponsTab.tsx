@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CampoComAjuda } from "@/components/onboarding/CampoComAjuda";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -265,7 +266,7 @@ export function CuponsTab() {
           {form && (
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="c-codigo">Código</Label>
+                <CampoComAjuda ajuda="cupom.codigo" htmlFor="c-codigo">Código</CampoComAjuda>
                 <Input
                   id="c-codigo"
                   value={form.codigo}
@@ -285,7 +286,7 @@ export function CuponsTab() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="c-valor">Valor do desconto (R$)</Label>
+                  <CampoComAjuda ajuda="cupom.desconto" htmlFor="c-valor">Valor do desconto (R$)</CampoComAjuda>
                   <Input
                     id="c-valor"
                     inputMode="decimal"
@@ -295,7 +296,7 @@ export function CuponsTab() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="c-max">Limite de usos (vazio = ilimitado)</Label>
+                  <CampoComAjuda ajuda="cupom.limite_usos" htmlFor="c-max">Limite de usos (vazio = ilimitado)</CampoComAjuda>
                   <Input
                     id="c-max"
                     inputMode="numeric"
@@ -308,7 +309,7 @@ export function CuponsTab() {
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="c-validade">Validade (opcional)</Label>
+                <CampoComAjuda ajuda="cupom.validade" htmlFor="c-validade">Validade (opcional)</CampoComAjuda>
                 <Input
                   id="c-validade"
                   type="date"

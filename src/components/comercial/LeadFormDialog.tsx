@@ -8,6 +8,7 @@ import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CampoComAjuda } from "@/components/onboarding/CampoComAjuda";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -240,7 +241,7 @@ export function LeadFormDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="segmento">Segmento</Label>
+            <CampoComAjuda ajuda="lead.segmento" htmlFor="segmento">Segmento</CampoComAjuda>
             <Input
               id="segmento"
               list="segmentos-sugeridos"
@@ -294,7 +295,7 @@ export function LeadFormDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="valor">Valor estimado (R$)</Label>
+            <CampoComAjuda ajuda="lead.valor_estimado" htmlFor="valor">Valor estimado (R$)</CampoComAjuda>
             <Input
               id="valor"
               inputMode="decimal"
