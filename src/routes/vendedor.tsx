@@ -56,6 +56,7 @@ import {
   Share2,
   Ticket,
   Target,
+  Database,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
@@ -183,6 +184,7 @@ function VendedorArea() {
     { value: "painel", label: "Painel", icon: LayoutDashboard, to: "/vendedor" },
     { value: "tarefas", label: "Tarefas", icon: ClipboardList, to: "/tarefas" },
     { value: "comercial", label: "Comercial", icon: Target, to: "/comercial" },
+    { value: "banco-leads", label: "Banco de Leads", icon: Database, to: "/banco-leads" },
     { value: "indicacoes", label: "Indicações", icon: Share2 },
     { value: "cupons", label: "Meus cupons", icon: Ticket },
     { value: "clientes", label: "Meus clientes", icon: Users },

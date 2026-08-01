@@ -594,6 +594,28 @@ const TELA_SOLICITACOES: Tutorial = {
   ],
 };
 
+const TELA_BANCO_LEADS: Tutorial = {
+  chave: "tela:banco-leads",
+  titulo: "Banco de Leads",
+  papeis: ["admin", "vendedor"],
+  passos: [
+    {
+      alvo: '[data-tour="banco-leads"]',
+      titulo: "O repositório central",
+      corpo:
+        "Só o admin abastece o Banco de Leads. Os vendedores puxam leads daqui para a própria carteira em Gestão comercial.",
+      posicao: "bottom",
+    },
+    {
+      alvo: '[data-tour="banco-cota"]',
+      titulo: "Sua cota da hora",
+      corpo:
+        "São até 20 leads por hora. O contador mostra quanto resta e a que horas a cota volta ao total.",
+      posicao: "bottom",
+    },
+  ],
+};
+
 export const TUTORIAIS: readonly Tutorial[] = [
   BOAS_VINDAS_ADMIN,
   BOAS_VINDAS_VENDEDOR,
@@ -602,6 +624,7 @@ export const TUTORIAIS: readonly Tutorial[] = [
   TELA_ADMIN_CLIENTES,
   TELA_ADMIN_CONFIG,
   TELA_COMERCIAL,
+  TELA_BANCO_LEADS,
   TELA_TAREFAS,
   TELA_VENDEDOR,
   TELA_CLIENTE,
@@ -708,6 +731,17 @@ export const RESUMOS_TELA: Record<string, ResumoTela> = {
       "A régua de cadência reagenda o próximo contato em 2, 4, 7 e 15 dias.",
       "Importar planilha permite revisar antes de confirmar e desfazer em até 24 horas.",
       "Leads incompletos são os que entraram sem telefone ou e-mail.",
+    ],
+  },
+  "tela:banco-leads": {
+    titulo: "Banco de Leads",
+    resumo: "Repositório central que o admin abastece e os vendedores consomem.",
+    topicos: [
+      "Só o admin importa listas e cadastra leads no banco.",
+      "Cada vendedor puxa até 20 leads por hora para a própria carteira.",
+      "Telefone e e-mail ficam ocultos até o lead ser puxado.",
+      "Leads sem nenhum contato registrado voltam ao banco automaticamente após o prazo configurado.",
+      "Depois de três devoluções o lead é arquivado.",
     ],
   },
   "tela:tarefas": {

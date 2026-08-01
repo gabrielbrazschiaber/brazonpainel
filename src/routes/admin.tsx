@@ -171,6 +171,7 @@ interface Config {
   nome_app: string | null;
   dominio: string | null;
   dias_aviso_vencimento: number | null;
+  dias_devolver_lead: number | null;
   percentual_comissao_padrao: number | null;
   asaas_webhook_url: string | null;
   asaas_ambiente: "producao" | "sandbox" | null;
@@ -247,6 +248,7 @@ function AdminArea() {
           nome_app: "",
           dominio: "",
           dias_aviso_vencimento: 5,
+          dias_devolver_lead: 7,
           percentual_comissao_padrao: 10,
           asaas_webhook_url: "",
           asaas_ambiente: "sandbox",
@@ -1360,6 +1362,7 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
       nome_app: "",
       dominio: "",
       dias_aviso_vencimento: 5,
+      dias_devolver_lead: 7,
       percentual_comissao_padrao: 10,
       asaas_webhook_url: "",
       asaas_ambiente: "sandbox",
@@ -1470,6 +1473,7 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
           nome_app: form.nome_app ?? "",
           dominio: form.dominio ?? "",
           dias_aviso_vencimento: Number(form.dias_aviso_vencimento) || 0,
+          dias_devolver_lead: Math.min(30, Math.max(3, Number(form.dias_devolver_lead) || 7)),
           percentual_comissao_padrao: Number(form.percentual_comissao_padrao) || 0,
           asaas_webhook_url: form.asaas_webhook_url ?? "",
           asaas_ambiente: form.asaas_ambiente ?? "sandbox",
@@ -1561,6 +1565,23 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
                   : "Nenhum lembrete gerado ainda."}
               </span>
             </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="cdevolver">Dias até devolver lead</Label>
+            <Input
+              id="cdevolver"
+              type="number"
+              min={3}
+              max={30}
+              value={form.dias_devolver_lead ?? 7}
+              onChange={(e) => set("dias_devolver_lead", Number(e.target.value))}
+            />
+            <p className="text-xs text-muted-foreground">
+              Leads puxados do Banco de Leads e não trabalhados voltam ao banco depois desse
+              prazo (entre 3 e 30 dias). O vendedor é avisado um dia antes. A rotina roda todos os
+              dias às 8h (horário de Brasília).
+            </p>
           </div>
 
           <div className="grid gap-2">
