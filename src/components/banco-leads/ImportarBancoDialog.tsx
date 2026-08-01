@@ -423,6 +423,8 @@ export function ImportarBancoDialog({
                 empresa: _emp,
                 cnpjCompletado: _cc,
                 cnpjCientifico: _ci,
+                cnpjExplicacao: _ce,
+
                 ...campos
               }) => campos,
             ),
