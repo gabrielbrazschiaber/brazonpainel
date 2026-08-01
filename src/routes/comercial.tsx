@@ -652,8 +652,9 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                         </TableCell>
                         <TableCell className="text-right">{l.reunioes_count}</TableCell>
                         <TableCell>
-                          {l.proximo_contato ? formatDate(l.proximo_contato) : "—"}
+                          <ProximoContatoCell lead={l} />
                         </TableCell>
+
                         <TableCell className="text-right">
                           <div
                             className="flex justify-end gap-1"
