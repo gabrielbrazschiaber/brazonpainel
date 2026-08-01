@@ -113,15 +113,18 @@ function origemLabel(t: Tarefa): string {
 }
 
 function TarefasPage() {
-  const { loading, session, role } = useAuth();
+  const { loading, session, role, roleResolvido } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !session) navigate({ to: "/login" });
-    else if (!loading && role === "cliente") navigate({ to: "/solicitacoes", replace: true });
-  }, [loading, session, role, navigate]);
+    if (loading) return;
+    if (!session) navigate({ to: "/login" });
+    else if (roleResolvido && role === "cliente") {
+      navigate({ to: "/solicitacoes", replace: true });
+    }
+  }, [loading, session, role, roleResolvido, navigate]);
 
-  if (loading || !session || !role || role === "cliente") {
+  if (loading || !session || !roleResolvido || !role || role === "cliente") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />

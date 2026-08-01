@@ -16,13 +16,17 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const navigate = useNavigate();
-  const { loading, session, role } = useAuth();
+  const { loading, session, role, roleResolvido } = useAuth();
 
   useEffect(() => {
     if (loading) return;
-    if (session) navigate({ to: roleHome(role) });
-    else navigate({ to: "/login" });
-  }, [loading, session, role, navigate]);
+    if (!session) {
+      navigate({ to: "/login" });
+      return;
+    }
+    // Só decide o destino depois que o papel estiver resolvido.
+    if (roleResolvido) navigate({ to: roleHome(role) });
+  }, [loading, session, role, roleResolvido, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

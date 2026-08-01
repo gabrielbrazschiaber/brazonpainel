@@ -127,14 +127,14 @@ interface PlanoOpcao {
 }
 
 function SolicitacoesPage() {
-  const { loading, session, role } = useAuth();
+  const { loading, session, role, roleResolvido } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
   }, [loading, session, navigate]);
 
-  if (loading || !session || !role) {
+  if (loading || !session || !roleResolvido || !role) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
