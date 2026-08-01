@@ -130,6 +130,7 @@ export const criarLoteBancoSchema = z.object({
 /** Um bloco de linhas de um lote já criado. */
 export const importarBlocoBancoSchema = z.object({
   lote_id: z.string().uuid(),
+  origem: z.enum(LEAD_ORIGENS).default("prospeccao_ativa"),
   linhas: z.array(linhaBancoSchema).min(1, "Nenhuma linha para importar").max(500),
 });
 

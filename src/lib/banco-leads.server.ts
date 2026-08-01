@@ -347,7 +347,11 @@ interface LoteContexto {
   bloqueado_ate: string | null;
 }
 
-async function contextoDoLote(supabase: Sb, loteId: string): Promise<LoteContexto> {
+async function contextoDoLote(
+  supabase: Sb,
+  loteId: string,
+  origem: LeadOrigem,
+): Promise<LoteContexto> {
   const { data, error } = await supabase
     .from("banco_leads_lotes")
     .select("reservado_segmento, reservado_estado, reservado_cnae, horas_reserva, created_at")
@@ -363,8 +367,7 @@ async function contextoDoLote(supabase: Sb, loteId: string): Promise<LoteContext
       : null;
 
   return {
-    // A origem fica no primeiro bloco; o padrão cobre lotes antigos.
-    origem: "prospeccao_ativa",
+    origem,
     reservado_segmento: (data.reservado_segmento as string | null) ?? null,
     reservado_estado: (data.reservado_estado as string | null) ?? null,
     reservado_cnae: (data.reservado_cnae as string | null) ?? null,
@@ -382,7 +385,7 @@ export async function importarBlocoBancoServer(
   dados: z.infer<typeof importarBlocoBancoSchema>,
 ): Promise<{ importados: number; ignorados: number; erros: { linha: number; motivo: string }[] }> {
   await exigirAdmin(supabase, userId);
-  const ctx = await contextoDoLote(supabase, dados.lote_id);
+  const ctx = await contextoDoLote(supabase, dados.lote_id, dados.origem);
 
   const erros: { linha: number; motivo: string }[] = [];
   let ignorados = 0;
