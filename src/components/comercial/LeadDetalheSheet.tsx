@@ -251,12 +251,17 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
                   <Phone className="mr-2 h-4 w-4" /> Ligar
                 </a>
               </Button>
-              <Button asChild variant="outline" size="sm">
-                <a href={linkWhatsApp(lead.telefone)} target="_blank" rel="noreferrer">
+              <Button asChild variant="outline" size="sm" disabled={zap !== "ativo"}>
+                <a
+                  href={linkWhatsApp(lead.telefone)}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={WHATSAPP_MENSAGEM[zap]}
+                >
                   WhatsApp
                 </a>
               </Button>
-              <WhatsAppIndicator telefone={lead.telefone} />
+              <WhatsAppIndicator telefone={lead.telefone} status={zap} />
             </div>
 
             <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -264,9 +269,10 @@ export function LeadDetalheSheet({ lead, aberto, onOpenChange, onAtualizado }: P
                 <dt className="text-muted-foreground">Telefone</dt>
                 <dd className="flex items-center gap-1.5">
                   {lead.telefone}
-                  <WhatsAppIndicator telefone={lead.telefone} size="sm" />
+                  <WhatsAppIndicator telefone={lead.telefone} status={zap} size="sm" />
                 </dd>
               </div>
+
 
               <div>
                 <dt className="text-muted-foreground">E-mail</dt>
