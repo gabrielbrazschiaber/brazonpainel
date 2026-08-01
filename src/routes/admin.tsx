@@ -6,6 +6,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { SairButton } from "@/components/SairButton";
 import { AppShell } from "@/components/AppShell";
 import { useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { ReverTutoriais } from "@/components/onboarding/ReverTutoriais";
+import {
+  useProgressoEquipe,
+  BadgeOnboarding,
+} from "@/components/onboarding/ProgressoEquipe";
 import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
@@ -766,6 +771,11 @@ function VendedoresTab({
                 <TableCell>
                   <div className="font-medium text-foreground">{v.nome ?? "—"}</div>
                   <div className="text-xs text-muted-foreground">{v.email ?? ""}</div>
+                  {progressoCarregado && (
+                    <div className="mt-1">
+                      <BadgeOnboarding concluido={concluidos.has(v.user_id)} />
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell className="font-mono text-sm">{v.codigo_indicacao}</TableCell>
                 <TableCell>{v.percentual_comissao}%</TableCell>
