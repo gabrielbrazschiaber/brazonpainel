@@ -126,3 +126,19 @@ export const reagendarFollowUp = createServerFn({ method: "POST" })
     const { reagendarFollowUpServer } = await import("@/lib/leads.server");
     return reagendarFollowUpServer(context.supabase, context.userId, data);
   });
+
+export const registrarFollowUp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => registrarFollowUpSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { registrarFollowUpServer } = await import("@/lib/leads.server");
+    return registrarFollowUpServer(context.supabase, context.userId, data);
+  });
+
+export const reativarCadencia = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => reativarCadenciaSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { reativarCadenciaServer } = await import("@/lib/leads.server");
+    return reativarCadenciaServer(context.supabase, context.userId, data);
+  });
