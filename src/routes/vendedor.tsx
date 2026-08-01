@@ -56,6 +56,7 @@ import {
   Share2,
   Ticket,
   Target,
+  Database,
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
