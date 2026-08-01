@@ -149,6 +149,10 @@ interface LinhaPreparada {
   cnae_descricao: string | null;
   erro: string | null;
   avisos: string[];
+  /** Zeros à esquerda acrescentados (Excel os havia removido). */
+  cnpjCompletado: boolean;
+  /** Célula veio em notação científica: dígitos perdidos, sem recuperação. */
+  cnpjCientifico: boolean;
 }
 
 function texto(valor: string | undefined, max = 120): string | null {
@@ -172,7 +176,13 @@ function primeiroSocio(valor: string | undefined): string {
   return normalizarNome(bruto.replace(/\(.*?\)/g, ""));
 }
 
-function prepararLinhas(arquivo: ArquivoLido, mapa: Destino[], catalogo: Cnae[]): LinhaPreparada[] {
+function prepararLinhas(
+  arquivo: ArquivoLido,
+  mapa: Destino[],
+  catalogo: Cnae[],
+  /** CNPJs corrigidos à mão na revisão, por número de linha. */
+  edicoes: Record<number, string> = {},
+): LinhaPreparada[] {
   const porCodigo = new Map(catalogo.map((c) => [c.codigo, c]));
   const vistos = new Set<string>();
 
@@ -198,8 +208,12 @@ function prepararLinhas(arquivo: ArquivoLido, mapa: Destino[], catalogo: Cnae[])
     const email = normalizarEmail(pega("email"));
     const uf = (pega("estado") ?? "").trim().toUpperCase().slice(0, 2);
 
-    const { cnpj, cientifico } = normalizarCnpj(pega("cnpj"));
-    if (cientifico) avisos.push("CNPJ veio em notação científica e foi descartado");
+    const bruto = pega("cnpj");
+    const editado = edicoes[i + 1];
+    const { cnpj, aviso, cientifico, completado } = normalizarCnpj(
+      editado !== undefined ? editado : bruto,
+    );
+    if (aviso) avisos.push(aviso);
 
     const cnae = normalizarCnae(pega("cnae_codigo"));
     const cnaeDesc = texto(pega("cnae_descricao"), 300);
@@ -237,6 +251,8 @@ function prepararLinhas(arquivo: ArquivoLido, mapa: Destino[], catalogo: Cnae[])
       cnae_descricao: cnaeDesc ?? doCatalogo?.descricao ?? null,
       erro,
       avisos,
+      cnpjCompletado: completado,
+      cnpjCientifico: cientifico,
     };
   });
 }
@@ -278,9 +294,11 @@ export function ImportarBancoDialog({
   const [etapa, setEtapa] = useState("");
   const [salvando, setSalvando] = useState(false);
 
+  const [cnpjEditado, setCnpjEditado] = useState<Record<number, string>>({});
+
   const linhas = useMemo(
-    () => (arquivo ? prepararLinhas(arquivo, mapa, cnaes) : []),
-    [arquivo, mapa, cnaes],
+    () => (arquivo ? prepararLinhas(arquivo, mapa, cnaes, cnpjEditado) : []),
+    [arquivo, mapa, cnaes, cnpjEditado],
   );
   const validas = useMemo(() => linhas.filter((l) => !l.erro), [linhas]);
   const comErro = linhas.length - validas.length;
@@ -303,10 +321,13 @@ export function ImportarBancoDialog({
   }, [validas, cnaes]);
 
   const semCnpj = validas.filter((l) => !l.cnpj).length;
+  const cnpjCompletados = validas.filter((l) => l.cnpjCompletado).length;
+  const cnpjCientificos = linhas.filter((l) => l.cnpjCientifico).length;
 
   function limpar() {
     setArquivo(null);
     setMapa([]);
+    setCnpjEditado({});
     setFonte("");
     setReservaSegmento(SEM_RESERVA);
     setReservaEstado(SEM_RESERVA);
@@ -381,7 +402,16 @@ export function ImportarBancoDialog({
           data: {
             lote_id,
             origem,
-            linhas: bloco.map(({ erro: _e, avisos: _a, empresa: _emp, ...campos }) => campos),
+            linhas: bloco.map(
+              ({
+                erro: _e,
+                avisos: _a,
+                empresa: _emp,
+                cnpjCompletado: _cc,
+                cnpjCientifico: _ci,
+                ...campos
+              }) => campos,
+            ),
           },
         });
         enviados += bloco.length;
@@ -548,6 +578,11 @@ export function ImportarBancoDialog({
                 </Badge>
                 {comErro > 0 ? <Badge variant="destructive">{comErro} com erro</Badge> : null}
                 {semCnpj > 0 ? <Badge variant="outline">{semCnpj} sem CNPJ</Badge> : null}
+                {cnpjCompletados > 0 ? (
+                  <Badge className="bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
+                    {cnpjCompletados} CNPJ completado(s)
+                  </Badge>
+                ) : null}
               </div>
 
               {faltamObrigatorios.length > 0 ? (
@@ -561,6 +596,20 @@ export function ImportarBancoDialog({
                   Sem coluna de contato: o nome sai do primeiro sócio, do nome fantasia ou da razão
                   social, nesta ordem.
                 </p>
+              ) : null}
+
+              {cnpjCientificos > 0 ? (
+                <div className="rounded-md border border-amber-300/60 bg-amber-50 p-3 text-xs dark:border-amber-500/30 dark:bg-amber-500/10">
+                  <p className="mb-1 font-medium text-foreground">
+                    {cnpjCientificos} linha(s) com CNPJ corrompido pelo Excel (notação científica)
+                  </p>
+                  <p className="text-muted-foreground">
+                    Este caso é diferente do CNPJ sem zeros à esquerda: aqui o Excel apagou os
+                    dígitos e não há como recuperar — completar com zeros criaria um CNPJ falso.
+                    Estas linhas importam sem CNPJ; para trazê-lo, reexporte a planilha com a coluna
+                    formatada como texto ou corrija o valor na prévia.
+                  </p>
+                </div>
               ) : null}
 
               {cnaesNovos.length > 0 ? (
@@ -648,7 +697,36 @@ export function ImportarBancoDialog({
                         </TableCell>
                         <TableCell className="whitespace-nowrap">{l.telefone || "—"}</TableCell>
                         <TableCell className="hidden whitespace-nowrap md:table-cell">
-                          {l.cnpj ? formatarCnpj(l.cnpj) : "—"}
+                          <div className="flex items-center gap-1.5">
+                            <Input
+                              aria-label={`CNPJ da linha ${l.linha}`}
+                              className="h-8 w-[10.5rem] font-mono text-xs"
+                              value={
+                                cnpjEditado[l.linha] ??
+                                (l.cnpj ? formatarCnpj(l.cnpj) : "")
+                              }
+                              placeholder="Sem CNPJ"
+                              onChange={(e) =>
+                                setCnpjEditado((atual) => ({
+                                  ...atual,
+                                  [l.linha]: e.target.value,
+                                }))
+                              }
+                            />
+                            {l.cnpjCompletado ? (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info
+                                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                                    aria-label="Completado com zeros à esquerda"
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Completado com zeros à esquerda (o Excel os havia removido)
+                                </TooltipContent>
+                              </Tooltip>
+                            ) : null}
+                          </div>
                         </TableCell>
                         <TableCell className="hidden whitespace-nowrap md:table-cell">
                           {l.cnae_codigo ? formatarCnae(l.cnae_codigo) : "—"}
