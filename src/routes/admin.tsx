@@ -1147,7 +1147,7 @@ function ClientesTab({
 
   return (
     <div className="space-y-4">
-      <Card className="p-3 sm:p-4">
+      <Card data-tour="clientes-filtros" className="p-3 sm:p-4">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <div className="relative sm:col-span-2 lg:col-span-1">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -1213,7 +1213,7 @@ function ClientesTab({
         </div>
       </Card>
 
-      <Card className="overflow-x-auto">
+      <Card data-tour="clientes-lista" className="overflow-x-auto">
         <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow>

@@ -374,7 +374,7 @@ function SolicitacoesConteudo({ home }: { home: string }) {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-4 px-4 py-5">
-        <Card className="flex flex-col gap-3 border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <Card data-tour="solic-catalogo" className="flex flex-col gap-3 border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="font-semibold">Sua assinatura renova sozinha.</p>
             <p className="text-sm text-muted-foreground">{AVISO_RENOVACAO}</p>
@@ -437,7 +437,7 @@ function SolicitacoesConteudo({ home }: { home: string }) {
             acao={<Button onClick={abrirCatalogo}>Fazer uma solicitação</Button>}
           />
         ) : (
-          <div className="space-y-3">
+          <div data-tour="solic-lista" className="space-y-3">
             {visiveis.map((s) => (
               <Card key={s.id} className="space-y-2 p-4">
                 <div className="flex flex-wrap items-center gap-2">

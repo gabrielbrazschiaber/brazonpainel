@@ -320,7 +320,7 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div data-tour="tarefas-filtros" className="flex flex-wrap items-center gap-2">
           <Select value={filtro} onValueChange={(v) => setFiltro(v as TarefaStatus | "todas")}>
             <SelectTrigger className="w-full sm:w-56">
               <SelectValue placeholder="Filtrar por status" />
@@ -357,7 +357,7 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
             }
           />
         ) : (
-          <div className="space-y-3">
+          <div data-tour="tarefas-lista" className="space-y-3">
             {visiveis.map((t) => (
               <Card key={t.id} className="p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

@@ -238,7 +238,7 @@ function VendedorArea() {
         <MinhaContaVendedorDialog open={contaOpen} onOpenChange={setContaOpen} />
 
         {/* Métricas */}
-        <section className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <section data-tour="vend-metricas" className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <MetricCard icon={Users} label="Total de clientes" value={String(metrics.total)} />
           <MetricCard
             icon={CheckCircle2}
@@ -253,6 +253,7 @@ function VendedorArea() {
             tone="text-destructive"
           />
           <MetricCard
+            dataTour="vend-comissao"
             icon={Wallet}
             label="Comissão estimada/mês"
             value={formatCurrency(metrics.comissao)}
@@ -278,17 +279,17 @@ function VendedorArea() {
         </section>
 
         {/* Indicações */}
-        <div id="secao-indicacoes">
+        <div id="secao-indicacoes" data-tour="secao-indicacoes">
           <ReferralsCard />
         </div>
 
         {/* Cupons do vendedor */}
-        <div id="secao-cupons">
+        <div id="secao-cupons" data-tour="secao-cupons">
           <CuponsVendedor />
         </div>
 
         {/* Lista de clientes */}
-        <section id="secao-clientes" className="mt-8">
+        <section id="secao-clientes" data-tour="secao-clientes" className="mt-8">
           <h2 className="text-lg font-bold text-foreground">Meus clientes</h2>
           <Card className="mt-4 overflow-x-auto">
             <Table>
