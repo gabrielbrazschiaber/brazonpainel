@@ -63,7 +63,10 @@ export const salvarBancoLeadSchema = z.object({
 export const linhaBancoSchema = z.object({
   linha: z.number().int().min(1).max(5000),
   nome_contato: z.string().trim().min(2, "Nome obrigatório").max(120),
-  telefone: z.string().trim().regex(/^\d{10,11}$/, "Telefone deve ter DDD + número"),
+  telefone: z
+    .string()
+    .trim()
+    .regex(/^\d{10,11}$/, "Telefone deve ter DDD + número"),
   empresa: texto(120),
   cargo: texto(120),
   email: texto(200),

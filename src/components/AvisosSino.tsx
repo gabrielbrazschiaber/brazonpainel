@@ -118,7 +118,6 @@ export function AvisosSino() {
     return () => clearInterval(t);
   }, [carregar, userId, visivel]);
 
-
   const notifNaoLidas = contagem.notificacoes;
   const novasNovidades = contagem.novidades;
   const total = notifNaoLidas + novasNovidades;
@@ -196,8 +195,6 @@ export function AvisosSino() {
       void supabase.removeChannel(canal);
     };
   }, [userId, carregar, visivel]);
-
-
 
   async function handleOpenChange(v: boolean) {
     setOpen(v);

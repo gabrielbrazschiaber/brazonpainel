@@ -25,13 +25,35 @@ import {
 import { formatCurrency, formatDate, daysUntil, initials } from "@/lib/format";
 
 import { toast } from "sonner";
-import { Bell, CalendarClock, CreditCard, BadgeCheck, RefreshCw, MessageSquare, FileCheck2, ScrollText } from "lucide-react";
+import {
+  Bell,
+  CalendarClock,
+  CreditCard,
+  BadgeCheck,
+  RefreshCw,
+  MessageSquare,
+  FileCheck2,
+  ScrollText,
+} from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { gerarCobranca } from "@/lib/asaas.functions";
 import { validarMeuCupom } from "@/lib/cupons.functions";
 
 export const Route = createFileRoute("/cliente")({
-  head: () => ({ meta: [{ title: "Minha assinatura" }] }),
+  head: () => ({
+    meta: [
+      { title: "Minha assinatura | Brazon" },
+      {
+        name: "description",
+        content:
+          "Acompanhe seu plano, vencimentos e faturas, renove a assinatura e abra solicitações para a equipe Brazon.",
+      },
+      { property: "og:title", content: "Minha assinatura | Brazon" },
+      { property: "og:description", content: "Seu plano, faturas e renovação em um só lugar." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: () => (
     <RequireRole role="cliente">
       <ClienteArea />
@@ -79,7 +101,10 @@ function ClienteArea() {
   const gerarCobrancaFn = useServerFn(gerarCobranca);
   const validarCupomFn = useServerFn(validarMeuCupom);
   const [codigoCupom, setCodigoCupom] = useState("");
-  const [cupomAplicado, setCupomAplicado] = useState<{ codigo: string; valor_desconto: number } | null>(null);
+  const [cupomAplicado, setCupomAplicado] = useState<{
+    codigo: string;
+    valor_desconto: number;
+  } | null>(null);
   const [validandoCupom, setValidandoCupom] = useState(false);
 
   const load = useCallback(async () => {
@@ -124,19 +149,15 @@ function ClienteArea() {
     }
   }, []);
 
-
   useEffect(() => {
     load();
   }, [load]);
 
   const dias = daysUntil(cliente?.data_vencimento);
   const venc = cliente?.data_vencimento;
-  const totalMensal =
-    (cliente?.planos?.valor ?? 0) + (cliente?.servico_extra_valor ?? 0);
+  const totalMensal = (cliente?.planos?.valor ?? 0) + (cliente?.servico_extra_valor ?? 0);
   const assinaturaAtiva = Boolean(cliente?.asaas_subscription_id);
-  const faturaPendente = pagamentos.find(
-    (p) => p.status === "pendente" && p.invoice_url,
-  );
+  const faturaPendente = pagamentos.find((p) => p.status === "pendente" && p.invoice_url);
 
   function headerTone() {
     if (cliente?.status === "ativo" && (dias == null || dias > 5)) return "ativo";
@@ -151,8 +172,6 @@ function ClienteArea() {
     { value: "aceites", label: "Meus aceites", icon: FileCheck2, to: "/meus-aceites" },
     { value: "termos", label: "Termos de Uso", icon: ScrollText, to: "/termos-de-uso" },
   ];
-
-
 
   async function aplicarCupom() {
     const cod = codigoCupom.trim();
@@ -219,14 +238,12 @@ function ClienteArea() {
       await load();
     } catch (err) {
       toast.error("Não foi possível gerar a cobrança", {
-        description:
-          err instanceof Error ? err.message : "Verifique a configuração do Asaas.",
+        description: err instanceof Error ? err.message : "Verifique a configuração do Asaas.",
       });
     } finally {
       setRenovando(null);
     }
   }
-
 
   useTourDaTela("tela:cliente", !loading);
 
@@ -278,9 +295,7 @@ function ClienteArea() {
               <p className="text-sm font-semibold text-warning-foreground">
                 Mensagem do seu vendedor
               </p>
-              <p className="mt-1 text-sm text-warning-foreground/90">
-                {cliente.mensagem_vendedor}
-              </p>
+              <p className="mt-1 text-sm text-warning-foreground/90">{cliente.mensagem_vendedor}</p>
             </div>
           </div>
         )}
@@ -292,7 +307,9 @@ function ClienteArea() {
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary sm:h-9 sm:w-9">
                 <CalendarClock className="h-4 w-4" />
               </span>
-              <span className="min-w-0 text-xs font-medium leading-tight sm:text-sm">Vencimento</span>
+              <span className="min-w-0 text-xs font-medium leading-tight sm:text-sm">
+                Vencimento
+              </span>
             </div>
             <p className="mt-3 text-xl font-bold text-foreground sm:text-2xl">{formatDate(venc)}</p>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -308,7 +325,9 @@ function ClienteArea() {
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary sm:h-9 sm:w-9">
                 <CreditCard className="h-4 w-4" />
               </span>
-              <span className="min-w-0 text-xs font-medium leading-tight sm:text-sm">Plano atual</span>
+              <span className="min-w-0 text-xs font-medium leading-tight sm:text-sm">
+                Plano atual
+              </span>
             </div>
             <p className="mt-3 text-xl font-bold text-foreground sm:text-2xl">
               {cliente?.planos?.nome ?? "—"}
@@ -323,11 +342,18 @@ function ClienteArea() {
             )}
             {(cliente?.planos?.valor || cliente?.servico_extra_valor) && (
               <p className="mt-2 text-sm font-semibold text-foreground">
-                Total: {formatCurrency((cliente?.planos?.valor ?? 0) + (cliente?.servico_extra_valor ?? 0))}/mês
+                Total:{" "}
+                {formatCurrency(
+                  (cliente?.planos?.valor ?? 0) + (cliente?.servico_extra_valor ?? 0),
+                )}
+                /mês
               </p>
             )}
           </Card>
-          <Card data-tour="cli-status" className="card-interactive p-4 sm:p-5 min-[420px]:col-span-2 lg:col-span-1">
+          <Card
+            data-tour="cli-status"
+            className="card-interactive p-4 sm:p-5 min-[420px]:col-span-2 lg:col-span-1"
+          >
             <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary sm:h-9 sm:w-9">
                 <BadgeCheck className="h-4 w-4" />
@@ -374,9 +400,7 @@ function ClienteArea() {
                   <Button
                     variant="outline"
                     className="w-full shrink-0 sm:w-auto"
-                    onClick={() =>
-                      window.open(faturaPendente.invoice_url!, "_blank", "noopener")
-                    }
+                    onClick={() => window.open(faturaPendente.invoice_url!, "_blank", "noopener")}
                   >
                     Abrir fatura em aberto
                   </Button>
@@ -386,14 +410,12 @@ function ClienteArea() {
           </section>
         )}
 
-
-
-
         {/* Renovar assinatura */}
         <section className="mt-10">
           <h2 className="text-lg font-bold text-foreground">Renovar assinatura</h2>
           <p className="text-sm text-muted-foreground">
-            Ative a cobrança mensal recorrente do seu plano atual — o pagamento é gerado automaticamente todo mês.
+            Ative a cobrança mensal recorrente do seu plano atual — o pagamento é gerado
+            automaticamente todo mês.
           </p>
           {/* Cupom de desconto */}
           {cliente?.plano_id && !assinaturaAtiva && (
@@ -468,7 +490,9 @@ function ClienteArea() {
                     onClick={() => handleRenovar(p)}
                     disabled={renovando !== null}
                   >
-                    {renovando === p.id ? "Gerando cobrança..." : "Assinar mensalmente (recorrente)"}
+                    {renovando === p.id
+                      ? "Gerando cobrança..."
+                      : "Assinar mensalmente (recorrente)"}
                   </Button>
                 </Card>
               ))}
@@ -479,7 +503,8 @@ function ClienteArea() {
             )}
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Pagamento recorrente mensal processado com segurança pela Asaas. Você pode cancelar quando quiser falando com seu vendedor.
+            Pagamento recorrente mensal processado com segurança pela Asaas. Você pode cancelar
+            quando quiser falando com seu vendedor.
           </p>
         </section>
 

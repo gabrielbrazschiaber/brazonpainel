@@ -74,9 +74,7 @@ export const salvarLeadSchema = z
     proximo_contato: dataOpcional,
   })
   .refine(
-    (d) =>
-      !(d.estagio === "perdido" || d.estagio === "nao_interessado") ||
-      Boolean(d.motivo_perda),
+    (d) => !(d.estagio === "perdido" || d.estagio === "nao_interessado") || Boolean(d.motivo_perda),
     { message: "Informe o motivo da perda", path: ["motivo_perda"] },
   );
 
@@ -87,9 +85,7 @@ export const mudarEstagioSchema = z
     motivo_perda: texto(500),
   })
   .refine(
-    (d) =>
-      !(d.estagio === "perdido" || d.estagio === "nao_interessado") ||
-      Boolean(d.motivo_perda),
+    (d) => !(d.estagio === "perdido" || d.estagio === "nao_interessado") || Boolean(d.motivo_perda),
     { message: "Informe o motivo da perda", path: ["motivo_perda"] },
   );
 
@@ -118,7 +114,10 @@ export const followUpsSchema = z.object({
 
 export const reagendarFollowUpSchema = z.object({
   id: z.string().uuid(),
-  proximo_contato: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
+  proximo_contato: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
 });
 
 export const RESULTADOS_FOLLOW_UP = ["sem_resposta", "respondeu", "adiar"] as const;
@@ -142,7 +141,6 @@ export const registrarFollowUpSchema = z
   });
 
 export const reativarCadenciaSchema = z.object({ lead_id: z.string().uuid() });
-
 
 export const dashboardSchema = z.object({
   dias: z.number().int().min(0).max(3650).optional(),

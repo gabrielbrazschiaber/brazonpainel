@@ -117,7 +117,6 @@ export function ClienteFormDialog({
   const [erros, setErros] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
-
   const validarCupom = useServerFn(validarCupomPublico);
   const buscarDestaque = useServerFn(cupomEmDestaque);
   const [destaque, setDestaque] = useState<CupomAplicado | null>(null);
@@ -129,7 +128,6 @@ export function ClienteFormDialog({
       setValues(valoresDoCliente(cliente));
       setCupomAplicado(null);
       setErros({});
-
     }
   }, [aberto, cliente]);
 
@@ -210,7 +208,6 @@ export function ClienteFormDialog({
     setErros({});
     const v = (parsed as { data: ClienteFormValues }).data;
     const comum = clientePayloadComum(v);
-
 
     setSaving(true);
     try {
@@ -311,11 +308,20 @@ export function ClienteFormDialog({
               Como cadastrar um cliente (passo a passo)
             </summary>
             <ol className="mt-2 list-decimal space-y-1 pl-4">
-              <li>Preencha nome, e-mail e CPF/CNPJ — o CPF/CNPJ é exigido pela plataforma de pagamento.</li>
-              <li>Escolha o plano; se houver, descreva o serviço extra e o valor, que soma à mensalidade.</li>
+              <li>
+                Preencha nome, e-mail e CPF/CNPJ — o CPF/CNPJ é exigido pela plataforma de
+                pagamento.
+              </li>
+              <li>
+                Escolha o plano; se houver, descreva o serviço extra e o valor, que soma à
+                mensalidade.
+              </li>
               <li>Aplique o cupom de desconto, se tiver um.</li>
               <li>Defina o primeiro vencimento (não pode ser uma data passada).</li>
-              <li>Ao salvar, o cliente é criado na plataforma de pagamento e recebe o e-mail para definir a senha.</li>
+              <li>
+                Ao salvar, o cliente é criado na plataforma de pagamento e recebe o e-mail para
+                definir a senha.
+              </li>
             </ol>
           </details>
         )}
@@ -354,7 +360,9 @@ export function ClienteFormDialog({
 
             <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
               <div className="grid gap-2">
-                <CampoComAjuda ajuda="cliente.cpf_cnpj" htmlFor={`${p}cpf`}>CPF ou CNPJ *</CampoComAjuda>
+                <CampoComAjuda ajuda="cliente.cpf_cnpj" htmlFor={`${p}cpf`}>
+                  CPF ou CNPJ *
+                </CampoComAjuda>
                 <Input
                   id={`${p}cpf`}
                   inputMode="numeric"
@@ -366,7 +374,9 @@ export function ClienteFormDialog({
                 <Erro campo="cpfCnpj" />
               </div>
               <div className="grid gap-2">
-                <CampoComAjuda ajuda="cliente.telefone" htmlFor={`${p}tel`}>Telefone (opcional)</CampoComAjuda>
+                <CampoComAjuda ajuda="cliente.telefone" htmlFor={`${p}tel`}>
+                  Telefone (opcional)
+                </CampoComAjuda>
                 <div className="flex items-center gap-2">
                   <Input
                     id={`${p}tel`}
@@ -380,7 +390,6 @@ export function ClienteFormDialog({
                 </div>
                 <Erro campo="telefone" />
               </div>
-
             </div>
 
             {editando && (
@@ -419,7 +428,9 @@ export function ClienteFormDialog({
             </div>
 
             <div className="grid gap-2 rounded-md border border-border p-3">
-              <CampoComAjuda ajuda="cliente.servico_extra" htmlFor={`${p}serv`}>Serviço extra (opcional)</CampoComAjuda>
+              <CampoComAjuda ajuda="cliente.servico_extra" htmlFor={`${p}serv`}>
+                Serviço extra (opcional)
+              </CampoComAjuda>
               <Input
                 id={`${p}serv`}
                 value={values.servicoExtra}
@@ -448,11 +459,12 @@ export function ClienteFormDialog({
             </div>
           </fieldset>
 
-
           {!editando && (
             <>
               <div className="grid gap-2 rounded-md border border-primary/30 bg-primary/5 p-3">
-                <CampoComAjuda ajuda="cliente.cupom" htmlFor={`${p}cupom`}>Cupom de desconto (opcional)</CampoComAjuda>
+                <CampoComAjuda ajuda="cliente.cupom" htmlFor={`${p}cupom`}>
+                  Cupom de desconto (opcional)
+                </CampoComAjuda>
                 {destaque && !cupomAplicado && (
                   <button
                     type="button"
@@ -460,8 +472,7 @@ export function ClienteFormDialog({
                     className="rounded-md border border-dashed border-primary/50 px-3 py-2 text-left text-xs text-primary hover:bg-primary/10"
                   >
                     <span className="font-semibold">{destaque.codigo}</span> —{" "}
-                    {destaque.descricao ??
-                      `${formatCurrency(destaque.valor_desconto)} de desconto`}
+                    {destaque.descricao ?? `${formatCurrency(destaque.valor_desconto)} de desconto`}
                     {destaque.apenas_primeira_mensalidade && " (1ª mensalidade)"}. Toque para
                     aplicar.
                   </button>
@@ -513,7 +524,9 @@ export function ClienteFormDialog({
               </div>
 
               <div className="grid gap-2">
-                <CampoComAjuda ajuda="cliente.primeiro_vencimento" htmlFor={`${p}venc`}>Primeiro vencimento *</CampoComAjuda>
+                <CampoComAjuda ajuda="cliente.primeiro_vencimento" htmlFor={`${p}venc`}>
+                  Primeiro vencimento *
+                </CampoComAjuda>
                 <Input
                   id={`${p}venc`}
                   type="date"
@@ -537,7 +550,9 @@ export function ClienteFormDialog({
           )}
 
           <div className="grid gap-2">
-            <CampoComAjuda ajuda="cliente.anotacoes" htmlFor={`${p}anot`}>Anotações sobre o cliente (opcional)</CampoComAjuda>
+            <CampoComAjuda ajuda="cliente.anotacoes" htmlFor={`${p}anot`}>
+              Anotações sobre o cliente (opcional)
+            </CampoComAjuda>
             <Textarea
               id={`${p}anot`}
               value={values.anotacoes}

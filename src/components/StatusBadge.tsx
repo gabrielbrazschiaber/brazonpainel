@@ -29,13 +29,7 @@ const statusMap: Record<string, { label: string; tone: Tone }> = {
   simulacao: { label: "Simulação", tone: "primary" },
 };
 
-export function StatusBadge({
-  status,
-  className,
-}: {
-  status: string;
-  className?: string;
-}) {
+export function StatusBadge({ status, className }: { status: string; className?: string }) {
   const cfg = statusMap[status] ?? { label: status, tone: "muted" as Tone };
   return (
     <span

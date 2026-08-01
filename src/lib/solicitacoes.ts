@@ -81,7 +81,13 @@ export const CATALOGO_SOLICITACOES: ItemCatalogo[] = [
     icone: "CalendarClock",
     prioridade: "media",
     campos: [
-      { nome: "dia", label: "Dia desejado", tipo: "dia_mes", obrigatorio: true, ajuda: "Entre 1 e 28" },
+      {
+        nome: "dia",
+        label: "Dia desejado",
+        tipo: "dia_mes",
+        obrigatorio: true,
+        ajuda: "Entre 1 e 28",
+      },
       { nome: "motivo", label: "Motivo", tipo: "textarea", obrigatorio: false },
     ],
   },
@@ -119,7 +125,9 @@ export const CATALOGO_SOLICITACOES: ItemCatalogo[] = [
     descricao: "Descreva livremente o que precisa",
     icone: "MessageSquarePlus",
     prioridade: "media",
-    campos: [{ nome: "solicitacao", label: "Sua solicitação", tipo: "textarea", obrigatorio: true }],
+    campos: [
+      { nome: "solicitacao", label: "Sua solicitação", tipo: "textarea", obrigatorio: true },
+    ],
   },
 ];
 

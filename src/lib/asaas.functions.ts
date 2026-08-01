@@ -45,11 +45,8 @@ export const gerarCobranca = createServerFn({ method: "POST" })
 
     // 3. Cupom: validado inteiramente no servidor. O código informado tem
     //    prioridade; sem código, usa o cupom reservado no cadastro.
-    const {
-      validarCupomParaCliente,
-      registrarUsoCupom,
-      MENSAGENS_CUPOM,
-    } = await import("./cupons.server");
+    const { validarCupomParaCliente, registrarUsoCupom, MENSAGENS_CUPOM } =
+      await import("./cupons.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     let codigoCupom = (data.cupom ?? "").trim();
@@ -127,7 +124,6 @@ export const gerarCobranca = createServerFn({ method: "POST" })
       descontoAplicado,
     };
   });
-
 
 /**
  * Admin testa a chave/ambiente do Asaas configurado.

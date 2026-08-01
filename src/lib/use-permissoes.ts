@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { minhasPermissoes } from "@/lib/permissions.functions";
 import type { AppPermission } from "@/lib/permissions";
@@ -7,6 +7,9 @@ import type { AppPermission } from "@/lib/permissions";
  * Permissões do usuário autenticado.
  * Serve apenas para esconder controles na interface — a autorização real
  * continua sendo feita no servidor (ensurePermission) e nas políticas RLS.
+ *
+ * `pode` e o objeto retornado são memoizados: sem isso, qualquer `useMemo`
+ * ou `useEffect` do consumidor que dependa deles roda a cada renderização.
  */
 export function usePermissoes() {
   const carregar = useServerFn(minhasPermissoes);
@@ -28,9 +31,10 @@ export function usePermissoes() {
     };
   }, [carregar]);
 
-  function pode(permissao: AppPermission) {
-    return permissoes.includes(permissao);
-  }
+  const pode = useCallback(
+    (permissao: AppPermission) => permissoes.includes(permissao),
+    [permissoes],
+  );
 
-  return { permissoes, pode, carregando };
+  return useMemo(() => ({ permissoes, pode, carregando }), [permissoes, pode, carregando]);
 }

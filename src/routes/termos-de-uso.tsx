@@ -6,20 +6,21 @@ import { Button } from "@/components/ui/button";
 import { SairButton } from "@/components/SairButton";
 import { useAuth, roleHome } from "@/lib/auth";
 import { ChevronLeft } from "lucide-react";
-import {
-  TERMOS_ATUALIZADO_EM,
-  TERMOS_RODAPE,
-  TERMOS_SECOES,
-  TERMOS_VERSAO,
-} from "@/lib/termos";
+import { TERMOS_ATUALIZADO_EM, TERMOS_RODAPE, TERMOS_SECOES, TERMOS_VERSAO } from "@/lib/termos";
 
 export const Route = createFileRoute("/termos-de-uso")({
   head: () => ({
     meta: [
       { title: "Termos de Uso — Brazon" },
-      { name: "description", content: "Termos de Uso da plataforma Brazon de gestão de assinaturas." },
+      {
+        name: "description",
+        content: "Termos de Uso da plataforma Brazon de gestão de assinaturas.",
+      },
       { property: "og:title", content: "Termos de Uso — Brazon" },
-      { property: "og:description", content: "Termos de Uso da plataforma Brazon de gestão de assinaturas." },
+      {
+        property: "og:description",
+        content: "Termos de Uso da plataforma Brazon de gestão de assinaturas.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

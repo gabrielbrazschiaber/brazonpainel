@@ -112,7 +112,6 @@ function liberarLock() {
   restaurarBody();
 }
 
-
 /**
  * Bloqueia o scroll da página enquanto `ativo` for verdadeiro, cooperando com
  * outros overlays via contagem de referências. Usa `position: fixed` para

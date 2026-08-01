@@ -113,7 +113,12 @@ export const salvarCupom = createServerFn({ method: "POST" })
     };
 
     const { data: salvo, error } = data.id
-      ? await supabaseAdmin.from("cupons").update(payload).eq("id", data.id).select("id").maybeSingle()
+      ? await supabaseAdmin
+          .from("cupons")
+          .update(payload)
+          .eq("id", data.id)
+          .select("id")
+          .maybeSingle()
       : await supabaseAdmin.from("cupons").insert(payload).select("id").maybeSingle();
 
     if (error) throw new Error("Não foi possível salvar o cupom.");
@@ -198,7 +203,9 @@ export const detalharCupom = createServerFn({ method: "POST" })
     const [{ data: usos }, { data: reservas }] = await Promise.all([
       supabaseAdmin
         .from("cupom_usos")
-        .select("id,cliente_id,valor_desconto,valor_original,valor_final,origem,asaas_payment_id,asaas_subscription_id,pago_em,created_at")
+        .select(
+          "id,cliente_id,valor_desconto,valor_original,valor_final,origem,asaas_payment_id,asaas_subscription_id,pago_em,created_at",
+        )
         .eq("cupom_id", data.cupom_id)
         .order("created_at", { ascending: false })
         .limit(200),

@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import {
-  enfileirar,
-  tamanho,
-  flush,
-  _resetBufferParaTestes,
-} from "@/lib/telemetry-buffer";
+import { enfileirar, tamanho, flush, _resetBufferParaTestes } from "@/lib/telemetry-buffer";
 import type { EventoExportado } from "@/lib/telemetry-export";
 
 function evento(overrides: Partial<EventoExportado> = {}): EventoExportado {

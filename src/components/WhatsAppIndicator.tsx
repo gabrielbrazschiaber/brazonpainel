@@ -8,12 +8,7 @@ import {
   statusWhatsApp,
   type WhatsAppStatus,
 } from "@/lib/whatsapp";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export { statusWhatsApp, type WhatsAppStatus };
 

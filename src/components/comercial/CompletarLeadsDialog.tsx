@@ -16,11 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 import { apenasDigitos, ESTAGIO_LABEL, type LeadEstagio } from "@/lib/leads";
 import { salvarLead, type Lead } from "@/lib/leads.functions";
@@ -197,9 +193,7 @@ export function CompletarLeadsDialog({
                       autoFocus={c.campo === "empresa"}
                       value={rascunho[c.campo]}
                       list={c.campo === "segmento" ? "segmentos-rapido" : undefined}
-                      onChange={(e) =>
-                        setRascunho((r) => ({ ...r, [c.campo]: e.target.value }))
-                      }
+                      onChange={(e) => setRascunho((r) => ({ ...r, [c.campo]: e.target.value }))}
                     />
                   </div>
                 ))}
@@ -233,9 +227,7 @@ export function CompletarLeadsDialog({
                       <Input
                         id={`cheio-${c.campo}`}
                         value={rascunho[c.campo]}
-                        onChange={(e) =>
-                          setRascunho((r) => ({ ...r, [c.campo]: e.target.value }))
-                        }
+                        onChange={(e) => setRascunho((r) => ({ ...r, [c.campo]: e.target.value }))}
                       />
                     </div>
                   ))}

@@ -104,7 +104,7 @@ const BOAS_VINDAS_ADMIN: Tutorial = {
       alvo: '[data-tour="nav-conta"]',
       titulo: "Minha conta",
       corpo:
-        "Altere seu nome, e-mail e senha. É lá também que fica o botão \"Rever tutoriais\" se você quiser ver tudo de novo.",
+        'Altere seu nome, e-mail e senha. É lá também que fica o botão "Rever tutoriais" se você quiser ver tudo de novo.',
       posicao: "right",
     },
   ],
@@ -172,8 +172,7 @@ const BOAS_VINDAS_VENDEDOR: Tutorial = {
     {
       alvo: '[data-tour="nav-chat"]',
       titulo: "Chat com a equipe",
-      corpo:
-        "Fale com a administração e atenda os clientes sem sair do painel.",
+      corpo: "Fale com a administração e atenda os clientes sem sair do painel.",
       posicao: "right",
     },
   ],
@@ -206,8 +205,7 @@ const BOAS_VINDAS_CLIENTE: Tutorial = {
     {
       alvo: '[data-tour="nav-aceites"]',
       titulo: "Meus aceites",
-      corpo:
-        "Histórico das versões do Termo de Uso que você aceitou, com data e hora.",
+      corpo: "Histórico das versões do Termo de Uso que você aceitou, com data e hora.",
       posicao: "right",
     },
     {
@@ -527,8 +525,7 @@ const TELA_CLIENTE: Tutorial = {
     {
       alvo: '[data-tour="cli-status"]',
       titulo: "Status e vencimento",
-      corpo:
-        "Mostra se você está em dia e quantos dias faltam para a próxima cobrança mensal.",
+      corpo: "Mostra se você está em dia e quantos dias faltam para a próxima cobrança mensal.",
       posicao: "bottom",
     },
     {
@@ -542,7 +539,7 @@ const TELA_CLIENTE: Tutorial = {
       alvo: '[data-tour="cli-historico"]',
       titulo: "Faturas e histórico",
       corpo:
-        "Em faturas pendentes use \"Abrir fatura\" para pagar por PIX, boleto ou cartão — o link continua válido se você fechar a janela.",
+        'Em faturas pendentes use "Abrir fatura" para pagar por PIX, boleto ou cartão — o link continua válido se você fechar a janela.',
       posicao: "top",
     },
     {
@@ -582,8 +579,7 @@ const TELA_SOLICITACOES: Tutorial = {
     {
       alvo: '[data-tour="solic-lista"]',
       titulo: "Depois de enviar",
-      corpo:
-        "Seu pedido vira uma tarefa para a equipe e você acompanha o andamento nesta lista.",
+      corpo: "Seu pedido vira uma tarefa para a equipe e você acompanha o andamento nesta lista.",
       posicao: "top",
     },
     {
@@ -671,10 +667,7 @@ export function tutorialVisivel(
 }
 
 /** Tutoriais que este usuário realmente pode rever (papel + permissões). */
-export function tutoriaisVisiveis(
-  papel: AppRole | null,
-  pode: PodePermissao,
-): readonly Tutorial[] {
+export function tutoriaisVisiveis(papel: AppRole | null, pode: PodePermissao): readonly Tutorial[] {
   return tutoriaisDoPapel(papel)
     .map((t) => tutorialVisivel(t.chave, papel, pode))
     .filter((t): t is Tutorial => Boolean(t));
@@ -693,8 +686,7 @@ export interface ResumoTela {
 export const RESUMOS_TELA: Record<string, ResumoTela> = {
   "tela:admin-dashboard": {
     titulo: "Dashboard da administração",
-    resumo:
-      "Retrato do negócio no período escolhido, com o que precisa de ação em destaque.",
+    resumo: "Retrato do negócio no período escolhido, com o que precisa de ação em destaque.",
     topicos: [
       "Indicadores: assinaturas ativas, receita mensal, novos clientes e churn.",
       "Alertas e ações urgentes: vencimentos próximos e falhas de cobrança.",
@@ -769,7 +761,7 @@ export const RESUMOS_TELA: Record<string, ResumoTela> = {
     resumo: "Status, plano, próximo vencimento e histórico de faturas.",
     topicos: [
       "A cobrança é mensal e automática — não é preciso pedir renovação.",
-      "Em faturas pendentes, \"Abrir fatura\" reabre o link de pagamento a qualquer momento.",
+      'Em faturas pendentes, "Abrir fatura" reabre o link de pagamento a qualquer momento.',
       "Pagamento por PIX, boleto ou cartão.",
       "Para mudar plano ou vencimento, use Solicitações.",
     ],
@@ -806,8 +798,7 @@ export const AJUDA_CAMPOS: Record<string, string> = {
     "Dia da primeira cobrança. Esse dia vira a âncora das próximas mensalidades, mesmo em meses mais curtos.",
   "cliente.cupom":
     "Desconto aplicado apenas na primeira mensalidade. As seguintes voltam ao valor cheio.",
-  "cliente.anotacoes":
-    "Observações internas sobre o cliente. O cliente não vê este campo.",
+  "cliente.anotacoes": "Observações internas sobre o cliente. O cliente não vê este campo.",
 
   // Lead
   "lead.segmento": "Ramo de atuação do lead. Ajuda a priorizar quem tem mais chance de fechar.",
@@ -822,7 +813,8 @@ export const AJUDA_CAMPOS: Record<string, string> = {
   "cupom.codigo": "Código que o cliente digita. Evite espaços e acentos.",
   "cupom.desconto":
     "Vale somente para a primeira mensalidade — a partir da segunda o valor volta ao normal.",
-  "cupom.limite_usos": "Quantas vezes o cupom pode ser usado no total. Ao atingir o limite, ele para de valer.",
+  "cupom.limite_usos":
+    "Quantas vezes o cupom pode ser usado no total. Ao atingir o limite, ele para de valer.",
   "cupom.validade": "Depois desta data o cupom deixa de ser aceito no cadastro.",
 
   // Permissões

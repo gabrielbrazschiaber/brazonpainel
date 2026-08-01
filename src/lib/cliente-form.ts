@@ -35,7 +35,12 @@ export function telefoneValido(v: string): boolean {
 export const clienteFormSchema = z
   .object({
     nome: z.string().trim().min(2, "Informe um nome com pelo menos 2 caracteres.").max(120),
-    email: z.string().trim().min(1, "Informe o e-mail.").email("Informe um e-mail válido.").max(255),
+    email: z
+      .string()
+      .trim()
+      .min(1, "Informe o e-mail.")
+      .email("Informe um e-mail válido.")
+      .max(255),
     cpfCnpj: z.string().trim().max(20).default(""),
     telefone: z.string().trim().max(20).default(""),
     planoId: z.string().trim().default(""),
@@ -103,7 +108,6 @@ export function errosPorCampo(issues: { path: (string | number)[]; message: stri
   }
   return mapa;
 }
-
 
 export type ClienteFormValues = z.infer<typeof clienteFormSchema>;
 

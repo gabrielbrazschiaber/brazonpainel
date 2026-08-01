@@ -52,7 +52,6 @@ export function ConfiguracoesPage({
         : secoes.filter(
             (s) => pode(s.permissao) && (!s.roles || (role !== null && s.roles.includes(role))),
           ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [secoes, carregando, pode, role],
   );
 
@@ -122,7 +121,6 @@ export function ConfiguracoesPage({
       </Card>
     );
   }
-
 
   const secaoAtual = visiveis.find((s) => s.value === ativa) ?? visiveis[0];
 

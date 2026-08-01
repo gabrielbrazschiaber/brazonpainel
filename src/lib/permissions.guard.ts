@@ -23,9 +23,7 @@ export async function ensurePermission(
     _permission: permissao,
   });
   if (error || data !== true) {
-    throw new Error(
-      `Acesso negado: você não tem a permissão "${rotuloPermissao(permissao)}".`,
-    );
+    throw new Error(`Acesso negado: você não tem a permissão "${rotuloPermissao(permissao)}".`);
   }
 }
 

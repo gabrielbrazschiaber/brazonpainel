@@ -21,7 +21,6 @@ import type {
   reativarCadenciaSchema,
 } from "@/lib/leads.schemas";
 
-
 // Cliente tipado do usuário logado (RLS ativa). Tipo frouxo de propósito.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Sb = any;
@@ -122,10 +121,7 @@ export async function nomesDeUsuarios(ids: string[]): Promise<Map<string, string
   const unicos = Array.from(new Set(ids.filter(Boolean)));
   if (unicos.length === 0) return mapa;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
-    .from("profiles")
-    .select("id, nome, email")
-    .in("id", unicos);
+  const { data } = await supabaseAdmin.from("profiles").select("id, nome, email").in("id", unicos);
   for (const p of data ?? []) mapa.set(p.id, (p.nome || "").trim() || p.email);
   return mapa;
 }
@@ -134,10 +130,7 @@ export async function nomesDeUsuarios(ids: string[]): Promise<Map<string, string
 export async function listarVendedoresServer(supabase: Sb, userId: string) {
   const { isAdmin } = await escopoComercial(supabase, userId);
   if (!isAdmin) return [] as { id: string; nome: string }[];
-  const { data, error } = await supabase
-    .from("vendedores")
-    .select("id")
-    .eq("ativo", true);
+  const { data, error } = await supabase.from("vendedores").select("id").eq("ativo", true);
   if (error) throw new Error(error.message);
   const ids = (data ?? []).map((v: { id: string }) => v.id);
   const nomes = await nomesVendedores(ids);
@@ -165,9 +158,7 @@ export async function listarLeadsServer(
   const pagina = filtros.pagina ?? 0;
   const inicio = pagina * porPagina;
 
-  let query = supabase
-    .from("leads")
-    .select(CAMPOS_LEAD, { count: "exact" });
+  let query = supabase.from("leads").select(CAMPOS_LEAD, { count: "exact" });
 
   // Ordenação: mais recentes (padrão) ou mais incompletos primeiro.
   query =
@@ -197,7 +188,6 @@ export async function listarLeadsServer(
       .lte("proximo_contato", hojeISO())
       .not("estagio", "in", `(${ESTAGIOS_SEM_FOLLOW_UP.join(",")})`);
   }
-
 
   if (filtros.busca) {
     const termo = filtros.busca.replace(/[%,]/g, " ").trim();
@@ -592,9 +582,7 @@ export async function dashboardComercialServer(
   const base = () => {
     let q = supabase
       .from("leads")
-      .select(
-        "estagio, segmento, valor_estimado, contatado_em, vendedor_id, follow_ups_feitos",
-      )
+      .select("estagio, segmento, valor_estimado, contatado_em, vendedor_id, follow_ups_feitos")
       .limit(5000);
     if (vendedorFiltro) q = q.eq("vendedor_id", vendedorFiltro);
     return q;
@@ -695,10 +683,7 @@ export async function dashboardComercialServer(
     valor_ganho: number;
   }[] = [];
   if (escopo.isAdmin) {
-    const porVendedor = new Map<
-      string,
-      { contatados: number; ganhos: number; valor: number }
-    >();
+    const porVendedor = new Map<string, { contatados: number; ganhos: number; valor: number }>();
     for (const l of leadsAtuais) {
       const v = porVendedor.get(l.vendedor_id) ?? { contatados: 0, ganhos: 0, valor: 0 };
       v.contatados += 1;
@@ -732,9 +717,7 @@ export async function dashboardComercialServer(
   // Cadência: contadores independentes do período (é operação do dia a dia).
   const hoje = hojeISO();
   const semFollowUp = `(${ESTAGIOS_SEM_FOLLOW_UP.join(",")})`;
-  const contarCadencia = (
-    aplicar: (q: ReturnType<typeof supabase.from>) => unknown,
-  ) => {
+  const contarCadencia = (aplicar: (q: ReturnType<typeof supabase.from>) => unknown) => {
     let q = supabase
       .from("leads")
       .select("id", { count: "exact", head: true })
@@ -771,7 +754,6 @@ export async function dashboardComercialServer(
     cadencias_encerradas: encerradasRes.count ?? 0,
     media_tentativas_ate_ganho,
   };
-
 }
 
 export type DashboardComercial = Awaited<ReturnType<typeof dashboardComercialServer>>;
@@ -915,10 +897,7 @@ export async function followUpsServer(
     queryEncerrados = queryEncerrados.eq("vendedor_id", filtros.vendedor_id);
   }
 
-  const [{ data, error }, { count: encerrados }] = await Promise.all([
-    query,
-    queryEncerrados,
-  ]);
+  const [{ data, error }, { count: encerrados }] = await Promise.all([query, queryEncerrados]);
   if (error) throw new Error(error.message);
 
   const nomes = escopo.isAdmin
@@ -1100,7 +1079,6 @@ export async function reativarCadenciaServer(
   return { id: data.id as string };
 }
 
-
 /** Contador leve para o badge da sidebar: atrasados + de hoje. */
 export async function contarFollowUpsServer(supabase: Sb, userId: string) {
   const escopo = await escopoComercial(supabase, userId).catch(() => null);
@@ -1115,9 +1093,7 @@ export async function contarFollowUpsServer(supabase: Sb, userId: string) {
     return aplicar(q) as Promise<{ count: number | null }>;
   };
   const [atrasados, deHoje] = await Promise.all([
-    contar((q) =>
-      (q as Sb).not("proximo_contato", "is", null).lt("proximo_contato", hoje),
-    ),
+    contar((q) => (q as Sb).not("proximo_contato", "is", null).lt("proximo_contato", hoje)),
     contar((q) => (q as Sb).eq("proximo_contato", hoje)),
   ]);
   const a = atrasados.count ?? 0;

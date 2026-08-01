@@ -78,9 +78,7 @@ export function ChatSheet({
           const minha = lista.find((c) => c.id === conversa_id);
           setConversas(lista);
           setAbertaId(conversa_id);
-          setTituloAberta(
-            minha?.titulo?.trim() ? minha.titulo : "Atendimento — equipe Brazon",
-          );
+          setTituloAberta(minha?.titulo?.trim() ? minha.titulo : "Atendimento — equipe Brazon");
         } catch (e) {
           if (!cancelado) {
             toast.error("Não foi possível abrir o atendimento", {

@@ -16,8 +16,10 @@ function diasAte(vencimento: string): number {
 }
 
 function mensagemLembrete(dias: number, nomeApp: string): string {
-  if (dias <= 0) return `Sua assinatura ${nomeApp} vence hoje. Garanta a renovação para não perder o acesso.`;
-  if (dias === 1) return `Sua assinatura ${nomeApp} vence amanhã. Renove para manter o acesso ativo.`;
+  if (dias <= 0)
+    return `Sua assinatura ${nomeApp} vence hoje. Garanta a renovação para não perder o acesso.`;
+  if (dias === 1)
+    return `Sua assinatura ${nomeApp} vence amanhã. Renove para manter o acesso ativo.`;
   return `Sua assinatura ${nomeApp} vence em ${dias} dias. Renove com antecedência para manter o acesso ativo.`;
 }
 

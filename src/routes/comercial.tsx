@@ -191,11 +191,8 @@ function ProximoContatoCell({ lead }: { lead: Lead }) {
       : lead.proximo_contato === hojeISO
         ? "text-amber-600 dark:text-amber-400 font-medium"
         : "text-muted-foreground";
-  return (
-    <span className={`whitespace-nowrap ${cor}`}>{formatDate(lead.proximo_contato)}</span>
-  );
+  return <span className={`whitespace-nowrap ${cor}`}>{formatDate(lead.proximo_contato)}</span>;
 }
-
 
 function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }) {
   const carregarLeads = useServerFn(listarLeads);
@@ -228,9 +225,9 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const [soZap, setSoZap] = useState(false);
   /** Aba/filtro de leads com dados faltando. */
   const [incompletos, setIncompletos] = useState(false);
-  const [abaFollowUp, setAbaFollowUp] = useState<
-    "atrasados" | "hoje" | "proximos" | undefined
-  >(undefined);
+  const [abaFollowUp, setAbaFollowUp] = useState<"atrasados" | "hoje" | "proximos" | undefined>(
+    undefined,
+  );
   const [ordem, setOrdem] = useState<"recentes" | "completude">("recentes");
   /** Filtro por lote de importação (vem do resultado da importação). */
   const [loteId, setLoteId] = useState<string | null>(null);
@@ -260,7 +257,6 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     }),
     [dias, filtroVendedor, estagio, origem, segmento, busca, followUp, incompletos, loteId, ordem],
   );
-
 
   const recarregar = useCallback(async () => {
     setCarregando(true);
@@ -349,7 +345,6 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     [leads, soZap, statusZap],
   );
 
-
   async function confirmarExclusao() {
     if (!excluindo) return;
     setOcupado(true);
@@ -397,7 +392,11 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button data-tour="comercial-importar" variant="outline" onClick={() => setImportarAberto(true)}>
+            <Button
+              data-tour="comercial-importar"
+              variant="outline"
+              onClick={() => setImportarAberto(true)}
+            >
               <Upload className="mr-2 h-4 w-4" /> Importar planilha
             </Button>
             <Button
@@ -571,7 +570,6 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             )}
           </div>
 
-
           {carregando ? (
             <>
               <LeadsSkeletonCards />
@@ -619,7 +617,6 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
               {/* Mobile: cards empilhados */}
               <div className="space-y-3 sm:hidden">
                 {leadsVisiveis.map((l) => (
-
                   <Card
                     key={l.id}
                     className="cursor-pointer space-y-2 p-4"
@@ -654,7 +651,6 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                       <span className="col-span-2">
                         Próximo contato: <ProximoContatoCell lead={l} />
                       </span>
-
                     </div>
                   </Card>
                 ))}
@@ -808,7 +804,6 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         segmentos={listaSegmentos}
         onAtualizado={() => void recarregar()}
       />
-
 
       <LeadDetalheSheet
         lead={detalhe}

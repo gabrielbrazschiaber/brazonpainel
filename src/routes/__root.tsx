@@ -87,22 +87,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "- Brazon is a SaaS subscription management web application for clients, sellers, and administrators.",
+          "Brazon: plataforma de gestão de assinaturas com painéis para cliente, vendedor e administrador, cobranças recorrentes e acompanhamento comercial.",
       },
       { name: "author", content: "Brazon" },
       { property: "og:title", content: "Brazon — Gestão de Assinaturas" },
       {
         property: "og:description",
-        content:
-          "- Brazon is a SaaS subscription management web application for clients, sellers, and administrators.",
+        content: "Gestão de assinaturas, cobranças recorrentes e time comercial em um só painel.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Brazon — Gestão de Assinaturas" },
       {
         name: "twitter:description",
-        content:
-          "- Brazon is a SaaS subscription management web application for clients, sellers, and administrators.",
+        content: "Gestão de assinaturas, cobranças recorrentes e time comercial em um só painel.",
       },
       {
         property: "og:image",

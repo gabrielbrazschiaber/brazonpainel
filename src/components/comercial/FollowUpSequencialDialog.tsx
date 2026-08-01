@@ -94,9 +94,7 @@ export function FollowUpSequencialDialog({
       onRegistrado();
       proximo();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Não foi possível registrar o follow-up.",
-      );
+      toast.error(err instanceof Error ? err.message : "Não foi possível registrar o follow-up.");
     } finally {
       setOcupado(false);
     }
@@ -210,10 +208,7 @@ export function FollowUpSequencialDialog({
           <Button variant="ghost" disabled={ocupado || !atual} onClick={proximo}>
             <SkipForward className="mr-2 h-4 w-4" /> Pular
           </Button>
-          <Button
-            disabled={ocupado || !atual}
-            onClick={() => void aplicar("sem_resposta")}
-          >
+          <Button disabled={ocupado || !atual} onClick={() => void aplicar("sem_resposta")}>
             {ocupado ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Sem resposta
           </Button>

@@ -286,14 +286,13 @@ export interface Importacao {
   pode_desfazer: boolean;
 }
 
-export async function listarImportacoesServer(
-  supabase: Sb,
-  userId: string,
-): Promise<Importacao[]> {
+export async function listarImportacoesServer(supabase: Sb, userId: string): Promise<Importacao[]> {
   await escopoComercial(supabase, userId);
   const { data, error } = await supabase
     .from("lead_importacoes")
-    .select("id, arquivo_nome, total_linhas, importados, atualizados, ignorados, created_at, autor_id")
+    .select(
+      "id, arquivo_nome, total_linhas, importados, atualizados, ignorados, created_at, autor_id",
+    )
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) throw new Error(error.message);
@@ -349,7 +348,10 @@ export async function desfazerImportacaoServer(
   if (total === 0) return { removidos: 0, preservados: 0 };
 
   const candidatos = (todos ?? [])
-    .filter((l: { estagio: string; completude: number }) => l.estagio === "contatado" && Number(l.completude ?? 0) === 0)
+    .filter(
+      (l: { estagio: string; completude: number }) =>
+        l.estagio === "contatado" && Number(l.completude ?? 0) === 0,
+    )
     .map((l: { id: string }) => l.id);
 
   const bloqueados = new Set<string>();
@@ -361,7 +363,8 @@ export async function desfazerImportacaoServer(
     for (const r of reunioes ?? []) bloqueados.add(r.lead_id);
     const contagem = new Map<string, number>();
     for (const a of atividades ?? []) {
-      const importada = a.tipo === "nota" && String(a.corpo ?? "").startsWith("Importado da planilha");
+      const importada =
+        a.tipo === "nota" && String(a.corpo ?? "").startsWith("Importado da planilha");
       if (!importada) bloqueados.add(a.lead_id);
       else contagem.set(a.lead_id, (contagem.get(a.lead_id) ?? 0) + 1);
     }

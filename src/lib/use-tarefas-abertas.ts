@@ -96,10 +96,8 @@ export function useTarefasAbertas(opcoes: Opcoes = {}) {
           });
         },
       )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "tarefas" },
-        () => agendar(),
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tarefas" }, () =>
+        agendar(),
       )
       .subscribe();
 

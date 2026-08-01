@@ -87,7 +87,6 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
     ativo: role === "admin" || role === "vendedor",
   });
 
-
   const pathname = useRouterState({ select: (r) => r.location.pathname });
 
   // Trava o scroll da página enquanto o drawer mobile estiver aberto.
@@ -128,162 +127,161 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
         </SidebarHeader>
 
         <SidebarContent className="overflow-y-auto overscroll-contain">
-        {acaoPrincipal && (
+          {acaoPrincipal && (
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      data-tour="acao-principal"
+                      onClick={() => {
+                        fecharSeMobile();
+                        acaoPrincipal.onClick();
+                      }}
+                      tooltip={acaoPrincipal.label}
+                      className="h-10 bg-primary/10 font-medium text-primary hover:bg-primary/20 hover:text-primary md:h-8"
+                    >
+                      <acaoPrincipal.icon className="h-4 w-4" />
+                      <span>{acaoPrincipal.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
+
           <SidebarGroup>
+            <SidebarGroupLabel>Navegação</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map((item) => (
+                  <SidebarMenuItem key={item.value}>
+                    {item.to ? (
+                      <SidebarMenuButton
+                        asChild
+                        data-tour={`nav-${item.value}`}
+                        isActive={pathname === item.to}
+                        tooltip={item.label}
+                        className="h-10 md:h-8"
+                      >
+                        <Link to={item.to} onClick={fecharSeMobile}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                          {item.to === "/tarefas" && abertas > 0 && (
+                            <span className="ml-auto rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground">
+                              {abertas > 99 ? "99+" : abertas}
+                            </span>
+                          )}
+                          {item.to === "/comercial" && followUps > 0 && (
+                            <span
+                              className="ml-auto rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground"
+                              title="Follow-ups atrasados e de hoje"
+                            >
+                              {followUps > 99 ? "99+" : followUps}
+                            </span>
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    ) : (
+                      <SidebarMenuButton
+                        data-tour={`nav-${item.value}`}
+                        isActive={tab === item.value}
+                        onClick={() => {
+                          onTab?.(item.value);
+                          fecharSeMobile();
+                        }}
+                        tooltip={item.label}
+                        className="h-10 md:h-8"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    )}
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel>Atalhos</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    data-tour="acao-principal"
+                    data-tour="nav-chat"
                     onClick={() => {
                       fecharSeMobile();
-                      acaoPrincipal.onClick();
+                      setChatAberto(true);
                     }}
-                    tooltip={acaoPrincipal.label}
-                    className="h-10 bg-primary/10 font-medium text-primary hover:bg-primary/20 hover:text-primary md:h-8"
+                    tooltip="Chat com a equipe"
+                    className="h-10 md:h-8"
                   >
-                    <acaoPrincipal.icon className="h-4 w-4" />
-                    <span>{acaoPrincipal.label}</span>
+                    <MessagesSquare className="h-4 w-4" />
+                    <span>Chat com a equipe</span>
+                    {naoLidas > 0 && (
+                      <span className="ml-auto rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground">
+                        {naoLidas > 9 ? "9+" : naoLidas}
+                      </span>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        )}
+        </SidebarContent>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Navegação</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.value}>
-                  {item.to ? (
-                    <SidebarMenuButton
-                      asChild
-                      data-tour={`nav-${item.value}`}
-                      isActive={pathname === item.to}
-                      tooltip={item.label}
-                      className="h-10 md:h-8"
-                    >
-                      <Link to={item.to} onClick={fecharSeMobile}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                        {item.to === "/tarefas" && abertas > 0 && (
-                          <span className="ml-auto rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground">
-                            {abertas > 99 ? "99+" : abertas}
-                          </span>
-                        )}
-                        {item.to === "/comercial" && followUps > 0 && (
-                          <span
-                            className="ml-auto rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground"
-                            title="Follow-ups atrasados e de hoje"
-                          >
-                            {followUps > 99 ? "99+" : followUps}
-                          </span>
-                        )}
-
-                      </Link>
-                    </SidebarMenuButton>
-                  ) : (
-                    <SidebarMenuButton
-                      data-tour={`nav-${item.value}`}
-                      isActive={tab === item.value}
-                      onClick={() => {
-                        onTab?.(item.value);
-                        fecharSeMobile();
-                      }}
-                      tooltip={item.label}
-                      className="h-10 md:h-8"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  )}
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Atalhos</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
+        <SidebarFooter className="border-t border-sidebar-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <SidebarMenu>
+            {tutoriais.length > 0 && (
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  data-tour="nav-chat"
+                  data-tour="nav-tutoriais"
                   onClick={() => {
                     fecharSeMobile();
-                    setChatAberto(true);
+                    void reverTutoriais();
                   }}
-                  tooltip="Chat com a equipe"
+                  tooltip="Rever tutoriais"
                   className="h-10 md:h-8"
                 >
-                  <MessagesSquare className="h-4 w-4" />
-                  <span>Chat com a equipe</span>
-                  {naoLidas > 0 && (
-                    <span className="ml-auto rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground">
-                      {naoLidas > 9 ? "9+" : naoLidas}
-                    </span>
-                  )}
+                  <GraduationCap className="h-4 w-4" />
+                  <span>Rever tutoriais</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="border-t border-sidebar-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <SidebarMenu>
-          {tutoriais.length > 0 && (
+            )}
+            {onConta && (
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  data-tour="nav-conta"
+                  onClick={() => {
+                    onConta();
+                    fecharSeMobile();
+                  }}
+                  tooltip="Minha conta"
+                  className="h-10 md:h-8"
+                >
+                  <UserCog className="h-4 w-4" />
+                  <span>Minha conta</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
             <SidebarMenuItem>
               <SidebarMenuButton
-                data-tour="nav-tutoriais"
                 onClick={() => {
                   fecharSeMobile();
-                  void reverTutoriais();
+                  void sair();
                 }}
-                tooltip="Rever tutoriais"
-                className="h-10 md:h-8"
+                disabled={saindo}
+                tooltip="Sair"
+                aria-label="Sair da conta"
+                className="h-10 text-destructive hover:bg-destructive/10 hover:text-destructive md:h-8"
               >
-                <GraduationCap className="h-4 w-4" />
-                <span>Rever tutoriais</span>
+                <LogOut className="h-4 w-4" />
+                <span>{saindo ? "Saindo..." : "Sair"}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          )}
-          {onConta && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                data-tour="nav-conta"
-                onClick={() => {
-                  onConta();
-                  fecharSeMobile();
-                }}
-                tooltip="Minha conta"
-                className="h-10 md:h-8"
-              >
-                <UserCog className="h-4 w-4" />
-                <span>Minha conta</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => {
-                fecharSeMobile();
-                void sair();
-              }}
-              disabled={saindo}
-              tooltip="Sair"
-              aria-label="Sair da conta"
-              className="h-10 text-destructive hover:bg-destructive/10 hover:text-destructive md:h-8"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>{saindo ? "Saindo..." : "Sair"}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+          </SidebarMenu>
+        </SidebarFooter>
       </div>
       {chatAberto && (
         <ChatSheet

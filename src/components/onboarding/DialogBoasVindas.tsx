@@ -42,10 +42,7 @@ export function DialogBoasVindas({ tutorial, papel, onComecar, onAgoraNao }: Pro
 
   return (
     <Dialog open onOpenChange={(aberto) => !aberto && onAgoraNao()}>
-      <DialogContent
-        className="w-[calc(100vw-2rem)] max-w-lg"
-        data-onboarding="boas-vindas"
-      >
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-lg" data-onboarding="boas-vindas">
         <DialogHeader>
           <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Compass className="h-5 w-5" />
@@ -55,7 +52,6 @@ export function DialogBoasVindas({ tutorial, papel, onComecar, onAgoraNao }: Pro
             Em menos de um minuto mostramos onde fica cada coisa. Se preferir não ver, os tours
             deixam de aparecer — você pode reativá-los em "Rever tutoriais".
           </DialogDescription>
-
         </DialogHeader>
 
         <ul className="space-y-2 text-sm text-muted-foreground">

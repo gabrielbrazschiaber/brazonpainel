@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  criarNovidade,
-  atualizarNovidade,
-  excluirNovidade,
-} from "@/lib/novidades.functions";
+import { criarNovidade, atualizarNovidade, excluirNovidade } from "@/lib/novidades.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -315,7 +311,12 @@ export function NovidadesTab() {
                       >
                         {n.publicado ? "Despublicar" : "Publicar"}
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(n)} title="Editar">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => openEdit(n)}
+                        title="Editar"
+                      >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
@@ -377,9 +378,7 @@ export function NovidadesTab() {
                 <Label>Tipo</Label>
                 <Select
                   value={form.tipo}
-                  onValueChange={(v) =>
-                    setForm({ ...form, tipo: v as "novidade" | "comunicado" })
-                  }
+                  onValueChange={(v) => setForm({ ...form, tipo: v as "novidade" | "comunicado" })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -397,27 +396,21 @@ export function NovidadesTab() {
                 <label className="flex items-center gap-2 text-sm">
                   <Checkbox
                     checked={form.publico_cliente}
-                    onCheckedChange={(v) =>
-                      setForm({ ...form, publico_cliente: v === true })
-                    }
+                    onCheckedChange={(v) => setForm({ ...form, publico_cliente: v === true })}
                   />
                   Clientes
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <Checkbox
                     checked={form.publico_vendedor}
-                    onCheckedChange={(v) =>
-                      setForm({ ...form, publico_vendedor: v === true })
-                    }
+                    onCheckedChange={(v) => setForm({ ...form, publico_vendedor: v === true })}
                   />
                   Vendedores
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <Checkbox
                     checked={form.publico_admin}
-                    onCheckedChange={(v) =>
-                      setForm({ ...form, publico_admin: v === true })
-                    }
+                    onCheckedChange={(v) => setForm({ ...form, publico_admin: v === true })}
                   />
                   Admins
                 </label>
@@ -426,9 +419,7 @@ export function NovidadesTab() {
             <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 p-3">
               <div>
                 <p className="text-sm font-medium">Publicar imediatamente</p>
-                <p className="text-xs text-muted-foreground">
-                  Desligue para salvar como rascunho.
-                </p>
+                <p className="text-xs text-muted-foreground">Desligue para salvar como rascunho.</p>
               </div>
               <Switch
                 checked={form.publicado}

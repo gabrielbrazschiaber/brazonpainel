@@ -1,8 +1,9 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { VALOR_CUPOM_VENDEDOR } from "./cupons.vendedor";
 import { registrarAuditoria } from "./audit.server";
+import type { ClienteSupabaseUsuario } from "@/lib/supabase-tipos";
 
-type SB = { from: (t: string) => any };
+type SB = ClienteSupabaseUsuario;
 
 /** Confirma que o usuário logado é um vendedor ativo e devolve o id do vendedor. */
 async function vendedorAtual(supabase: SB, userId: string): Promise<string> {

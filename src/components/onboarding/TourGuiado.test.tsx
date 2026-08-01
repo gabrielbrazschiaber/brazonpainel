@@ -40,7 +40,17 @@ function montarAlvos() {
   // que o tour os considere visíveis.
   host.querySelectorAll<HTMLElement>("[data-tour]").forEach((el, i) => {
     el.getBoundingClientRect = () =>
-      ({ top: 40 + i * 80, left: 20, width: 120, height: 36, right: 140, bottom: 76 + i * 80, x: 20, y: 40 + i * 80, toJSON: () => ({}) }) as DOMRect;
+      ({
+        top: 40 + i * 80,
+        left: 20,
+        width: 120,
+        height: 36,
+        right: 140,
+        bottom: 76 + i * 80,
+        x: 20,
+        y: 40 + i * 80,
+        toJSON: () => ({}),
+      }) as DOMRect;
     el.scrollIntoView = vi.fn();
   });
   return host;
@@ -141,7 +151,9 @@ describe("TourGuiado — acessibilidade e teclado", () => {
     await screen.findByRole("dialog");
 
     await waitFor(() =>
-      expect((alvo.scrollIntoView as unknown as ReturnType<typeof vi.fn>).mock.calls[0]?.[0]).toMatchObject({
+      expect(
+        (alvo.scrollIntoView as unknown as ReturnType<typeof vi.fn>).mock.calls[0]?.[0],
+      ).toMatchObject({
         behavior: "auto",
       }),
     );
@@ -158,7 +170,9 @@ describe("TourGuiado — acessibilidade e teclado", () => {
     await screen.findByRole("dialog");
 
     await waitFor(() =>
-      expect((alvo.scrollIntoView as unknown as ReturnType<typeof vi.fn>).mock.calls[0]?.[0]).toMatchObject({
+      expect(
+        (alvo.scrollIntoView as unknown as ReturnType<typeof vi.fn>).mock.calls[0]?.[0],
+      ).toMatchObject({
         behavior: "smooth",
       }),
     );

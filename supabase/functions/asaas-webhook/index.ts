@@ -1,8 +1,8 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.8'
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
 
 // Definição dos tipos do Supabase de acordo com as migrações
-type PagamentoStatus = 'pago' | 'pendente' | 'vencido';
-type ClienteStatus = 'ativo' | 'vencido' | 'inadimplente' | 'cancelado';
+type PagamentoStatus = "pago" | "pendente" | "vencido";
+type ClienteStatus = "ativo" | "vencido" | "inadimplente" | "cancelado";
 
 // Avança o vencimento do cliente em 1 mês a partir do vencimento da cobrança paga
 // (ciclo MONTHLY da assinatura). Se o Asaas não informar dueDate, usa a data de hoje.
@@ -11,42 +11,59 @@ type ClienteStatus = 'ativo' | 'vencido' | 'inadimplente' | 'cancelado';
 // ciclos para que meses curtos não "encolham" o vencimento permanentemente:
 // 31/01 -> 28/02 -> 31/03 (e não 28/03).
 function proximoVencimento(dueDate?: string | null, anchorDay?: number | null): string {
-  const base = dueDate ? new Date(`${dueDate}T12:00:00Z`) : new Date()
-  if (Number.isNaN(base.getTime())) return new Date().toISOString().split('T')[0]
+  const base = dueDate ? new Date(`${dueDate}T12:00:00Z`) : new Date();
+  if (Number.isNaN(base.getTime())) return new Date().toISOString().split("T")[0];
 
-  const diaBase = base.getUTCDate()
+  const diaBase = base.getUTCDate();
   const ancora =
-    anchorDay && anchorDay >= 1 && anchorDay <= 31 ? Math.max(anchorDay, diaBase) : diaBase
+    anchorDay && anchorDay >= 1 && anchorDay <= 31 ? Math.max(anchorDay, diaBase) : diaBase;
 
-  const ano = base.getUTCFullYear()
-  const mes = base.getUTCMonth() + 1
+  const ano = base.getUTCFullYear();
+  const mes = base.getUTCMonth() + 1;
   // Último dia do mês de destino (trata anos bissextos automaticamente).
-  const ultimoDia = new Date(Date.UTC(ano, mes + 1, 0, 12)).getUTCDate()
-  const proximo = new Date(Date.UTC(ano, mes, Math.min(ancora, ultimoDia), 12))
-  return proximo.toISOString().split('T')[0]
+  const ultimoDia = new Date(Date.UTC(ano, mes + 1, 0, 12)).getUTCDate();
+  const proximo = new Date(Date.UTC(ano, mes, Math.min(ancora, ultimoDia), 12));
+  return proximo.toISOString().split("T")[0];
 }
 
 // Dia "âncora" da assinatura: o maior dia do mês já usado como vencimento.
 function diaAncora(dataVencimento?: string | null): number | null {
-  if (!dataVencimento) return null
-  const d = new Date(`${dataVencimento}T12:00:00Z`)
-  if (Number.isNaN(d.getTime())) return null
-  return d.getUTCDate()
+  if (!dataVencimento) return null;
+  const d = new Date(`${dataVencimento}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.getUTCDate();
 }
-
 
 // Guarda apenas os campos necessários para auditoria/diagnóstico.
 // O payload bruto do Asaas contém dados pessoais e financeiros do pagador
 // que não precisam ser persistidos.
-// deno-lint-ignore no-explicit-any
-function resumirPayload(payload: any) {
-  if (!payload || typeof payload !== 'object') return null
+interface AsaasEntidade {
+  id?: string | null;
+  status?: string | null;
+  value?: number | null;
+  billingType?: string | null;
+  dueDate?: string | null;
+  paymentDate?: string | null;
+  nextDueDate?: string | null;
+  deleted?: boolean | null;
+  externalReference?: string | null;
+}
 
-  // Eventos de assinatura (SUBSCRIPTION_*) trazem payload.subscription.
-  if (payload.subscription && !payload.payment) {
-    const s = payload.subscription ?? {}
+interface AsaasWebhookPayload {
+  event?: string | null;
+  payment?: AsaasEntidade | null;
+  subscription?: AsaasEntidade | null;
+}
+
+function resumirPayload(payload: unknown) {
+  if (!payload || typeof payload !== "object") return null;
+  const dados = payload as AsaasWebhookPayload;
+
+  // Eventos de assinatura (SUBSCRIPTION_*) trazem dados.subscription.
+  if (dados.subscription && !dados.payment) {
+    const s = dados.subscription ?? {};
     return {
-      event: payload.event ?? null,
+      event: dados.event ?? null,
       subscription: {
         id: s.id ?? null,
         status: s.status ?? null,
@@ -55,12 +72,12 @@ function resumirPayload(payload: any) {
         deleted: s.deleted ?? null,
         externalReference: s.externalReference ?? null,
       },
-    }
+    };
   }
 
-  const p = payload.payment ?? {}
+  const p = dados.payment ?? {};
   return {
-    event: payload.event ?? null,
+    event: dados.event ?? null,
     payment: {
       id: p.id ?? null,
       status: p.status ?? null,
@@ -70,20 +87,18 @@ function resumirPayload(payload: any) {
       paymentDate: p.paymentDate ?? null,
       externalReference: p.externalReference ?? null,
     },
-  }
+  };
 }
 
 // Eventos de assinatura que encerram a recorrência no Asaas.
-const EVENTOS_ASSINATURA_ENCERRADA = [
-  'SUBSCRIPTION_INACTIVATED',
-  'SUBSCRIPTION_DELETED',
-]
+const EVENTOS_ASSINATURA_ENCERRADA = ["SUBSCRIPTION_INACTIVATED", "SUBSCRIPTION_DELETED"];
 
+type SupabaseLike = {
+  from: (tabela: string) => { insert: (linha: Record<string, unknown>) => Promise<unknown> };
+};
 
-// deno-lint-ignore no-explicit-any
 async function logWebhook(
-  // deno-lint-ignore no-explicit-any
-  supabase: any,
+  supabase: SupabaseLike,
   event: string | null,
   paymentId: string | null,
   status: string | null,
@@ -92,350 +107,367 @@ async function logWebhook(
   errorMessage: string | null,
 ) {
   try {
-    await supabase.from('asaas_webhook_logs').insert({
+    await supabase.from("asaas_webhook_logs").insert({
       event: event ?? null,
       payment_id: paymentId ?? null,
       status: status ?? null,
       payload: resumirPayload(payload),
       processing_result: processingResult,
       error_message: errorMessage,
-    })
+    });
   } catch (e) {
-    console.warn('[Asaas Webhook] Falha ao gravar log do webhook:', e)
+    console.warn("[Asaas Webhook] Falha ao gravar log do webhook:", e);
   }
 }
-
 
 // Comparação resistente a ataques de temporização: compara digests SHA-256,
 // que têm sempre o mesmo tamanho, sem sair do laço no primeiro byte diferente.
 async function segredoConfere(enviado: string, esperado: string): Promise<boolean> {
-  if (!enviado || !esperado) return false
-  const enc = new TextEncoder()
+  if (!enviado || !esperado) return false;
+  const enc = new TextEncoder();
   const [a, b] = await Promise.all([
-    crypto.subtle.digest('SHA-256', enc.encode(enviado)),
-    crypto.subtle.digest('SHA-256', enc.encode(esperado)),
-  ])
-  const va = new Uint8Array(a)
-  const vb = new Uint8Array(b)
-  let diff = 0
-  for (let i = 0; i < va.length; i++) diff |= va[i] ^ vb[i]
-  return diff === 0
+    crypto.subtle.digest("SHA-256", enc.encode(enviado)),
+    crypto.subtle.digest("SHA-256", enc.encode(esperado)),
+  ]);
+  const va = new Uint8Array(a);
+  const vb = new Uint8Array(b);
+  let diff = 0;
+  for (let i = 0; i < va.length; i++) diff |= va[i] ^ vb[i];
+  return diff === 0;
 }
 
 Deno.serve(async (req) => {
   // Apenas aceita requisições POST
-  if (req.method !== 'POST') {
-    return new Response('Método não permitido', { status: 405 })
+  if (req.method !== "POST") {
+    return new Response("Método não permitido", { status: 405 });
   }
 
   // Autenticação do webhook: o Asaas envia o token configurado no cabeçalho
   // "asaas-access-token". Rejeitamos qualquer requisição sem o token correto.
-  const expectedToken = Deno.env.get('ASAAS_WEBHOOK_TOKEN')
+  const expectedToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
   if (!expectedToken) {
-    console.error('[Asaas Webhook] ASAAS_WEBHOOK_TOKEN ausente no ambiente.')
-    return new Response('Erro interno de configuração', { status: 500 })
+    console.error("[Asaas Webhook] ASAAS_WEBHOOK_TOKEN ausente no ambiente.");
+    return new Response("Erro interno de configuração", { status: 500 });
   }
   const receivedToken =
-    req.headers.get('asaas-access-token') ?? req.headers.get('asaas-webhook-token')
+    req.headers.get("asaas-access-token") ?? req.headers.get("asaas-webhook-token");
   if (!receivedToken || !(await segredoConfere(receivedToken, expectedToken))) {
-    console.warn('[Asaas Webhook] Token de autenticação inválido ou ausente.')
-    return new Response('Não autorizado', { status: 401 })
+    console.warn("[Asaas Webhook] Token de autenticação inválido ou ausente.");
+    return new Response("Não autorizado", { status: 401 });
   }
 
   try {
-    const payload = await req.json()
-    console.log('[Asaas Webhook] Evento recebido:', payload.event)
+    const payload = await req.json();
+    console.log("[Asaas Webhook] Evento recebido:", payload.event);
 
-
-    const event = payload.event
-    const payment = payload.payment
-    const subscription = payload.subscription
+    const event = payload.event;
+    const payment = payload.payment;
+    const subscription = payload.subscription;
 
     if (!event || (!payment && !subscription)) {
-      return new Response('Payload inválido', { status: 400 })
+      return new Response("Payload inválido", { status: 400 });
     }
 
     // Inicializa o cliente do Supabase com a Service Role Key para ignorar RLS
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('[Asaas Webhook] Variáveis do Supabase ausentes no ambiente.')
-      return new Response('Erro interno de configuração', { status: 500 })
+      console.error("[Asaas Webhook] Variáveis do Supabase ausentes no ambiente.");
+      return new Response("Erro interno de configuração", { status: 500 });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
-        persistSession: false
-      }
-    })
+        persistSession: false,
+      },
+    });
 
     // ---------- Caminho 1: eventos de assinatura (SUBSCRIPTION_*) ----------
     if (subscription && !payment) {
-      const subId = subscription.id ?? null
-      const subStatus = subscription.status ?? null
+      const subId = subscription.id ?? null;
+      const subStatus = subscription.status ?? null;
       const encerrada =
-        EVENTOS_ASSINATURA_ENCERRADA.includes(event) || subscription.deleted === true
+        EVENTOS_ASSINATURA_ENCERRADA.includes(event) || subscription.deleted === true;
 
-      let resultado = encerrada ? 'OK' : 'SUBSCRIPTION_IGNORED'
-      let erro: string | null = null
+      let resultado = encerrada ? "OK" : "SUBSCRIPTION_IGNORED";
+      let erro: string | null = null;
 
       if (encerrada) {
         const { data: cli } = await supabase
-          .from('clientes')
-          .select('id')
-          .eq('asaas_subscription_id', subId)
-          .maybeSingle()
+          .from("clientes")
+          .select("id")
+          .eq("asaas_subscription_id", subId)
+          .maybeSingle();
 
         if (!cli) {
-          console.warn(`[Asaas Webhook] Nenhum cliente para a assinatura ${subId}`)
-          resultado = 'NOT_FOUND'
-          erro = `Nenhum cliente local encontrado para a assinatura ${subId}`
+          console.warn(`[Asaas Webhook] Nenhum cliente para a assinatura ${subId}`);
+          resultado = "NOT_FOUND";
+          erro = `Nenhum cliente local encontrado para a assinatura ${subId}`;
         } else {
           const { error: updErr } = await supabase
-            .from('clientes')
+            .from("clientes")
             .update({
-              status: 'cancelado' as ClienteStatus,
+              status: "cancelado" as ClienteStatus,
               asaas_subscription_id: null,
               updated_at: new Date().toISOString(),
             })
-            .eq('id', cli.id)
+            .eq("id", cli.id);
 
           if (updErr) {
-            console.error('[Asaas Webhook] Erro ao cancelar cliente:', updErr.message)
-            resultado = 'ERROR'
-            erro = updErr.message
+            console.error("[Asaas Webhook] Erro ao cancelar cliente:", updErr.message);
+            resultado = "ERROR";
+            erro = updErr.message;
           } else {
             try {
-              await supabase.from('auditoria').insert({
+              await supabase.from("auditoria").insert({
                 actor_id: null,
-                actor_email: 'asaas-webhook',
+                actor_email: "asaas-webhook",
                 actor_role: null,
-                acao: 'webhook_assinatura_cancelada',
-                entidade: 'cliente',
+                acao: "webhook_assinatura_cancelada",
+                entidade: "cliente",
                 entidade_id: cli.id,
                 detalhes: {
                   asaas_subscription_id: subId,
                   evento: event,
                   status_assinatura: subStatus,
                 },
-              })
+              });
             } catch (auditErr) {
-              console.warn('[Asaas Webhook] Erro ao registrar auditoria:', auditErr)
+              console.warn("[Asaas Webhook] Erro ao registrar auditoria:", auditErr);
             }
           }
         }
       } else {
         // SUBSCRIPTION_CREATED/UPDATED e demais: apenas registramos.
         // A fonte da verdade do valor é o banco local (sincronizarAssinaturaCliente).
-        console.log(`[Asaas Webhook] Evento de assinatura ${event} apenas registrado.`)
+        console.log(`[Asaas Webhook] Evento de assinatura ${event} apenas registrado.`);
       }
 
-      await logWebhook(supabase, event, subId, subStatus, payload, resultado, erro)
+      await logWebhook(supabase, event, subId, subStatus, payload, resultado, erro);
 
       return new Response(JSON.stringify({ success: true, processed: true }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // ---------- Caminho 2: eventos de cobrança (fluxo original) ----------
-    const asaasPaymentId = payment.id
-    const asaasStatus = payment.status
-
+    const asaasPaymentId = payment.id;
+    const asaasStatus = payment.status;
 
     // Mapeamento do status de pagamento do Asaas para o banco local
-    let mappedPaymentStatus: PagamentoStatus = 'pendente'
-    if (['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(asaasStatus)) {
-      mappedPaymentStatus = 'pago'
-    } else if (['OVERDUE', 'RESTORED'].includes(asaasStatus)) {
-      mappedPaymentStatus = 'vencido'
-    } else if (['REFUNDED', 'CHARGEBACK_REQUESTED', 'CHARGEBACK_DISPUTE'].includes(asaasStatus)) {
-      mappedPaymentStatus = 'vencido' // Revertido/Estornado
+    let mappedPaymentStatus: PagamentoStatus = "pendente";
+    if (["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"].includes(asaasStatus)) {
+      mappedPaymentStatus = "pago";
+    } else if (["OVERDUE", "RESTORED"].includes(asaasStatus)) {
+      mappedPaymentStatus = "vencido";
+    } else if (["REFUNDED", "CHARGEBACK_REQUESTED", "CHARGEBACK_DISPUTE"].includes(asaasStatus)) {
+      mappedPaymentStatus = "vencido"; // Revertido/Estornado
     }
 
-    console.log(`[Asaas Webhook] Pagamento ${asaasPaymentId}: Status Asaas: ${asaasStatus} -> Mapeado para: ${mappedPaymentStatus}`)
+    console.log(
+      `[Asaas Webhook] Pagamento ${asaasPaymentId}: Status Asaas: ${asaasStatus} -> Mapeado para: ${mappedPaymentStatus}`,
+    );
 
-    let processingResult = 'OK'
-    let errorMessage: string | null = null
+    let processingResult = "OK";
+    let errorMessage: string | null = null;
 
     // 1. Atualizar a tabela de pagamentos local buscando pelo ID de pagamento do Asaas
     const { data: updatedPayments, error: paymentErr } = await supabase
-      .from('pagamentos')
+      .from("pagamentos")
       .update({
         status: mappedPaymentStatus,
-        data_pagamento: mappedPaymentStatus === 'pago' ? new Date().toISOString().split('T')[0] : null,
-        updated_at: new Date().toISOString()
+        data_pagamento:
+          mappedPaymentStatus === "pago" ? new Date().toISOString().split("T")[0] : null,
+        updated_at: new Date().toISOString(),
       })
-      .eq('asaas_payment_id', asaasPaymentId)
-      .select('id, cliente_id, valor')
+      .eq("asaas_payment_id", asaasPaymentId)
+      .select("id, cliente_id, valor");
 
     if (paymentErr) {
-      console.error('[Asaas Webhook] Erro ao atualizar tabela pagamentos:', paymentErr.message)
-      processingResult = 'ERROR'
-      errorMessage = paymentErr.message
-      await logWebhook(supabase, event, asaasPaymentId, asaasStatus, payload, processingResult, errorMessage)
-      return new Response(JSON.stringify({ error: paymentErr.message }), { status: 500 })
+      console.error("[Asaas Webhook] Erro ao atualizar tabela pagamentos:", paymentErr.message);
+      processingResult = "ERROR";
+      errorMessage = paymentErr.message;
+      await logWebhook(
+        supabase,
+        event,
+        asaasPaymentId,
+        asaasStatus,
+        payload,
+        processingResult,
+        errorMessage,
+      );
+      return new Response(JSON.stringify({ error: paymentErr.message }), { status: 500 });
     }
 
     // Se o pagamento local existir no banco
     if (updatedPayments && updatedPayments.length > 0) {
-      const record = updatedPayments[0]
-      console.log(`[Asaas Webhook] Pagamento local ${record.id} atualizado.`)
+      const record = updatedPayments[0];
+      console.log(`[Asaas Webhook] Pagamento local ${record.id} atualizado.`);
 
       // Marca o uso do cupom como efetivamente pago (data/hora da confirmação).
-      if (mappedPaymentStatus === 'pago') {
+      if (mappedPaymentStatus === "pago") {
         await supabase
-          .from('cupom_usos')
+          .from("cupom_usos")
           .update({ pago_em: new Date().toISOString() })
-          .eq('asaas_payment_id', asaasPaymentId)
-          .is('pago_em', null)
+          .eq("asaas_payment_id", asaasPaymentId)
+          .is("pago_em", null);
       }
 
-
       // Mapeamento do status do cliente com base no pagamento
-      let clienteStatus: ClienteStatus = 'ativo'
-      if (mappedPaymentStatus === 'pago') {
-        clienteStatus = 'ativo'
-      } else if (mappedPaymentStatus === 'vencido') {
-        clienteStatus = 'vencido'
+      let clienteStatus: ClienteStatus = "ativo";
+      if (mappedPaymentStatus === "pago") {
+        clienteStatus = "ativo";
+      } else if (mappedPaymentStatus === "vencido") {
+        clienteStatus = "vencido";
       }
 
       // 2. Atualizar o status do cliente (e avançar o vencimento quando pago)
-      let ancora: number | null = null
-      if (mappedPaymentStatus === 'pago') {
+      let ancora: number | null = null;
+      if (mappedPaymentStatus === "pago") {
         const { data: cliAtual } = await supabase
-          .from('clientes')
-          .select('data_vencimento')
-          .eq('id', record.cliente_id)
-          .maybeSingle()
-        ancora = diaAncora(cliAtual?.data_vencimento)
+          .from("clientes")
+          .select("data_vencimento")
+          .eq("id", record.cliente_id)
+          .maybeSingle();
+        ancora = diaAncora(cliAtual?.data_vencimento);
       }
 
       const { error: clientErr } = await supabase
-        .from('clientes')
+        .from("clientes")
         .update({
           status: clienteStatus,
-          ...(mappedPaymentStatus === 'pago'
+          ...(mappedPaymentStatus === "pago"
             ? { data_vencimento: proximoVencimento(payment.dueDate, ancora) }
             : {}),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', record.cliente_id)
+        .eq("id", record.cliente_id);
 
       if (clientErr) {
-        console.error('[Asaas Webhook] Erro ao atualizar status do cliente:', clientErr.message)
-        processingResult = 'ERROR'
-        errorMessage = clientErr.message
+        console.error("[Asaas Webhook] Erro ao atualizar status do cliente:", clientErr.message);
+        processingResult = "ERROR";
+        errorMessage = clientErr.message;
       } else {
-        console.log(`[Asaas Webhook] Status do cliente ${record.cliente_id} atualizado para ${clienteStatus}.`)
+        console.log(
+          `[Asaas Webhook] Status do cliente ${record.cliente_id} atualizado para ${clienteStatus}.`,
+        );
       }
 
       // 3. Registrar auditoria (opcional - usando banco de dados de auditoria)
       try {
-        await supabase.from('auditoria').insert({
+        await supabase.from("auditoria").insert({
           actor_id: null,
-          actor_email: 'asaas-webhook',
+          actor_email: "asaas-webhook",
           actor_role: null,
-          acao: 'webhook_pagamento_processado',
-          entidade: 'pagamento',
+          acao: "webhook_pagamento_processado",
+          entidade: "pagamento",
           entidade_id: record.id,
           detalhes: {
             asaas_payment_id: asaasPaymentId,
             evento: event,
             status_asaas: asaasStatus,
-            status_mapeado: mappedPaymentStatus
-          }
-        })
+            status_mapeado: mappedPaymentStatus,
+          },
+        });
       } catch (auditErr) {
-        console.warn('[Asaas Webhook] Erro ao registrar log de auditoria:', auditErr)
+        console.warn("[Asaas Webhook] Erro ao registrar log de auditoria:", auditErr);
       }
     } else {
       // Cobranças de ciclos futuros são criadas pelo Asaas (assinatura recorrente)
       // e ainda não existem localmente: registramos aqui.
-      const clienteRef = payment.externalReference ?? null
-      let clienteId: string | null = null
+      const clienteRef = payment.externalReference ?? null;
+      let clienteId: string | null = null;
 
       if (clienteRef) {
         const { data: cli } = await supabase
-          .from('clientes')
-          .select('id')
-          .eq('id', clienteRef)
-          .maybeSingle()
-        clienteId = cli?.id ?? null
+          .from("clientes")
+          .select("id")
+          .eq("id", clienteRef)
+          .maybeSingle();
+        clienteId = cli?.id ?? null;
       }
 
       if (!clienteId && payment.subscription) {
         const { data: cli } = await supabase
-          .from('clientes')
-          .select('id')
-          .eq('asaas_subscription_id', payment.subscription)
-          .maybeSingle()
-        clienteId = cli?.id ?? null
+          .from("clientes")
+          .select("id")
+          .eq("asaas_subscription_id", payment.subscription)
+          .maybeSingle();
+        clienteId = cli?.id ?? null;
       }
 
       if (clienteId) {
-        const { error: insErr } = await supabase.from('pagamentos').insert({
+        const { error: insErr } = await supabase.from("pagamentos").insert({
           cliente_id: clienteId,
           valor: Number(payment.value ?? 0),
           status: mappedPaymentStatus,
           data_pagamento:
-            mappedPaymentStatus === 'pago' ? new Date().toISOString().split('T')[0] : null,
+            mappedPaymentStatus === "pago" ? new Date().toISOString().split("T")[0] : null,
           asaas_payment_id: asaasPaymentId,
           asaas_subscription_id: payment.subscription ?? null,
           invoice_url: payment.invoiceUrl ?? payment.bankSlipUrl ?? null,
-        })
+        });
 
         if (insErr) {
-          console.error('[Asaas Webhook] Erro ao criar pagamento recorrente:', insErr.message)
-          processingResult = 'ERROR'
-          errorMessage = insErr.message
+          console.error("[Asaas Webhook] Erro ao criar pagamento recorrente:", insErr.message);
+          processingResult = "ERROR";
+          errorMessage = insErr.message;
         } else {
-          processingResult = 'CREATED'
+          processingResult = "CREATED";
           const clienteStatus: ClienteStatus =
-            mappedPaymentStatus === 'vencido' ? 'vencido' : 'ativo'
+            mappedPaymentStatus === "vencido" ? "vencido" : "ativo";
 
-          let ancoraRec: number | null = null
-          if (mappedPaymentStatus === 'pago') {
+          let ancoraRec: number | null = null;
+          if (mappedPaymentStatus === "pago") {
             const { data: cliAtual } = await supabase
-              .from('clientes')
-              .select('data_vencimento')
-              .eq('id', clienteId)
-              .maybeSingle()
-            ancoraRec = diaAncora(cliAtual?.data_vencimento)
+              .from("clientes")
+              .select("data_vencimento")
+              .eq("id", clienteId)
+              .maybeSingle();
+            ancoraRec = diaAncora(cliAtual?.data_vencimento);
           }
 
           await supabase
-            .from('clientes')
+            .from("clientes")
             .update({
               status: clienteStatus,
-              ...(mappedPaymentStatus === 'pago'
+              ...(mappedPaymentStatus === "pago"
                 ? { data_vencimento: proximoVencimento(payment.dueDate, ancoraRec) }
                 : {}),
               updated_at: new Date().toISOString(),
             })
-            .eq('id', clienteId)
+            .eq("id", clienteId);
         }
       } else {
-        console.warn(`[Asaas Webhook] Nenhum cliente correspondente para o pagamento ${asaasPaymentId}`)
-        processingResult = 'NOT_FOUND'
-        errorMessage = `Nenhum cliente local encontrado para ${asaasPaymentId}`
+        console.warn(
+          `[Asaas Webhook] Nenhum cliente correspondente para o pagamento ${asaasPaymentId}`,
+        );
+        processingResult = "NOT_FOUND";
+        errorMessage = `Nenhum cliente local encontrado para ${asaasPaymentId}`;
       }
     }
 
-
-    await logWebhook(supabase, event, asaasPaymentId, asaasStatus, payload, processingResult, errorMessage)
-
+    await logWebhook(
+      supabase,
+      event,
+      asaasPaymentId,
+      asaasStatus,
+      payload,
+      processingResult,
+      errorMessage,
+    );
 
     return new Response(JSON.stringify({ success: true, processed: true }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    })
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (err) {
-    console.error('[Asaas Webhook] Erro geral de processamento:', err)
+    console.error("[Asaas Webhook] Erro geral de processamento:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    })
+      headers: { "Content-Type": "application/json" },
+    });
   }
-})
+});

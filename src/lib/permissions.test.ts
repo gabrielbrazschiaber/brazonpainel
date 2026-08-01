@@ -1,10 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { ensurePermission, hasPermission } from "@/lib/permissions.guard";
-import {
-  PERMISSOES_BLOQUEADAS,
-  TODAS_PERMISSOES,
-  CATALOGO_PERMISSOES,
-} from "@/lib/permissions";
+import { PERMISSOES_BLOQUEADAS, TODAS_PERMISSOES, CATALOGO_PERMISSOES } from "@/lib/permissions";
 
 function clienteFake(resposta: boolean | null, erro: unknown = null) {
   return {
@@ -15,32 +11,30 @@ function clienteFake(resposta: boolean | null, erro: unknown = null) {
 describe("controle de acesso — cenários de negativa", () => {
   it("recusa quando o usuário não tem a permissão", async () => {
     const sb = clienteFake(false);
-    await expect(
-      ensurePermission(sb, "user-1", "clientes.excluir"),
-    ).rejects.toThrow(/Acesso negado/);
+    await expect(ensurePermission(sb, "user-1", "clientes.excluir")).rejects.toThrow(
+      /Acesso negado/,
+    );
   });
 
   it("recusa quando a verificação falha (fail-closed)", async () => {
     const sb = clienteFake(null, { message: "boom" });
-    await expect(
-      ensurePermission(sb, "user-1", "configuracoes.gerenciar"),
-    ).rejects.toThrow(/Acesso negado/);
+    await expect(ensurePermission(sb, "user-1", "configuracoes.gerenciar")).rejects.toThrow(
+      /Acesso negado/,
+    );
   });
 
   it("recusa quando o retorno não é exatamente true", async () => {
     for (const valor of [null, undefined, 1, "true", {}] as unknown[]) {
       const sb = { rpc: vi.fn().mockResolvedValue({ data: valor, error: null }) };
-      await expect(
-        ensurePermission(sb, "user-1", "planos.gerenciar"),
-      ).rejects.toThrow(/Acesso negado/);
+      await expect(ensurePermission(sb, "user-1", "planos.gerenciar")).rejects.toThrow(
+        /Acesso negado/,
+      );
     }
   });
 
   it("permite quando a permissão existe", async () => {
     const sb = clienteFake(true);
-    await expect(
-      ensurePermission(sb, "user-1", "clientes.criar"),
-    ).resolves.toBeUndefined();
+    await expect(ensurePermission(sb, "user-1", "clientes.criar")).resolves.toBeUndefined();
     expect(sb.rpc).toHaveBeenCalledWith("has_permission", {
       _user_id: "user-1",
       _permission: "clientes.criar",

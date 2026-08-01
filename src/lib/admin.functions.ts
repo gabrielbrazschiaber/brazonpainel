@@ -191,7 +191,8 @@ export const atualizarVendedor = createServerFn({ method: "POST" })
       vend.user_id,
       authUpdate,
     );
-    if (authErr) throw new Error(authErr.message ?? "Não foi possível atualizar o login do vendedor.");
+    if (authErr)
+      throw new Error(authErr.message ?? "Não foi possível atualizar o login do vendedor.");
 
     const { error: profErr } = await supabaseAdmin
       .from("profiles")
@@ -237,7 +238,6 @@ const editarClienteAdminSchema = z.object({
   anotacoes: z.string().trim().max(2000).optional().nullable(),
 });
 
-
 // Admin edita nome, e-mail e (opcionalmente) senha de qualquer cliente.
 export const atualizarClienteAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -265,7 +265,8 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
       cli.user_id,
       authUpdate,
     );
-    if (authErr) throw new Error(authErr.message ?? "Não foi possível atualizar o login do cliente.");
+    if (authErr)
+      throw new Error(authErr.message ?? "Não foi possível atualizar o login do cliente.");
 
     const { error: profErr } = await supabaseAdmin
       .from("profiles")
@@ -301,7 +302,6 @@ export const atualizarClienteAdmin = createServerFn({ method: "POST" })
       const { sincronizarAssinaturaCliente } = await import("@/lib/asaas.server");
       sincronizacaoAsaas = await sincronizarAssinaturaCliente(data.cliente_id);
     }
-
 
     const { registrarAuditoria } = await import("@/lib/audit.server");
     await registrarAuditoria({
@@ -506,7 +506,9 @@ export const listarFilaAsaas = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
       .from("asaas_sync_queue")
-      .select("id, cliente_id, tipo, status, tentativas, max_tentativas, proxima_tentativa_em, ultimo_erro, updated_at, clientes(nome)")
+      .select(
+        "id, cliente_id, tipo, status, tentativas, max_tentativas, proxima_tentativa_em, ultimo_erro, updated_at, clientes(nome)",
+      )
       .order("updated_at", { ascending: false })
       .limit(50);
 
@@ -605,7 +607,7 @@ export const reprocessarSyncCliente = createServerFn({ method: "POST" })
           status: transitorio ? "pendente" : "falhou",
           ultimo_erro: resultado.motivo ?? "desconhecido",
           proxima_tentativa_em: new Date(
-            Date.now() + (transitorio ? calcularBackoffMs(1) : 0)
+            Date.now() + (transitorio ? calcularBackoffMs(1) : 0),
           ).toISOString(),
         })
         .eq("cliente_id", data.cliente_id)
@@ -699,7 +701,12 @@ export const salvarPlano = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: salvo, error } = data.id
-      ? await supabaseAdmin.from("planos").update(payload).eq("id", data.id).select("id").maybeSingle()
+      ? await supabaseAdmin
+          .from("planos")
+          .update(payload)
+          .eq("id", data.id)
+          .select("id")
+          .maybeSingle()
       : await supabaseAdmin.from("planos").insert(payload).select("id").maybeSingle();
 
     if (error) throw new Error("Não foi possível salvar o plano.");

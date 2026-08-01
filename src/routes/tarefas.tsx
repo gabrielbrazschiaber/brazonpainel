@@ -218,7 +218,6 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
           return { id: c.id, nome: (p?.nome || "").trim() || p?.email || "Cliente" };
         }),
       );
-
     })();
   }, [equipe, carregarResponsaveis]);
 
@@ -253,7 +252,14 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
       });
       toast.success(equipe ? "Tarefa criada." : "Solicitação enviada ao seu vendedor.");
       setAberto(false);
-      setForm({ titulo: "", descricao: "", prioridade: "media", prazo: "", cliente_id: "", responsavel_id: "" });
+      setForm({
+        titulo: "",
+        descricao: "",
+        prioridade: "media",
+        prazo: "",
+        cliente_id: "",
+        responsavel_id: "",
+      });
       await recarregar();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível salvar.");
@@ -285,7 +291,6 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
     }
     void alterar(t.id, { status: novo });
   }
-
 
   useTourDaTela("tela:tarefas", !carregando);
 
@@ -382,7 +387,9 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
                       </Badge>
                     </div>
                     {t.descricao && (
-                      <p className="whitespace-pre-line text-sm text-muted-foreground">{t.descricao}</p>
+                      <p className="whitespace-pre-line text-sm text-muted-foreground">
+                        {t.descricao}
+                      </p>
                     )}
                     <p className="text-xs text-muted-foreground">
                       {origemLabel(t)}
@@ -438,14 +445,15 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {([t.status, ...transicoesPermitidas(t.status, isAdmin)] as TarefaStatus[]).map((s) => (
+                          {(
+                            [t.status, ...transicoesPermitidas(t.status, isAdmin)] as TarefaStatus[]
+                          ).map((s) => (
                             <SelectItem key={s} value={s}>
                               {STATUS_LABEL[s]}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-
                     </div>
                   )}
                 </div>
@@ -495,7 +503,9 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
                 <Label>Prioridade</Label>
                 <Select
                   value={form.prioridade}
-                  onValueChange={(v) => setForm((f) => ({ ...f, prioridade: v as TarefaPrioridade }))}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, prioridade: v as TarefaPrioridade }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />

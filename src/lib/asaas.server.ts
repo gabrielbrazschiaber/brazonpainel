@@ -1,5 +1,17 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+/** Forma parcial do objeto de cobrança devolvido pela API do Asaas. */
+export interface PagamentoAsaas {
+  id?: string;
+  status?: string;
+  dueDate?: string;
+  value?: number;
+  invoiceUrl?: string | null;
+  bankSlipUrl?: string | null;
+  billingType?: string;
+  [chave: string]: unknown;
+}
+
 interface ConfigAsaas {
   apiKey: string;
   baseUrl: string;
@@ -13,21 +25,21 @@ async function lerJson(response: Response, contexto: string) {
   } catch {
     console.error(`[Asaas] Resposta não-JSON (${contexto}):`, text.slice(0, 300));
     throw new Error(
-      `Erro Asaas (${contexto}): resposta inesperada do servidor. Verifique a chave de API e o ambiente (sandbox/produção) nas Configurações.`
+      `Erro Asaas (${contexto}): resposta inesperada do servidor. Verifique a chave de API e o ambiente (sandbox/produção) nas Configurações.`,
     );
   }
 }
 
-const URL_PRODUCAO = 'https://api.asaas.com/v3';
-const URL_SANDBOX = 'https://api-sandbox.asaas.com/v3';
+const URL_PRODUCAO = "https://api.asaas.com/v3";
+const URL_SANDBOX = "https://api-sandbox.asaas.com/v3";
 
 // O Asaas exige um cabeçalho User-Agent em todas as requisições.
 function asaasHeaders(apiKey: string, comBody = false): Record<string, string> {
   const headers: Record<string, string> = {
-    'access_token': apiKey,
-    'User-Agent': 'BrazonPainel/1.0'
+    access_token: apiKey,
+    "User-Agent": "BrazonPainel/1.0",
   };
-  if (comBody) headers['Content-Type'] = 'application/json';
+  if (comBody) headers["Content-Type"] = "application/json";
   return headers;
 }
 
@@ -35,15 +47,14 @@ function asaasHeaders(apiKey: string, comBody = false): Record<string, string> {
 // Isso evita o erro "invalid_environment" quando o toggle sandbox/produção
 // não corresponde à chave informada.
 async function resolverBaseUrl(apiKey: string, preferido: string): Promise<string> {
-  const ordem = preferido === URL_PRODUCAO
-    ? [URL_PRODUCAO, URL_SANDBOX]
-    : [URL_SANDBOX, URL_PRODUCAO];
+  const ordem =
+    preferido === URL_PRODUCAO ? [URL_PRODUCAO, URL_SANDBOX] : [URL_SANDBOX, URL_PRODUCAO];
 
-  let ultimoErro = '';
+  let ultimoErro = "";
   for (const base of ordem) {
     try {
       const resp = await fetch(`${base}/myAccount`, {
-        headers: asaasHeaders(apiKey)
+        headers: asaasHeaders(apiKey),
       });
       if (resp.ok) {
         return base;
@@ -51,16 +62,16 @@ async function resolverBaseUrl(apiKey: string, preferido: string): Promise<strin
       const txt = await resp.text();
       ultimoErro = txt.slice(0, 200);
       // 401/invalid_environment => chave não é deste ambiente; tenta o outro
-      if (resp.status === 401 || txt.includes('invalid_environment')) {
+      if (resp.status === 401 || txt.includes("invalid_environment")) {
         continue;
       }
     } catch (e) {
       ultimoErro = e instanceof Error ? e.message : String(e);
     }
   }
-  console.error('[Asaas] Chave não reconhecida em nenhum ambiente. Detalhe:', ultimoErro);
+  console.error("[Asaas] Chave não reconhecida em nenhum ambiente. Detalhe:", ultimoErro);
   throw new Error(
-    'Chave de API do Asaas inválida ou não reconhecida em nenhum ambiente (sandbox/produção). Verifique a chave nas Configurações.'
+    "Chave de API do Asaas inválida ou não reconhecida em nenhum ambiente (sandbox/produção). Verifique a chave nas Configurações.",
   );
 }
 
@@ -68,31 +79,33 @@ async function resolverBaseUrl(apiKey: string, preferido: string): Promise<strin
 async function obterConfigAsaas(): Promise<ConfigAsaas> {
   // 1. Tenta obter do Environment do servidor
   const envKey = process.env.ASAAS_API_KEY;
-  const envAmbiente = process.env.ASAAS_AMBIENTE || 'sandbox';
+  const envAmbiente = process.env.ASAAS_AMBIENTE || "sandbox";
 
   if (envKey) {
-    const preferido = envAmbiente === 'producao' ? URL_PRODUCAO : URL_SANDBOX;
+    const preferido = envAmbiente === "producao" ? URL_PRODUCAO : URL_SANDBOX;
     return {
       apiKey: envKey,
-      baseUrl: await resolverBaseUrl(envKey, preferido)
+      baseUrl: await resolverBaseUrl(envKey, preferido),
     };
   }
 
   // 2. Fallback: Busca da tabela configuracoes no banco de dados
   const { data: config, error } = await supabaseAdmin
-    .from('configuracoes')
-    .select('asaas_api_key, asaas_ambiente')
+    .from("configuracoes")
+    .select("asaas_api_key, asaas_ambiente")
     .limit(1)
     .maybeSingle();
 
   if (error || !config || !config.asaas_api_key) {
-    throw new Error('Configuração do Asaas (API Key) não encontrada no servidor ou banco de dados.');
+    throw new Error(
+      "Configuração do Asaas (API Key) não encontrada no servidor ou banco de dados.",
+    );
   }
 
-  const preferido = config.asaas_ambiente === 'producao' ? URL_PRODUCAO : URL_SANDBOX;
+  const preferido = config.asaas_ambiente === "producao" ? URL_PRODUCAO : URL_SANDBOX;
   return {
     apiKey: config.asaas_api_key,
-    baseUrl: await resolverBaseUrl(config.asaas_api_key, preferido)
+    baseUrl: await resolverBaseUrl(config.asaas_api_key, preferido),
   };
 }
 
@@ -104,7 +117,7 @@ async function obterOuCriarClienteAsaas(
   cpfCnpj: string,
   telefone: string | null,
   asaasCustomerIdExistente: string | null,
-  config: ConfigAsaas
+  config: ConfigAsaas,
 ): Promise<string> {
   if (asaasCustomerIdExistente) {
     return asaasCustomerIdExistente;
@@ -113,7 +126,7 @@ async function obterOuCriarClienteAsaas(
   console.log(`[Asaas] Criando cliente ${nome} (${email}) no painel do Asaas...`);
 
   const response = await fetch(`${config.baseUrl}/customers`, {
-    method: 'POST',
+    method: "POST",
     headers: asaasHeaders(config.apiKey, true),
     body: JSON.stringify({
       name: nome,
@@ -121,30 +134,30 @@ async function obterOuCriarClienteAsaas(
       cpfCnpj: cpfCnpj,
       ...(telefone ? { mobilePhone: telefone } : {}),
       externalReference: clienteId,
-      notificationDisabled: true
-    })
+      notificationDisabled: true,
+    }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[Asaas] Falha ao criar cliente:', errorText);
+    console.error("[Asaas] Falha ao criar cliente:", errorText);
     // Detalhe do provedor fica apenas no log do servidor.
     throw new Error(
-      'Não foi possível registrar seus dados na plataforma de pagamento. Confira o CPF/CNPJ cadastrado e tente novamente.'
+      "Não foi possível registrar seus dados na plataforma de pagamento. Confira o CPF/CNPJ cadastrado e tente novamente.",
     );
   }
 
-  const data = await lerJson(response, 'Criar Cliente');
+  const data = await lerJson(response, "Criar Cliente");
   const asaasCustomerId = data.id;
 
   // Atualiza no banco de dados local
   const { error: updateErr } = await supabaseAdmin
-    .from('clientes')
+    .from("clientes")
     .update({ asaas_customer_id: asaasCustomerId })
-    .eq('id', clienteId);
+    .eq("id", clienteId);
 
   if (updateErr) {
-    console.error('[Asaas] Erro ao salvar asaas_customer_id localmente:', updateErr.message);
+    console.error("[Asaas] Erro ao salvar asaas_customer_id localmente:", updateErr.message);
   }
 
   return asaasCustomerId;
@@ -153,7 +166,7 @@ async function obterOuCriarClienteAsaas(
 export interface CobrancaParams {
   clienteId: string;
   valor: number;
-  tipoPagamento: 'PIX' | 'BOLETO' | 'CREDIT_CARD';
+  tipoPagamento: "PIX" | "BOLETO" | "CREDIT_CARD";
   dataVencimento: string; // Formato YYYY-MM-DD
   descricao?: string;
   /**
@@ -163,24 +176,22 @@ export interface CobrancaParams {
   descontoPrimeiraMensalidade?: number;
 }
 
-
 // Busca a cobrança em aberto de uma assinatura (a próxima a ser paga).
-async function buscarCobrancaAtualDaAssinatura(
-  subscriptionId: string,
-  config: ConfigAsaas
-) {
-  const resp = await fetch(
-    `${config.baseUrl}/subscriptions/${subscriptionId}/payments?limit=20`,
-    { headers: asaasHeaders(config.apiKey) }
-  );
+async function buscarCobrancaAtualDaAssinatura(subscriptionId: string, config: ConfigAsaas) {
+  const resp = await fetch(`${config.baseUrl}/subscriptions/${subscriptionId}/payments?limit=20`, {
+    headers: asaasHeaders(config.apiKey),
+  });
   if (!resp.ok) {
-    console.error('[Asaas] Falha ao listar cobranças da assinatura:', (await resp.text()).slice(0, 300));
+    console.error(
+      "[Asaas] Falha ao listar cobranças da assinatura:",
+      (await resp.text()).slice(0, 300),
+    );
     return null;
   }
-  const lista = await lerJson(resp, 'Listar Cobranças da Assinatura');
-  const pagamentos: any[] = Array.isArray(lista?.data) ? lista.data : [];
+  const lista = await lerJson(resp, "Listar Cobranças da Assinatura");
+  const pagamentos: PagamentoAsaas[] = Array.isArray(lista?.data) ? lista.data : [];
   const abertos = pagamentos
-    .filter((p) => ['PENDING', 'AWAITING_RISK_ANALYSIS', 'OVERDUE'].includes(p.status))
+    .filter((p) => ["PENDING", "AWAITING_RISK_ANALYSIS", "OVERDUE"].includes(p.status ?? ""))
     .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)));
   return abertos[0] ?? pagamentos[0] ?? null;
 }
@@ -190,21 +201,21 @@ async function buscarCobrancaAtualDaAssinatura(
 async function obterPixCopiaECola(
   paymentId: string | null | undefined,
   billingType: string,
-  config: ConfigAsaas
+  config: ConfigAsaas,
 ): Promise<string | null> {
-  if (!paymentId || billingType !== 'PIX') return null;
+  if (!paymentId || billingType !== "PIX") return null;
   try {
     const resp = await fetch(`${config.baseUrl}/payments/${paymentId}/pixQrCode`, {
       headers: asaasHeaders(config.apiKey),
     });
     if (!resp.ok) {
-      console.error('[Asaas] Falha ao obter QR Code PIX:', (await resp.text()).slice(0, 300));
+      console.error("[Asaas] Falha ao obter QR Code PIX:", (await resp.text()).slice(0, 300));
       return null;
     }
-    const qr = await lerJson(resp, 'QR Code PIX');
+    const qr = await lerJson(resp, "QR Code PIX");
     return (qr?.payload as string) ?? null;
   } catch (e) {
-    console.error('[Asaas] Erro ao obter QR Code PIX:', e instanceof Error ? e.message : e);
+    console.error("[Asaas] Erro ao obter QR Code PIX:", e instanceof Error ? e.message : e);
     return null;
   }
 }
@@ -213,41 +224,41 @@ async function obterPixCopiaECola(
 async function registrarPagamentoLocal(
   clienteId: string,
   subscriptionId: string,
-  pagamentoAsaas: any
+  pagamentoAsaas: PagamentoAsaas,
 ) {
   if (!pagamentoAsaas?.id) return null;
 
   const invoiceUrl = pagamentoAsaas.invoiceUrl || pagamentoAsaas.bankSlipUrl || null;
 
   const { data: existente } = await supabaseAdmin
-    .from('pagamentos')
-    .select('id')
-    .eq('asaas_payment_id', pagamentoAsaas.id)
+    .from("pagamentos")
+    .select("id")
+    .eq("asaas_payment_id", pagamentoAsaas.id)
     .maybeSingle();
 
   if (existente) {
     await supabaseAdmin
-      .from('pagamentos')
+      .from("pagamentos")
       .update({ invoice_url: invoiceUrl, asaas_subscription_id: subscriptionId })
-      .eq('id', existente.id);
+      .eq("id", existente.id);
     return existente.id;
   }
 
   const { data: novo, error } = await supabaseAdmin
-    .from('pagamentos')
+    .from("pagamentos")
     .insert({
       cliente_id: clienteId,
       valor: Number(pagamentoAsaas.value ?? 0),
-      status: 'pendente',
+      status: "pendente",
       asaas_payment_id: pagamentoAsaas.id,
       asaas_subscription_id: subscriptionId,
       invoice_url: invoiceUrl,
     })
-    .select('id')
+    .select("id")
     .single();
 
   if (error) {
-    console.error('[Asaas] Erro ao registrar pagamento local:', error.message);
+    console.error("[Asaas] Erro ao registrar pagamento local:", error.message);
     return null;
   }
   return novo.id;
@@ -260,32 +271,32 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
 
   // 1. Busca os dados do cliente no banco
   const { data: cliente, error: cliErr } = await supabaseAdmin
-    .from('clientes')
-    .select('id, user_id, asaas_customer_id, asaas_subscription_id, cpf_cnpj, telefone')
-    .eq('id', params.clienteId)
+    .from("clientes")
+    .select("id, user_id, asaas_customer_id, asaas_subscription_id, cpf_cnpj, telefone")
+    .eq("id", params.clienteId)
     .maybeSingle();
 
   if (cliErr || !cliente) {
     throw new Error(`Cliente não encontrado para cobrança: ${params.clienteId}`);
   }
 
-  const cpfCnpj = (cliente.cpf_cnpj || '').replace(/\D/g, '');
+  const cpfCnpj = (cliente.cpf_cnpj || "").replace(/\D/g, "");
   if (!cpfCnpj) {
     throw new Error(
-      'É necessário cadastrar o CPF ou CNPJ do cliente antes de gerar a cobrança. Peça ao seu vendedor para preencher esse dado.'
+      "É necessário cadastrar o CPF ou CNPJ do cliente antes de gerar a cobrança. Peça ao seu vendedor para preencher esse dado.",
     );
   }
 
   // O perfil (nome/email) está ligado por user_id, não por uma FK direta de clientes.
   const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('nome, email')
-    .eq('id', cliente.user_id)
+    .from("profiles")
+    .select("nome, email")
+    .eq("id", cliente.user_id)
     .maybeSingle();
 
-  const nome = profile?.nome || 'Cliente Brazon';
-  const email = profile?.email || '';
-  const telefone = (cliente.telefone || '').replace(/\D/g, '') || null;
+  const nome = profile?.nome || "Cliente Brazon";
+  const email = profile?.email || "";
+  const telefone = (cliente.telefone || "").replace(/\D/g, "") || null;
 
   // 2. Obtém ou cria o cliente no Asaas
   const asaasCustomerId = await obterOuCriarClienteAsaas(
@@ -295,30 +306,30 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
     cpfCnpj,
     telefone,
     cliente.asaas_customer_id,
-    config
+    config,
   );
 
-  const descricao = params.descricao || 'Assinatura mensal Brazon';
+  const descricao = params.descricao || "Assinatura mensal Brazon";
 
   // 3. Se já existe assinatura ativa, reaproveita (mantendo a recorrência)
   //    e apenas garante que o valor/forma de pagamento estejam atualizados.
   if (cliente.asaas_subscription_id) {
     const respAssinatura = await fetch(
       `${config.baseUrl}/subscriptions/${cliente.asaas_subscription_id}`,
-      { headers: asaasHeaders(config.apiKey) }
+      { headers: asaasHeaders(config.apiKey) },
     );
 
     if (respAssinatura.ok) {
-      const assinatura = await lerJson(respAssinatura, 'Consultar Assinatura');
+      const assinatura = await lerJson(respAssinatura, "Consultar Assinatura");
 
-      if (assinatura.status === 'ACTIVE' && !assinatura.deleted) {
+      if (assinatura.status === "ACTIVE" && !assinatura.deleted) {
         // Mantém valor e forma de pagamento sincronizados com o plano atual.
         if (
           Number(assinatura.value) !== Number(params.valor) ||
           assinatura.billingType !== params.tipoPagamento
         ) {
           const upd = await fetch(`${config.baseUrl}/subscriptions/${assinatura.id}`, {
-            method: 'POST',
+            method: "POST",
             headers: asaasHeaders(config.apiKey, true),
             body: JSON.stringify({
               value: params.valor,
@@ -328,7 +339,10 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
             }),
           });
           if (!upd.ok) {
-            console.error('[Asaas] Falha ao atualizar assinatura:', (await upd.text()).slice(0, 300));
+            console.error(
+              "[Asaas] Falha ao atualizar assinatura:",
+              (await upd.text()).slice(0, 300),
+            );
           }
         }
 
@@ -345,32 +359,31 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
             pixCopyPaste: await obterPixCopiaECola(atual.id, params.tipoPagamento, config),
             status: atual.status,
             descontoAplicado: 0,
-
           };
         }
       }
     } else {
       console.error(
-        '[Asaas] Assinatura anterior inválida, criando uma nova:',
-        (await respAssinatura.text()).slice(0, 300)
+        "[Asaas] Assinatura anterior inválida, criando uma nova:",
+        (await respAssinatura.text()).slice(0, 300),
       );
     }
   }
 
   // 4. Cria a ASSINATURA mensal recorrente no Asaas
   console.log(
-    `[Asaas] Criando assinatura mensal de ${params.valor} via ${params.tipoPagamento} para ${nome}...`
+    `[Asaas] Criando assinatura mensal de ${params.valor} via ${params.tipoPagamento} para ${nome}...`,
   );
 
   const response = await fetch(`${config.baseUrl}/subscriptions`, {
-    method: 'POST',
+    method: "POST",
     headers: asaasHeaders(config.apiKey, true),
     body: JSON.stringify({
       customer: asaasCustomerId,
       billingType: params.tipoPagamento,
       value: params.valor,
       nextDueDate: params.dataVencimento,
-      cycle: 'MONTHLY',
+      cycle: "MONTHLY",
       description: descricao,
       externalReference: cliente.id,
     }),
@@ -378,22 +391,22 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('[Asaas] Falha ao criar assinatura:', errorText);
+    console.error("[Asaas] Falha ao criar assinatura:", errorText);
     // Detalhe do provedor fica apenas no log do servidor.
     throw new Error(
-      'Não foi possível gerar a cobrança recorrente no momento. Tente novamente em instantes ou fale com seu vendedor.'
+      "Não foi possível gerar a cobrança recorrente no momento. Tente novamente em instantes ou fale com seu vendedor.",
     );
   }
 
-  const assinatura = await lerJson(response, 'Criar Assinatura');
+  const assinatura = await lerJson(response, "Criar Assinatura");
 
   // 5. Guarda a assinatura no cliente para os próximos ciclos
   const { error: updErr } = await supabaseAdmin
-    .from('clientes')
+    .from("clientes")
     .update({ asaas_subscription_id: assinatura.id })
-    .eq('id', cliente.id);
+    .eq("id", cliente.id);
   if (updErr) {
-    console.error('[Asaas] Erro ao salvar asaas_subscription_id:', updErr.message);
+    console.error("[Asaas] Erro ao salvar asaas_subscription_id:", updErr.message);
   }
 
   // 6. Busca a primeira cobrança gerada pela assinatura
@@ -404,10 +417,10 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
   let descontoAplicado = 0;
   const desconto = Number(params.descontoPrimeiraMensalidade ?? 0);
   if (primeira?.id && desconto > 0) {
-    const { aplicarDesconto } = await import('@/lib/cupons.server');
+    const { aplicarDesconto } = await import("@/lib/cupons.server");
     const valorComDesconto = aplicarDesconto(Number(primeira.value ?? params.valor), desconto);
     const respDesc = await fetch(`${config.baseUrl}/payments/${primeira.id}`, {
-      method: 'POST',
+      method: "POST",
       headers: asaasHeaders(config.apiKey, true),
       body: JSON.stringify({
         value: valorComDesconto,
@@ -415,10 +428,13 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
       }),
     });
     if (respDesc.ok) {
-      primeira = await lerJson(respDesc, 'Aplicar Desconto');
+      primeira = await lerJson(respDesc, "Aplicar Desconto");
       descontoAplicado = Number((Number(params.valor) - valorComDesconto).toFixed(2));
     } else {
-      console.error('[Asaas] Falha ao aplicar desconto na 1ª cobrança:', (await respDesc.text()).slice(0, 300));
+      console.error(
+        "[Asaas] Falha ao aplicar desconto na 1ª cobrança:",
+        (await respDesc.text()).slice(0, 300),
+      );
     }
   }
 
@@ -437,15 +453,13 @@ export async function gerarCobrancaAsaas(params: CobrancaParams) {
     status: primeira?.status ?? assinatura.status,
     descontoAplicado,
   };
-
 }
-
 
 // Testa a chave/ambiente do Asaas consultando os dados da conta.
 export async function testarConexaoAsaas() {
   const config = await obterConfigAsaas();
   const response = await fetch(`${config.baseUrl}/myAccount`, {
-    headers: asaasHeaders(config.apiKey)
+    headers: asaasHeaders(config.apiKey),
   });
 
   if (!response.ok) {
@@ -453,13 +467,13 @@ export async function testarConexaoAsaas() {
     throw new Error(`Erro Asaas (Testar Chave): ${errorText.slice(0, 300)}`);
   }
 
-  const data = await lerJson(response, 'Testar Chave');
-  const ambiente = config.baseUrl === URL_PRODUCAO ? 'producao' : 'sandbox';
+  const data = await lerJson(response, "Testar Chave");
+  const ambiente = config.baseUrl === URL_PRODUCAO ? "producao" : "sandbox";
   return {
     ok: true,
     ambiente,
-    nomeConta: data.name || data.email || 'Conta Asaas',
-    email: data.email || null
+    nomeConta: data.name || data.email || "Conta Asaas",
+    email: data.email || null,
   };
 }
 
@@ -473,7 +487,7 @@ export async function testarConexaoAsaas() {
  */
 export async function sincronizarAssinaturaCliente(
   clienteId: string,
-  opcoes: { enfileirarSeFalhar?: boolean } = {}
+  opcoes: { enfileirarSeFalhar?: boolean } = {},
 ): Promise<{
   sincronizado: boolean;
   motivo?: string;
@@ -486,17 +500,19 @@ export async function sincronizarAssinaturaCliente(
     concluirSincronizacao,
     ehFalhaTransitoria,
     statusEhTransitorio,
-  } = await import('@/lib/asaas-queue.server');
+  } = await import("@/lib/asaas-queue.server");
 
-  const finalizar = async (
-    resultado: { sincronizado: boolean; motivo?: string; valor?: number }
-  ) => {
+  const finalizar = async (resultado: {
+    sincronizado: boolean;
+    motivo?: string;
+    valor?: number;
+  }) => {
     if (resultado.sincronizado) {
       await concluirSincronizacao(clienteId);
       return resultado;
     }
     if (enfileirarSeFalhar && ehFalhaTransitoria(resultado.motivo)) {
-      await enfileirarSincronizacao(clienteId, resultado.motivo ?? 'erro');
+      await enfileirarSincronizacao(clienteId, resultado.motivo ?? "erro");
       return { ...resultado, enfileirado: true };
     }
     return resultado;
@@ -504,86 +520,85 @@ export async function sincronizarAssinaturaCliente(
 
   try {
     const { data: cliente } = await supabaseAdmin
-      .from('clientes')
-      .select('id, asaas_subscription_id, servico_extra_valor, planos(nome, valor)')
-      .eq('id', clienteId)
+      .from("clientes")
+      .select("id, asaas_subscription_id, servico_extra_valor, planos(nome, valor)")
+      .eq("id", clienteId)
       .maybeSingle();
 
-    if (!cliente) return { sincronizado: false, motivo: 'cliente_nao_encontrado' };
+    if (!cliente) return { sincronizado: false, motivo: "cliente_nao_encontrado" };
     if (!cliente.asaas_subscription_id) {
-      return { sincronizado: false, motivo: 'sem_assinatura' };
+      return { sincronizado: false, motivo: "sem_assinatura" };
     }
 
     const plano = (cliente as unknown as { planos: { nome: string; valor: number } | null }).planos;
     const valor = Number(plano?.valor ?? 0) + Number(cliente.servico_extra_valor ?? 0);
-    if (!(valor > 0)) return { sincronizado: false, motivo: 'valor_invalido' };
+    if (!(valor > 0)) return { sincronizado: false, motivo: "valor_invalido" };
 
     const config = await obterConfigAsaas();
 
     const respAssinatura = await fetch(
       `${config.baseUrl}/subscriptions/${cliente.asaas_subscription_id}`,
-      { headers: asaasHeaders(config.apiKey) }
+      { headers: asaasHeaders(config.apiKey) },
     );
     if (!respAssinatura.ok) {
       const detalhe = (await respAssinatura.text()).slice(0, 300);
-      console.error('[Asaas] Falha ao consultar assinatura ao sincronizar:', detalhe);
+      console.error("[Asaas] Falha ao consultar assinatura ao sincronizar:", detalhe);
       return finalizar({
         sincronizado: false,
         motivo: statusEhTransitorio(respAssinatura.status)
-          ? 'asaas_indisponivel'
-          : 'assinatura_invalida',
+          ? "asaas_indisponivel"
+          : "assinatura_invalida",
       });
     }
 
-    const assinatura = await lerJson(respAssinatura, 'Consultar Assinatura');
-    if (assinatura.deleted || assinatura.status !== 'ACTIVE') {
-      return { sincronizado: false, motivo: 'assinatura_inativa' };
+    const assinatura = await lerJson(respAssinatura, "Consultar Assinatura");
+    if (assinatura.deleted || assinatura.status !== "ACTIVE") {
+      return { sincronizado: false, motivo: "assinatura_inativa" };
     }
     if (Number(assinatura.value) === Number(valor)) {
       return finalizar({ sincronizado: true, valor });
     }
 
     const upd = await fetch(`${config.baseUrl}/subscriptions/${assinatura.id}`, {
-      method: 'POST',
+      method: "POST",
       headers: asaasHeaders(config.apiKey, true),
       body: JSON.stringify({
         value: valor,
-        description: plano?.nome ? `Assinatura ${plano.nome} - Brazon` : 'Assinatura mensal Brazon',
+        description: plano?.nome ? `Assinatura ${plano.nome} - Brazon` : "Assinatura mensal Brazon",
         updatePendingPayments: true,
       }),
     });
     if (!upd.ok) {
       const detalhe = (await upd.text()).slice(0, 300);
-      console.error('[Asaas] Falha ao sincronizar assinatura:', detalhe);
+      console.error("[Asaas] Falha ao sincronizar assinatura:", detalhe);
       return finalizar({
         sincronizado: false,
-        motivo: statusEhTransitorio(upd.status) ? 'asaas_indisponivel' : 'falha_asaas',
+        motivo: statusEhTransitorio(upd.status) ? "asaas_indisponivel" : "falha_asaas",
       });
     }
 
     // Atualiza a cobrança em aberto localmente (valor e link da fatura).
     const atual = await buscarCobrancaAtualDaAssinatura(assinatura.id, config);
-    if (atual) {
+    if (atual?.id) {
       await registrarPagamentoLocal(cliente.id, assinatura.id, atual);
       await supabaseAdmin
-        .from('pagamentos')
+        .from("pagamentos")
         .update({ valor: Number(atual.value ?? valor) })
-        .eq('asaas_payment_id', atual.id);
+        .eq("asaas_payment_id", atual.id);
     }
 
     return finalizar({ sincronizado: true, valor });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.error('[Asaas] Erro ao sincronizar assinatura:', msg);
+    console.error("[Asaas] Erro ao sincronizar assinatura:", msg);
     // Erros de rede/timeout são transitórios; configuração ausente não é.
-    const configAusente = msg.includes('Configuração do Asaas');
+    const configAusente = msg.includes("Configuração do Asaas");
     return finalizar({
       sincronizado: false,
-      motivo: configAusente ? 'sem_configuracao' : 'erro_rede',
+      motivo: configAusente ? "sem_configuracao" : "erro_rede",
     });
   }
 }
-
 
 /**
  * Provisiona o cliente na plataforma de pagamento logo no cadastro, salvando o
@@ -595,43 +610,43 @@ export async function sincronizarAssinaturaCliente(
  */
 export async function provisionarClienteAsaas(
   clienteId: string,
-  opcoes: { enfileirarSeFalhar?: boolean } = {}
+  opcoes: { enfileirarSeFalhar?: boolean } = {},
 ): Promise<{ provisionado: boolean; motivo?: string; asaasCustomerId?: string }> {
   const enfileirar = opcoes.enfileirarSeFalhar !== false;
   const agendarRetry = async (motivo: string) => {
     if (!enfileirar) return;
     try {
-      const { enfileirarSincronizacao } = await import('@/lib/asaas-queue.server');
-      await enfileirarSincronizacao(clienteId, motivo, 'cliente');
+      const { enfileirarSincronizacao } = await import("@/lib/asaas-queue.server");
+      await enfileirarSincronizacao(clienteId, motivo, "cliente");
     } catch (e) {
       console.error(
-        '[Asaas] Falha ao enfileirar provisionamento do cliente:',
-        e instanceof Error ? e.message : e
+        "[Asaas] Falha ao enfileirar provisionamento do cliente:",
+        e instanceof Error ? e.message : e,
       );
     }
   };
   try {
     const { data: cliente } = await supabaseAdmin
-      .from('clientes')
-      .select('id, user_id, asaas_customer_id, cpf_cnpj, telefone')
-      .eq('id', clienteId)
+      .from("clientes")
+      .select("id, user_id, asaas_customer_id, cpf_cnpj, telefone")
+      .eq("id", clienteId)
       .maybeSingle();
 
-    if (!cliente) return { provisionado: false, motivo: 'cliente_nao_encontrado' };
+    if (!cliente) return { provisionado: false, motivo: "cliente_nao_encontrado" };
     if (cliente.asaas_customer_id) {
       return { provisionado: true, asaasCustomerId: cliente.asaas_customer_id };
     }
-    if (!cliente.cpf_cnpj) return { provisionado: false, motivo: 'sem_cpf_cnpj' };
+    if (!cliente.cpf_cnpj) return { provisionado: false, motivo: "sem_cpf_cnpj" };
 
     const { data: perfil } = await supabaseAdmin
-      .from('profiles')
-      .select('nome, email')
-      .eq('id', cliente.user_id)
+      .from("profiles")
+      .select("nome, email")
+      .eq("id", cliente.user_id)
       .maybeSingle();
 
     if (!perfil?.email) {
-      await agendarRetry('sem_email');
-      return { provisionado: false, motivo: 'sem_email' };
+      await agendarRetry("sem_email");
+      return { provisionado: false, motivo: "sem_email" };
     }
 
     const config = await obterConfigAsaas();
@@ -642,13 +657,13 @@ export async function provisionarClienteAsaas(
       cliente.cpf_cnpj,
       cliente.telefone ?? null,
       null,
-      config
+      config,
     );
 
     // Deu certo: encerra qualquer retry pendente deste cliente.
     try {
-      const { concluirSincronizacao } = await import('@/lib/asaas-queue.server');
-      await concluirSincronizacao(clienteId, 'cliente');
+      const { concluirSincronizacao } = await import("@/lib/asaas-queue.server");
+      await concluirSincronizacao(clienteId, "cliente");
     } catch {
       /* não bloqueia o fluxo */
     }
@@ -657,11 +672,11 @@ export async function provisionarClienteAsaas(
   } catch (err) {
     // Detalhe do provedor fica só no log do servidor.
     console.error(
-      '[Asaas] Falha ao provisionar cliente no cadastro:',
-      err instanceof Error ? err.message : err
+      "[Asaas] Falha ao provisionar cliente no cadastro:",
+      err instanceof Error ? err.message : err,
     );
-    await agendarRetry('falha_asaas');
-    return { provisionado: false, motivo: 'falha_asaas' };
+    await agendarRetry("falha_asaas");
+    return { provisionado: false, motivo: "falha_asaas" };
   }
 }
 
@@ -674,7 +689,7 @@ export async function provisionarClienteAsaas(
  */
 export async function criarCobrancaInicialCadastro(
   clienteId: string,
-  opcoes: { tipoPagamento?: 'PIX' | 'BOLETO' | 'CREDIT_CARD' } = {}
+  opcoes: { tipoPagamento?: "PIX" | "BOLETO" | "CREDIT_CARD" } = {},
 ): Promise<{
   criada: boolean;
   motivo?: string;
@@ -685,36 +700,38 @@ export async function criarCobrancaInicialCadastro(
 }> {
   try {
     const { data: cliente } = await supabaseAdmin
-      .from('clientes')
-      .select('id, user_id, plano_id, servico_extra_valor, cupom_pendente_id, asaas_subscription_id')
-      .eq('id', clienteId)
+      .from("clientes")
+      .select(
+        "id, user_id, plano_id, servico_extra_valor, cupom_pendente_id, asaas_subscription_id",
+      )
+      .eq("id", clienteId)
       .maybeSingle();
 
-    if (!cliente) return { criada: false, motivo: 'cliente_nao_encontrado' };
-    if (cliente.asaas_subscription_id) return { criada: false, motivo: 'ja_possui_assinatura' };
-    if (!cliente.plano_id) return { criada: false, motivo: 'sem_plano' };
+    if (!cliente) return { criada: false, motivo: "cliente_nao_encontrado" };
+    if (cliente.asaas_subscription_id) return { criada: false, motivo: "ja_possui_assinatura" };
+    if (!cliente.plano_id) return { criada: false, motivo: "sem_plano" };
 
     const { data: plano } = await supabaseAdmin
-      .from('planos')
-      .select('id, nome, valor, ativo')
-      .eq('id', cliente.plano_id)
+      .from("planos")
+      .select("id, nome, valor, ativo")
+      .eq("id", cliente.plano_id)
       .maybeSingle();
-    if (!plano || !plano.ativo) return { criada: false, motivo: 'plano_indisponivel' };
+    if (!plano || !plano.ativo) return { criada: false, motivo: "plano_indisponivel" };
 
     const valorTotal = Number(plano.valor) + Number(cliente.servico_extra_valor ?? 0);
 
     // Cupom reservado no cadastro: validado de novo aqui, no servidor.
-    const { validarCupomParaCliente, registrarUsoCupom } = await import('./cupons.server');
+    const { validarCupomParaCliente, registrarUsoCupom } = await import("./cupons.server");
     let cupomAplicado: { id: string; codigo: string; valor: number } | null = null;
     if (cliente.cupom_pendente_id) {
       const { data: pend } = await supabaseAdmin
-        .from('cupons')
-        .select('codigo')
-        .eq('id', cliente.cupom_pendente_id)
+        .from("cupons")
+        .select("codigo")
+        .eq("id", cliente.cupom_pendente_id)
         .maybeSingle();
       if (pend?.codigo) {
         const res = await validarCupomParaCliente(pend.codigo, cliente.id);
-        if (!('motivo' in res)) {
+        if (!("motivo" in res)) {
           cupomAplicado = {
             id: res.cupom.id,
             codigo: res.cupom.codigo,
@@ -731,8 +748,8 @@ export async function criarCobrancaInicialCadastro(
     const resultado = await gerarCobrancaAsaas({
       clienteId: cliente.id,
       valor: valorTotal,
-      tipoPagamento: opcoes.tipoPagamento ?? 'PIX',
-      dataVencimento: venc.toISOString().split('T')[0],
+      tipoPagamento: opcoes.tipoPagamento ?? "PIX",
+      dataVencimento: venc.toISOString().split("T")[0],
       descricao: `Assinatura mensal Brazon - ${plano.nome}`,
       descontoPrimeiraMensalidade: cupomAplicado?.valor ?? 0,
     });
@@ -764,9 +781,9 @@ export async function criarCobrancaInicialCadastro(
     };
   } catch (err) {
     console.error(
-      '[Asaas] Falha ao criar cobrança inicial do cadastro:',
-      err instanceof Error ? err.message : err
+      "[Asaas] Falha ao criar cobrança inicial do cadastro:",
+      err instanceof Error ? err.message : err,
     );
-    return { criada: false, motivo: 'falha_asaas' };
+    return { criada: false, motivo: "falha_asaas" };
   }
 }

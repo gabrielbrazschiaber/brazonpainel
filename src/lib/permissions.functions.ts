@@ -2,11 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ensurePermission } from "@/lib/permissions.guard";
-import {
-  PERMISSOES_BLOQUEADAS,
-  TODAS_PERMISSOES,
-  type AppPermission,
-} from "@/lib/permissions";
+import { PERMISSOES_BLOQUEADAS, TODAS_PERMISSOES, type AppPermission } from "@/lib/permissions";
 
 const papelSchema = z.enum(["cliente", "vendedor", "admin"]);
 const permissaoSchema = z.enum(TODAS_PERMISSOES as [AppPermission, ...AppPermission[]]);
@@ -21,17 +17,11 @@ export const minhasPermissoes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     const lista = (roles ?? []).map((r) => r.role);
     if (lista.length === 0) return { permissoes: [] as AppPermission[] };
 
-    const { data } = await supabase
-      .from("role_permissions")
-      .select("permission")
-      .in("role", lista);
+    const { data } = await supabase.from("role_permissions").select("permission").in("role", lista);
     const set = new Set((data ?? []).map((r) => r.permission as AppPermission));
     return { permissoes: Array.from(set) };
   });
@@ -43,9 +33,7 @@ export const listarPermissoesPapeis = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     await ensurePermission(supabase, userId, "configuracoes.gerenciar");
 
-    const { data, error } = await supabase
-      .from("role_permissions")
-      .select("role, permission");
+    const { data, error } = await supabase.from("role_permissions").select("role, permission");
     if (error) throw new Error(error.message);
 
     const matriz: Record<string, AppPermission[]> = {

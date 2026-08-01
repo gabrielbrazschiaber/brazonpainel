@@ -71,8 +71,7 @@ export function SairButton({ variante = "icone", className }: SairButtonProps) {
         <AlertDialogHeader>
           <AlertDialogTitle>Sair da conta?</AlertDialogTitle>
           <AlertDialogDescription>
-            Sua sessão será encerrada neste dispositivo e você voltará para a tela de
-            login.
+            Sua sessão será encerrada neste dispositivo e você voltará para a tela de login.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
