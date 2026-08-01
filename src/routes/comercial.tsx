@@ -18,6 +18,8 @@ import {
 import { useAuth, roleHome } from "@/lib/auth";
 import { GateDependenteDePapel } from "@/components/GateEstado";
 import { TermosGate } from "@/components/TermosGate";
+import { OnboardingProvider, useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -135,7 +137,9 @@ function ComercialPage() {
   return (
     <GateDependenteDePapel pronto={Boolean(role) && permitido}>
       <TermosGate>
-        <ComercialConteudo isAdmin={role === "admin"} home={roleHome(role)} />
+        <OnboardingProvider>
+          <ComercialConteudo isAdmin={role === "admin"} home={roleHome(role)} />
+        </OnboardingProvider>
       </TermosGate>
     </GateDependenteDePapel>
   );
@@ -372,6 +376,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         </Button>
         <BrazonLogo className="hidden h-7 sm:block" />
         <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
+          <AjudaDaTela chave="tela:comercial" />
           <ThemeToggle />
           <AvisosSino />
           <SairButton variante="icone" />

@@ -21,6 +21,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
 import { GateDependenteDePapel } from "@/components/GateEstado";
 import { TermosGate } from "@/components/TermosGate";
+import { OnboardingProvider, useTourDaTela } from "@/components/onboarding/OnboardingProvider";
+import { AjudaDaTela } from "@/components/onboarding/AjudaDaTela";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -138,7 +140,9 @@ function SolicitacoesPage() {
   return (
     <GateDependenteDePapel pronto={Boolean(role)}>
       <TermosGate>
-        <SolicitacoesConteudo home={roleHome(role)} />
+        <OnboardingProvider>
+          <SolicitacoesConteudo home={roleHome(role)} />
+        </OnboardingProvider>
       </TermosGate>
     </GateDependenteDePapel>
   );
@@ -367,6 +371,7 @@ function SolicitacoesConteudo({ home }: { home: string }) {
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
             </Link>
           </Button>
+          <AjudaDaTela chave="tela:solicitacoes" />
           <ThemeToggle />
           <AvisosSino />
           <SairButton />
