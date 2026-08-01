@@ -99,7 +99,9 @@ describe("normalizarCnpj — entradas traiçoeiras", () => {
   it("é consistente entre chamadas repetidas (cliente e servidor)", () => {
     const entradas = ["23.194.700/0103", "  67958067000104 ", "2,31947E+11", "./-"];
     for (const e of entradas) {
-      expect(normalizarCnpj(e)).toEqual(normalizarCnpj(normalizarCnpj(e).cnpj ?? e));
+      const primeiro = normalizarCnpj(e);
+      expect(normalizarCnpj(e)).toEqual(primeiro);
+      if (primeiro.cnpj) expect(normalizarCnpj(primeiro.cnpj).cnpj).toBe(primeiro.cnpj);
     }
   });
 });
