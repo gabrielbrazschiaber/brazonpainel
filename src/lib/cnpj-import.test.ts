@@ -134,3 +134,21 @@ describe("explicacaoCnpj", () => {
     expect(explicacaoCnpj(normalizarCnpj("67958067000104"))).toBeNull();
   });
 });
+
+describe("avisoCriticoCnpj (validação final do lote)", () => {
+  it("aceita CNPJ vazio", () => {
+    expect(avisoCriticoCnpj("")).toBeNull();
+    expect(avisoCriticoCnpj(null)).toBeNull();
+  });
+
+  it("aceita CNPJ válido e CNPJ completado com zeros", () => {
+    expect(avisoCriticoCnpj("11.222.333/0001-81")).toBeNull();
+    expect(avisoCriticoCnpj("1222333000181")).toBeNull();
+  });
+
+  it("bloqueia notação científica, valor irreconhecível e dígito inválido", () => {
+    expect(avisoCriticoCnpj("2,31947E+11")).toBe(AVISO_CNPJ_CIENTIFICO);
+    expect(avisoCriticoCnpj("123")).toBe(AVISO_CNPJ_INVALIDO);
+    expect(avisoCriticoCnpj("11.222.333/0001-99")).toBe(AVISO_CNPJ_DIGITO);
+  });
+});
