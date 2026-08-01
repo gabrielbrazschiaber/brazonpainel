@@ -331,7 +331,7 @@ function VendedorArea() {
               <TableRow>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Plano</TableHead>
-                <TableHead>Vencimento</TableHead>
+                <TableHead className="hidden md:table-cell">Vencimento</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden text-right sm:table-cell">Ações</TableHead>
               </TableRow>
@@ -344,7 +344,10 @@ function VendedorArea() {
                       {c.nome ?? "—"}
                       <WhatsAppIndicator telefone={c.telefone} size="sm" />
                     </div>
-                    <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
+                    <div className="break-all text-xs text-muted-foreground">{c.email ?? ""}</div>
+                    <div className="text-xs text-muted-foreground md:hidden">
+                      Vence em {formatDate(c.data_vencimento)}
+                    </div>
 
                     <div className="mt-2 flex flex-wrap gap-2 sm:hidden">
                       <Button variant="outline" size="sm" onClick={() => setMsgCliente(c)}>
@@ -371,7 +374,9 @@ function VendedorArea() {
                       </div>
                     )}
                   </TableCell>
-                  <TableCell>{formatDate(c.data_vencimento)}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {formatDate(c.data_vencimento)}
+                  </TableCell>
                   <TableCell>
                     <StatusBadge status={c.status} />
                   </TableCell>

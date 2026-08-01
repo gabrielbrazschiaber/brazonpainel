@@ -94,7 +94,7 @@ function LinhaEscopo({ escopo, onSalvo }: { escopo: EscopoVendedor; onSalvo: () 
           value={segmentos}
           onChange={(e) => setSegmentos(e.target.value)}
           placeholder="Ex.: Padaria, Farmácia"
-          className="h-9 min-w-[180px]"
+          className="h-9 w-full sm:w-auto sm:min-w-[180px]"
           aria-label={`Segmentos de ${escopo.nome}`}
         />
       </TableCell>
@@ -103,7 +103,7 @@ function LinhaEscopo({ escopo, onSalvo }: { escopo: EscopoVendedor; onSalvo: () 
           value={estados}
           onChange={(e) => setEstados(e.target.value)}
           placeholder="Ex.: SP, MG"
-          className="h-9 min-w-[120px]"
+          className="h-9 w-full sm:w-auto sm:min-w-[120px]"
           aria-label={`Estados de ${escopo.nome}`}
         />
       </TableCell>

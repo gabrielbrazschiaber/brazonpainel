@@ -379,7 +379,7 @@ export function ImportarBancoDialog({
                               })
                             }
                           >
-                            <SelectTrigger className="h-9 min-w-[170px]">
+                            <SelectTrigger className="h-9 w-full sm:min-w-[170px]">
                               <SelectValue placeholder="Ignorar coluna" />
                             </SelectTrigger>
                             <SelectContent>

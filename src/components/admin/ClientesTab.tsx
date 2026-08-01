@@ -226,13 +226,13 @@ export function ClientesTab({
       </Card>
 
       <Card data-tour="clientes-lista" className="overflow-x-auto">
-        <Table className="min-w-[600px]">
+        <Table className="min-w-full sm:min-w-[600px]">
           <TableHeader>
             <TableRow>
               <TableHead>Cliente</TableHead>
-              <TableHead>Vendedor</TableHead>
-              <TableHead>Plano</TableHead>
-              <TableHead>Vencimento</TableHead>
+              <TableHead className="hidden lg:table-cell">Vendedor</TableHead>
+              <TableHead className="hidden md:table-cell">Plano</TableHead>
+              <TableHead className="hidden md:table-cell">Vencimento</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -245,11 +245,20 @@ export function ClientesTab({
                     {c.nome ?? "—"}
                     <WhatsAppIndicator telefone={c.telefone} size="sm" />
                   </div>
-                  <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
+                  <div className="break-all text-xs text-muted-foreground">{c.email ?? ""}</div>
+                  <div className="mt-1 text-xs text-muted-foreground md:hidden">
+                    {[c.planos?.nome ?? "Sem plano", formatDate(c.data_vencimento)]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </div>
                 </TableCell>
-                <TableCell>{c.vendedor_id ? (vmap.get(c.vendedor_id) ?? "—") : "—"}</TableCell>
-                <TableCell>{c.planos?.nome ?? "—"}</TableCell>
-                <TableCell>{formatDate(c.data_vencimento)}</TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  {c.vendedor_id ? (vmap.get(c.vendedor_id) ?? "—") : "—"}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">{c.planos?.nome ?? "—"}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {formatDate(c.data_vencimento)}
+                </TableCell>
                 <TableCell>
                   <StatusBadge status={c.status} />
                 </TableCell>

@@ -90,12 +90,12 @@ export function PlanosTab({ planos, onChanged }: { planos: Plano[]; onChanged: (
         </Button>
       </div>
       <Card className="mt-4 overflow-x-auto">
-        <Table className="min-w-[600px]">
+        <Table className="min-w-full sm:min-w-[600px]">
           <TableHeader>
             <TableRow>
               <TableHead>Plano</TableHead>
               <TableHead>Valor</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="hidden sm:table-cell">Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -105,9 +105,12 @@ export function PlanosTab({ planos, onChanged }: { planos: Plano[]; onChanged: (
                 <TableCell>
                   <div className="font-medium text-foreground">{p.nome}</div>
                   <div className="text-xs text-muted-foreground">{p.descricao ?? ""}</div>
+                  <div className="mt-1 sm:hidden">
+                    <StatusBadge status={p.ativo ? "ativo" : "cancelado"} />
+                  </div>
                 </TableCell>
                 <TableCell>{formatCurrency(p.valor)}</TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                   <StatusBadge status={p.ativo ? "ativo" : "cancelado"} />
                 </TableCell>
                 <TableCell className="text-right">

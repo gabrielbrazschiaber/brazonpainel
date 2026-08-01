@@ -106,7 +106,7 @@ export function TelemetriaAuthTab() {
         </div>
         <div className="flex items-center gap-2">
           <Select value={dias} onValueChange={setDias}>
-            <SelectTrigger className="w-[170px]">
+            <SelectTrigger className="w-full sm:w-[170px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

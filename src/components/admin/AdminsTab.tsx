@@ -102,11 +102,11 @@ export function AdminsTab({
         </Button>
       </div>
       <Card className="mt-4 overflow-x-auto">
-        <Table className="min-w-[600px]">
+        <Table className="min-w-full sm:min-w-[600px]">
           <TableHeader>
             <TableRow>
               <TableHead>Administrador</TableHead>
-              <TableHead>E-mail</TableHead>
+              <TableHead className="hidden sm:table-cell">E-mail</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -121,8 +121,13 @@ export function AdminsTab({
                       <span className="text-xs text-muted-foreground">(você)</span>
                     )}
                   </div>
+                  <div className="mt-1 break-all text-xs text-muted-foreground sm:hidden">
+                    {a.email ?? ""}
+                  </div>
                 </TableCell>
-                <TableCell className="text-sm text-muted-foreground">{a.email ?? ""}</TableCell>
+                <TableCell className="hidden break-all text-sm text-muted-foreground sm:table-cell">
+                  {a.email ?? ""}
+                </TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"

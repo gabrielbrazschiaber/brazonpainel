@@ -520,7 +520,7 @@ function ClienteArea() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Data</TableHead>
-                  <TableHead>Plano</TableHead>
+                  <TableHead className="hidden sm:table-cell">Plano</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Fatura</TableHead>
@@ -529,8 +529,15 @@ function ClienteArea() {
               <TableBody>
                 {pagamentos.map((pg) => (
                   <TableRow key={pg.id}>
-                    <TableCell>{formatDate(pg.data_pagamento || pg.created_at)}</TableCell>
-                    <TableCell>{cliente?.planos?.nome ?? "—"}</TableCell>
+                    <TableCell>
+                      {formatDate(pg.data_pagamento || pg.created_at)}
+                      <span className="block text-xs text-muted-foreground sm:hidden">
+                        {cliente?.planos?.nome ?? "—"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {cliente?.planos?.nome ?? "—"}
+                    </TableCell>
                     <TableCell>{formatCurrency(pg.valor)}</TableCell>
                     <TableCell>
                       <StatusBadge status={pg.status} />
