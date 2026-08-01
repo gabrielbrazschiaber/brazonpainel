@@ -212,15 +212,15 @@ export function NovidadesTab() {
       </div>
 
       <Card className="mt-4 overflow-x-auto">
-        <Table className="min-w-[720px]">
+        <Table className="min-w-full sm:min-w-[720px]">
           <TableHeader>
             <TableRow>
               <TableHead>Título</TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead>Versão</TableHead>
-              <TableHead>Público</TableHead>
+              <TableHead className="hidden lg:table-cell">Versão</TableHead>
+              <TableHead className="hidden md:table-cell">Público</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Publicada em</TableHead>
+              <TableHead className="hidden md:table-cell">Publicada em</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -258,7 +258,7 @@ export function NovidadesTab() {
                       {n.tipo === "comunicado" ? "Comunicado" : "Novidade"}
                     </span>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
                     {n.versao ? (
                       <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs">
                         {n.versao}
@@ -267,7 +267,7 @@ export function NovidadesTab() {
                       "—"
                     )}
                   </TableCell>
-                  <TableCell className="text-xs">
+                  <TableCell className="hidden text-xs md:table-cell">
                     <div className="flex gap-1">
                       {n.publico_cliente && (
                         <span className="rounded bg-muted px-1.5 py-0.5" title="Clientes">

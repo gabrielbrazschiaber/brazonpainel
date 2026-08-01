@@ -293,9 +293,9 @@ export function ComercialDashboard({
             <TableHeader>
               <TableRow>
                 <TableHead>Vendedor</TableHead>
-                <TableHead className="text-right">Contatados</TableHead>
+                <TableHead className="hidden text-right md:table-cell">Contatados</TableHead>
                 <TableHead className="text-right">Ganhos</TableHead>
-                <TableHead className="text-right">Fechamento</TableHead>
+                <TableHead className="hidden text-right sm:table-cell">Fechamento</TableHead>
                 <TableHead className="text-right">Valor ganho</TableHead>
               </TableRow>
             </TableHeader>
@@ -306,9 +306,11 @@ export function ComercialDashboard({
                     <Badge variant="outline">{i + 1}</Badge>
                     {r.nome}
                   </TableCell>
-                  <TableCell className="text-right">{r.contatados}</TableCell>
+                  <TableCell className="hidden text-right md:table-cell">{r.contatados}</TableCell>
                   <TableCell className="text-right">{r.ganhos}</TableCell>
-                  <TableCell className="text-right">{percentual(r.taxa)}</TableCell>
+                  <TableCell className="hidden text-right sm:table-cell">
+                    {percentual(r.taxa)}
+                  </TableCell>
                   <TableCell className="text-right">{formatCurrency(r.valor_ganho)}</TableCell>
                 </TableRow>
               ))}

@@ -177,13 +177,13 @@ export function VendedoresTab({
         </Button>
       </div>
       <Card className="mt-4 overflow-x-auto">
-        <Table className="min-w-[600px]">
+        <Table className="min-w-full sm:min-w-[600px]">
           <TableHeader>
             <TableRow>
               <TableHead>Vendedor</TableHead>
-              <TableHead>Código</TableHead>
-              <TableHead>Comissão</TableHead>
-              <TableHead>Clientes</TableHead>
+              <TableHead className="hidden md:table-cell">Código</TableHead>
+              <TableHead className="hidden md:table-cell">Comissão</TableHead>
+              <TableHead className="hidden lg:table-cell">Clientes</TableHead>
               <TableHead>Ativo</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -193,16 +193,23 @@ export function VendedoresTab({
               <TableRow key={v.id}>
                 <TableCell>
                   <div className="font-medium text-foreground">{v.nome ?? "—"}</div>
-                  <div className="text-xs text-muted-foreground">{v.email ?? ""}</div>
+                  <div className="break-all text-xs text-muted-foreground">{v.email ?? ""}</div>
+                  <div className="mt-1 text-xs text-muted-foreground md:hidden">
+                    {v.codigo_indicacao} · {v.percentual_comissao}% · {v.clientes_count ?? 0}{" "}
+                    cliente
+                    {(v.clientes_count ?? 0) === 1 ? "" : "s"}
+                  </div>
                   {progressoCarregado && (
                     <div className="mt-1">
                       <BadgeOnboarding concluido={concluidos.has(v.user_id)} />
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="font-mono text-sm">{v.codigo_indicacao}</TableCell>
-                <TableCell>{v.percentual_comissao}%</TableCell>
-                <TableCell>{v.clientes_count ?? 0}</TableCell>
+                <TableCell className="hidden font-mono text-sm md:table-cell">
+                  {v.codigo_indicacao}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">{v.percentual_comissao}%</TableCell>
+                <TableCell className="hidden lg:table-cell">{v.clientes_count ?? 0}</TableCell>
                 <TableCell>
                   <Switch checked={v.ativo} onCheckedChange={() => toggleAtivo(v)} />
                 </TableCell>

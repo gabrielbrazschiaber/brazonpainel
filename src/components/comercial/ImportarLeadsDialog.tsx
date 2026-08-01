@@ -698,7 +698,7 @@ export function ImportarLeadsDialog({
                 <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 <span>Importação concluída.</span>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <Card className="p-3">
                   <p className="eyebrow">Criados</p>
                   <p className="text-xl font-semibold">{resultado.importados}</p>

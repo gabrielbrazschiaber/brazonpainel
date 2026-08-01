@@ -45,7 +45,7 @@ export function AuditoriaTab() {
 
   return (
     <Card className="p-5">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Auditoria de alterações</h2>
           <p className="text-sm text-muted-foreground">
@@ -56,26 +56,31 @@ export function AuditoriaTab() {
           {loading ? "Carregando..." : "Atualizar"}
         </Button>
       </div>
-      <Table className="min-w-[600px]">
+      <Table className="min-w-full sm:min-w-[600px]">
         <TableHeader>
           <TableRow>
             <TableHead>Data</TableHead>
             <TableHead>Autor</TableHead>
-            <TableHead>Perfil</TableHead>
+            <TableHead className="hidden md:table-cell">Perfil</TableHead>
             <TableHead>Ação</TableHead>
-            <TableHead>Entidade</TableHead>
-            <TableHead>Detalhes</TableHead>
+            <TableHead className="hidden md:table-cell">Entidade</TableHead>
+            <TableHead className="hidden lg:table-cell">Detalhes</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((r) => (
             <TableRow key={r.id}>
               <TableCell className="whitespace-nowrap">{formatDateTime(r.created_at)}</TableCell>
-              <TableCell>{r.actor_email ?? "—"}</TableCell>
-              <TableCell>{r.actor_role ?? "—"}</TableCell>
+              <TableCell className="break-all">
+                {r.actor_email ?? "—"}
+                <span className="block text-xs text-muted-foreground md:hidden">
+                  {[r.actor_role, r.entidade].filter(Boolean).join(" · ") || "—"}
+                </span>
+              </TableCell>
+              <TableCell className="hidden md:table-cell">{r.actor_role ?? "—"}</TableCell>
               <TableCell>{r.acao}</TableCell>
-              <TableCell>{r.entidade ?? "—"}</TableCell>
-              <TableCell>
+              <TableCell className="hidden md:table-cell">{r.entidade ?? "—"}</TableCell>
+              <TableCell className="hidden lg:table-cell">
                 <code className="text-xs text-muted-foreground">
                   {r.detalhes ? JSON.stringify(r.detalhes) : "—"}
                 </code>

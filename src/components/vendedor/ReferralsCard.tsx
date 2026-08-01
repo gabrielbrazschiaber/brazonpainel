@@ -98,7 +98,7 @@ export function ReferralsCard() {
           </p>
         </div>
         <Select value={periodo} onValueChange={setPeriodo}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
