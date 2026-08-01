@@ -121,6 +121,29 @@ export const reagendarFollowUpSchema = z.object({
   proximo_contato: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
 });
 
+export const RESULTADOS_FOLLOW_UP = ["sem_resposta", "respondeu", "adiar"] as const;
+export type ResultadoFollowUp = (typeof RESULTADOS_FOLLOW_UP)[number];
+
+export const registrarFollowUpSchema = z
+  .object({
+    lead_id: z.string().uuid(),
+    resultado: z.enum(RESULTADOS_FOLLOW_UP),
+    nota: texto(2000),
+    novo_estagio: z.enum(LEAD_ESTAGIOS).optional(),
+    adiar_dias: z.number().int().min(1).max(180).optional(),
+  })
+  .refine((d) => d.resultado !== "respondeu" || Boolean(d.novo_estagio), {
+    message: "Informe o novo estágio do lead",
+    path: ["novo_estagio"],
+  })
+  .refine((d) => d.resultado !== "adiar" || Boolean(d.adiar_dias), {
+    message: "Informe em quantos dias adiar",
+    path: ["adiar_dias"],
+  });
+
+export const reativarCadenciaSchema = z.object({ lead_id: z.string().uuid() });
+
+
 export const dashboardSchema = z.object({
   dias: z.number().int().min(0).max(3650).optional(),
   vendedor_id: z.string().uuid().optional(),
