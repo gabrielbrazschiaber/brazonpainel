@@ -39,8 +39,10 @@ import {
 } from "@/components/ui/table";
 
 import {
+  explicacaoCnpj,
   formatarCnpj,
   lerArquivo,
+
   normalizarChave,
   normalizarCnpj,
   normalizarDataBr,
@@ -160,7 +162,10 @@ interface LinhaPreparada {
   cnpjCompletado: boolean;
   /** Célula veio em notação científica: dígitos perdidos, sem recuperação. */
   cnpjCientifico: boolean;
+  /** Explicação da regra de CNPJ aplicada nesta linha (tooltip). */
+  cnpjExplicacao: string | null;
 }
+
 
 function texto(valor: string | undefined, max = 120): string | null {
   const t = (valor ?? "").trim();
@@ -217,10 +222,10 @@ function prepararLinhas(
 
     const bruto = pega("cnpj");
     const editado = edicoes[i + 1];
-    const { cnpj, aviso, cientifico, completado } = normalizarCnpj(
-      editado !== undefined ? editado : bruto,
-    );
+    const normalizado = normalizarCnpj(editado !== undefined ? editado : bruto);
+    const { cnpj, aviso, cientifico, completado } = normalizado;
     if (aviso) avisos.push(aviso);
+
 
     const cnae = normalizarCnae(pega("cnae_codigo"));
     const cnaeDesc = texto(pega("cnae_descricao"), 300);
@@ -260,6 +265,8 @@ function prepararLinhas(
       avisos,
       cnpjCompletado: completado,
       cnpjCientifico: cientifico,
+      cnpjExplicacao: explicacaoCnpj(normalizado),
+
     };
   });
 }
@@ -416,6 +423,8 @@ export function ImportarBancoDialog({
                 empresa: _emp,
                 cnpjCompletado: _cc,
                 cnpjCientifico: _ci,
+                cnpjExplicacao: _ce,
+
                 ...campos
               }) => campos,
             ),
@@ -713,10 +722,11 @@ export function ImportarBancoDialog({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Contato</TableHead>
-                      <TableHead>Telefone</TableHead>
-                      <TableHead className="hidden md:table-cell">CNPJ</TableHead>
+                      <TableHead className="hidden sm:table-cell">Telefone</TableHead>
+                      <TableHead>CNPJ</TableHead>
                       <TableHead className="hidden md:table-cell">CNAE</TableHead>
-                      <TableHead>Situação</TableHead>
+                      <TableHead>Avisos</TableHead>
+                      <TableHead className="hidden sm:table-cell">Situação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -727,50 +737,88 @@ export function ImportarBancoDialog({
                           <p className="text-xs text-muted-foreground">
                             {l.razao_social ?? l.nome_fantasia ?? "—"}
                           </p>
+                          <p className="text-xs text-muted-foreground sm:hidden">
+                            {l.telefone || "—"}
+                          </p>
                         </TableCell>
-                        <TableCell className="whitespace-nowrap">{l.telefone || "—"}</TableCell>
-                        <TableCell className="hidden whitespace-nowrap md:table-cell">
-                          <div className="flex items-center gap-1.5">
-                            <Input
-                              aria-label={`CNPJ da linha ${l.linha}`}
-                              className="h-8 w-[10.5rem] font-mono text-xs"
-                              value={
-                                cnpjEditado[l.linha] ??
-                                (l.cnpj ? formatarCnpj(l.cnpj) : "")
-                              }
-                              placeholder="Sem CNPJ"
-                              onChange={(e) =>
-                                setCnpjEditado((atual) => ({
-                                  ...atual,
-                                  [l.linha]: e.target.value,
-                                }))
-                              }
-                            />
-                            {l.cnpjCompletado ? (
-                              <TooltipProvider>
-                                <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Info
-                                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                                    aria-label="Completado com zeros à esquerda"
-                                  />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  Completado com zeros à esquerda (o Excel os havia removido)
-                                </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            ) : null}
-                          </div>
+                        <TableCell className="hidden whitespace-nowrap sm:table-cell">
+                          {l.telefone || "—"}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <Input
+                            aria-label={`CNPJ da linha ${l.linha}`}
+                            className="h-8 w-full min-w-[9.5rem] font-mono text-xs sm:w-[10.5rem]"
+                            value={
+                              cnpjEditado[l.linha] !== undefined
+                                ? cnpjEditado[l.linha]
+                                : formatarCnpj(l.cnpj)
+                            }
+                            placeholder="Sem CNPJ"
+                            onChange={(e) =>
+                              setCnpjEditado((atual) => ({
+                                ...atual,
+                                [l.linha]: formatarCnpj(e.target.value),
+                              }))
+                            }
+                          />
                         </TableCell>
                         <TableCell className="hidden whitespace-nowrap md:table-cell">
                           {l.cnae_codigo ? formatarCnae(l.cnae_codigo) : "—"}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="min-w-[11rem] align-top">
+                          {l.erro ? (
+                            <Badge variant="destructive" className="mb-1 sm:hidden">
+                              {l.erro}
+                            </Badge>
+                          ) : null}
+                          {l.avisos.length ? (
+
+                            <div className="flex flex-wrap gap-1">
+                              {l.avisos.map((a) => {
+                                const explica =
+                                  a === l.avisos.find((x) => x.startsWith("CNPJ"))
+                                    ? l.cnpjExplicacao
+                                    : null;
+                                const badge = (
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      l.cnpjCientifico && a.startsWith("CNPJ corrompido")
+                                        ? "border-amber-400/60 text-amber-700 dark:text-amber-300"
+                                        : undefined
+                                    }
+                                  >
+                                    {a.startsWith("CNPJ") ? (
+                                      <Info className="mr-1 h-3 w-3 shrink-0" aria-hidden />
+                                    ) : null}
+                                    <span className="whitespace-normal text-left">{a}</span>
+                                  </Badge>
+                                );
+                                return explica ? (
+                                  <TooltipProvider key={a}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button type="button" className="cursor-help">
+                                          {badge}
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-xs">
+                                        {explica}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                ) : (
+                                  <span key={a}>{badge}</span>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Nenhum</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           {l.erro ? (
                             <Badge variant="destructive">{l.erro}</Badge>
-                          ) : l.avisos.length ? (
-                            <Badge variant="outline">{l.avisos[0]}</Badge>
                           ) : (
                             <Badge variant="secondary">Pronta</Badge>
                           )}
@@ -778,6 +826,7 @@ export function ImportarBancoDialog({
                       </TableRow>
                     ))}
                   </TableBody>
+
                 </Table>
               </div>
               {linhas.length > 15 ? (
