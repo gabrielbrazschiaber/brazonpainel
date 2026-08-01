@@ -25,7 +25,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { session, role, loading } = useAuth();
+  const { session, role, roleResolvido, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -33,10 +33,11 @@ function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
-    if (!loading && session) {
+    // Aguarda o papel resolver para não mandar o usuário ao painel errado.
+    if (!loading && session && roleResolvido) {
       navigate({ to: roleHome(role) });
     }
-  }, [loading, session, role, navigate]);
+  }, [loading, session, role, roleResolvido, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
