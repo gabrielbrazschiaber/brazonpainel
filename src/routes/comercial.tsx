@@ -620,7 +620,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                 className="flex flex-col items-center gap-2 pt-2 text-xs text-muted-foreground"
               >
                 <span aria-live="polite">
-                  Mostrando {leads.length} de {total} lead{total === 1 ? "" : "s"}
+                  Mostrando {leadsVisiveis.length} de {total} lead{total === 1 ? "" : "s"}
+                  {soZap ? " (só com WhatsApp ativo)" : ""}
                 </span>
 
                 {carregandoMais && (
