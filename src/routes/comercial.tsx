@@ -28,6 +28,8 @@ import { useJanelaVirtual } from "@/lib/use-janela-virtual";
 import { TelaShell } from "@/components/TelaShell";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+import { CardsEsqueleto } from "@/components/ui/loading-state";
+
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { LeadsSkeletonCards, LeadsSkeletonRows } from "@/components/comercial/LeadsSkeleton";
@@ -387,6 +389,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     <TelaShell
       voltarPara={home}
       area="Gestão comercial"
+      trilha={[{ rotulo: "Painel", para: home }, { rotulo: "Gestão comercial" }]}
+
       headerExtra={
         <Suspense fallback={null}>
           <AjudaDaTela chave="tela:comercial" />
@@ -468,18 +472,11 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       </div>
 
       {carregando && !dados ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </div>
+        <CardsEsqueleto quantidade={3} />
       ) : (
         dados && (
-          <Suspense
-            fallback={
-              <div className="flex justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            }
-          >
+          <Suspense fallback={<CardsEsqueleto quantidade={3} />}>
+
             <ComercialDashboard
               dados={dados}
               onVerIncompletos={() => {

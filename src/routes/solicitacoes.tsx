@@ -53,6 +53,8 @@ import {
 
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ListaEsqueleto } from "@/components/ui/loading-state";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -379,7 +381,9 @@ function SolicitacoesConteudo({ home }: { home: string }) {
     <TelaShell
       voltarPara={home}
       area="Solicitações"
+      trilha={[{ rotulo: "Painel", para: home }, { rotulo: "Solicitações" }]}
       larguraMax="max-w-5xl"
+
       headerExtra={
         <Suspense fallback={null}>
           <AjudaDaTela chave="tela:solicitacoes" />
@@ -452,11 +456,9 @@ function SolicitacoesConteudo({ home }: { home: string }) {
         </Tabs>
 
         {carregando ? (
-          <div className="flex flex-col items-center gap-2 py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Carregando solicitações...</p>
-          </div>
+          <ListaEsqueleto linhas={4} />
         ) : visiveis.length === 0 ? (
+
           <EmptyState
             icon={Inbox}
             titulo="Nenhuma solicitação ainda"
