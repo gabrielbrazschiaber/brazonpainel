@@ -106,6 +106,22 @@ async function logWebhook(
 }
 
 
+// Comparação resistente a ataques de temporização: compara digests SHA-256,
+// que têm sempre o mesmo tamanho, sem sair do laço no primeiro byte diferente.
+async function segredoConfere(enviado: string, esperado: string): Promise<boolean> {
+  if (!enviado || !esperado) return false
+  const enc = new TextEncoder()
+  const [a, b] = await Promise.all([
+    crypto.subtle.digest('SHA-256', enc.encode(enviado)),
+    crypto.subtle.digest('SHA-256', enc.encode(esperado)),
+  ])
+  const va = new Uint8Array(a)
+  const vb = new Uint8Array(b)
+  let diff = 0
+  for (let i = 0; i < va.length; i++) diff |= va[i] ^ vb[i]
+  return diff === 0
+}
+
 Deno.serve(async (req) => {
   // Apenas aceita requisições POST
   if (req.method !== 'POST') {
@@ -121,7 +137,7 @@ Deno.serve(async (req) => {
   }
   const receivedToken =
     req.headers.get('asaas-access-token') ?? req.headers.get('asaas-webhook-token')
-  if (!receivedToken || receivedToken !== expectedToken) {
+  if (!receivedToken || !(await segredoConfere(receivedToken, expectedToken))) {
     console.warn('[Asaas Webhook] Token de autenticação inválido ou ausente.')
     return new Response('Não autorizado', { status: 401 })
   }
