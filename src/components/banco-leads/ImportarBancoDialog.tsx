@@ -17,12 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -151,9 +146,6 @@ const SINONIMOS: Record<Campo, string[]> = {
   observacoes: ["observacao", "observacoes", "obs", "anotacoes", "notas"],
 };
 
-
-
-
 interface LinhaPreparada {
   linha: number;
   nome_contato: string;
@@ -184,8 +176,6 @@ interface LinhaPreparada {
   /** Aviso crítico: CNPJ corrompido, irreconhecível ou com dígito inválido. */
   critico: boolean;
 }
-
-
 
 function texto(valor: string | undefined, max = 120): string | null {
   const t = (valor ?? "").trim();
@@ -246,7 +236,6 @@ function prepararLinhas(
     const { cnpj, aviso, cientifico, completado } = normalizado;
     if (aviso) avisos.push(aviso);
 
-
     const cnae = normalizarCnae(pega("cnae_codigo"));
     const cnaeDesc = texto(pega("cnae_descricao"), 300);
     const doCatalogo = cnae ? porCodigo.get(cnae) : undefined;
@@ -291,7 +280,6 @@ function prepararLinhas(
           ? true
           : aviso === AVISO_CNPJ_CIENTIFICO,
     };
-
   });
 }
 
@@ -488,7 +476,6 @@ export function ImportarBancoDialog({
     if (inputRef.current) inputRef.current.value = "";
   }
 
-
   async function aoEscolher(file: File | undefined) {
     if (!file) return;
     setLendo(true);
@@ -572,7 +559,6 @@ export function ImportarBancoDialog({
                 ...campos
               }) => campos,
             ),
-
           },
         });
         enviados += bloco.length;
@@ -783,7 +769,6 @@ export function ImportarBancoDialog({
                 ) : null}
               </div>
 
-
               {faltamObrigatorios.length > 0 ? (
                 <p className="flex items-center gap-2 text-sm text-destructive">
                   <AlertCircle className="h-4 w-4" />
@@ -925,7 +910,6 @@ export function ImportarBancoDialog({
                 </Table>
               </div>
 
-
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-medium text-foreground">
@@ -974,11 +958,10 @@ export function ImportarBancoDialog({
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Excluir remove da confirmação as linhas com erro ou aviso crítico (CNPJ corrompido,
-                  irreconhecível ou com dígito inválido) — as demais continuam válidas.
+                  Excluir remove da confirmação as linhas com erro ou aviso crítico (CNPJ
+                  corrompido, irreconhecível ou com dígito inválido) — as demais continuam válidas.
                 </p>
               </div>
-
 
               <div className="overflow-x-auto rounded-md border border-border">
                 <Table>
@@ -1017,9 +1000,7 @@ export function ImportarBancoDialog({
                             {[l.cidade, l.estado].filter(Boolean).join(" · ") || "Sem localidade"}
                             {l.segmento ? ` · ${l.segmento}` : ""}
                           </p>
-                          <p className="text-xs text-muted-foreground md:hidden">
-                            Linha {l.linha}
-                          </p>
+                          <p className="text-xs text-muted-foreground md:hidden">Linha {l.linha}</p>
                           <p className="text-xs text-muted-foreground sm:hidden">
                             {l.telefone || "—"}
                           </p>
@@ -1055,7 +1036,6 @@ export function ImportarBancoDialog({
                             </Badge>
                           ) : null}
                           {l.avisos.length ? (
-
                             <div className="flex flex-wrap gap-1">
                               {l.avisos.map((a) => {
                                 const explica =
@@ -1109,7 +1089,6 @@ export function ImportarBancoDialog({
                       </TableRow>
                     ))}
                   </TableBody>
-
                 </Table>
               </div>
               {totalFiltrado > LIMITE_PREVIA ? (

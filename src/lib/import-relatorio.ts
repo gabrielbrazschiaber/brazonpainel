@@ -86,10 +86,7 @@ export function nomeArquivoRelatorio(arquivo: string, ext: "csv" | "pdf"): strin
   return `relatorio-importacao-${base}-${dia}.${ext}`;
 }
 
-export function baixarCsvRelatorio(
-  cabecalho: CabecalhoRelatorio,
-  linhas: LinhaRelatorio[],
-): void {
+export function baixarCsvRelatorio(cabecalho: CabecalhoRelatorio, linhas: LinhaRelatorio[]): void {
   const csv = `\uFEFF${montarCsvRelatorio(cabecalho, linhas)}`;
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
   const a = document.createElement("a");
