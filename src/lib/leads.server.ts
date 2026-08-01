@@ -49,6 +49,10 @@ export interface Lead {
   motivo_perda: string | null;
   observacoes: string | null;
   proximo_contato: string | null;
+  /** Tentativas de contato SEM resposta já registradas. */
+  follow_ups_feitos: number;
+  ultimo_contato_em: string | null;
+  cadencia_encerrada: boolean;
   cliente_id: string | null;
   contatado_em: string;
   fechado_em: string | null;
