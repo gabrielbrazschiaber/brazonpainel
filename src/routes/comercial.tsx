@@ -643,6 +643,12 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                             {ESTAGIO_LABEL[l.estagio]}
                           </Badge>
                         </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Progress value={l.completude} className="h-1.5 w-14" />
+                            <span className="text-xs text-muted-foreground">{l.completude}%</span>
+                          </div>
+                        </TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(l.valor_estimado)}
                         </TableCell>
