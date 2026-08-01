@@ -64,9 +64,12 @@ function Kpi({
 export function ComercialDashboard({
   dados,
   onVerIncompletos,
+  onVerFollowUps,
 }: {
   dados: DashboardComercial;
   onVerIncompletos?: () => void;
+  /** Leva para a fila de follow-ups (aba de atrasados). */
+  onVerFollowUps?: () => void;
 }) {
   const { funil, anterior, reunioes, segmentos, serie, ranking } = dados;
   const total = funil.contatados || 1;
