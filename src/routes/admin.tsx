@@ -1697,6 +1697,7 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
         </div>
       </div>
     </Card>
+    </div>
   );
 }
 
