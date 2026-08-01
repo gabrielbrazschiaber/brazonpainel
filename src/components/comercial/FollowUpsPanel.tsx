@@ -6,55 +6,123 @@ import {
   AlertCircle,
   AlertTriangle,
   CalendarClock,
+  CalendarDays,
   CheckCircle2,
   Loader2,
   MessageCircle,
+  PhoneOff,
+  PlayCircle,
   RefreshCw,
+  RotateCcw,
 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { formatCurrency, formatDate } from "@/lib/format";
-import { ESTAGIO_LABEL, apenasDigitos, estagioClasse } from "@/lib/leads";
+import { ESTAGIO_LABEL, apenasDigitos, estagioClasse, type LeadEstagio } from "@/lib/leads";
+import { ADIAMENTOS, ESTAGIOS_RESPOSTA, resumoCadencia } from "@/lib/follow-up";
+import { FollowUpSequencialDialog } from "@/components/comercial/FollowUpSequencialDialog";
 import {
   painelFollowUps,
-  reagendarFollowUp,
+  registrarFollowUp,
+  reativarCadencia,
   type FollowUp,
   type PainelFollowUps,
 } from "@/lib/leads.functions";
 
-/** Soma dias a hoje e devolve no formato AAAA-MM-DD (fuso local). */
-function dataRelativa(dias: number): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + dias);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate(),
-  ).padStart(2, "0")}`;
+type Aba = "atrasados" | "hoje" | "proximos";
+
+interface Registro {
+  lead_id: string;
+  resultado: "sem_resposta" | "respondeu" | "adiar";
+  nota?: string;
+  novo_estagio?: LeadEstagio;
+  adiar_dias?: number;
 }
 
-const ADIAMENTOS = [
-  { label: "Hoje", dias: 0 },
-  { label: "Amanhã", dias: 1 },
-  { label: "+3 dias", dias: 3 },
-  { label: "+7 dias", dias: 7 },
-];
+/** Popover de "Respondeu": escolhe o novo estágio e registra a nota do contato. */
+function RespondeuPopover({
+  item,
+  ocupado,
+  onRegistrar,
+}: {
+  item: FollowUp;
+  ocupado: boolean;
+  onRegistrar: (r: Registro) => void;
+}) {
+  const [aberto, setAberto] = useState(false);
+  const [nota, setNota] = useState("");
+
+  return (
+    <Popover open={aberto} onOpenChange={setAberto}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" disabled={ocupado}>
+          <CheckCircle2 className="mr-1.5 h-4 w-4" /> Respondeu
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 space-y-3" align="end">
+        <div className="space-y-1.5">
+          <Label htmlFor={`nota-${item.id}`} className="text-xs">
+            Nota do contato (opcional)
+          </Label>
+          <Textarea
+            id={`nota-${item.id}`}
+            rows={2}
+            value={nota}
+            onChange={(e) => setNota(e.target.value)}
+            placeholder="O que ele respondeu?"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <p className="text-xs text-muted-foreground">Mover para</p>
+          <div className="flex flex-wrap gap-1.5">
+            {ESTAGIOS_RESPOSTA.map((e) => (
+              <Button
+                key={e}
+                size="sm"
+                variant="outline"
+                disabled={ocupado}
+                onClick={() => {
+                  setAberto(false);
+                  onRegistrar({
+                    lead_id: item.id,
+                    resultado: "respondeu",
+                    novo_estagio: e,
+                    ...(nota.trim() ? { nota: nota.trim() } : {}),
+                  });
+                  setNota("");
+                }}
+              >
+                {ESTAGIO_LABEL[e]}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function ItemFollowUp({
   item,
   isAdmin,
   atrasado,
-  onReagendar,
+  onRegistrar,
+  onReativar,
   ocupado,
 }: {
   item: FollowUp;
   isAdmin: boolean;
   atrasado: boolean;
-  onReagendar: (id: string, dias: number) => void;
+  onRegistrar: (r: Registro) => void;
+  onReativar: (id: string) => void;
   ocupado: boolean;
 }) {
   const digitos = apenasDigitos(item.telefone);
@@ -78,7 +146,13 @@ function ItemFollowUp({
                 {item.atraso} dia{item.atraso === 1 ? "" : "s"} de atraso
               </Badge>
             )}
+            {item.cadencia_encerrada && (
+              <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400">
+                Cadência encerrada
+              </Badge>
+            )}
           </div>
+          <p className="text-xs text-muted-foreground">{resumoCadencia(item)}</p>
           <p className="truncate text-xs text-muted-foreground">
             {[item.empresa, item.segmento].filter(Boolean).join(" · ") || "Sem empresa"}
             {isAdmin && item.vendedor_nome ? ` · ${item.vendedor_nome}` : ""}
@@ -99,22 +173,43 @@ function ItemFollowUp({
             </Button>
           )}
 
-          <Select
-            disabled={ocupado}
-            value=""
-            onValueChange={(v) => onReagendar(item.id, Number(v))}
-          >
-            <SelectTrigger className="h-9 w-[9.5rem]" aria-label="Reagendar follow-up">
-              <SelectValue placeholder="Reagendar" />
-            </SelectTrigger>
-            <SelectContent>
-              {ADIAMENTOS.map((a) => (
-                <SelectItem key={a.dias} value={String(a.dias)}>
-                  {a.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {item.cadencia_encerrada ? (
+            <Button variant="outline" size="sm" disabled={ocupado} onClick={() => onReativar(item.id)}>
+              <RotateCcw className="mr-1.5 h-4 w-4" /> Reativar cadência
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={ocupado}
+                onClick={() => onRegistrar({ lead_id: item.id, resultado: "sem_resposta" })}
+              >
+                <PhoneOff className="mr-1.5 h-4 w-4" /> Sem resposta
+              </Button>
+
+              <RespondeuPopover item={item} ocupado={ocupado} onRegistrar={onRegistrar} />
+
+              <Select
+                disabled={ocupado}
+                value=""
+                onValueChange={(v) =>
+                  onRegistrar({ lead_id: item.id, resultado: "adiar", adiar_dias: Number(v) })
+                }
+              >
+                <SelectTrigger className="h-9 w-[7.5rem]" aria-label="Adiar follow-up">
+                  <SelectValue placeholder="Adiar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ADIAMENTOS.map((d) => (
+                    <SelectItem key={d} value={String(d)}>
+                      +{d} dias
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
         </div>
       </div>
     </li>
@@ -122,27 +217,32 @@ function ItemFollowUp({
 }
 
 /**
- * Painel priorizado de follow-ups atrasados e de hoje.
+ * Painel priorizado de follow-ups: atrasados, de hoje e próximos 7 dias.
  * Vendedor vê só os seus (RLS); admin vê todos, com filtro por vendedor.
  */
 export function FollowUpsPanel({
   isAdmin,
   vendedorId,
   onAtualizado,
+  abaInicial,
 }: {
   isAdmin: boolean;
   /** Filtro de vendedor já resolvido pela página (apenas admin). */
   vendedorId?: string | undefined;
   onAtualizado?: () => void;
+  /** Aba forçada de fora (ex.: card do dashboard). */
+  abaInicial?: Aba;
 }) {
   const carregar = useServerFn(painelFollowUps);
-  const reagendar = useServerFn(reagendarFollowUp);
+  const registrar = useServerFn(registrarFollowUp);
+  const reativar = useServerFn(reativarCadencia);
 
   const [dados, setDados] = useState<PainelFollowUps | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
-  const [aba, setAba] = useState<"atrasados" | "hoje">("atrasados");
+  const [aba, setAba] = useState<Aba>("atrasados");
+  const [sequencialAberto, setSequencialAberto] = useState(false);
 
   const buscar = useCallback(async () => {
     setCarregando(true);
@@ -150,7 +250,7 @@ export function FollowUpsPanel({
     try {
       const d = await carregar({ data: vendedorId ? { vendedor_id: vendedorId } : {} });
       setDados(d);
-      setAba(d.totalAtrasados > 0 ? "atrasados" : "hoje");
+      setAba(d.totalAtrasados > 0 ? "atrasados" : d.totalHoje > 0 ? "hoje" : "proximos");
     } catch (err) {
       setErro(
         err instanceof Error ? err.message : "Não foi possível carregar os follow-ups.",
@@ -164,26 +264,67 @@ export function FollowUpsPanel({
     void buscar();
   }, [buscar]);
 
+  useEffect(() => {
+    if (abaInicial) setAba(abaInicial);
+  }, [abaInicial]);
+
   const lista = useMemo(() => {
     if (!dados) return [] as FollowUp[];
-    return aba === "atrasados" ? dados.atrasados : dados.hoje;
+    if (aba === "atrasados") return dados.atrasados;
+    if (aba === "hoje") return dados.hoje;
+    return dados.proximos;
   }, [dados, aba]);
 
-  async function aplicarReagendamento(id: string, dias: number) {
+  /** Fila do modo sequencial: atrasados primeiro, depois os de hoje. */
+  const filaDoDia = useMemo(() => {
+    if (!dados) return [] as FollowUp[];
+    return [...dados.atrasados, ...dados.hoje].filter((i) => !i.cadencia_encerrada);
+  }, [dados]);
+
+  async function aplicarRegistro(r: Registro) {
     setOcupado(true);
     try {
-      await reagendar({ data: { id, proximo_contato: dataRelativa(dias) } });
-      toast.success("Follow-up reagendado.");
+      await registrar({ data: r });
+      toast.success(
+        r.resultado === "sem_resposta"
+          ? "Tentativa registrada. Próximo contato reagendado."
+          : r.resultado === "adiar"
+            ? "Follow-up adiado."
+            : "Resposta registrada.",
+      );
       await buscar();
       onAtualizado?.();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Não foi possível reagendar o follow-up.",
+        err instanceof Error ? err.message : "Não foi possível registrar o follow-up.",
       );
     } finally {
       setOcupado(false);
     }
   }
+
+  async function aplicarReativacao(id: string) {
+    setOcupado(true);
+    try {
+      await reativar({ data: { lead_id: id } });
+      toast.success("Cadência reativada.");
+      await buscar();
+      onAtualizado?.();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Não foi possível reativar a cadência.",
+      );
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  const vazioTitulo =
+    aba === "atrasados"
+      ? "Nenhum follow-up atrasado. Fila em dia!"
+      : aba === "hoje"
+        ? "Nenhum follow-up marcado para hoje."
+        : "Nenhum follow-up nos próximos 7 dias.";
 
   return (
     <Card className="space-y-4 p-4 sm:p-5">
@@ -199,14 +340,23 @@ export function FollowUpsPanel({
             Ordenada por atraso, estágio do funil e valor estimado.
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => void buscar()} disabled={carregando}>
-          {carregando ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 h-4 w-4" />
-          )}
-          Atualizar
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() => setSequencialAberto(true)}
+            disabled={carregando || filaDoDia.length === 0}
+          >
+            <PlayCircle className="mr-2 h-4 w-4" /> Iniciar follow-up do dia
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => void buscar()} disabled={carregando}>
+            {carregando ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -224,6 +374,22 @@ export function FollowUpsPanel({
         >
           <CalendarClock className="mr-1.5 h-4 w-4" /> Hoje ({dados?.totalHoje ?? 0})
         </Button>
+        <Button
+          size="sm"
+          variant={aba === "proximos" ? "default" : "outline"}
+          onClick={() => setAba("proximos")}
+        >
+          <CalendarDays className="mr-1.5 h-4 w-4" /> Próximos 7 dias (
+          {dados?.totalProximos ?? 0})
+        </Button>
+        {(dados?.totalEncerrados ?? 0) > 0 && (
+          <Badge
+            variant="outline"
+            className="self-center border-amber-500/40 text-amber-600 dark:text-amber-400"
+          >
+            {dados?.totalEncerrados} com cadência encerrada
+          </Badge>
+        )}
       </div>
 
       {carregando ? (
@@ -246,13 +412,9 @@ export function FollowUpsPanel({
       ) : lista.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-lg border border-border/60 px-4 py-8 text-center">
           <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-          <p className="text-sm font-medium text-foreground">
-            {aba === "atrasados"
-              ? "Nenhum follow-up atrasado. Fila em dia!"
-              : "Nenhum follow-up marcado para hoje."}
-          </p>
+          <p className="text-sm font-medium text-foreground">{vazioTitulo}</p>
           <p className="text-xs text-muted-foreground">
-            Defina o próximo contato ao editar um lead para ele aparecer aqui.
+            Novos leads entram na fila automaticamente.
           </p>
         </div>
       ) : (
@@ -264,11 +426,22 @@ export function FollowUpsPanel({
               isAdmin={isAdmin}
               atrasado={aba === "atrasados"}
               ocupado={ocupado}
-              onReagendar={(id, dias) => void aplicarReagendamento(id, dias)}
+              onRegistrar={(r) => void aplicarRegistro(r)}
+              onReativar={(id) => void aplicarReativacao(id)}
             />
           ))}
         </ul>
       )}
+
+      <FollowUpSequencialDialog
+        aberto={sequencialAberto}
+        onOpenChange={setSequencialAberto}
+        itens={filaDoDia}
+        onRegistrado={() => {
+          void buscar();
+          onAtualizado?.();
+        }}
+      />
     </Card>
   );
 }
