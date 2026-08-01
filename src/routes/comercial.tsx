@@ -5,11 +5,13 @@ import { toast } from "sonner";
 import {
   AlertCircle,
   ArrowLeft,
+  ListChecks,
   Loader2,
   Pencil,
   RefreshCw,
   Target,
   Trash2,
+  Upload,
   UserPlus,
 } from "lucide-react";
 
