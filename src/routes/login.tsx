@@ -144,6 +144,95 @@ function LoginPage() {
     toast.success("Link enviado! Verifique seu e-mail.");
   }
 
+  if (fatorPendente) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
+        <ThemeToggle className="fixed right-3 top-3 z-50 bg-card/70 backdrop-blur sm:right-4 sm:top-4" />
+        <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+        <Card className="fade-in-up relative w-full max-w-md rounded-2xl p-6 shadow-lg sm:p-8">
+          <div className="mb-6 text-center">
+            <BrazonLogo
+              className="mb-4 justify-center"
+              symbolClassName="h-10 w-10"
+              textClassName="text-2xl"
+            />
+            <h1 className="text-2xl font-bold text-foreground">Verificação em duas etapas</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {modoRecuperacao
+                ? "Informe um dos códigos de recuperação que você guardou."
+                : "Digite o código de 6 dígitos do seu app autenticador."}
+            </p>
+          </div>
+
+          {modoRecuperacao ? (
+            <form onSubmit={confirmarRecuperacao} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-recuperacao">Código de recuperação</Label>
+                <Input
+                  id="login-recuperacao"
+                  autoComplete="one-time-code"
+                  value={codigoRecuperacao}
+                  onChange={(e) => setCodigoRecuperacao(e.target.value.toUpperCase())}
+                  placeholder="XXXX-XXXX"
+                />
+                <p className="text-xs text-muted-foreground">
+                  O código só pode ser usado uma vez. A verificação em duas etapas será desativada e
+                  você deverá cadastrá-la novamente.
+                </p>
+              </div>
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {submitting ? "Validando..." : "Usar código"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => setModoRecuperacao(false)}
+                disabled={submitting}
+              >
+                Voltar
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={confirmarSegundoFator} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-otp">Código do app</Label>
+                <InputOTP id="login-otp" maxLength={6} value={otp} onChange={setOtp}>
+                  <InputOTPGroup>
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <InputOTPSlot key={i} index={i} />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {submitting ? "Verificando..." : "Confirmar"}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setModoRecuperacao(true)}
+                className="w-full text-xs text-primary underline-offset-2 hover:underline"
+              >
+                Perdi o acesso ao app — usar código de recuperação
+              </button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => void cancelarSegundoFator()}
+                disabled={submitting}
+              >
+                Cancelar e voltar ao login
+              </Button>
+            </form>
+          )}
+        </Card>
+      </div>
+    );
+  }
+
   if (mode === "forgot") {
     return (
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
