@@ -172,11 +172,7 @@ function primeiroSocio(valor: string | undefined): string {
   return normalizarNome(bruto.replace(/\(.*?\)/g, ""));
 }
 
-function prepararLinhas(
-  arquivo: ArquivoLido,
-  mapa: Destino[],
-  catalogo: Cnae[],
-): LinhaPreparada[] {
+function prepararLinhas(arquivo: ArquivoLido, mapa: Destino[], catalogo: Cnae[]): LinhaPreparada[] {
   const porCodigo = new Map(catalogo.map((c) => [c.codigo, c]));
   const vistos = new Set<string>();
 

@@ -214,11 +214,7 @@ export function CnaesTab() {
             />
           </div>
           <div className="flex items-end gap-2">
-            <Button
-              size="sm"
-              onClick={() => void gravar(novo)}
-              disabled={salvandoCodigo !== null}
-            >
+            <Button size="sm" onClick={() => void gravar(novo)} disabled={salvandoCodigo !== null}>
               <Save className="mr-2 h-4 w-4" />
               Salvar
             </Button>
@@ -263,9 +259,7 @@ export function CnaesTab() {
                       {emEdicao ? (
                         <Input
                           value={rascunho.descricao}
-                          onChange={(e) =>
-                            setRascunho({ ...rascunho, descricao: e.target.value })
-                          }
+                          onChange={(e) => setRascunho({ ...rascunho, descricao: e.target.value })}
                           className="h-9"
                           aria-label={`Descrição do CNAE ${c.codigo}`}
                         />
