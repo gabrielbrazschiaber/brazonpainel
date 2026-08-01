@@ -22,6 +22,7 @@ export type {
   EscopoVendedor,
   LoteCriado,
   ResultadoImportacaoBanco,
+  OpcoesEscopo,
 } from "@/lib/banco-leads.server";
 
 const idSchema = z.object({ id: z.string().uuid() });
@@ -142,4 +143,12 @@ export const definirEscopoVendedor = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { definirEscopoVendedorServer } = await import("@/lib/banco-leads.server");
     return definirEscopoVendedorServer(context.supabase, context.userId, data);
+  });
+
+/** Opções reais de segmento, estado e CNAE (reserva + escopo do vendedor). */
+export const opcoesEscopo = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { opcoesEscopoServer } = await import("@/lib/banco-leads.server");
+    return opcoesEscopoServer(context.supabase, context.userId);
   });
