@@ -379,7 +379,9 @@ function SolicitacoesConteudo({ home }: { home: string }) {
     <TelaShell
       voltarPara={home}
       area="Solicitações"
+      trilha={[{ rotulo: "Painel", para: home }, { rotulo: "Solicitações" }]}
       larguraMax="max-w-5xl"
+
       headerExtra={
         <Suspense fallback={null}>
           <AjudaDaTela chave="tela:solicitacoes" />
