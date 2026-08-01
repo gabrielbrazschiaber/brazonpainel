@@ -287,8 +287,12 @@ function prepararLinhas(
       cnpjCompletado: completado,
       cnpjCientifico: cientifico,
       cnpjExplicacao: explicacaoCnpj(normalizado),
-
+      critico:
+        cientifico || aviso === AVISO_CNPJ_INVALIDO || aviso === AVISO_CNPJ_DIGITO
+          ? true
+          : aviso === AVISO_CNPJ_CIENTIFICO,
     };
+
   });
 }
 
