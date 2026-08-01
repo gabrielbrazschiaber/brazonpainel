@@ -4,6 +4,7 @@ import { AppSidebar, type AppNavItem, type AppAcaoPrincipal } from "@/components
 import { AvisosSino } from "@/components/AvisosSino";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ErroLimite } from "@/components/ErroLimite";
 import { useAuth } from "@/lib/auth";
 
 interface AppShellProps {
@@ -68,7 +69,8 @@ export function AppShell({
           <div
             className={`mx-auto w-full ${larguraMax} space-y-5 px-4 py-6 sm:space-y-6 sm:px-6 sm:py-8`}
           >
-            {children}
+            {/* Falha de um painel não derruba menu/cabeçalho nem a tela toda. */}
+            <ErroLimite area={contexto}>{children}</ErroLimite>
           </div>
         </div>
       </div>
