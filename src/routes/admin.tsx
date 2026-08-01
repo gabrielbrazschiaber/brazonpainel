@@ -67,22 +67,65 @@ const TOUR_POR_ABA: Record<string, string> = {
 };
 
 function AdminArea() {
-  const { planos, vendedores, clientes, admins, config, carregando, recarregar } = useDadosAdmin();
   const [contaOpen, setContaOpen] = useState(false);
   const [tab, setTab] = useState("dashboard");
   const { secao: secaoBuscada } = Route.useSearch();
 
-  // Hooks precisam vir antes de qualquer retorno condicional.
   const chaveTour = TOUR_POR_ABA[tab] ?? "";
-  useTourDaTela(chaveTour, !carregando && chaveTour !== "");
 
-  if (carregando) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  return (
+    <AppShell
+      contexto="Administração"
+      items={ADMIN_NAV_ITEMS}
+      tab={tab}
+      onTab={setTab}
+      onConta={() => setContaOpen(true)}
+      headerExtra={
+        chaveTour ? (
+          <Suspense fallback={null}>
+            <AjudaDaTela chave={chaveTour} />
+          </Suspense>
+        ) : undefined
+      }
+    >
+      {/* Qualquer exceção das abas do admin fica contida aqui, com Trace ID. */}
+      <AdminErroLimite>
+        {/* O menu e o cabeçalho já aparecem enquanto os dados carregam. */}
+        <Suspense fallback={<CarregandoBloco />}>
+          <AdminConteudo
+            tab={tab}
+            onTab={setTab}
+            chaveTour={chaveTour}
+            secaoBuscada={secaoBuscada}
+            contaOpen={contaOpen}
+            setContaOpen={setContaOpen}
+          />
+        </Suspense>
+      </AdminErroLimite>
+    </AppShell>
+  );
+}
+
+interface AdminConteudoProps {
+  tab: string;
+  onTab: (v: string) => void;
+  chaveTour: string;
+  secaoBuscada?: string;
+  contaOpen: boolean;
+  setContaOpen: (v: boolean) => void;
+}
+
+function AdminConteudo({
+  tab,
+  onTab,
+  chaveTour,
+  secaoBuscada,
+  contaOpen,
+  setContaOpen,
+}: AdminConteudoProps) {
+  const { planos, vendedores, clientes, admins, config, recarregar } = useDadosAdmin();
+
+  useTourDaTela(chaveTour, chaveTour !== "");
 
   // Seções internas de "Configurações": cada uma é renderizada sob demanda.
   const renderSecao: Record<string, () => ReactNode> = {
@@ -103,55 +146,39 @@ function AdminArea() {
   }));
 
   return (
-    <AppShell
-      contexto="Administração"
-      items={ADMIN_NAV_ITEMS}
-      tab={tab}
-      onTab={setTab}
-      onConta={() => setContaOpen(true)}
-      headerExtra={
-        chaveTour ? (
-          <Suspense fallback={null}>
-            <AjudaDaTela chave={chaveTour} />
-          </Suspense>
-        ) : undefined
-      }
-    >
+    <>
       <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={recarregar} />
 
-      {/* Qualquer exceção das abas do admin fica contida aqui, com Trace ID. */}
-      <AdminErroLimite>
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="sr-only">
-            {abasInternas(ADMIN_NAV_ITEMS).map((item) => (
-              <TabsTrigger key={item.value} value={item.value}>
-                {item.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      <Tabs value={tab} onValueChange={onTab}>
+        <TabsList className="sr-only">
+          {abasInternas(ADMIN_NAV_ITEMS).map((item) => (
+            <TabsTrigger key={item.value} value={item.value}>
+              {item.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-          <TabsContent value="dashboard" className="mt-0">
-            <Suspense fallback={<CarregandoBloco />}>
-              <AdminDashboard />
-            </Suspense>
-          </TabsContent>
-          <TabsContent value="clientes" className="mt-0">
-            <ClientesTab
-              clientes={clientes}
-              vendedores={vendedores}
-              planos={planos}
-              onChanged={recarregar}
-            />
-          </TabsContent>
-          <TabsContent value="novidades" className="mt-0">
-            <NovidadesTab />
-          </TabsContent>
-          <TabsContent value="config" className="mt-0">
-            <ConfiguracoesPage secoes={secoesConfig} secaoInicial={secaoBuscada} />
-          </TabsContent>
-        </Tabs>
-      </AdminErroLimite>
-    </AppShell>
+        <TabsContent value="dashboard" className="mt-0">
+          <Suspense fallback={<CarregandoBloco />}>
+            <AdminDashboard />
+          </Suspense>
+        </TabsContent>
+        <TabsContent value="clientes" className="mt-0">
+          <ClientesTab
+            clientes={clientes}
+            vendedores={vendedores}
+            planos={planos}
+            onChanged={recarregar}
+          />
+        </TabsContent>
+        <TabsContent value="novidades" className="mt-0">
+          <NovidadesTab />
+        </TabsContent>
+        <TabsContent value="config" className="mt-0">
+          <ConfiguracoesPage secoes={secoesConfig} secaoInicial={secaoBuscada} />
+        </TabsContent>
+      </Tabs>
+    </>
   );
 }
 

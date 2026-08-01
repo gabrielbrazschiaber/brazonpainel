@@ -88,6 +88,18 @@ const SidebarProvider = React.forwardRef<
       [setOpenProp, open],
     );
 
+    // Restaura, após a hidratação, o estado salvo no cookie: recarregar a
+    // página mantém a sidebar colapsada/expandida como o usuário deixou.
+    React.useEffect(() => {
+      if (setOpenProp) return;
+      const salvo = document.cookie
+        .split("; ")
+        .find((c) => c.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
+        ?.split("=")[1];
+      if (salvo === "true" || salvo === "false") _setOpen(salvo === "true");
+    }, [setOpenProp]);
+
+
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
       return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);

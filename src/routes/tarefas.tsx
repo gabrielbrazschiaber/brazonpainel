@@ -300,7 +300,7 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
     <div className="min-h-screen bg-muted/30">
       <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-          <BrazonLogo className="h-7 w-auto shrink-0" />
+          <BrazonLogo className="shrink-0" symbolClassName="h-7 w-7" textClassName="text-lg" />
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-base font-semibold sm:text-lg">
               {equipe ? "Tarefas" : "Minhas solicitações"}

@@ -42,9 +42,16 @@ export function BrazonLogo({
   textClassName?: string;
 }) {
   return (
-    <div className={cn("flex items-center gap-2.5", className)}>
-      <BrazonSymbol className={cn("h-8 w-8", symbolClassName)} />
-      <span className={cn("text-xl font-bold tracking-tight text-foreground", textClassName)}>
+    // `leading-none` + `shrink-0` mantêm símbolo e texto na mesma linha de base
+    // mesmo quando o cabeçalho define uma altura menor que o símbolo.
+    <div className={cn("flex shrink-0 items-center gap-2.5", className)}>
+      <BrazonSymbol className={cn("h-8 w-8 shrink-0", symbolClassName)} />
+      <span
+        className={cn(
+          "text-xl font-bold leading-none tracking-tight text-foreground",
+          textClassName,
+        )}
+      >
         BRA<span className="text-primary">Z</span>ON
       </span>
     </div>
