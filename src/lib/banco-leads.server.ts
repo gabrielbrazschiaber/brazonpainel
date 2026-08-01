@@ -2,6 +2,7 @@
 import type { z } from "zod";
 import { escopoComercial } from "@/lib/leads.server";
 import { apenasDigitos, type LeadOrigem } from "@/lib/leads";
+import { normalizarCnpj } from "@/lib/leads-import";
 import { HORAS_RESERVA_PADRAO, type BancoLeadStatus } from "@/lib/banco-leads";
 import type {
   listarBancoLeadsSchema,
@@ -413,7 +414,8 @@ export async function importarBlocoBancoServer(
     }
     vistos.add(tel);
 
-    const cnpj = (l.cnpj ?? "").replace(/\D/g, "");
+    // Revalidação de CNPJ no servidor: nunca confiamos no que vem do cliente.
+    const { cnpj } = normalizarCnpj(l.cnpj);
     const cnae = (l.cnae_codigo ?? "").replace(/\D/g, "");
 
     validas.push({
@@ -427,7 +429,7 @@ export async function importarBlocoBancoServer(
       estado: l.estado ? l.estado.toUpperCase().slice(0, 2) : null,
       origem: ctx.origem,
       observacoes: l.observacoes ?? null,
-      cnpj: cnpj.length === 14 ? cnpj : null,
+      cnpj: cnpj,
       razao_social: l.razao_social ?? null,
       nome_fantasia: l.nome_fantasia ?? null,
       socios: l.socios ?? null,

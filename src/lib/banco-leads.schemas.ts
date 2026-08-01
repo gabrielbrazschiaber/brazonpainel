@@ -30,12 +30,8 @@ const emailSchema = z
     message: "E-mail inválido",
   });
 
-const cnpjSchema = z
-  .string()
-  .trim()
-  .regex(/^\d{14}$/, "CNPJ deve ter 14 dígitos")
-  .nullable()
-  .optional();
+// Valor cru: o servidor normaliza e revalida com normalizarCnpj antes de gravar.
+const cnpjSchema = z.string().trim().max(30).nullable().optional();
 
 const cnaeSchema = z
   .string()
