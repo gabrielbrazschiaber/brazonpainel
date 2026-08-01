@@ -89,6 +89,7 @@ function ItemFollowUp({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
+          <WhatsAppIndicator telefone={item.telefone} />
           {whatsapp && (
             <Button asChild variant="outline" size="sm">
               <a href={whatsapp} target="_blank" rel="noopener noreferrer">
@@ -96,6 +97,7 @@ function ItemFollowUp({
               </a>
             </Button>
           )}
+
           <Select
             disabled={ocupado}
             value=""
