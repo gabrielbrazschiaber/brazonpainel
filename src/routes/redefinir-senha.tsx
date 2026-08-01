@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
@@ -118,6 +119,7 @@ function RedefinirSenhaPage() {
   if (done) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <ThemeToggle className="fixed right-3 top-3 z-50 bg-card/70 backdrop-blur sm:right-4 sm:top-4" />
         <Card className="w-full max-w-md p-8 text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
           <h1 className="mt-4 text-xl font-bold text-foreground">Senha atualizada!</h1>
@@ -134,6 +136,7 @@ function RedefinirSenhaPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <ThemeToggle className="fixed right-3 top-3 z-50 bg-card/70 backdrop-blur sm:right-4 sm:top-4" />
       <Card className="w-full max-w-md p-8">
         <div className="mb-6 text-center">
           <BrazonLogo
