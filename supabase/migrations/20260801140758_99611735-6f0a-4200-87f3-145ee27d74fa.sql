@@ -1,0 +1,2 @@
+CREATE INDEX IF NOT EXISTS idx_pagamentos_cliente_created ON public.pagamentos USING btree (cliente_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_clientes_vendedor_created ON public.clientes USING btree (vendedor_id, created_at DESC);

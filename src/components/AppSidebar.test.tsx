@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
 import { ClipboardList, LayoutDashboard, Users } from "lucide-react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
@@ -14,6 +15,8 @@ vi.mock("@tanstack/react-router", () => ({
   ),
   useRouterState: () => "/admin",
   useNavigate: () => vi.fn(),
+  // O prefetch por intenção usa o router para pré-carregar rotas no hover.
+  useRouter: () => ({ preloadRoute: vi.fn(() => Promise.resolve()) }),
 }));
 
 vi.mock("@/lib/use-tarefas-abertas", () => ({
@@ -40,11 +43,15 @@ const items: readonly AppNavItem[] = [
 ];
 
 function Harness({ onTab = vi.fn(), onConta = vi.fn() }) {
+  // O prefetch por intenção usa o cache de queries, então o menu precisa do provider.
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
-    <SidebarProvider>
-      <SidebarTrigger aria-label="Abrir menu" />
-      <AppSidebar items={items} tab="dashboard" onTab={onTab} onConta={onConta} />
-    </SidebarProvider>
+    <QueryClientProvider client={queryClient}>
+      <SidebarProvider>
+        <SidebarTrigger aria-label="Abrir menu" />
+        <AppSidebar items={items} tab="dashboard" onTab={onTab} onConta={onConta} />
+      </SidebarProvider>
+    </QueryClientProvider>
   );
 }
 

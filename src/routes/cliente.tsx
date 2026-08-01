@@ -1,6 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useCallback, lazy, Suspense } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useState, lazy, Suspense } from "react";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  chavesPainel,
+  clientePainelQuery,
+  type ClienteAssinatura as Cliente,
+  type PagamentoCliente as Pagamento,
+  type PlanoCliente as Plano,
+} from "@/lib/painel-queries";
+import { PainelEsqueleto } from "@/components/PainelEsqueleto";
+import { useJanelaVirtual } from "@/lib/use-janela-virtual";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -58,47 +67,20 @@ export const Route = createFileRoute("/cliente")({
   }),
   component: () => (
     <RequireRole role="cliente">
-      <ClienteArea />
+      {/* Suspense no lugar do spinner: a estrutura da tela aparece na hora. */}
+      <Suspense fallback={<PainelEsqueleto />}>
+        <ClienteArea />
+      </Suspense>
     </RequireRole>
   ),
 });
 
-interface Plano {
-  id: string;
-  nome: string;
-  valor: number;
-  descricao: string | null;
-  ativo: boolean;
-}
-
-interface Cliente {
-  id: string;
-  data_vencimento: string | null;
-  status: string;
-  mensagem_vendedor: string | null;
-  plano_id: string | null;
-  servico_extra: string | null;
-  servico_extra_valor: number | null;
-  asaas_subscription_id: string | null;
-  planos: Plano | null;
-}
-
-interface Pagamento {
-  id: string;
-  valor: number;
-  status: string;
-  data_pagamento: string | null;
-  created_at: string;
-  invoice_url: string | null;
-  planoNome?: string;
-}
-
 function ClienteArea() {
   const { profile } = useAuth();
-  const [cliente, setCliente] = useState<Cliente | null>(null);
-  const [planos, setPlanos] = useState<Plano[]>([]);
-  const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const {
+    data: { cliente, planos, pagamentos },
+  } = useSuspenseQuery(clientePainelQuery());
   const [renovando, setRenovando] = useState<string | null>(null);
   const gerarCobrancaFn = useServerFn(gerarCobranca);
   const validarCupomFn = useServerFn(validarMeuCupom);
@@ -109,57 +91,20 @@ function ClienteArea() {
   } | null>(null);
   const [validandoCupom, setValidandoCupom] = useState(false);
 
+  /** Revalida os dados do painel após uma ação (renovação, cupom...). */
   const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data: cli, error: erroCli } = await supabase
-        .from("clientes")
-        .select(
-          "id,data_vencimento,status,mensagem_vendedor,plano_id,servico_extra,servico_extra_valor,asaas_subscription_id,planos(id,nome,valor,descricao,ativo)",
-        )
-        .limit(1)
-        .maybeSingle();
-      if (erroCli) throw new Error(erroCli.message);
-      setCliente((cli ?? null) as unknown as Cliente);
-
-      const { data: pls, error: erroPls } = await supabase
-        .from("planos")
-        .select("id,nome,valor,descricao,ativo")
-        .eq("ativo", true)
-        .order("valor");
-      if (erroPls) throw new Error(erroPls.message);
-      setPlanos((pls ?? []) as Plano[]);
-
-      if (cli?.id) {
-        const { data: pgs, error: erroPgs } = await supabase
-          .from("pagamentos")
-          .select("id,valor,status,data_pagamento,created_at,invoice_url")
-          .eq("cliente_id", cli.id)
-          .order("created_at", { ascending: false });
-        if (erroPgs) throw new Error(erroPgs.message);
-        setPagamentos((pgs ?? []) as Pagamento[]);
-      } else {
-        setPagamentos([]);
-      }
-    } catch (e) {
-      // Antes o erro era ignorado e a tela ficava vazia sem explicação.
-      toast.error("Não foi possível carregar seus dados", {
-        description: e instanceof Error ? e.message : "Tente novamente em instantes.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+    await queryClient.invalidateQueries({ queryKey: chavesPainel.cliente });
+  }, [queryClient]);
 
   const dias = daysUntil(cliente?.data_vencimento);
   const venc = cliente?.data_vencimento;
   const totalMensal = (cliente?.planos?.valor ?? 0) + (cliente?.servico_extra_valor ?? 0);
   const assinaturaAtiva = Boolean(cliente?.asaas_subscription_id);
   const faturaPendente = pagamentos.find((p) => p.status === "pendente" && p.invoice_url);
+
+  // Histórico longo: renderiza apenas as linhas visíveis.
+  const janela = useJanelaVirtual({ total: pagamentos.length, altura: 60 });
+  const pagamentosVisiveis = pagamentos.slice(janela.inicio, janela.fim);
 
   function headerTone() {
     if (cliente?.status === "ativo" && (dias == null || dias > 5)) return "ativo";
@@ -247,15 +192,7 @@ function ClienteArea() {
     }
   }
 
-  useTourDaTela("tela:cliente", !loading);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  useTourDaTela("tela:cliente", true);
 
   return (
     <AppShell
@@ -515,7 +452,7 @@ function ClienteArea() {
         {/* Histórico de pagamentos */}
         <section data-tour="cli-historico" className="mt-10">
           <h2 className="text-lg font-bold text-foreground">Histórico de pagamentos</h2>
-          <Card className="mt-4 overflow-hidden">
+          <Card className="mt-4 overflow-hidden" ref={janela.ref}>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -527,7 +464,12 @@ function ClienteArea() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pagamentos.map((pg) => (
+                {janela.antes > 0 && (
+                  <TableRow aria-hidden>
+                    <TableCell colSpan={5} style={{ height: janela.antes, padding: 0 }} />
+                  </TableRow>
+                )}
+                {pagamentosVisiveis.map((pg) => (
                   <TableRow key={pg.id}>
                     <TableCell>
                       {formatDate(pg.data_pagamento || pg.created_at)}
@@ -557,6 +499,11 @@ function ClienteArea() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {janela.depois > 0 && (
+                  <TableRow aria-hidden>
+                    <TableCell colSpan={5} style={{ height: janela.depois, padding: 0 }} />
+                  </TableRow>
+                )}
                 {pagamentos.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">

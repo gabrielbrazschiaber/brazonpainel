@@ -1,7 +1,9 @@
 import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { chavesPainel, vendedorPainelQuery } from "@/lib/painel-queries";
+import { PainelEsqueleto } from "@/components/PainelEsqueleto";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
@@ -84,7 +86,10 @@ export const Route = createFileRoute("/vendedor")({
   }),
   component: () => (
     <RequireRole role="vendedor">
-      <VendedorArea />
+      {/* Suspense no lugar do spinner: a estrutura da tela aparece na hora. */}
+      <Suspense fallback={<PainelEsqueleto />}>
+        <VendedorArea />
+      </Suspense>
     </RequireRole>
   ),
 });
@@ -121,64 +126,21 @@ interface ClienteRow {
 
 function VendedorArea() {
   const { profile } = useAuth();
-  const [vendedor, setVendedor] = useState<Vendedor | null>(null);
-  const [clientes, setClientes] = useState<ClienteRow[]>([]);
-  const [planos, setPlanos] = useState<Plano[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data } = useSuspenseQuery(vendedorPainelQuery());
+  const vendedor = data.vendedor as Vendedor | null;
+  const clientes = data.clientes as unknown as ClienteRow[];
+  const planos = data.planos as Plano[];
   const [dialogOpen, setDialogOpen] = useState(false);
   const [msgCliente, setMsgCliente] = useState<ClienteRow | null>(null);
   const [editCliente, setEditCliente] = useState<ClienteRow | null>(null);
   const [contaOpen, setContaOpen] = useState(false);
   const [secaoAtiva, setSecaoAtiva] = useState("painel");
 
+  /** Revalida os dados do painel após uma ação (novo cliente, edição...). */
   const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data: vend, error: erroVend } = await supabase
-        .from("vendedores")
-        .select("id,codigo_indicacao,percentual_comissao,ativo")
-        .limit(1)
-        .maybeSingle();
-      if (erroVend) throw new Error(erroVend.message);
-      setVendedor((vend ?? null) as Vendedor | null);
-
-      const { data: pls, error: erroPls } = await supabase
-        .from("planos")
-        .select("id,nome,valor")
-        .eq("ativo", true)
-        .order("valor");
-      if (erroPls) throw new Error(erroPls.message);
-      setPlanos((pls ?? []) as Plano[]);
-
-      const { data: cls, error: erroCls } = await supabase
-        .from("clientes")
-        .select(
-          "id,user_id,data_vencimento,status,mensagem_vendedor,anotacoes,plano_id,servico_extra,servico_extra_valor,cpf_cnpj,telefone,planos(nome,valor)",
-        )
-        .order("created_at", { ascending: false });
-      if (erroCls) throw new Error(erroCls.message);
-      const rows = (cls ?? []) as unknown as ClienteRow[];
-
-      const map = await buscarPerfis(rows.map((r) => r.user_id));
-      rows.forEach((r) => {
-        const p = map.get(r.user_id);
-        r.nome = p?.nome || undefined;
-        r.email = p?.email || undefined;
-      });
-
-      setClientes(rows);
-    } catch (e) {
-      toast.error("Não foi possível carregar seus dados", {
-        description: e instanceof Error ? e.message : "Tente novamente em instantes.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+    await queryClient.invalidateQueries({ queryKey: chavesPainel.vendedor });
+  }, [queryClient]);
 
   const metrics = useMemo(() => {
     const total = clientes.length;
@@ -218,15 +180,7 @@ function VendedorArea() {
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  useTourDaTela("tela:vendedor", !loading);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  useTourDaTela("tela:vendedor", true);
 
   return (
     <AppShell

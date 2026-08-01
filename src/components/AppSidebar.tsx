@@ -24,6 +24,7 @@ import { useChatNaoLidas } from "@/lib/use-chat-nao-lidas";
 import { useTarefasAbertas } from "@/lib/use-tarefas-abertas";
 import { useFollowUpsPendentes } from "@/lib/use-follow-ups-pendentes";
 import { useAuth } from "@/lib/auth";
+import { usePrefetchIntencao, usePrefetchQuandoVisivel } from "@/lib/use-prefetch-intencao";
 import { toast } from "sonner";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 
@@ -96,6 +97,14 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
   const trapRef = React.useRef<HTMLDivElement>(null);
   useFocusTrap(isMobile && openMobile, trapRef);
 
+  // Prefetch por intenção: hover/foco no item adianta código + dados da rota.
+  const { aoIntencao } = usePrefetchIntencao();
+  // E, com o menu visível e o navegador ocioso, adiantamos as rotas do menu.
+  usePrefetchQuandoVisivel(
+    items.map((i) => i.to),
+    trapRef,
+  );
+
   function fecharSeMobile() {
     if (isMobile) setOpenMobile(false);
   }
@@ -164,7 +173,13 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
                         tooltip={item.label}
                         className="h-10 md:h-8"
                       >
-                        <Link to={item.to} onClick={fecharSeMobile}>
+                        <Link
+                          to={item.to}
+                          onClick={fecharSeMobile}
+                          onMouseEnter={() => aoIntencao(item.to)}
+                          onFocus={() => aoIntencao(item.to)}
+                          onTouchStart={() => aoIntencao(item.to)}
+                        >
                           <item.icon className="h-4 w-4" />
                           <span>{item.label}</span>
                           {item.to === "/tarefas" && abertas > 0 && (

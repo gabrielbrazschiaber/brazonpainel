@@ -25,6 +25,7 @@ const AjudaDaTela = lazy(() =>
   import("@/components/onboarding/AjudaDaTela").then((m) => ({ default: m.AjudaDaTela })),
 );
 import { BrazonLogo } from "@/components/BrazonLogo";
+import { useJanelaVirtual } from "@/lib/use-janela-virtual";
 import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AvisosSino } from "@/components/AvisosSino";
@@ -359,6 +360,13 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     [leads, soZap, statusZap],
   );
 
+  // Com scroll infinito a lista cresce sem limite: renderizamos apenas as
+  // linhas visíveis (mais folga) para não pesar no celular.
+  const janelaCards = useJanelaVirtual({ total: leadsVisiveis.length, altura: 148 });
+  const janelaLinhas = useJanelaVirtual({ total: leadsVisiveis.length, altura: 64 });
+  const cardsVisiveis = leadsVisiveis.slice(janelaCards.inicio, janelaCards.fim);
+  const linhasVisiveis = leadsVisiveis.slice(janelaLinhas.inicio, janelaLinhas.fim);
+
   async function confirmarExclusao() {
     if (!excluindo) return;
     setOcupado(true);
@@ -385,7 +393,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             <span className="hidden sm:ml-2 sm:inline">Painel</span>
           </Link>
         </Button>
-        <BrazonLogo className="hidden h-7 sm:block" />
+        <BrazonLogo className="hidden sm:flex" symbolClassName="h-7 w-7" textClassName="text-lg" />
         <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
           <Suspense fallback={null}>
             <AjudaDaTela chave="tela:comercial" />
@@ -639,8 +647,9 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
           ) : (
             <>
               {/* Mobile: cards empilhados */}
-              <div className="space-y-3 sm:hidden">
-                {leadsVisiveis.map((l) => (
+              <div className="space-y-3 sm:hidden" ref={janelaCards.ref}>
+                <div style={{ height: janelaCards.antes }} aria-hidden />
+                {cardsVisiveis.map((l) => (
                   <Card
                     key={l.id}
                     className="cursor-pointer space-y-2 p-4"
@@ -678,14 +687,20 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                     </div>
                   </Card>
                 ))}
+                <div style={{ height: janelaCards.depois }} aria-hidden />
               </div>
 
               {/* Desktop: tabela */}
-              <div className="hidden sm:block">
+              <div className="hidden sm:block" ref={janelaLinhas.ref}>
                 <Table>
                   <CabecalhoLeads />
                   <TableBody>
-                    {leadsVisiveis.map((l) => (
+                    {janelaLinhas.antes > 0 && (
+                      <TableRow aria-hidden>
+                        <TableCell colSpan={9} style={{ height: janelaLinhas.antes, padding: 0 }} />
+                      </TableRow>
+                    )}
+                    {linhasVisiveis.map((l) => (
                       <TableRow key={l.id} className="cursor-pointer" onClick={() => setDetalhe(l)}>
                         <TableCell>
                           <p className="font-medium">{l.nome_contato}</p>
@@ -753,6 +768,14 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                         </TableCell>
                       </TableRow>
                     ))}
+                    {janelaLinhas.depois > 0 && (
+                      <TableRow aria-hidden>
+                        <TableCell
+                          colSpan={9}
+                          style={{ height: janelaLinhas.depois, padding: 0 }}
+                        />
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
