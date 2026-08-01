@@ -38,6 +38,8 @@ jobs:
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
       VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
       VITE_APP_VERSION: ${{ github.sha }}
+      # Trace único por execução: casa artefatos do E2E com auth_telemetria.trace_id
+      E2E_TRACE_ID: ci-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
 
@@ -66,14 +68,14 @@ jobs:
 
       # Falha o build em QUALQUER ocorrência dos textos de bloqueio
       # ("Acesso não liberado" / "Falha de conexão") durante o carregamento.
-      - name: Gates de auth sob rede afunilada e troca de conta
+      - name: Gates de auth (rotas críticas por papel e tipo de navegação)
         run: bun run test:e2e:auth
 
       - name: Evidências (vídeo, screenshot e HTML)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-auth-evidencias
+          name: e2e-auth-evidencias-${{ github.run_id }}
           path: |
             tests/e2e/artifacts/**
             /tmp/dev-server.log

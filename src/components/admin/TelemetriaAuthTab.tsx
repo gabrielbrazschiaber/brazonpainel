@@ -198,11 +198,72 @@ export function TelemetriaAuthTab() {
           </tbody>
         </table>
       </div>
+      <IncidentesPorTrace dias={Number(dias)} />
       <p className="text-xs text-muted-foreground">
         {totais.versoes} versão(ões) do app no período. Defina <code>VITE_APP_VERSION</code> no
         build para comparar publicações.
       </p>
     </div>
+  );
+}
+
+interface Incidente {
+  trace_id: string | null;
+  tipo: string;
+  rota: string | null;
+  app_version: string;
+  erro: string | null;
+  created_at: string;
+}
+
+/**
+ * Incidentes recentes com o Trace ID: o mesmo valor nomeia os artefatos do E2E
+ * (vídeo/screenshot/dump) e viaja para o destino externo (Sentry/Datadog),
+ * permitindo rastrear cada caso ponta a ponta.
+ */
+function IncidentesPorTrace({ dias }: { dias: number }) {
+  const [itens, setItens] = useState<Incidente[]>([]);
+
+  useEffect(() => {
+    const desde = new Date(Date.now() - dias * 86400000).toISOString();
+    void supabase
+      .from("auth_telemetria")
+      .select("trace_id, tipo, rota, app_version, erro, created_at")
+      .in("tipo", ["papel_erro", "papel_sem_papel"])
+      .gte("created_at", desde)
+      .order("created_at", { ascending: false })
+      .limit(15)
+      .then(({ data }) => setItens((data ?? []) as Incidente[]));
+  }, [dias]);
+
+  if (itens.length === 0) return null;
+
+  return (
+    <Card className="p-4">
+      <h3 className="text-sm font-semibold text-foreground">Incidentes recentes (Trace ID)</h3>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Use o Trace ID para achar o vídeo/screenshot do teste e o evento no monitoramento externo.
+      </p>
+      <ul className="mt-3 space-y-2 text-sm">
+        {itens.map((i, idx) => (
+          <li
+            key={`${i.trace_id ?? "sem"}-${idx}`}
+            className="flex flex-wrap items-center gap-2 border-t border-border pt-2 first:border-0 first:pt-0"
+          >
+            <Badge variant={i.tipo === "papel_erro" ? "destructive" : "outline"}>
+              {ROTULOS[i.tipo] ?? i.tipo}
+            </Badge>
+            <span className="font-medium text-foreground">{i.rota ?? "—"}</span>
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+              {i.trace_id ?? "sem trace"}
+            </code>
+            <span className="text-xs text-muted-foreground">
+              versão {i.app_version} · {new Date(i.created_at).toLocaleString("pt-BR")}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 
