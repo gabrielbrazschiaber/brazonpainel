@@ -32,7 +32,7 @@ export interface Escopo {
 }
 
 const CAMPOS_LEAD =
-  "id, vendedor_id, nome_contato, empresa, cargo, telefone, email, segmento, origem, estagio, valor_estimado, motivo_perda, observacoes, proximo_contato, cliente_id, contatado_em, fechado_em, importacao_id, completude, created_at, updated_at";
+  "id, vendedor_id, nome_contato, empresa, cargo, telefone, email, segmento, origem, estagio, valor_estimado, motivo_perda, observacoes, proximo_contato, follow_ups_feitos, ultimo_contato_em, cadencia_encerrada, cliente_id, contatado_em, fechado_em, importacao_id, completude, created_at, updated_at";
 
 export interface Lead {
   id: string;
