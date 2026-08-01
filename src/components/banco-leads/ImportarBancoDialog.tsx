@@ -1,19 +1,23 @@
 import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertCircle, FileSpreadsheet, Info, Loader2, Upload } from "lucide-react";
+import {
+  AlertCircle,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Info,
+  Loader2,
+  Trash2,
+  Upload,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -39,10 +43,12 @@ import {
 } from "@/components/ui/table";
 
 import {
+  AVISO_CNPJ_CIENTIFICO,
+  AVISO_CNPJ_DIGITO,
+  AVISO_CNPJ_INVALIDO,
   explicacaoCnpj,
   formatarCnpj,
   lerArquivo,
-
   normalizarChave,
   normalizarCnpj,
   normalizarDataBr,
@@ -52,6 +58,19 @@ import {
   telefoneValido,
   type ArquivoLido,
 } from "@/lib/leads-import";
+import {
+  ROTULO_NIVEL,
+  resumirConfianca,
+  sugerirComConfianca,
+  type SugestaoColuna,
+} from "@/lib/import-mapeamento";
+import {
+  baixarCsvRelatorio,
+  imprimirRelatorioPdf,
+  type CabecalhoRelatorio,
+  type LinhaRelatorio,
+} from "@/lib/import-relatorio";
+
 import {
   BLOCO_IMPORT_BANCO,
   ESTADOS_BR,
@@ -127,22 +146,6 @@ const SINONIMOS: Record<Campo, string[]> = {
   observacoes: ["observacao", "observacoes", "obs", "anotacoes", "notas"],
 };
 
-function sugerir(cabecalhos: string[]): Destino[] {
-  const usados = new Set<Campo>();
-  return cabecalhos.map((h) => {
-    const chave = normalizarChave(h);
-    if (!chave) return "";
-    for (const { campo } of CAMPOS) {
-      if (usados.has(campo)) continue;
-      if (SINONIMOS[campo].some((s) => chave === s || chave.startsWith(s))) {
-        usados.add(campo);
-        return campo;
-      }
-    }
-    return "";
-  });
-}
-
 interface LinhaPreparada {
   linha: number;
   nome_contato: string;
@@ -170,8 +173,9 @@ interface LinhaPreparada {
   cnpjCientifico: boolean;
   /** Explicação da regra de CNPJ aplicada nesta linha (tooltip). */
   cnpjExplicacao: string | null;
+  /** Aviso crítico: CNPJ corrompido, irreconhecível ou com dígito inválido. */
+  critico: boolean;
 }
-
 
 function texto(valor: string | undefined, max = 120): string | null {
   const t = (valor ?? "").trim();
@@ -232,7 +236,6 @@ function prepararLinhas(
     const { cnpj, aviso, cientifico, completado } = normalizado;
     if (aviso) avisos.push(aviso);
 
-
     const cnae = normalizarCnae(pega("cnae_codigo"));
     const cnaeDesc = texto(pega("cnae_descricao"), 300);
     const doCatalogo = cnae ? porCodigo.get(cnae) : undefined;
@@ -272,7 +275,10 @@ function prepararLinhas(
       cnpjCompletado: completado,
       cnpjCientifico: cientifico,
       cnpjExplicacao: explicacaoCnpj(normalizado),
-
+      critico:
+        cientifico || aviso === AVISO_CNPJ_INVALIDO || aviso === AVISO_CNPJ_DIGITO
+          ? true
+          : aviso === AVISO_CNPJ_CIENTIFICO,
     };
   });
 }
@@ -318,15 +324,107 @@ export function ImportarBancoDialog({
   const [cnpjEditado, setCnpjEditado] = useState<Record<number, string>>({});
   /** Prévia filtrada só nas linhas com erro ou aviso. */
   const [soProblemas, setSoProblemas] = useState(false);
+  /** Sugestões do auto-mapeamento (com confiança) da última leitura. */
+  const [sugestoes, setSugestoes] = useState<SugestaoColuna<Campo>[]>([]);
+  /** Números de linha removidos da confirmação pelo admin. */
+  const [excluidas, setExcluidas] = useState<number[]>([]);
 
-  const linhas = useMemo(
+  const todasLinhas = useMemo(
     () => (arquivo ? prepararLinhas(arquivo, mapa, cnaes, cnpjEditado) : []),
     [arquivo, mapa, cnaes, cnpjEditado],
   );
-  const validas = useMemo(() => linhas.filter((l) => !l.erro), [linhas]);
-  const comErro = linhas.length - validas.length;
+  const linhas = todasLinhas;
+  const foraSet = useMemo(() => new Set(excluidas), [excluidas]);
+  const validas = useMemo(
+    () => linhas.filter((l) => !l.erro && !foraSet.has(l.linha)),
+    [linhas, foraSet],
+  );
+  const comErro = linhas.filter((l) => Boolean(l.erro)).length;
   const faltamObrigatorios = CAMPOS.filter((c) => c.obrigatorio && !mapa.includes(c.campo));
   const semNome = !mapa.includes("nome_contato") && !mapa.includes("socios");
+
+  /** Contadores do impacto da confirmação, recalculados a cada ajuste do mapa. */
+  const contadores = useMemo(() => {
+    const consideradas = linhas.filter((l) => !foraSet.has(l.linha));
+    return {
+      total: linhas.length,
+      validas: consideradas.filter((l) => !l.erro).length,
+      comAvisos: consideradas.filter((l) => !l.erro && l.avisos.length > 0).length,
+      comCriticos: consideradas.filter((l) => l.critico && !l.erro).length,
+      comErros: consideradas.filter((l) => Boolean(l.erro)).length,
+      excluidas: excluidas.length,
+    };
+  }, [linhas, foraSet, excluidas]);
+
+  const confianca = useMemo(
+    () =>
+      resumirConfianca(
+        sugestoes,
+        CAMPOS.filter((c) => c.obrigatorio && !mapa.includes(c.campo)).map((c) => c.label),
+      ),
+    [sugestoes, mapa],
+  );
+
+  /** Linhas que a exclusão automática removeria (erro ou aviso crítico). */
+  const aExcluirCriticas = useMemo(
+    () => linhas.filter((l) => (l.critico || Boolean(l.erro)) && !foraSet.has(l.linha)).length,
+    [linhas, foraSet],
+  );
+
+  function excluirCriticas() {
+    const alvo = linhas.filter((l) => l.critico || Boolean(l.erro)).map((l) => l.linha);
+    setExcluidas((atual) => Array.from(new Set([...atual, ...alvo])));
+    toast.success(`${alvo.length} linha(s) removida(s) da confirmação.`);
+  }
+
+  function cabecalhoRelatorio(): CabecalhoRelatorio {
+    return {
+      arquivo: arquivo?.nome ?? "importacao",
+      fonte: fonte.trim(),
+      geradoEm: new Date(),
+      total: contadores.total,
+      validas: contadores.validas,
+      comAvisos: contadores.comAvisos,
+      comCriticos: contadores.comCriticos,
+      comErros: contadores.comErros,
+    };
+  }
+
+  function linhasRelatorio(): LinhaRelatorio[] {
+    return linhas
+      .filter((l) => Boolean(l.erro) || l.avisos.length > 0 || foraSet.has(l.linha))
+      .map((l) => ({
+        linha: l.linha,
+        contato: l.nome_contato || l.razao_social || l.nome_fantasia || "—",
+        telefone: l.telefone,
+        cnpj: formatarCnpj(l.cnpj),
+        situacao: l.erro ? "Com erro" : l.critico ? "Aviso crítico" : "Com aviso",
+        erro: l.erro,
+        avisos: l.avisos,
+        critico: l.critico,
+        excluida: foraSet.has(l.linha),
+      }));
+  }
+
+  function baixarCsv() {
+    const dados = linhasRelatorio();
+    if (dados.length === 0) {
+      toast.info("Nenhum aviso ou erro nesta prévia — relatório dispensável.");
+      return;
+    }
+    baixarCsvRelatorio(cabecalhoRelatorio(), dados);
+  }
+
+  function baixarPdf() {
+    const dados = linhasRelatorio();
+    if (dados.length === 0) {
+      toast.info("Nenhum aviso ou erro nesta prévia — relatório dispensável.");
+      return;
+    }
+    if (!imprimirRelatorioPdf(cabecalhoRelatorio(), dados)) {
+      toast.error("O navegador bloqueou a janela de impressão. Libere pop-ups e tente de novo.");
+    }
+  }
 
   /** CNAEs da planilha que ainda não existem no catálogo. */
   const cnaesNovos = useMemo(() => {
@@ -365,6 +463,8 @@ export function ImportarBancoDialog({
   function limpar() {
     setArquivo(null);
     setMapa([]);
+    setSugestoes([]);
+    setExcluidas([]);
     setCnpjEditado({});
     setFonte("");
     setReservaSegmento(SEM_RESERVA);
@@ -391,7 +491,14 @@ export function ImportarBancoDialog({
         },
       });
       setArquivo(lido);
-      setMapa(sugerir(lido.cabecalhos));
+      const auto = sugerirComConfianca<Campo>(
+        lido.cabecalhos,
+        CAMPOS.map((c) => c.campo),
+        SINONIMOS,
+      );
+      setSugestoes(auto);
+      setMapa(auto.map((s) => s.destino));
+      setExcluidas([]);
       if (!fonte) setFonte(file.name.replace(/\.[^.]+$/, "").slice(0, 160));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível ler o arquivo.");
@@ -448,7 +555,7 @@ export function ImportarBancoDialog({
                 cnpjCompletado: _cc,
                 cnpjCientifico: _ci,
                 cnpjExplicacao: _ce,
-
+                critico: _cr,
                 ...campos
               }) => campos,
             ),
@@ -638,9 +745,22 @@ export function ImportarBancoDialog({
                 <span className="font-medium">{arquivo.nome}</span>
                 <Badge variant="secondary">{linhas.length} linha(s)</Badge>
                 <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
-                  {validas.length} pronta(s)
+                  {validas.length} válida(s)
                 </Badge>
+                {contadores.comAvisos > 0 ? (
+                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                    {contadores.comAvisos} com aviso
+                  </Badge>
+                ) : null}
+                {contadores.comCriticos > 0 ? (
+                  <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
+                    {contadores.comCriticos} com aviso crítico
+                  </Badge>
+                ) : null}
                 {comErro > 0 ? <Badge variant="destructive">{comErro} com erro</Badge> : null}
+                {excluidas.length > 0 ? (
+                  <Badge variant="outline">{excluidas.length} excluída(s)</Badge>
+                ) : null}
                 {semCnpj > 0 ? <Badge variant="outline">{semCnpj} sem CNPJ</Badge> : null}
                 {cnpjCompletados > 0 ? (
                   <Badge className="bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
@@ -693,68 +813,154 @@ export function ImportarBancoDialog({
                 </div>
               ) : null}
 
+              <div className="rounded-md border border-border bg-muted/40 p-3 text-xs">
+                <p className="font-medium text-foreground">
+                  Mapeamento automático · {ROTULO_NIVEL[confianca.nivel]} ({confianca.media}%)
+                </p>
+                <p className="text-muted-foreground">
+                  {confianca.reconhecidas} coluna(s) reconhecida(s) pelo cabeçalho ·{" "}
+                  {confianca.ignoradas} ignorada(s).{" "}
+                  {confianca.faltando.length > 0
+                    ? `Ajuste manualmente: falta ${confianca.faltando.join(" e ")}.`
+                    : "Confira abaixo antes de importar."}
+                </p>
+              </div>
+
               <div className="overflow-x-auto rounded-md border border-border">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Coluna da planilha</TableHead>
                       <TableHead>Vai para</TableHead>
-                      <TableHead>Exemplo</TableHead>
+                      <TableHead>Confiança</TableHead>
+                      <TableHead className="hidden md:table-cell">Exemplo</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {arquivo.cabecalhos.map((h, i) => (
-                      <TableRow key={`${h}-${i}`}>
-                        <TableCell className="font-medium">{h}</TableCell>
-                        <TableCell>
-                          <Select
-                            value={valorSelect(mapa[i], IGNORAR_COLUNA)}
-                            onValueChange={(v) =>
-                              setMapa((atual) => {
-                                const novo = [...atual];
-                                novo[i] = valorDoSelect(v, IGNORAR_COLUNA) as Campo | "";
-                                return novo;
-                              })
-                            }
-                          >
-                            <SelectTrigger className="h-9 w-full sm:min-w-[170px]">
-                              <SelectValue placeholder="Ignorar coluna" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-72">
-                              <SelectItem value={IGNORAR_COLUNA}>Ignorar coluna</SelectItem>
-                              {opcoesCampos.map((c) => (
-                                <SelectItem key={c.value} value={c.value}>
-                                  {c.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="max-w-[180px] truncate text-muted-foreground">
-                          {arquivo.matriz[0]?.[i] ?? "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {arquivo.cabecalhos.map((h, i) => {
+                      const s = sugestoes[i];
+                      const alterado = Boolean(s) && s.destino !== mapa[i];
+                      return (
+                        <TableRow key={`${h}-${i}`}>
+                          <TableCell className="font-medium">{h}</TableCell>
+                          <TableCell>
+                            <Select
+                              value={valorSelect(mapa[i], IGNORAR_COLUNA)}
+                              onValueChange={(v) =>
+                                setMapa((atual) => {
+                                  const novo = [...atual];
+                                  novo[i] = valorDoSelect(v, IGNORAR_COLUNA) as Campo | "";
+                                  return novo;
+                                })
+                              }
+                            >
+                              <SelectTrigger className="h-9 w-full sm:min-w-[170px]">
+                                <SelectValue placeholder="Ignorar coluna" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-72">
+                                <SelectItem value={IGNORAR_COLUNA}>Ignorar coluna</SelectItem>
+                                {opcoesCampos.map((c) => (
+                                  <SelectItem key={c.value} value={c.value}>
+                                    {c.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="align-middle">
+                            {alterado ? (
+                              <Badge variant="secondary">Ajustado por você</Badge>
+                            ) : s && s.destino ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button type="button" className="cursor-help">
+                                      <Badge
+                                        variant="outline"
+                                        className={
+                                          s.nivel === "alta"
+                                            ? "border-emerald-400/60 text-emerald-700 dark:text-emerald-300"
+                                            : s.nivel === "media"
+                                              ? "border-sky-400/60 text-sky-700 dark:text-sky-300"
+                                              : "border-amber-400/60 text-amber-700 dark:text-amber-300"
+                                        }
+                                      >
+                                        {s.confianca}%
+                                      </Badge>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs">
+                                    {ROTULO_NIVEL[s.nivel]} — {s.motivo}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                Sem correspondência
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden max-w-[180px] truncate text-muted-foreground md:table-cell">
+                            {arquivo.matriz[0]?.[i] ?? "—"}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium text-foreground">
-                  Prévia da importação
-                  <span className="ml-2 text-xs font-normal text-muted-foreground">
-                    {comProblema.length} linha(s) a conferir · {totalAvisos} aviso(s)
-                  </span>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-foreground">
+                    Prévia da importação
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      {comProblema.length} linha(s) a conferir · {totalAvisos} aviso(s)
+                    </span>
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={soProblemas ? "default" : "outline"}
+                    onClick={() => setSoProblemas((v) => !v)}
+                    disabled={comProblema.length === 0}
+                  >
+                    {soProblemas ? "Mostrar todas as linhas" : "Só linhas com aviso ou erro"}
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => excluirCriticas()}
+                    disabled={aExcluirCriticas === 0}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir {aExcluirCriticas || ""} linha(s) com problema
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setExcluidas([])}
+                    disabled={excluidas.length === 0}
+                  >
+                    Restaurar {excluidas.length} excluída(s)
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => baixarCsv()}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Relatório CSV
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => baixarPdf()}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Relatório PDF
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Excluir remove da confirmação as linhas com erro ou aviso crítico (CNPJ
+                  corrompido, irreconhecível ou com dígito inválido) — as demais continuam válidas.
                 </p>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={soProblemas ? "default" : "outline"}
-                  onClick={() => setSoProblemas((v) => !v)}
-                  disabled={comProblema.length === 0}
-                >
-                  {soProblemas ? "Mostrar todas as linhas" : "Só linhas com aviso ou erro"}
-                </Button>
               </div>
 
               <div className="overflow-x-auto rounded-md border border-border">
@@ -794,9 +1000,7 @@ export function ImportarBancoDialog({
                             {[l.cidade, l.estado].filter(Boolean).join(" · ") || "Sem localidade"}
                             {l.segmento ? ` · ${l.segmento}` : ""}
                           </p>
-                          <p className="text-xs text-muted-foreground md:hidden">
-                            Linha {l.linha}
-                          </p>
+                          <p className="text-xs text-muted-foreground md:hidden">Linha {l.linha}</p>
                           <p className="text-xs text-muted-foreground sm:hidden">
                             {l.telefone || "—"}
                           </p>
@@ -832,7 +1036,6 @@ export function ImportarBancoDialog({
                             </Badge>
                           ) : null}
                           {l.avisos.length ? (
-
                             <div className="flex flex-wrap gap-1">
                               {l.avisos.map((a) => {
                                 const explica =
@@ -886,7 +1089,6 @@ export function ImportarBancoDialog({
                       </TableRow>
                     ))}
                   </TableBody>
-
                 </Table>
               </div>
               {totalFiltrado > LIMITE_PREVIA ? (
