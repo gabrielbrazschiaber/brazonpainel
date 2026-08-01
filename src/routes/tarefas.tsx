@@ -15,6 +15,7 @@ import {
 import { TermosGate } from "@/components/TermosGate";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { SairButton } from "@/components/SairButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { AvisosSino } from "@/components/AvisosSino";
 import { ComentariosTarefa } from "@/components/tarefas/ComentariosTarefa";
 import { formatDate } from "@/lib/format";
@@ -302,6 +303,7 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
             </Link>
           </Button>
+          <ThemeToggle />
           <AvisosSino />
           <SairButton />
         </div>
