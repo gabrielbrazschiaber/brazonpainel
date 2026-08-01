@@ -334,7 +334,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
           }
         : {})}
     >
-      <ErroLimite titulo="O Banco de Leads não carregou">
+      <ErroLimite area="Banco de Leads">
         <div className="space-y-5" data-tour="banco-leads">
           <header className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
