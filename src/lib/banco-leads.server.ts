@@ -229,9 +229,12 @@ export async function salvarBancoLeadServer(
   const { id, ...campos } = dados;
   const payload = {
     ...campos,
+    // CNPJ passa pela mesma normalização da importação (zeros à esquerda, etc.).
+    cnpj: campos.cnpj === undefined ? undefined : normalizarCnpj(campos.cnpj).cnpj,
     estado: campos.estado ? campos.estado.toUpperCase() : null,
     reservado_estado: campos.reservado_estado ? campos.reservado_estado.toUpperCase() : null,
   };
+
 
   if (id) {
     const { data, error } = await supabase
