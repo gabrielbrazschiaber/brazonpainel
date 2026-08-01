@@ -10,11 +10,9 @@ import {
 } from "@/test/supabase-mock";
 import { limparAuthTelemetria, lerAuthTelemetria } from "@/lib/auth-telemetry";
 
-const mock = vi.hoisted(() => {
-  const { criarSupabaseMock: criar } = require("@/test/supabase-mock") as {
-    criarSupabaseMock: typeof criarSupabaseMock;
-  };
-  return { sb: criar(), navigate: vi.fn(async () => {}) };
+const mock = await vi.hoisted(async () => {
+  const m = await import("@/test/supabase-mock");
+  return { sb: m.criarSupabaseMock(), navigate: vi.fn(async () => {}) };
 });
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: mock.sb.supabase }));
