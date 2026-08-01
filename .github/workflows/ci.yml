@@ -81,6 +81,11 @@ jobs:
       - name: Tours de onboarding (primeira visita, conclusão e mobile)
         run: bun run test:e2e:onboarding
 
+      # Falha o build se /admin não carregar para o admin ou se aparecer erro de
+      # React (#310). Screenshot + dump saem com o mesmo Trace ID desta execução.
+      - name: Painel admin carrega sem erro de React
+        run: bun run test:e2e:admin
+
       - name: Evidências (vídeo, screenshot e HTML)
         if: always()
         uses: actions/upload-artifact@v4
