@@ -31,7 +31,10 @@ export function RequireRole({ role, children }: { role: AppRole; children: React
   return (
     <GateDependenteDePapel pronto={userRole === role}>
       <TermosGate>
-        <OnboardingProvider>{children}</OnboardingProvider>
+        {/* 2FA vem depois do aceite dos termos e vale para todas as telas. */}
+        <MfaGate>
+          <OnboardingProvider>{children}</OnboardingProvider>
+        </MfaGate>
       </TermosGate>
     </GateDependenteDePapel>
   );
