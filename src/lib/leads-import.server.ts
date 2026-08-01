@@ -2,9 +2,9 @@
 import type { z } from "zod";
 import { escopoComercial, nomesDeUsuarios } from "@/lib/leads.server";
 import type { importarLeadsSchema, verificarDuplicadosSchema } from "@/lib/leads-import.schemas";
+import type { ClienteSupabaseUsuario } from "@/lib/supabase-tipos";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Sb = any;
+type Sb = ClienteSupabaseUsuario;
 
 const CHUNK = 200;
 
