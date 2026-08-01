@@ -60,11 +60,13 @@ function LinhaEscopo({ escopo, onSalvo }: { escopo: EscopoVendedor; onSalvo: () 
   const salvar = useServerFn(definirEscopoVendedor);
   const [segmentos, setSegmentos] = useState(listaParaTexto(escopo.segmentos));
   const [estados, setEstados] = useState(listaParaTexto(escopo.estados));
+  const [cnaes, setCnaes] = useState(listaParaTexto(escopo.cnaes));
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
     setSegmentos(listaParaTexto(escopo.segmentos));
     setEstados(listaParaTexto(escopo.estados));
+    setCnaes(listaParaTexto(escopo.cnaes));
   }, [escopo]);
 
   async function enviar() {
@@ -75,6 +77,9 @@ function LinhaEscopo({ escopo, onSalvo }: { escopo: EscopoVendedor; onSalvo: () 
           vendedor_id: escopo.id,
           segmentos: textoParaLista(segmentos),
           estados: textoParaLista(estados, 2).filter((e) => e.length === 2),
+          cnaes: textoParaLista(cnaes)
+            .map((c) => c.replace(/\D/g, ""))
+            .filter((c) => c.length === 7),
         },
       });
       toast.success(`Escopo de ${escopo.nome} atualizado.`);

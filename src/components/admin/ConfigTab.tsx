@@ -24,6 +24,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
       dominio: "",
       dias_aviso_vencimento: 5,
       dias_devolver_lead: 7,
+      horas_reserva_lote: 48,
       percentual_comissao_padrao: 10,
       asaas_webhook_url: "",
       asaas_ambiente: "sandbox",
@@ -135,6 +136,10 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
           dominio: form.dominio ?? "",
           dias_aviso_vencimento: Number(form.dias_aviso_vencimento) || 0,
           dias_devolver_lead: Math.min(30, Math.max(3, Number(form.dias_devolver_lead) || 7)),
+          horas_reserva_lote: Math.min(
+            720,
+            Math.max(1, Number(form.horas_reserva_lote) || 48),
+          ),
           percentual_comissao_padrao: Number(form.percentual_comissao_padrao) || 0,
           asaas_webhook_url: form.asaas_webhook_url ?? "",
           asaas_ambiente: form.asaas_ambiente ?? "sandbox",
@@ -243,6 +248,23 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
                 Leads puxados do Banco de Leads e não trabalhados voltam ao banco depois desse prazo
                 (entre 3 e 30 dias). O vendedor é avisado um dia antes. A rotina roda todos os dias
                 às 8h (horário de Brasília).
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="creserva">Horas de reserva do lote</Label>
+              <Input
+                id="creserva"
+                type="number"
+                min={1}
+                max={720}
+                value={form.horas_reserva_lote ?? 48}
+                onChange={(e) => set("horas_reserva_lote", Number(e.target.value))}
+              />
+              <p className="text-xs text-muted-foreground">
+                Quando um lote é importado com reserva de segmento, estado ou CNAE, só vendedores
+                com esse escopo veem os leads durante esse período (entre 1 e 720 horas). Depois
+                disso, o lote fica livre para todo o time.
               </p>
             </div>
 
