@@ -190,10 +190,6 @@ function LoginPage() {
         <Button asChild variant="outline" className="w-full">
           <Link to="/cadastro">Criar minha conta e assinar</Link>
         </Button>
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          Cadastro imediato, sem precisar de vendedor. Tem um link de indicação? Use-o para manter seu
-          vendedor vinculado.
-        </p>
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Ao continuar, você concorda com os{" "}
           <Link to="/termos-de-uso" className="text-primary underline-offset-2 hover:underline">
