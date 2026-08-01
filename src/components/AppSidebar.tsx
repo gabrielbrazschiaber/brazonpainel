@@ -22,6 +22,7 @@ import { useSair } from "@/lib/use-sair";
 import { ChatSheet } from "@/components/chat/ChatSheet";
 import { useChatNaoLidas } from "@/lib/use-chat-nao-lidas";
 import { useTarefasAbertas } from "@/lib/use-tarefas-abertas";
+import { useFollowUpsPendentes } from "@/lib/use-follow-ups-pendentes";
 import { useAuth } from "@/lib/auth";
 
 export interface AppNavItem {
