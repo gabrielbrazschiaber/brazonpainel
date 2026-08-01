@@ -501,7 +501,14 @@ export function ImportarBancoDialog({
         },
       });
       setArquivo(lido);
-      setMapa(sugerir(lido.cabecalhos));
+      const auto = sugerirComConfianca<Campo>(
+        lido.cabecalhos,
+        CAMPOS.map((c) => c.campo),
+        SINONIMOS,
+      );
+      setSugestoes(auto);
+      setMapa(auto.map((s) => s.destino));
+      setExcluidas([]);
       if (!fonte) setFonte(file.name.replace(/\.[^.]+$/, "").slice(0, 160));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível ler o arquivo.");
