@@ -1,3 +1,4 @@
+import { GATE_TEXTOS } from "@/lib/gate-textos";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -25,8 +26,8 @@ vi.mock("@/components/TermosGate", () => ({
 import { AuthProvider, useAuth, type AppRole } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
 
-const BLOQUEIO = "Acesso não liberado";
-const FALHA = "Falha de conexão";
+const BLOQUEIO = GATE_TEXTOS.sem_papel.titulo;
+const FALHA = GATE_TEXTOS.erro.titulo;
 
 /** Observa TODA mutação do DOM: pega estados transitórios entre renders. */
 function observarTextos() {
@@ -109,7 +110,7 @@ describe("gates dependentes de papel", () => {
       user_roles: papeis(["admin"], 10),
       role_permissions: papeis([]),
     });
-    await userEvent.click(screen.getByRole("button", { name: /tentar novamente/i }));
+    await userEvent.click(document.querySelector('[data-gate-acao="retry"]') as HTMLElement);
     await screen.findByText("PAINEL ADMIN");
     expect(lerAuthTelemetria().some((e) => e.tipo === "papel_retry")).toBe(true);
   });

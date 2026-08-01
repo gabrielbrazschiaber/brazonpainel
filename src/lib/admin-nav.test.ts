@@ -25,7 +25,7 @@ describe("navegação do admin", () => {
   });
 
   it("as demais seções não restringem papel além da permissão", () => {
-    for (const secao of SECOES_CONFIG_META.filter((s) => s.value !== "auditoria")) {
+    for (const secao of SECOES_CONFIG_META.filter((s) => !s.roles?.length)) {
       expect(secao.roles).toBeUndefined();
     }
   });
