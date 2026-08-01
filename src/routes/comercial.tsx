@@ -186,6 +186,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const [segmento, setSegmento] = useState("todos");
   const [origem, setOrigem] = useState<LeadOrigem | "todas">("todas");
   const [followUp, setFollowUp] = useState(false);
+  const [soZap, setSoZap] = useState(false);
 
   const [formAberto, setFormAberto] = useState(false);
   const [editando, setEditando] = useState<Lead | null>(null);
