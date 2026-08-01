@@ -171,13 +171,40 @@ function ProviderInterno({ children }: { children: React.ReactNode }) {
     [salvar],
   );
 
+  /**
+   * Dispensar é definitivo: marca o tutorial atual e TODOS os outros visíveis
+   * como pulados, para nada mais abrir sozinho. Só "Rever tutoriais" traz de volta.
+   */
   const pular = React.useCallback(
     (chave: string, passo?: number) => {
       setChaveAtiva((atual) => (atual === chave ? null : atual));
-      salvar(chave, "pulado", passo);
+      setBoasVindasAberto(false);
+
+      const chaves = new Set<string>([chave]);
+      tutoriaisVisiveis(role, pode).forEach((t) => chaves.add(t.chave));
+      chaves.add(CHAVE_BOAS_VINDAS);
+
+      setItens((atuais) => {
+        const outros = atuais.filter((i) => !chaves.has(i.chave));
+        return [
+          ...outros,
+          ...Array.from(chaves).map((c) => ({
+            chave: c,
+            status: "pulado",
+            passo_parou: c === chave ? (passo ?? null) : null,
+          })),
+        ];
+      });
+
+      chaves.forEach((c) => {
+        void marcar({
+          data: { chave: c, status: "pulado", passo_parou: c === chave ? passo : undefined },
+        }).catch(() => {});
+      });
     },
-    [salvar],
+    [marcar, role, pode],
   );
+
 
   const registrarPasso = React.useCallback(
     (chave: string, passo: number) => {
