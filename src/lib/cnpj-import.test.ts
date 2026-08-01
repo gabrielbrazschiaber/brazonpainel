@@ -4,8 +4,11 @@ import {
   AVISO_CNPJ_COMPLETADO,
   AVISO_CNPJ_DIGITO,
   AVISO_CNPJ_INVALIDO,
+  explicacaoCnpj,
+  formatarCnpj,
   normalizarCnpj,
 } from "@/lib/leads-import";
+
 
 describe("normalizarCnpj", () => {
   it("completa zeros à esquerda quando faltam dígitos", () => {
