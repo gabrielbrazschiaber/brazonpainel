@@ -367,11 +367,41 @@ export function normalizarCnpj(valor: string | null | undefined): CnpjNormalizad
 }
 
 
+/**
+ * Máscara única do CNPJ: 00.000.000/0000-00.
+ * Valores parciais (durante a digitação) recebem a mesma máscara, aplicada
+ * progressivamente, para o campo nunca mudar de formato.
+ */
 export function formatarCnpj(valor: string | null | undefined): string {
-  const d = (valor ?? "").replace(/\D/g, "");
-  if (d.length !== 14) return (valor ?? "").toString().trim() || "—";
-  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+  const d = (valor ?? "").toString().replace(/\D/g, "").slice(0, 14);
+  if (!d) return "";
+  let saida = d.slice(0, 2);
+  if (d.length > 2) saida += `.${d.slice(2, 5)}`;
+  if (d.length > 5) saida += `.${d.slice(5, 8)}`;
+  if (d.length > 8) saida += `/${d.slice(8, 12)}`;
+  if (d.length > 12) saida += `-${d.slice(12, 14)}`;
+  return saida;
 }
+
+/** Texto do tooltip explicando exatamente a regra aplicada ao CNPJ da linha. */
+export function explicacaoCnpj(n: CnpjNormalizado): string | null {
+  if (n.cientifico) {
+    return `${AVISO_CNPJ_CIENTIFICO}. Regra aplicada: valores em notação científica (ex.: 2,31947E+11) perderam dígitos no Excel, então o CNPJ fica vazio — completar com zeros criaria um número falso.`;
+  }
+  if (n.aviso === AVISO_CNPJ_INVALIDO) {
+    return "Regra aplicada: após remover pontuação, o valor ficou com menos de 8 ou mais de 14 dígitos — não é aproveitável, então o CNPJ fica vazio. A linha continua importando.";
+  }
+  if (n.aviso === AVISO_CNPJ_DIGITO) {
+    return n.completado
+      ? "Regra aplicada: zeros à esquerda foram completados até 14 dígitos, mas os dígitos verificadores (módulo 11) não conferem. O valor é gravado como está — confira na origem."
+      : "Regra aplicada: os 14 dígitos foram mantidos, porém os dígitos verificadores (módulo 11) não conferem. O valor é gravado como está — confira na origem.";
+  }
+  if (n.completado) {
+    return "Regra aplicada: o Excel removeu os zeros à esquerda, então completamos à esquerda até 14 dígitos. Os dígitos verificadores conferem.";
+  }
+  return null;
+}
+
 
 /** Datas de planilha: "31/12/2020", "2020-12-31" ou serial do Excel. */
 export function normalizarDataBr(valor: string | null | undefined): string | null {
