@@ -24,6 +24,7 @@ import { CuponsTab } from "@/components/admin/CuponsTab";
 import { MinhaContaDialog } from "@/components/admin/MinhaContaDialog";
 import { NovidadesTab } from "@/components/admin/NovidadesTab";
 import { PermissoesTab } from "@/components/admin/PermissoesTab";
+import { CnaesTab } from "@/components/admin/CnaesTab";
 import { PlanosTab } from "@/components/admin/PlanosTab";
 import { TelemetriaAuthTab } from "@/components/admin/TelemetriaAuthTab";
 import { VendedoresTab } from "@/components/admin/VendedoresTab";
