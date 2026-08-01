@@ -32,10 +32,8 @@ import { OnboardingProvider, useTourDaTela } from "@/components/onboarding/Onboa
 const AjudaDaTela = lazy(() =>
   import("@/components/onboarding/AjudaDaTela").then((m) => ({ default: m.AjudaDaTela })),
 );
-import { BrazonLogo } from "@/components/BrazonLogo";
-import { SairButton } from "@/components/SairButton";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { AvisosSino } from "@/components/AvisosSino";
+import { TelaShell } from "@/components/TelaShell";
+import { PageHeader } from "@/components/ui/page-header";
 import { formatCurrency } from "@/lib/format";
 import {
   AVISO_RENOVACAO,
@@ -378,33 +376,24 @@ function SolicitacoesConteudo({ home }: { home: string }) {
   useTourDaTela("tela:solicitacoes", !carregando);
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-          <BrazonLogo className="shrink-0" symbolClassName="h-7 w-7" textClassName="text-lg" />
-          <div className="min-w-0 flex-1">
-            <h1 className="flex items-center gap-2 truncate text-base font-semibold sm:text-lg">
-              <MessageSquare className="h-4 w-4 text-primary" /> Solicitações
-            </h1>
-            <p className="truncate text-xs text-muted-foreground">
-              Peça o que precisar e acompanhe seus pedidos. Nossa equipe cuida do resto.
-            </p>
-          </div>
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link to={home}>
-              <ArrowLeft className="mr-1.5 h-4 w-4" /> Voltar
-            </Link>
-          </Button>
-          <Suspense fallback={null}>
-            <AjudaDaTela chave="tela:solicitacoes" />
-          </Suspense>
-          <ThemeToggle />
-          <AvisosSino />
-          <SairButton />
-        </div>
-      </header>
+    <TelaShell
+      voltarPara={home}
+      area="Solicitações"
+      larguraMax="max-w-5xl"
+      headerExtra={
+        <Suspense fallback={null}>
+          <AjudaDaTela chave="tela:solicitacoes" />
+        </Suspense>
+      }
+    >
+      <PageHeader
+        eyebrow="Atendimento"
+        eyebrowIcon={MessageSquare}
+        titulo="Solicitações"
+        descricao="Peça o que precisar e acompanhe seus pedidos. Nossa equipe cuida do resto."
+      />
 
-      <main className="mx-auto max-w-5xl space-y-4 px-4 py-5">
+      <div className="space-y-4">
         <Card
           data-tour="solic-catalogo"
           className="flex flex-col gap-3 border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -529,7 +518,7 @@ function SolicitacoesConteudo({ home }: { home: string }) {
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       <Dialog open={dialogo} onOpenChange={setDialogo}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
@@ -597,7 +586,7 @@ function SolicitacoesConteudo({ home }: { home: string }) {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </TelaShell>
   );
 }
 

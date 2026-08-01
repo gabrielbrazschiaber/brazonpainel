@@ -38,7 +38,7 @@ export function AppShell({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-dvh w-full bg-background">
         <AppSidebar
           items={items}
           tab={tab}
@@ -52,10 +52,12 @@ export function AppShell({
             <SidebarTrigger className="h-10 w-10 shrink-0" aria-label="Abrir menu" />
             <div className="min-w-0 flex-1">
               <p className="eyebrow truncate">{contexto}</p>
-              <h1 className="truncate text-sm font-semibold leading-tight text-foreground sm:text-base">
+              {/* Identidade da sessão: o <h1> da página fica no conteúdo. */}
+              <p className="truncate text-sm font-semibold leading-tight text-foreground sm:text-base">
                 {profile?.nome || profile?.email}
-              </h1>
+              </p>
             </div>
+
             <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
               {headerExtra}
               <ThemeToggle />
