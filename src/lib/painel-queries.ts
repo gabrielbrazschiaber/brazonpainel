@@ -44,7 +44,7 @@ async function carregarAdmin(): Promise<DadosAdmin> {
     supabase.from("planos").select("id,nome,valor,descricao,ativo").order("valor"),
     supabase
       .from("vendedores")
-      .select("id,user_id,codigo_indicacao,percentual_comissao,ativo")
+      .select("id,user_id,codigo_indicacao,percentual_comissao,ativo,segmentos,estados,cnaes")
       .order("created_at", { ascending: false })
       .limit(LIMITE_LISTA),
     supabase
