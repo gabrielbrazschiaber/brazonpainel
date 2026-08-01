@@ -154,6 +154,7 @@ function CabecalhoLeads() {
         <TableHead>Telefone</TableHead>
         <TableHead>Segmento</TableHead>
         <TableHead>Estágio</TableHead>
+        <TableHead className="w-28">Completude</TableHead>
         <TableHead className="text-right">Valor</TableHead>
         <TableHead className="text-right">Reuniões</TableHead>
         <TableHead>Próximo contato</TableHead>
