@@ -226,6 +226,7 @@ export async function listarLeadsServer(
     leads: leads.map((l) => ({
       ...l,
       valor_estimado: Number(l.valor_estimado ?? 0),
+      completude: Number(l.completude ?? 0),
       reunioes_count: contagem.get(l.id) ?? 0,
       vendedor_nome: nomes.get(l.vendedor_id) ?? null,
     })),
