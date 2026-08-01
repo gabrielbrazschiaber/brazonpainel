@@ -162,7 +162,10 @@ interface LinhaPreparada {
   cnpjCompletado: boolean;
   /** Célula veio em notação científica: dígitos perdidos, sem recuperação. */
   cnpjCientifico: boolean;
+  /** Explicação da regra de CNPJ aplicada nesta linha (tooltip). */
+  cnpjExplicacao: string | null;
 }
+
 
 function texto(valor: string | undefined, max = 120): string | null {
   const t = (valor ?? "").trim();
