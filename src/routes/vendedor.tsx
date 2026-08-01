@@ -398,14 +398,16 @@ function MetricCard({
   label,
   value,
   tone = "text-foreground",
+  dataTour,
 }: {
   icon: typeof Users;
   label: string;
   value: string;
   tone?: string;
+  dataTour?: string;
 }) {
   return (
-    <Card className="card-interactive p-4 sm:p-5">
+    <Card data-tour={dataTour} className="card-interactive p-4 sm:p-5">
       <div className="flex items-center gap-2 text-muted-foreground sm:gap-2.5">
         <span
           className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 sm:h-9 sm:w-9 ${tone}`}
