@@ -493,6 +493,33 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                 Só com WhatsApp ativo
               </Label>
             </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="so-incompletos"
+                checked={incompletos}
+                onCheckedChange={(v) => {
+                  setIncompletos(v);
+                  setOrdem(v ? "completude" : "recentes");
+                }}
+              />
+              <Label htmlFor="so-incompletos" className="text-sm">
+                Só incompletos
+              </Label>
+            </div>
+            <Select value={ordem} onValueChange={(v) => setOrdem(v as "recentes" | "completude")}>
+              <SelectTrigger className="w-full sm:w-52">
+                <SelectValue placeholder="Ordenar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recentes">Mais recentes primeiro</SelectItem>
+                <SelectItem value="completude">Menos completos primeiro</SelectItem>
+              </SelectContent>
+            </Select>
+            {loteId && (
+              <Button variant="ghost" size="sm" onClick={() => setLoteId(null)}>
+                Limpar filtro de lote
+              </Button>
+            )}
           </div>
 
 
