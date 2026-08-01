@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -32,23 +33,44 @@ import {
 } from "@/components/ui/table";
 
 import {
+  formatarCnpj,
   lerArquivo,
   normalizarChave,
+  normalizarCnpj,
+  normalizarDataBr,
   normalizarEmail,
   normalizarNome,
   normalizarTelefone,
   telefoneValido,
   type ArquivoLido,
 } from "@/lib/leads-import";
-import { ESTADOS_BR } from "@/lib/banco-leads";
+import {
+  BLOCO_IMPORT_BANCO,
+  ESTADOS_BR,
+  MAX_BYTES_BANCO,
+  MAX_LINHAS_BANCO,
+} from "@/lib/banco-leads";
+import { formatarCnae, normalizarCnae, rotuloCnae, sugerirSegmentoPorCnae } from "@/lib/cnaes";
+import type { Cnae } from "@/lib/cnaes";
 import { LEAD_ORIGENS, ORIGEM_LABEL, type LeadOrigem } from "@/lib/leads";
-import { importarBancoLeads } from "@/lib/banco-leads.functions";
+import {
+  criarLoteBanco,
+  finalizarLoteBanco,
+  importarBlocoBanco,
+} from "@/lib/banco-leads.functions";
 
-/** Campos aceitos na importação do banco (inclui cidade/estado). */
+/** Campos aceitos na importação do banco, no formato real das planilhas de CNPJ. */
 const CAMPOS = [
-  { campo: "nome_contato", label: "Nome do contato", obrigatorio: true },
+  { campo: "nome_contato", label: "Nome do contato", obrigatorio: false },
   { campo: "telefone", label: "Telefone", obrigatorio: true },
-  { campo: "empresa", label: "Empresa", obrigatorio: false },
+  { campo: "cnpj", label: "CNPJ", obrigatorio: false },
+  { campo: "razao_social", label: "Razão social", obrigatorio: false },
+  { campo: "nome_fantasia", label: "Nome fantasia", obrigatorio: false },
+  { campo: "socios", label: "Sócios", obrigatorio: false },
+  { campo: "cnae_codigo", label: "CNAE (código)", obrigatorio: false },
+  { campo: "cnae_descricao", label: "CNAE (descrição)", obrigatorio: false },
+  { campo: "data_abertura", label: "Data de abertura", obrigatorio: false },
+  { campo: "porte", label: "Porte", obrigatorio: false },
   { campo: "cargo", label: "Cargo", obrigatorio: false },
   { campo: "email", label: "E-mail", obrigatorio: false },
   { campo: "segmento", label: "Segmento", obrigatorio: false },
@@ -60,13 +82,31 @@ const CAMPOS = [
 type Campo = (typeof CAMPOS)[number]["campo"];
 type Destino = Campo | "";
 
+/** Nomes reais vistos nas planilhas da Receita/mailings. */
 const SINONIMOS: Record<Campo, string[]> = {
-  nome_contato: ["nome", "contato", "responsavel", "nomedocontato", "lead", "cliente"],
-  telefone: ["telefone", "tel", "celular", "whatsapp", "fone", "numero"],
-  empresa: ["empresa", "razaosocial", "negocio", "fantasia", "loja"],
-  cargo: ["cargo", "funcao", "posicao"],
+  nome_contato: ["nomecontato", "contato", "responsavel", "nomedocontato"],
+  telefone: [
+    "telefone",
+    "telefone1",
+    "telefones",
+    "tel",
+    "celular",
+    "whatsapp",
+    "fone",
+    "ddd",
+    "numero",
+  ],
+  cnpj: ["cnpj", "cnpjbasico", "documento", "cnpjcpf"],
+  razao_social: ["razaosocial", "razao", "empresa", "nomeempresarial"],
+  nome_fantasia: ["nomefantasia", "fantasia", "nomecomercial"],
+  socios: ["socio", "socios", "quadrosocietario", "qsa", "representante"],
+  cnae_codigo: ["cnae", "cnaefiscal", "cnaeprincipal", "codigocnae", "cnaecodigo"],
+  cnae_descricao: ["cnaedescricao", "descricaocnae", "atividadeprincipal", "atividade"],
+  data_abertura: ["dataabertura", "abertura", "datainicioatividade", "inicioatividade"],
+  porte: ["porte", "portempresa", "portedaempresa"],
+  cargo: ["cargo", "funcao", "posicao", "qualificacao"],
   email: ["email", "mail", "correio"],
-  segmento: ["segmento", "ramo", "nicho", "categoria", "setor", "area"],
+  segmento: ["segmento", "ramo", "nicho", "categoria", "setor"],
   cidade: ["cidade", "municipio", "localidade"],
   estado: ["estado", "uf", "sigla"],
   observacoes: ["observacao", "observacoes", "obs", "anotacoes", "notas"],
@@ -99,48 +139,104 @@ interface LinhaPreparada {
   cidade: string | null;
   estado: string | null;
   observacoes: string | null;
+  cnpj: string | null;
+  razao_social: string | null;
+  nome_fantasia: string | null;
+  socios: string | null;
+  data_abertura: string | null;
+  porte: string | null;
+  cnae_codigo: string | null;
+  cnae_descricao: string | null;
   erro: string | null;
+  avisos: string[];
 }
 
-function texto(valor: string | undefined): string | null {
+function texto(valor: string | undefined, max = 120): string | null {
   const t = (valor ?? "").trim();
-  return t === "" ? null : t.slice(0, 120);
+  return t === "" ? null : t.slice(0, max);
 }
 
-function prepararLinhas(arquivo: ArquivoLido, mapa: Destino[]): LinhaPreparada[] {
-  const indice = (campo: Campo) => mapa.indexOf(campo);
-  const iNome = indice("nome_contato");
-  const iTel = indice("telefone");
+/** Planilhas trazem "11999998888 / 1133334444": pegamos o primeiro válido. */
+function primeiroTelefone(valor: string | undefined): string {
+  const partes = (valor ?? "").split(/[;/|\n]+/);
+  for (const parte of partes) {
+    const d = normalizarTelefone(parte);
+    if (telefoneValido(d)) return d;
+  }
+  return normalizarTelefone(valor);
+}
+
+/** Primeiro nome da lista de sócios ("JOAO DA SILVA; MARIA..." → "Joao Da Silva"). */
+function primeiroSocio(valor: string | undefined): string {
+  const bruto = (valor ?? "").split(/[;/|\n]+/)[0] ?? "";
+  return normalizarNome(bruto.replace(/\(.*?\)/g, ""));
+}
+
+function prepararLinhas(arquivo: ArquivoLido, mapa: Destino[], catalogo: Cnae[]): LinhaPreparada[] {
+  const porCodigo = new Map(catalogo.map((c) => [c.codigo, c]));
   const vistos = new Set<string>();
 
   return arquivo.matriz.map((celulas, i) => {
     const pega = (campo: Campo) => {
-      const idx = indice(campo);
+      const idx = mapa.indexOf(campo);
       return idx >= 0 ? celulas[idx] : undefined;
     };
-    const nome = normalizarNome(iNome >= 0 ? celulas[iNome] : "");
-    const tel = normalizarTelefone(iTel >= 0 ? celulas[iTel] : "");
+
+    const avisos: string[] = [];
+    const razao = texto(pega("razao_social"), 200);
+    const fantasia = texto(pega("nome_fantasia"), 200);
+    const socios = texto(pega("socios"), 1000);
+
+    // Precedência do nome do contato: coluna própria → sócio → fantasia → razão.
+    const nome =
+      normalizarNome(pega("nome_contato")) ||
+      primeiroSocio(socios ?? undefined) ||
+      normalizarNome(fantasia ?? "") ||
+      normalizarNome(razao ?? "");
+
+    const tel = primeiroTelefone(pega("telefone"));
     const email = normalizarEmail(pega("email"));
     const uf = (pega("estado") ?? "").trim().toUpperCase().slice(0, 2);
 
+    const { cnpj, cientifico } = normalizarCnpj(pega("cnpj"));
+    if (cientifico) avisos.push("CNPJ veio em notação científica e foi descartado");
+
+    const cnae = normalizarCnae(pega("cnae_codigo"));
+    const cnaeDesc = texto(pega("cnae_descricao"), 300);
+    const doCatalogo = cnae ? porCodigo.get(cnae) : undefined;
+    const segmento =
+      texto(pega("segmento")) ??
+      doCatalogo?.segmento_sugerido ??
+      (sugerirSegmentoPorCnae(cnaeDesc ?? doCatalogo?.descricao ?? "") || null);
+
     let erro: string | null = null;
-    if (nome.length < 2) erro = "Nome do contato ausente";
+    if (nome.length < 2) erro = "Sem nome de contato, sócio, fantasia ou razão social";
     else if (!telefoneValido(tel)) erro = "Telefone inválido";
     else if (vistos.has(tel)) erro = "Telefone repetido na planilha";
     if (!erro) vistos.add(tel);
+    if (!cnae) avisos.push("Sem CNAE");
 
     return {
       linha: i + 1,
       nome_contato: nome,
       telefone: tel,
-      empresa: texto(pega("empresa")),
+      empresa: razao ?? fantasia,
       cargo: texto(pega("cargo")),
       email: email && email.includes("@") ? email : null,
-      segmento: texto(pega("segmento")),
+      segmento,
       cidade: texto(pega("cidade")),
       estado: uf.length === 2 ? uf : null,
       observacoes: (pega("observacoes") ?? "").trim().slice(0, 4000) || null,
+      cnpj: cnpj || null,
+      razao_social: razao,
+      nome_fantasia: fantasia,
+      socios,
+      data_abertura: normalizarDataBr(pega("data_abertura")),
+      porte: texto(pega("porte"), 60),
+      cnae_codigo: cnae || null,
+      cnae_descricao: cnaeDesc ?? doCatalogo?.descricao ?? null,
       erro,
+      avisos,
     };
   });
 }
@@ -152,14 +248,21 @@ export function ImportarBancoDialog({
   aberto,
   onOpenChange,
   segmentos,
+  cnaes,
+  horasReservaPadrao,
   onConcluido,
 }: {
   aberto: boolean;
   onOpenChange: (v: boolean) => void;
   segmentos: string[];
+  /** Catálogo de CNAEs já conhecido, para reserva e sugestão de segmento. */
+  cnaes: Cnae[];
+  horasReservaPadrao: number;
   onConcluido: () => void;
 }) {
-  const enviar = useServerFn(importarBancoLeads);
+  const criarLote = useServerFn(criarLoteBanco);
+  const enviarBloco = useServerFn(importarBlocoBanco);
+  const finalizar = useServerFn(finalizarLoteBanco);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [arquivo, setArquivo] = useState<ArquivoLido | null>(null);
@@ -168,13 +271,38 @@ export function ImportarBancoDialog({
   const [origem, setOrigem] = useState<LeadOrigem>("prospeccao_ativa");
   const [reservaSegmento, setReservaSegmento] = useState<string>(SEM_RESERVA);
   const [reservaEstado, setReservaEstado] = useState<string>(SEM_RESERVA);
+  const [reservaCnae, setReservaCnae] = useState<string>(SEM_RESERVA);
+  const [horasReserva, setHorasReserva] = useState<number>(horasReservaPadrao);
   const [lendo, setLendo] = useState(false);
+  const [progresso, setProgresso] = useState(0);
+  const [etapa, setEtapa] = useState("");
   const [salvando, setSalvando] = useState(false);
 
-  const linhas = useMemo(() => (arquivo ? prepararLinhas(arquivo, mapa) : []), [arquivo, mapa]);
+  const linhas = useMemo(
+    () => (arquivo ? prepararLinhas(arquivo, mapa, cnaes) : []),
+    [arquivo, mapa, cnaes],
+  );
   const validas = useMemo(() => linhas.filter((l) => !l.erro), [linhas]);
   const comErro = linhas.length - validas.length;
   const faltamObrigatorios = CAMPOS.filter((c) => c.obrigatorio && !mapa.includes(c.campo));
+  const semNome = !mapa.includes("nome_contato") && !mapa.includes("socios");
+
+  /** CNAEs da planilha que ainda não existem no catálogo. */
+  const cnaesNovos = useMemo(() => {
+    const conhecidos = new Set(cnaes.map((c) => c.codigo));
+    const mapaNovos = new Map<string, { codigo: string; descricao: string; segmento: string }>();
+    for (const l of validas) {
+      if (!l.cnae_codigo || conhecidos.has(l.cnae_codigo) || mapaNovos.has(l.cnae_codigo)) continue;
+      mapaNovos.set(l.cnae_codigo, {
+        codigo: l.cnae_codigo,
+        descricao: l.cnae_descricao ?? "",
+        segmento: l.segmento ?? "",
+      });
+    }
+    return Array.from(mapaNovos.values());
+  }, [validas, cnaes]);
+
+  const semCnpj = validas.filter((l) => !l.cnpj).length;
 
   function limpar() {
     setArquivo(null);
@@ -182,14 +310,27 @@ export function ImportarBancoDialog({
     setFonte("");
     setReservaSegmento(SEM_RESERVA);
     setReservaEstado(SEM_RESERVA);
+    setReservaCnae(SEM_RESERVA);
+    setHorasReserva(horasReservaPadrao);
+    setProgresso(0);
+    setEtapa("");
     if (inputRef.current) inputRef.current.value = "";
   }
 
   async function aoEscolher(file: File | undefined) {
     if (!file) return;
     setLendo(true);
+    setProgresso(0);
     try {
-      const lido = await lerArquivo(file);
+      const lido = await lerArquivo(file, {
+        maxLinhas: MAX_LINHAS_BANCO,
+        maxBytes: MAX_BYTES_BANCO,
+        usarWorker: true,
+        onProgresso: (pct, etapaAtual) => {
+          setProgresso(pct);
+          setEtapa(etapaAtual);
+        },
+      });
       setArquivo(lido);
       setMapa(sugerir(lido.cabecalhos));
       if (!fonte) setFonte(file.name.replace(/\.[^.]+$/, "").slice(0, 160));
@@ -197,6 +338,7 @@ export function ImportarBancoDialog({
       toast.error(e instanceof Error ? e.message : "Não foi possível ler o arquivo.");
     } finally {
       setLendo(false);
+      setEtapa("");
     }
   }
 
@@ -210,19 +352,44 @@ export function ImportarBancoDialog({
       toast.error("Nenhuma linha válida para importar.");
       return;
     }
+
     setSalvando(true);
+    setProgresso(0);
     try {
-      const r = await enviar({
+      const { lote_id } = await criarLote({
         data: {
           arquivo_nome: arquivo.nome,
           fonte: fonte.trim(),
           origem,
           reservado_segmento: reservaSegmento === SEM_RESERVA ? null : reservaSegmento,
           reservado_estado: reservaEstado === SEM_RESERVA ? null : reservaEstado,
-          total_linhas: linhas.length,
-          linhas: validas.map(({ erro: _e, ...campos }) => campos),
+          reservado_cnae: reservaCnae === SEM_RESERVA ? null : reservaCnae,
+          horas_reserva: horasReserva,
+          total_linhas: validas.length,
         },
       });
+
+      const blocos: LinhaPreparada[][] = [];
+      for (let i = 0; i < validas.length; i += BLOCO_IMPORT_BANCO) {
+        blocos.push(validas.slice(i, i + BLOCO_IMPORT_BANCO));
+      }
+
+      let enviados = 0;
+      for (const [indice, bloco] of blocos.entries()) {
+        setEtapa(`Gravando bloco ${indice + 1} de ${blocos.length}`);
+        await enviarBloco({
+          data: {
+            lote_id,
+            origem,
+            linhas: bloco.map(({ erro: _e, avisos: _a, empresa: _emp, ...campos }) => campos),
+          },
+        });
+        enviados += bloco.length;
+        setProgresso(Math.round((enviados / validas.length) * 100));
+      }
+
+      setEtapa("Fechando o lote");
+      const r = await finalizar({ data: { lote_id } });
       toast.success(
         `${r.importados} lead(s) no banco.` +
           (r.ignorados > 0 ? ` ${r.ignorados} ignorado(s) (duplicados ou inválidos).` : ""),
@@ -234,6 +401,7 @@ export function ImportarBancoDialog({
       toast.error(e instanceof Error ? e.message : "Falha ao importar.");
     } finally {
       setSalvando(false);
+      setEtapa("");
     }
   }
 
@@ -249,8 +417,8 @@ export function ImportarBancoDialog({
         <DialogHeader>
           <DialogTitle>Importar leads para o banco</DialogTitle>
           <DialogDescription>
-            Planilha .xlsx, .xls ou .csv com até 2.000 linhas. Nenhum arquivo é enviado: só as
-            linhas já conferidas aqui.
+            Planilha .xlsx, .xls ou .csv de até 35 MB e {MAX_LINHAS_BANCO.toLocaleString("pt-BR")}{" "}
+            linhas. Nada é gravado antes desta revisão: só as linhas conferidas aqui sobem.
           </DialogDescription>
         </DialogHeader>
 
@@ -265,10 +433,14 @@ export function ImportarBancoDialog({
               disabled={lendo || salvando}
               onChange={(e) => void aoEscolher(e.target.files?.[0])}
             />
-            {lendo ? (
-              <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Lendo planilha…
-              </p>
+            {lendo || salvando ? (
+              <div className="space-y-1.5">
+                <Progress value={progresso} />
+                <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  {etapa || "Processando"} · {progresso}%
+                </p>
+              </div>
             ) : null}
           </div>
 
@@ -279,7 +451,7 @@ export function ImportarBancoDialog({
                 id="banco-fonte"
                 value={fonte}
                 onChange={(e) => setFonte(e.target.value)}
-                placeholder="Ex.: Feira do Varejo 2026"
+                placeholder="Ex.: Base Receita — Padarias SP"
                 maxLength={160}
               />
             </div>
@@ -330,10 +502,39 @@ export function ImportarBancoDialog({
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1.5">
+              <Label>Reservar para o CNAE</Label>
+              <Select value={reservaCnae} onValueChange={setReservaCnae}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sem reserva" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <SelectItem value={SEM_RESERVA}>Sem reserva</SelectItem>
+                  {cnaes.map((c) => (
+                    <SelectItem key={c.codigo} value={c.codigo}>
+                      {rotuloCnae(c)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="banco-horas">Horas de reserva</Label>
+              <Input
+                id="banco-horas"
+                type="number"
+                min={1}
+                max={720}
+                value={horasReserva}
+                onChange={(e) =>
+                  setHorasReserva(Math.min(720, Math.max(1, Number(e.target.value) || 1)))
+                }
+              />
+            </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Com reserva, só vendedores com esse segmento/estado no escopo conseguem puxar estes
-            leads nas primeiras 48 horas.
+            Com reserva, só vendedores com esse segmento, estado ou CNAE no escopo conseguem puxar
+            estes leads durante as primeiras {horasReserva} hora(s).
           </p>
 
           {arquivo ? (
@@ -346,6 +547,7 @@ export function ImportarBancoDialog({
                   {validas.length} pronta(s)
                 </Badge>
                 {comErro > 0 ? <Badge variant="destructive">{comErro} com erro</Badge> : null}
+                {semCnpj > 0 ? <Badge variant="outline">{semCnpj} sem CNPJ</Badge> : null}
               </div>
 
               {faltamObrigatorios.length > 0 ? (
@@ -353,6 +555,29 @@ export function ImportarBancoDialog({
                   <AlertCircle className="h-4 w-4" />
                   Indique a coluna de {faltamObrigatorios.map((c) => c.label).join(" e ")}.
                 </p>
+              ) : null}
+              {semNome ? (
+                <p className="text-xs text-muted-foreground">
+                  Sem coluna de contato: o nome sai do primeiro sócio, do nome fantasia ou da razão
+                  social, nesta ordem.
+                </p>
+              ) : null}
+
+              {cnaesNovos.length > 0 ? (
+                <div className="rounded-md border border-border bg-muted/40 p-3 text-xs">
+                  <p className="mb-1 font-medium text-foreground">
+                    {cnaesNovos.length} CNAE(s) novo(s) serão cadastrados automaticamente
+                  </p>
+                  <ul className="space-y-0.5 text-muted-foreground">
+                    {cnaesNovos.slice(0, 6).map((c) => (
+                      <li key={c.codigo}>
+                        {formatarCnae(c.codigo)} — {c.descricao || "sem descrição"}
+                        {c.segmento ? ` · segmento sugerido: ${c.segmento}` : ""}
+                      </li>
+                    ))}
+                    {cnaesNovos.length > 6 ? <li>e mais {cnaesNovos.length - 6}…</li> : null}
+                  </ul>
+                </div>
               ) : null}
 
               <div className="overflow-x-auto rounded-md border border-border">
@@ -382,7 +607,7 @@ export function ImportarBancoDialog({
                             <SelectTrigger className="h-9 w-full sm:min-w-[170px]">
                               <SelectValue placeholder="Ignorar coluna" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="max-h-72">
                               <SelectItem value="">Ignorar coluna</SelectItem>
                               {CAMPOS.map((c) => (
                                 <SelectItem key={c.campo} value={c.campo}>
@@ -401,20 +626,51 @@ export function ImportarBancoDialog({
                 </Table>
               </div>
 
-              {comErro > 0 ? (
-                <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                  <p className="mb-1 font-medium text-foreground">Linhas que serão ignoradas</p>
-                  <ul className="space-y-0.5">
-                    {linhas
-                      .filter((l) => l.erro)
-                      .slice(0, 8)
-                      .map((l) => (
-                        <li key={l.linha}>
-                          Linha {l.linha}: {l.erro}
-                        </li>
-                      ))}
-                  </ul>
-                </div>
+              <div className="overflow-x-auto rounded-md border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Contato</TableHead>
+                      <TableHead>Telefone</TableHead>
+                      <TableHead className="hidden md:table-cell">CNPJ</TableHead>
+                      <TableHead className="hidden md:table-cell">CNAE</TableHead>
+                      <TableHead>Situação</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {linhas.slice(0, 15).map((l) => (
+                      <TableRow key={l.linha}>
+                        <TableCell>
+                          <p className="font-medium">{l.nome_contato || "—"}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {l.razao_social ?? l.nome_fantasia ?? "—"}
+                          </p>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">{l.telefone || "—"}</TableCell>
+                        <TableCell className="hidden whitespace-nowrap md:table-cell">
+                          {l.cnpj ? formatarCnpj(l.cnpj) : "—"}
+                        </TableCell>
+                        <TableCell className="hidden whitespace-nowrap md:table-cell">
+                          {l.cnae_codigo ? formatarCnae(l.cnae_codigo) : "—"}
+                        </TableCell>
+                        <TableCell>
+                          {l.erro ? (
+                            <Badge variant="destructive">{l.erro}</Badge>
+                          ) : l.avisos.length ? (
+                            <Badge variant="outline">{l.avisos[0]}</Badge>
+                          ) : (
+                            <Badge variant="secondary">Pronta</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              {linhas.length > 15 ? (
+                <p className="text-xs text-muted-foreground">
+                  Mostrando as 15 primeiras linhas de {linhas.length}.
+                </p>
               ) : null}
             </div>
           ) : null}

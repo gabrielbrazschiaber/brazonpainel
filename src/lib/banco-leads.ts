@@ -23,6 +23,15 @@ export function bancoStatusClasse(status: BancoLeadStatus): string {
 /** Teto fixo de leads que um vendedor pode puxar por hora (validado no banco). */
 export const LIMITE_PUXADAS_HORA = 20;
 
+/** Limites da importação do banco de leads (planilhas grandes de CNPJ). */
+export const MAX_LINHAS_BANCO = 20000;
+export const MAX_BYTES_BANCO = 35 * 1024 * 1024;
+/** Linhas enviadas por requisição — o resto sobe em blocos com progresso. */
+export const BLOCO_IMPORT_BANCO = 500;
+
+/** Horas de reserva padrão de um lote quando as configurações não dizem nada. */
+export const HORAS_RESERVA_PADRAO = 48;
+
 export const ESTADOS_BR = [
   "AC",
   "AL",

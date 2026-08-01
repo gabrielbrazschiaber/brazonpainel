@@ -164,25 +164,105 @@ export interface ArquivoLido {
   matriz: string[][];
 }
 
-export async function lerArquivo(file: File): Promise<ArquivoLido> {
-  if (file.size > MAX_BYTES) {
-    throw new Error("Arquivo acima de 5 MB. Divida a planilha em partes menores.");
+export interface OpcoesLeitura {
+  /** Teto de linhas de dados. Padrão: MAX_LINHAS. */
+  maxLinhas?: number;
+  /** Teto de bytes do arquivo. Padrão: MAX_BYTES. */
+  maxBytes?: number;
+  /** Progresso de 0 a 100 com a etapa atual. */
+  onProgresso?: (pct: number, etapa: string) => void;
+  /** Ler em Web Worker para não travar a tela em arquivos grandes. */
+  usarWorker?: boolean;
+}
+
+function mb(bytes: number): string {
+  return `${Math.round(bytes / (1024 * 1024))} MB`;
+}
+
+/**
+ * Heurística extra de cabeçalho: linha sem nenhum número "de dado"
+ * (CNPJ, telefone, valor) e com pelo menos duas colunas preenchidas.
+ */
+function pareceCabecalho(linha: string[]): boolean {
+  const preenchidas = linha.filter((c) => (c ?? "").toString().trim() !== "");
+  if (preenchidas.length < 2) return false;
+  return preenchidas.every((c) => {
+    const t = c.toString().trim();
+    const digitos = t.replace(/\D/g, "");
+    return digitos.length < 5 && /[a-zA-ZÀ-ú]/.test(t);
+  });
+}
+
+/** Lê a matriz no Web Worker; devolve null quando o worker não está disponível. */
+async function lerMatrizNoWorker(
+  file: File,
+  ext: string,
+  onProgresso?: (pct: number, etapa: string) => void,
+): Promise<string[][] | null> {
+  if (typeof Worker === "undefined") return null;
+  try {
+    const worker = new Worker(new URL("./planilha.worker.ts", import.meta.url), {
+      type: "module",
+    });
+    return await new Promise<string[][]>((resolve, reject) => {
+      worker.onmessage = (ev: MessageEvent) => {
+        const msg = ev.data as
+          | { tipo: "progresso"; pct: number; etapa: string }
+          | { tipo: "pronto"; matriz: string[][] }
+          | { tipo: "erro"; mensagem: string };
+        if (msg.tipo === "progresso") {
+          onProgresso?.(msg.pct, msg.etapa);
+          return;
+        }
+        worker.terminate();
+        if (msg.tipo === "pronto") resolve(msg.matriz);
+        else reject(new Error(msg.mensagem));
+      };
+      worker.onerror = () => {
+        worker.terminate();
+        reject(new Error("worker-indisponivel"));
+      };
+      worker.postMessage({ file, ext });
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function lerArquivo(file: File, opcoes: OpcoesLeitura = {}): Promise<ArquivoLido> {
+  const maxBytes = opcoes.maxBytes ?? MAX_BYTES;
+  const maxLinhas = opcoes.maxLinhas ?? MAX_LINHAS;
+  const avisar = opcoes.onProgresso;
+
+  if (file.size > maxBytes) {
+    throw new Error(`Arquivo acima de ${mb(maxBytes)}. Divida a planilha em partes menores.`);
   }
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!["xlsx", "xls", "csv"].includes(ext)) {
     throw new Error("Formato não aceito. Envie um arquivo .xlsx, .xls ou .csv.");
   }
 
-  // xlsx/papaparse só entram no bundle quando o usuário abre uma planilha.
-  const { lerMatriz } = await import("@/lib/leads-planilha");
-  const bruta = await lerMatriz(file, ext);
+  avisar?.(5, "Abrindo o arquivo");
+
+  let bruta: string[][] | null = null;
+  if (opcoes.usarWorker) {
+    bruta = await lerMatrizNoWorker(file, ext, avisar);
+  }
+  if (!bruta) {
+    // xlsx/papaparse só entram no bundle quando o usuário abre uma planilha.
+    const { lerMatriz } = await import("@/lib/leads-planilha");
+    avisar?.(20, "Lendo a planilha");
+    bruta = await lerMatriz(file, ext);
+  }
+
+  avisar?.(75, "Conferindo as linhas");
 
   if (bruta.length === 0) throw new Error("Nenhuma linha encontrada no arquivo.");
 
   const largura = bruta.reduce((m, l) => Math.max(m, l.length), 0);
   const primeira = bruta[0] ?? [];
   const sugestao = sugerirMapa(primeira);
-  const temCabecalho = sugestao.some((s) => s !== "");
+  const temCabecalho = sugestao.some((s) => s !== "") || pareceCabecalho(primeira);
 
   const matriz = (temCabecalho ? bruta.slice(1) : bruta).map((l) => {
     const linha = [...l];
@@ -191,9 +271,9 @@ export async function lerArquivo(file: File): Promise<ArquivoLido> {
   });
 
   if (matriz.length === 0) throw new Error("O arquivo só tem cabeçalho, sem linhas de dados.");
-  if (matriz.length > MAX_LINHAS) {
+  if (matriz.length > maxLinhas) {
     throw new Error(
-      `A planilha tem ${matriz.length} linhas. O limite é ${MAX_LINHAS} por arquivo — divida em partes menores.`,
+      `A planilha tem ${matriz.length} linhas. O limite é ${maxLinhas} por arquivo — divida em partes menores.`,
     );
   }
 
@@ -202,8 +282,71 @@ export async function lerArquivo(file: File): Promise<ArquivoLido> {
     return temCabecalho && original ? original : `Coluna ${letraColuna(i)}`;
   });
 
+  avisar?.(100, "Pronto para revisão");
+
   return { nome: file.name, cabecalhos, temCabecalho, matriz };
 }
+
+// ---------------------------------------------------------------------------
+// Dados de empresa (planilhas de CNPJ / Receita)
+// ---------------------------------------------------------------------------
+
+export interface CnpjNormalizado {
+  cnpj: string;
+  /** true quando a célula veio em notação científica (dígitos perdidos). */
+  cientifico: boolean;
+}
+
+/**
+ * CNPJ de planilha é um campo traiçoeiro: quando a coluna está formatada como
+ * número, o Excel entrega "1,23457E+13" e os dígitos finais JÁ SE PERDERAM.
+ * Nesse caso devolvemos cnpj vazio e sinalizamos para a revisão avisar o admin,
+ * em vez de gravar um CNPJ falso no banco.
+ */
+export function normalizarCnpj(valor: string | null | undefined): CnpjNormalizado {
+  const bruto = (valor ?? "").toString().trim();
+  if (!bruto) return { cnpj: "", cientifico: false };
+  if (/^[\d.,]+\s*[eE]\s*\+?\d+$/.test(bruto)) return { cnpj: "", cientifico: true };
+
+  const d = bruto.replace(/\D/g, "");
+  if (!d) return { cnpj: "", cientifico: false };
+  if (d.length > 14) return { cnpj: d.slice(0, 14), cientifico: false };
+  return { cnpj: d.padStart(14, "0"), cientifico: false };
+}
+
+export function formatarCnpj(valor: string | null | undefined): string {
+  const d = (valor ?? "").replace(/\D/g, "");
+  if (d.length !== 14) return (valor ?? "").toString().trim() || "—";
+  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+}
+
+/** Datas de planilha: "31/12/2020", "2020-12-31" ou serial do Excel. */
+export function normalizarDataBr(valor: string | null | undefined): string | null {
+  const bruto = (valor ?? "").toString().trim();
+  if (!bruto) return null;
+
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(bruto);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+
+  const br = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/.exec(bruto);
+  if (br) {
+    const dia = br[1].padStart(2, "0");
+    const mes = br[2].padStart(2, "0");
+    const ano = br[3].length === 2 ? `20${br[3]}` : br[3];
+    if (Number(mes) < 1 || Number(mes) > 12 || Number(dia) < 1 || Number(dia) > 31) return null;
+    return `${ano}-${mes}-${dia}`;
+  }
+
+  // Serial do Excel (dias desde 30/12/1899).
+  const serial = Number(bruto.replace(",", "."));
+  if (Number.isFinite(serial) && serial > 20000 && serial < 60000) {
+    const base = Date.UTC(1899, 11, 30);
+    const d = new Date(base + Math.trunc(serial) * 86400000);
+    return d.toISOString().slice(0, 10);
+  }
+  return null;
+}
+
 
 // ---------------------------------------------------------------------------
 // Linhas e classificação

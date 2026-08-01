@@ -55,6 +55,8 @@ export interface Config {
   dominio: string | null;
   dias_aviso_vencimento: number | null;
   dias_devolver_lead: number | null;
+  /** Janela de reserva de um lote importado, em horas. */
+  horas_reserva_lote: number | null;
   percentual_comissao_padrao: number | null;
   asaas_webhook_url: string | null;
   asaas_ambiente: "producao" | "sandbox" | null;
@@ -68,6 +70,7 @@ export const CONFIG_PADRAO: Config = {
   dominio: "",
   dias_aviso_vencimento: 5,
   dias_devolver_lead: 7,
+  horas_reserva_lote: 48,
   percentual_comissao_padrao: 10,
   asaas_webhook_url: "",
   asaas_ambiente: "sandbox",

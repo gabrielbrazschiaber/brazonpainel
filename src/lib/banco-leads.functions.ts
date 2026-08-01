@@ -3,7 +3,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   bancoLeadIdSchema,
   definirEscopoVendedorSchema,
-  importarBancoLeadsSchema,
+  criarLoteBancoSchema,
+  importarBlocoBancoSchema,
+  finalizarLoteBancoSchema,
   listarBancoLeadsSchema,
   puxarLeadsSchema,
   salvarBancoLeadSchema,
@@ -18,6 +20,7 @@ export type {
   EstatisticasBanco,
   QualidadeLote,
   EscopoVendedor,
+  LoteCriado,
   ResultadoImportacaoBanco,
 } from "@/lib/banco-leads.server";
 
@@ -46,12 +49,31 @@ export const salvarBancoLead = createServerFn({ method: "POST" })
     return salvarBancoLeadServer(context.supabase, context.userId, data);
   });
 
-export const importarBancoLeads = createServerFn({ method: "POST" })
+/** Passo 1: cria o lote (fonte, reserva e prazo). */
+export const criarLoteBanco = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => importarBancoLeadsSchema.parse(d))
+  .inputValidator((d: unknown) => criarLoteBancoSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { importarBancoLeadsServer } = await import("@/lib/banco-leads.server");
-    return importarBancoLeadsServer(context.supabase, context.userId, data);
+    const { criarLoteBancoServer } = await import("@/lib/banco-leads.server");
+    return criarLoteBancoServer(context.supabase, context.userId, data);
+  });
+
+/** Passo 2: envia um bloco de linhas já revisadas. */
+export const importarBlocoBanco = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => importarBlocoBancoSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { importarBlocoBancoServer } = await import("@/lib/banco-leads.server");
+    return importarBlocoBancoServer(context.supabase, context.userId, data);
+  });
+
+/** Passo 3: fecha o lote e consolida os totais. */
+export const finalizarLoteBanco = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => finalizarLoteBancoSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { finalizarLoteBancoServer } = await import("@/lib/banco-leads.server");
+    return finalizarLoteBancoServer(context.supabase, context.userId, data.lote_id);
   });
 
 export const puxarLeads = createServerFn({ method: "POST" })

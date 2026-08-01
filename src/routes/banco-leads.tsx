@@ -98,6 +98,9 @@ import {
   type SaldoPuxadas,
 } from "@/lib/banco-leads.functions";
 import { listarSegmentos } from "@/lib/leads.functions";
+import { listarCnaes } from "@/lib/cnaes.functions";
+import type { Cnae } from "@/lib/cnaes.functions";
+import { HORAS_RESERVA_PADRAO } from "@/lib/banco-leads";
 
 export const Route = createFileRoute("/banco-leads")({
   head: () => ({
@@ -155,6 +158,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
   const buscar = useServerFn(listarBancoLeads);
   const buscarSaldo = useServerFn(saldoPuxadas);
   const buscarSegmentos = useServerFn(listarSegmentos);
+  const buscarCnaes = useServerFn(listarCnaes);
   const puxar = useServerFn(puxarLeads);
   const devolver = useServerFn(devolverLead);
   const arquivar = useServerFn(arquivarBancoLead);
@@ -164,6 +168,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
   const [lista, setLista] = useState<ListaBancoLeads | null>(null);
   const [saldo, setSaldo] = useState<SaldoPuxadas | null>(null);
   const [segmentos, setSegmentos] = useState<string[]>([]);
+  const [cnaes, setCnaes] = useState<Cnae[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [pagina, setPagina] = useState(0);
   const [busca, setBusca] = useState("");
@@ -237,6 +242,16 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
       }
     })();
   }, [buscarSegmentos]);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        setCnaes(await buscarCnaes({ data: {} }));
+      } catch {
+        setCnaes([]);
+      }
+    })();
+  }, [buscarCnaes]);
 
   useTourDaTela("tela:banco-leads", !carregando);
 
@@ -736,6 +751,8 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
           aberto={importAberto}
           onOpenChange={setImportAberto}
           segmentos={segmentos}
+          cnaes={cnaes}
+          horasReservaPadrao={HORAS_RESERVA_PADRAO}
           onConcluido={() => void carregar()}
         />
       </MontarQuandoAberto>

@@ -2,11 +2,12 @@
 import type { z } from "zod";
 import { escopoComercial } from "@/lib/leads.server";
 import { apenasDigitos, type LeadOrigem } from "@/lib/leads";
-import type { BancoLeadStatus } from "@/lib/banco-leads";
+import { HORAS_RESERVA_PADRAO, type BancoLeadStatus } from "@/lib/banco-leads";
 import type {
   listarBancoLeadsSchema,
   salvarBancoLeadSchema,
-  importarBancoLeadsSchema,
+  criarLoteBancoSchema,
+  importarBlocoBancoSchema,
   puxarLeadsSchema,
   definirEscopoVendedorSchema,
 } from "@/lib/banco-leads.schemas";
@@ -19,7 +20,7 @@ const CHUNK = 200;
 const PRAZO_PADRAO = 7;
 
 const CAMPOS =
-  "id, nome_contato, empresa, cargo, telefone, email, segmento, cidade, estado, origem, observacoes, status, puxado_por, puxado_em, lead_id, lote_id, reservado_segmento, reservado_estado, bloqueado_ate, vezes_devolvido, created_at, updated_at";
+  "id, nome_contato, empresa, cargo, telefone, email, segmento, cidade, estado, origem, observacoes, status, puxado_por, puxado_em, lead_id, lote_id, reservado_segmento, reservado_estado, reservado_cnae, bloqueado_ate, vezes_devolvido, cnpj, razao_social, nome_fantasia, socios, data_abertura, porte, cnae_codigo, cnae_descricao, created_at, updated_at";
 
 export interface BancoLead {
   id: string;
@@ -41,8 +42,17 @@ export interface BancoLead {
   lote_id: string | null;
   reservado_segmento: string | null;
   reservado_estado: string | null;
+  reservado_cnae: string | null;
   bloqueado_ate: string | null;
   vezes_devolvido: number;
+  cnpj: string | null;
+  razao_social: string | null;
+  nome_fantasia: string | null;
+  socios: string | null;
+  data_abertura: string | null;
+  porte: string | null;
+  cnae_codigo: string | null;
+  cnae_descricao: string | null;
   created_at: string;
   updated_at: string;
   /** true quando telefone/e-mail vieram mascarados. */
@@ -128,6 +138,7 @@ export async function listarBancoLeadsServer(
   if (filtros.segmento) q = q.eq("segmento", filtros.segmento);
   if (filtros.cidade) q = q.ilike("cidade", `%${filtros.cidade}%`);
   if (filtros.estado) q = q.eq("estado", filtros.estado.toUpperCase());
+  if (filtros.cnae) q = q.eq("cnae_codigo", filtros.cnae.replace(/\D/g, ""));
   if (filtros.lote_id) q = q.eq("lote_id", filtros.lote_id);
   if (isAdmin && filtros.vendedor_id) q = q.eq("puxado_por", filtros.vendedor_id);
   if (filtros.meus) {
@@ -258,22 +269,130 @@ function chunks<T>(lista: T[], tamanho: number): T[][] {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
-export async function importarBancoLeadsServer(
+/** Horas de reserva configuradas (padrão 48h, entre 1 e 720). */
+async function horasReserva(supabase: Sb): Promise<number> {
+  const { data } = await supabase
+    .from("configuracoes")
+    .select("horas_reserva_lote")
+    .limit(1)
+    .maybeSingle();
+  const horas = Number(data?.horas_reserva_lote ?? HORAS_RESERVA_PADRAO);
+  if (!Number.isFinite(horas)) return HORAS_RESERVA_PADRAO;
+  return Math.min(720, Math.max(1, Math.trunc(horas)));
+}
+
+export interface LoteCriado {
+  lote_id: string;
+  /** Reserva aplicada às linhas deste lote (ISO) ou null quando não há reserva. */
+  bloqueado_ate: string | null;
+  horas_reserva: number;
+}
+
+/**
+ * Passo 1 da importação: cria o lote. As linhas sobem depois em blocos, para
+ * suportar planilhas de até 20.000 linhas sem estourar a requisição.
+ */
+export async function criarLoteBancoServer(
   supabase: Sb,
   userId: string,
-  dados: z.infer<typeof importarBancoLeadsSchema>,
-): Promise<ResultadoImportacaoBanco> {
+  dados: z.infer<typeof criarLoteBancoSchema>,
+): Promise<LoteCriado> {
   await exigirAdmin(supabase, userId);
+
+  const reservaSegmento = dados.reservado_segmento ?? null;
+  const reservaEstado = dados.reservado_estado ? dados.reservado_estado.toUpperCase() : null;
+  const reservaCnae = dados.reservado_cnae ?? null;
+  const temReserva = Boolean(reservaSegmento || reservaEstado || reservaCnae);
+  const horas = dados.horas_reserva ?? (await horasReserva(supabase));
+  const bloqueadoAte = temReserva
+    ? new Date(Date.now() + horas * 60 * 60 * 1000).toISOString()
+    : null;
+
+  const { data: lote, error } = await supabase
+    .from("banco_leads_lotes")
+    .insert({
+      autor_id: userId,
+      arquivo_nome: dados.arquivo_nome,
+      fonte: dados.fonte,
+      reservado_segmento: reservaSegmento,
+      reservado_estado: reservaEstado,
+      reservado_cnae: reservaCnae,
+      horas_reserva: temReserva ? horas : null,
+      total_linhas: dados.total_linhas ?? 0,
+    })
+    .select("id")
+    .maybeSingle();
+  if (error || !lote) throw new Error(error?.message ?? "Não foi possível criar o lote.");
+
+  const { registrarAuditoria } = await import("@/lib/audit.server");
+  await registrarAuditoria({
+    actorId: userId,
+    acao: "criar_lote_banco_leads",
+    entidade: "banco_leads_lotes",
+    entidadeId: lote.id as string,
+    detalhes: {
+      fonte: dados.fonte,
+      arquivo: dados.arquivo_nome,
+      reserva: { segmento: reservaSegmento, estado: reservaEstado, cnae: reservaCnae, horas },
+    },
+  });
+
+  return { lote_id: lote.id as string, bloqueado_ate: bloqueadoAte, horas_reserva: horas };
+}
+
+interface LoteContexto {
+  origem: LeadOrigem;
+  reservado_segmento: string | null;
+  reservado_estado: string | null;
+  reservado_cnae: string | null;
+  bloqueado_ate: string | null;
+}
+
+async function contextoDoLote(
+  supabase: Sb,
+  loteId: string,
+  origem: LeadOrigem,
+): Promise<LoteContexto> {
+  const { data, error } = await supabase
+    .from("banco_leads_lotes")
+    .select("reservado_segmento, reservado_estado, reservado_cnae, horas_reserva, created_at")
+    .eq("id", loteId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Lote não encontrado.");
+
+  const horas = Number(data.horas_reserva ?? 0);
+  const bloqueadoAte =
+    horas > 0
+      ? new Date(new Date(data.created_at as string).getTime() + horas * 3600000).toISOString()
+      : null;
+
+  return {
+    origem,
+    reservado_segmento: (data.reservado_segmento as string | null) ?? null,
+    reservado_estado: (data.reservado_estado as string | null) ?? null,
+    reservado_cnae: (data.reservado_cnae as string | null) ?? null,
+    bloqueado_ate: bloqueadoAte,
+  };
+}
+
+/**
+ * Passo 2: grava um bloco de linhas. Revalida tudo no servidor — o que o
+ * navegador manda nunca é confiável — e autocadastra os CNAEs encontrados.
+ */
+export async function importarBlocoBancoServer(
+  supabase: Sb,
+  userId: string,
+  dados: z.infer<typeof importarBlocoBancoSchema>,
+): Promise<{ importados: number; ignorados: number; erros: { linha: number; motivo: string }[] }> {
+  await exigirAdmin(supabase, userId);
+  const ctx = await contextoDoLote(supabase, dados.lote_id, dados.origem);
 
   const erros: { linha: number; motivo: string }[] = [];
   let ignorados = 0;
   const vistos = new Set<string>();
-  const reservaSegmento = dados.reservado_segmento ?? null;
-  const reservaEstado = dados.reservado_estado ? dados.reservado_estado.toUpperCase() : null;
-
   const validas: Record<string, unknown>[] = [];
 
-  // Revalidação no servidor: o que o navegador mandou não é confiável.
   for (const l of dados.linhas) {
     const nome = (l.nome_contato ?? "").trim();
     const tel = apenasDigitos(l.telefone);
@@ -294,45 +413,54 @@ export async function importarBancoLeadsServer(
     }
     vistos.add(tel);
 
+    const cnpj = (l.cnpj ?? "").replace(/\D/g, "");
+    const cnae = (l.cnae_codigo ?? "").replace(/\D/g, "");
+
     validas.push({
       nome_contato: nome.slice(0, 120),
-      empresa: l.empresa ? l.empresa.slice(0, 120) : null,
+      empresa: (l.empresa ?? l.razao_social ?? null)?.slice(0, 120) ?? null,
       cargo: l.cargo ? l.cargo.slice(0, 120) : null,
       telefone: tel,
       email: l.email && EMAIL_RE.test(l.email) ? l.email : null,
       segmento: l.segmento ?? null,
       cidade: l.cidade ?? null,
       estado: l.estado ? l.estado.toUpperCase().slice(0, 2) : null,
-      origem: dados.origem,
+      origem: ctx.origem,
       observacoes: l.observacoes ?? null,
-      reservado_segmento: reservaSegmento,
-      reservado_estado: reservaEstado,
+      cnpj: cnpj.length === 14 ? cnpj : null,
+      razao_social: l.razao_social ?? null,
+      nome_fantasia: l.nome_fantasia ?? null,
+      socios: l.socios ?? null,
+      data_abertura: l.data_abertura ?? null,
+      porte: l.porte ?? null,
+      cnae_codigo: cnae.length === 7 ? cnae : null,
+      cnae_descricao: l.cnae_descricao ?? null,
+      reservado_segmento: ctx.reservado_segmento,
+      reservado_estado: ctx.reservado_estado,
+      reservado_cnae: ctx.reservado_cnae,
+      bloqueado_ate: ctx.bloqueado_ate,
       criado_por_id: userId,
+      lote_id: dados.lote_id,
       linha_arquivo: l.linha,
     });
   }
 
-  const { data: lote, error: erroLote } = await supabase
-    .from("banco_leads_lotes")
-    .insert({
-      autor_id: userId,
-      arquivo_nome: dados.arquivo_nome,
-      fonte: dados.fonte,
-      reservado_segmento: reservaSegmento,
-      reservado_estado: reservaEstado,
-      total_linhas: dados.total_linhas ?? dados.linhas.length,
-    })
-    .select("id")
-    .maybeSingle();
-  if (erroLote || !lote) throw new Error(erroLote?.message ?? "Não foi possível criar o lote.");
-  const loteId = lote.id as string;
+  // Autocadastro dos CNAEs vistos no bloco (com segmento sugerido).
+  const { registrarCnaesServer } = await import("@/lib/cnaes.server");
+  await registrarCnaesServer(
+    supabase,
+    validas
+      .filter((v) => v.cnae_codigo)
+      .map((v) => ({
+        codigo: v.cnae_codigo as string,
+        descricao: (v.cnae_descricao as string | null) ?? null,
+        segmento_sugerido: (v.segmento as string | null) ?? null,
+      })),
+  );
 
   let importados = 0;
   for (const bloco of chunks(validas, CHUNK)) {
-    const payload = bloco.map(({ linha_arquivo: _ignora, ...campos }) => ({
-      ...campos,
-      lote_id: loteId,
-    }));
+    const payload = bloco.map(({ linha_arquivo: _ignora, ...campos }) => campos);
     const { data, error } = await supabase.from("banco_leads").insert(payload).select("id");
     if (!error) {
       importados += data?.length ?? 0;
@@ -343,23 +471,46 @@ export async function importarBancoLeadsServer(
       const { error: e1 } = await supabase.from("banco_leads").insert(item).select("id");
       if (e1) {
         ignorados += 1;
-        erros.push({
-          linha: Number(bloco[i]?.linha_arquivo ?? 0),
-          motivo: mensagemErro(e1),
-        });
+        erros.push({ linha: Number(bloco[i]?.linha_arquivo ?? 0), motivo: mensagemErro(e1) });
       } else {
         importados += 1;
       }
     }
   }
 
+  return { importados, ignorados, erros: erros.slice(0, 50) };
+}
+
+/** Passo 3: fecha o lote com os totais reais gravados. */
+export async function finalizarLoteBancoServer(
+  supabase: Sb,
+  userId: string,
+  loteId: string,
+): Promise<ResultadoImportacaoBanco> {
+  await exigirAdmin(supabase, userId);
+
+  const { count: importados } = await supabase
+    .from("banco_leads")
+    .select("id", { count: "exact", head: true })
+    .eq("lote_id", loteId);
+
+  const { data: lote } = await supabase
+    .from("banco_leads_lotes")
+    .select("total_linhas")
+    .eq("id", loteId)
+    .maybeSingle();
+
+  const total = Number(lote?.total_linhas ?? 0);
+  const gravados = Number(importados ?? 0);
+  const ignorados = Math.max(0, total - gravados);
+
   await supabase
     .from("banco_leads_lotes")
-    .update({ importados, ignorados })
+    .update({ importados: gravados, ignorados })
     .eq("id", loteId)
     .select("id");
 
-  return { lote_id: loteId, importados, ignorados, erros: erros.slice(0, 50) };
+  return { lote_id: loteId, importados: gravados, ignorados, erros: [] };
 }
 
 export interface ResumoPuxada {
@@ -624,6 +775,7 @@ export async function definirEscopoVendedorServer(
     .update({
       segmentos: dados.segmentos,
       estados: dados.estados.map((e) => e.toUpperCase()),
+      cnaes: dados.cnaes,
     })
     .eq("id", dados.vendedor_id)
     .select("id")
@@ -638,6 +790,7 @@ export interface EscopoVendedor {
   nome: string;
   segmentos: string[];
   estados: string[];
+  cnaes: string[];
 }
 
 export async function listarEscoposVendedoresServer(
@@ -647,10 +800,15 @@ export async function listarEscoposVendedoresServer(
   await exigirAdmin(supabase, userId);
   const { data, error } = await supabase
     .from("vendedores")
-    .select("id, segmentos, estados")
+    .select("id, segmentos, estados, cnaes")
     .eq("ativo", true);
   if (error) throw new Error(error.message);
-  const linhas = (data ?? []) as { id: string; segmentos: string[]; estados: string[] }[];
+  const linhas = (data ?? []) as {
+    id: string;
+    segmentos: string[];
+    estados: string[];
+    cnaes: string[] | null;
+  }[];
   const nomes = await nomesDosVendedores(linhas.map((l) => l.id));
   return linhas
     .map((l) => ({
@@ -658,6 +816,7 @@ export async function listarEscoposVendedoresServer(
       nome: nomes.get(l.id) ?? "Vendedor",
       segmentos: l.segmentos ?? [],
       estados: l.estados ?? [],
+      cnaes: l.cnaes ?? [],
     }))
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 }
