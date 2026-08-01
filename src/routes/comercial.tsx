@@ -11,6 +11,11 @@ import { SairButton } from "@/components/SairButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AvisosSino } from "@/components/AvisosSino";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  LeadsSkeletonCards,
+  LeadsSkeletonRows,
+} from "@/components/comercial/LeadsSkeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -144,6 +149,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const [total, setTotal] = useState(0);
   const [temMais, setTemMais] = useState(false);
   const [carregandoMais, setCarregandoMais] = useState(false);
+  const [erroLista, setErroLista] = useState<string | null>(null);
+  const [erroMais, setErroMais] = useState<string | null>(null);
   const sentinela = useRef<HTMLDivElement | null>(null);
 
   const [busca, setBusca] = useState("");
@@ -175,6 +182,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
 
   const recarregar = useCallback(async () => {
     setCarregando(true);
+    setErroLista(null);
+    setErroMais(null);
     try {
       const [d, l] = await Promise.all([
         carregarDashboard({
@@ -188,7 +197,9 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       setTemMais(l.temMais);
       setPagina(0);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Não foi possível carregar os dados.");
+      setErroLista(
+        err instanceof Error ? err.message : "Não foi possível carregar os leads.",
+      );
     } finally {
       setCarregando(false);
     }
@@ -199,6 +210,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     if (carregandoMais || !temMais) return;
     const proxima = pagina + 1;
     setCarregandoMais(true);
+    setErroMais(null);
     try {
       const l = await carregarLeads({
         data: { ...filtrosLeads, pagina: proxima, por_pagina: POR_PAGINA },
@@ -211,7 +223,9 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       setTemMais(l.temMais);
       setPagina(proxima);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Não foi possível carregar mais leads.");
+      setErroMais(
+        err instanceof Error ? err.message : "Não foi possível carregar mais leads.",
+      );
     } finally {
       setCarregandoMais(false);
     }
@@ -224,7 +238,9 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   // Infinite scroll: observa a sentinela no fim da lista.
   useEffect(() => {
     const alvo = sentinela.current;
-    if (!alvo || !temMais) return;
+    // Com erro pendente o carregamento automático para: o usuário decide
+    // quando tentar novamente, evitando loop de requisições que falham.
+    if (!alvo || !temMais || erroMais) return;
     const obs = new IntersectionObserver(
       (entradas) => {
         if (entradas.some((e) => e.isIntersecting)) void carregarMais();
@@ -233,7 +249,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     );
     obs.observe(alvo);
     return () => obs.disconnect();
-  }, [carregarMais, temMais]);
+  }, [carregarMais, temMais, erroMais]);
 
   useEffect(() => {
     void carregarSegmentos({}).then(setSegmentos).catch(() => undefined);
