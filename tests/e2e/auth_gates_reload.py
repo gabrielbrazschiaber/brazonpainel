@@ -256,6 +256,24 @@ async def main() -> int:
             await asyncio.sleep(ATRASO_MS / 1000)
             await route.continue_()
 
+        # Captura o que o app EXPORTA para o destino externo de telemetria.
+        # O CI valida depois (bun run validar:telemetria) que todo evento leva
+        # trace_id, versão e rota — o mesmo contrato do destino real.
+        exportados: list[dict] = []
+
+        async def capturar_exportacao(route):
+            try:
+                dados = route.request.post_data_json
+                if isinstance(dados, list):
+                    exportados.extend(dados)
+                elif isinstance(dados, dict):
+                    exportados.append(dados)
+            except Exception as erro:  # nunca derruba o teste por causa disso
+                print("aviso: não foi possível ler o lote exportado:", erro)
+            await route.fulfill(status=200, body="{}", content_type="application/json")
+
+        await context.route("**/telemetria-e2e*", capturar_exportacao)
+
         await context.route("**/rest/v1/user_roles*", atrasar)
         await context.route("**/rest/v1/profiles*", atrasar)
         await context.route("**/rest/v1/role_permissions*", atrasar)
@@ -271,6 +289,11 @@ async def main() -> int:
 
         await context.close()  # necessário para finalizar os vídeos
         await browser.close()
+
+    (ARTIFACTS / "telemetria-exportada.json").write_text(
+        json.dumps(exportados, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    print(f"eventos de telemetria exportados capturados: {len(exportados)}")
 
     resumo = {
         "trace_id": TRACE_ID,
