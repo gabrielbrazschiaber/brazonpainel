@@ -151,21 +151,8 @@ const SINONIMOS: Record<Campo, string[]> = {
   observacoes: ["observacao", "observacoes", "obs", "anotacoes", "notas"],
 };
 
-function sugerir(cabecalhos: string[]): Destino[] {
-  const usados = new Set<Campo>();
-  return cabecalhos.map((h) => {
-    const chave = normalizarChave(h);
-    if (!chave) return "";
-    for (const { campo } of CAMPOS) {
-      if (usados.has(campo)) continue;
-      if (SINONIMOS[campo].some((s) => chave === s || chave.startsWith(s))) {
-        usados.add(campo);
-        return campo;
-      }
-    }
-    return "";
-  });
-}
+
+
 
 interface LinhaPreparada {
   linha: number;
