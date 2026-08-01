@@ -733,6 +733,17 @@ export const RESUMOS_TELA: Record<string, ResumoTela> = {
       "Leads incompletos são os que entraram sem telefone ou e-mail.",
     ],
   },
+  "tela:banco-leads": {
+    titulo: "Banco de Leads",
+    resumo: "Repositório central que o admin abastece e os vendedores consomem.",
+    topicos: [
+      "Só o admin importa listas e cadastra leads no banco.",
+      "Cada vendedor puxa até 20 leads por hora para a própria carteira.",
+      "Telefone e e-mail ficam ocultos até o lead ser puxado.",
+      "Leads sem nenhum contato registrado voltam ao banco automaticamente após o prazo configurado.",
+      "Depois de três devoluções o lead é arquivado.",
+    ],
+  },
   "tela:tarefas": {
     titulo: "Tarefas",
     resumo: "Fila de trabalho da equipe, com status, prioridade e responsável.",
