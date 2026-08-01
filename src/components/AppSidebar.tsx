@@ -153,6 +153,15 @@ export function AppSidebar({ items, tab, onTab, onConta, acaoPrincipal }: AppSid
                             {abertas > 99 ? "99+" : abertas}
                           </span>
                         )}
+                        {item.to === "/comercial" && followUps > 0 && (
+                          <span
+                            className="ml-auto rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground"
+                            title="Follow-ups atrasados e de hoje"
+                          >
+                            {followUps > 99 ? "99+" : followUps}
+                          </span>
+                        )}
+
                       </Link>
                     </SidebarMenuButton>
                   ) : (
