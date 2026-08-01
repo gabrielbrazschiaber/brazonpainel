@@ -199,8 +199,7 @@ function AdminArea() {
         supabase.from("user_roles").select("user_id").eq("role", "admin"),
       ]);
 
-      const primeiroErro =
-        resPls.error ?? resVds.error ?? resCls.error ?? resAdmins.error ?? null;
+      const primeiroErro = resPls.error ?? resVds.error ?? resCls.error ?? resAdmins.error ?? null;
       if (primeiroErro) throw new Error(primeiroErro.message);
 
       const vrows = (resVds.data ?? []) as unknown as VendedorRow[];
@@ -254,7 +253,6 @@ function AdminArea() {
     }
   }, []);
 
-
   useEffect(() => {
     load();
   }, [load]);
@@ -271,7 +269,6 @@ function AdminArea() {
   }
 
   const navItems = ADMIN_NAV_ITEMS;
-
 
   const renderSecao: Record<string, () => React.ReactNode> = {
     cupons: () => <CuponsTab />,
@@ -329,7 +326,6 @@ function AdminArea() {
     </AppShell>
   );
 }
-
 
 /* ---------------- Minha conta (admin) ---------------- */
 function MinhaContaDialog({
@@ -1238,7 +1234,6 @@ function ClientesTab({
                     <WhatsAppIndicator telefone={c.telefone} size="sm" />
                   </div>
                   <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
-
                 </TableCell>
                 <TableCell>{c.vendedor_id ? (vmap.get(c.vendedor_id) ?? "—") : "—"}</TableCell>
                 <TableCell>{c.planos?.nome ?? "—"}</TableCell>
@@ -1357,7 +1352,6 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
       ativo = false;
     };
   }, [buscarUltimaExecucao]);
-
 
   const [testando, setTestando] = useState(false);
   const [tokenMascara, setTokenMascara] = useState("");
@@ -1491,9 +1485,8 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
               onChange={(e) => set("dias_aviso_vencimento", Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
-              Clientes ativos recebem um lembrete automático no painel quando o vencimento
-              estiver dentro desse prazo. A rotina roda todos os dias às 6h (horário de
-              Brasília).
+              Clientes ativos recebem um lembrete automático no painel quando o vencimento estiver
+              dentro desse prazo. A rotina roda todos os dias às 6h (horário de Brasília).
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -1525,7 +1518,6 @@ function ConfigTab({ config, onSaved }: { config: Config | null; onSaved: () => 
                   : "Nenhum lembrete gerado ainda."}
               </span>
             </div>
-
           </div>
 
           <div className="grid gap-2">

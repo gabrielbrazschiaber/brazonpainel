@@ -13,7 +13,6 @@ import {
 import { toast } from "sonner";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
-
 interface LinhaResumo {
   app_version: string;
   rota: string;
@@ -75,9 +74,7 @@ export function TelemetriaAuthTab() {
     const resolvidos = linhas.filter((l) => l.tipo === "papel_resolvido");
     const p95 = resolvidos.reduce((max, l) => Math.max(max, l.p95_ms), 0);
     const p50 = resolvidos.length
-      ? Math.round(
-          resolvidos.reduce((a, l) => a + l.p50_ms, 0) / resolvidos.length,
-        )
+      ? Math.round(resolvidos.reduce((a, l) => a + l.p50_ms, 0) / resolvidos.length)
       : 0;
     return {
       eventos: soma("total"),
@@ -90,10 +87,7 @@ export function TelemetriaAuthTab() {
   }, [linhas]);
 
   const problematicas = useMemo(
-    () =>
-      linhas
-        .filter((l) => l.tipo === "papel_erro" || l.tipo === "papel_sem_papel")
-        .slice(0, 8),
+    () => linhas.filter((l) => l.tipo === "papel_erro" || l.tipo === "papel_sem_papel").slice(0, 8),
     [linhas],
   );
 
@@ -101,9 +95,7 @@ export function TelemetriaAuthTab() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">
-            Resolução de sessão e perfil
-          </h2>
+          <h2 className="text-lg font-semibold text-foreground">Resolução de sessão e perfil</h2>
           <p className="text-sm text-muted-foreground">
             Duração e desfecho da verificação de acesso, por versão e rota.
           </p>
@@ -140,11 +132,7 @@ export function TelemetriaAuthTab() {
           alerta={totais.semPapel > 0}
         />
         <Kpi titulo="Mediana (perfil)" valor={`${totais.p50} ms`} />
-        <Kpi
-          titulo="Pior caso p95"
-          valor={`${totais.p95} ms`}
-          alerta={totais.p95 > 2500}
-        />
+        <Kpi titulo="Pior caso p95" valor={`${totais.p95} ms`} alerta={totais.p95 > 2500} />
       </div>
 
       {problematicas.length > 0 && (
@@ -180,10 +168,7 @@ export function TelemetriaAuthTab() {
           </thead>
           <tbody>
             {linhas.map((l) => (
-              <tr
-                key={`${l.app_version}-${l.rota}-${l.tipo}`}
-                className="border-t border-border"
-              >
+              <tr key={`${l.app_version}-${l.rota}-${l.tipo}`} className="border-t border-border">
                 <td className="px-3 py-2">
                   <Badge variant="outline">{l.app_version}</Badge>
                 </td>
@@ -214,22 +199,14 @@ export function TelemetriaAuthTab() {
         </table>
       </div>
       <p className="text-xs text-muted-foreground">
-        {totais.versoes} versão(ões) do app no período. Defina{" "}
-        <code>VITE_APP_VERSION</code> no build para comparar publicações.
+        {totais.versoes} versão(ões) do app no período. Defina <code>VITE_APP_VERSION</code> no
+        build para comparar publicações.
       </p>
     </div>
   );
 }
 
-function Kpi({
-  titulo,
-  valor,
-  alerta,
-}: {
-  titulo: string;
-  valor: string;
-  alerta?: boolean;
-}) {
+function Kpi({ titulo, valor, alerta }: { titulo: string; valor: string; alerta?: boolean }) {
   return (
     <Card className="p-4">
       <p className="text-xs uppercase text-muted-foreground">{titulo}</p>

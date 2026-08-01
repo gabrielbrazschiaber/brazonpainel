@@ -3,12 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { useSair } from "@/lib/use-sair";
 import { Button } from "@/components/ui/button";
 import { registrarAuthTelemetria } from "@/lib/auth-telemetry";
-import {
-  GATE_ESTADOS,
-  GATE_RETRY,
-  GATE_TEXTOS,
-  atrasoBackoffMs,
-} from "@/lib/gate-textos";
+import { GATE_ESTADOS, GATE_RETRY, GATE_TEXTOS, atrasoBackoffMs } from "@/lib/gate-textos";
 
 /** Estado neutro de carregamento — nunca insinua bloqueio de acesso. */
 export function GateSpinner() {
@@ -126,9 +121,7 @@ export function GateFalhaConexao() {
         <h1 className="text-xl font-semibold text-foreground" data-gate-titulo>
           {t.titulo}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          {esgotado ? t.esgotado : t.descricao}
-        </p>
+        <p className="text-sm text-muted-foreground">{esgotado ? t.esgotado : t.descricao}</p>
         <div className="flex flex-wrap justify-center gap-2">
           <Button
             disabled={tentando}

@@ -2,13 +2,7 @@ import { GATE_TEXTOS } from "@/lib/gate-textos";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  criarSessao,
-  criarSupabaseMock,
-  papeis,
-  papeisErro,
-  perfilOk,
-} from "@/test/supabase-mock";
+import { criarSessao, criarSupabaseMock, papeis, papeisErro, perfilOk } from "@/test/supabase-mock";
 import { limparAuthTelemetria, lerAuthTelemetria } from "@/lib/auth-telemetry";
 
 const mock = await vi.hoisted(async () => {

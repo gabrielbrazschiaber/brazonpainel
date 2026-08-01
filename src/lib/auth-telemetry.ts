@@ -61,8 +61,7 @@ declare global {
   }
 }
 
-const agora = () =>
-  typeof performance !== "undefined" ? performance.now() : Date.now();
+const agora = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
 /** Cronômetro simples: `const fim = iniciarMedicao(); fim() // ms` */
 export function iniciarMedicao(): () => number {
@@ -126,8 +125,7 @@ function paraLinha(e: EventoRegistrado): LinhaTelemetria {
     papel: (registro["papel"] as string | undefined) ?? null,
     erro: (registro["erro"] as string | undefined) ?? null,
     app_version: APP_VERSION,
-    user_agent:
-      typeof navigator === "undefined" ? null : navigator.userAgent.slice(0, 300),
+    user_agent: typeof navigator === "undefined" ? null : navigator.userAgent.slice(0, 300),
   };
 }
 
@@ -204,7 +202,6 @@ export function registrarAuthTelemetria(evento: AuthTelemetryEvent): void {
   }
 
   if (debugAtivo()) {
-    // eslint-disable-next-line no-console
     console.info("[auth]", evento.tipo, registrado);
   }
 }
