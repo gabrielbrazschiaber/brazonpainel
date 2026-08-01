@@ -317,34 +317,38 @@ function AdminArea() {
     >
       <MinhaContaDialog open={contaOpen} onOpenChange={setContaOpen} onSaved={load} />
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="sr-only">
-          {abasInternas(navItems).map((item) => (
-            <TabsTrigger key={item.value} value={item.value}>
-              {item.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {/* Qualquer exceção das abas do admin fica contida aqui, com Trace ID. */}
+      <AdminErroLimite>
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="sr-only">
+            {abasInternas(navItems).map((item) => (
+              <TabsTrigger key={item.value} value={item.value}>
+                {item.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        <TabsContent value="dashboard" className="mt-0">
-          <AdminDashboard />
-        </TabsContent>
-        <TabsContent value="clientes" className="mt-0">
-          <ClientesTab
-            clientes={clientes}
-            vendedores={vendedores}
-            planos={planos}
-            onChanged={load}
-          />
-        </TabsContent>
-        <TabsContent value="novidades" className="mt-0">
-          <NovidadesTab />
-        </TabsContent>
-        <TabsContent value="config" className="mt-0">
-          <ConfiguracoesPage secoes={secoesConfig} secaoInicial={secaoBuscada} />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="dashboard" className="mt-0">
+            <AdminDashboard />
+          </TabsContent>
+          <TabsContent value="clientes" className="mt-0">
+            <ClientesTab
+              clientes={clientes}
+              vendedores={vendedores}
+              planos={planos}
+              onChanged={load}
+            />
+          </TabsContent>
+          <TabsContent value="novidades" className="mt-0">
+            <NovidadesTab />
+          </TabsContent>
+          <TabsContent value="config" className="mt-0">
+            <ConfiguracoesPage secoes={secoesConfig} secaoInicial={secaoBuscada} />
+          </TabsContent>
+        </Tabs>
+      </AdminErroLimite>
     </AppShell>
+
   );
 }
 
