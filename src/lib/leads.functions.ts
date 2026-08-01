@@ -11,7 +11,13 @@ import {
   salvarReuniaoSchema,
 } from "@/lib/leads.schemas";
 
-export type { Lead, Atividade, Reuniao, DashboardComercial } from "@/lib/leads.server";
+export type {
+  Lead,
+  Atividade,
+  Reuniao,
+  DashboardComercial,
+  ListaLeads,
+} from "@/lib/leads.server";
 
 export const listarLeads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

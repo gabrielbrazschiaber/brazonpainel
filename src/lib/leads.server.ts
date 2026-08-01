@@ -133,18 +133,31 @@ export async function listarVendedoresServer(supabase: Sb, userId: string) {
     .sort((a: { nome: string }, b: { nome: string }) => a.nome.localeCompare(b.nome, "pt-BR"));
 }
 
+export interface ListaLeads {
+  leads: Lead[];
+  /** Total de leads que atendem aos filtros (todas as páginas). */
+  total: number;
+  pagina: number;
+  temMais: boolean;
+}
+
 export async function listarLeadsServer(
   supabase: Sb,
   userId: string,
   filtros: z.infer<typeof listarLeadsSchema>,
-): Promise<Lead[]> {
+): Promise<ListaLeads> {
   const escopo = await escopoComercial(supabase, userId);
+
+  const porPagina = filtros.por_pagina ?? 25;
+  const pagina = filtros.pagina ?? 0;
+  const inicio = pagina * porPagina;
 
   let query = supabase
     .from("leads")
-    .select(CAMPOS_LEAD)
+    .select(CAMPOS_LEAD, { count: "exact" })
     .order("created_at", { ascending: false })
-    .limit(500);
+    // Busca 1 registro extra para saber se existe próxima página.
+    .range(inicio, inicio + porPagina);
 
   // Vendedor: a RLS já limita aos seus; o vendedor_id recebido é ignorado.
   if (escopo.isAdmin && filtros.vendedor_id) {
@@ -172,10 +185,12 @@ export async function listarLeadsServer(
     query = query.or(partes.join(","));
   }
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
   if (error) throw new Error(error.message);
 
-  const leads = (data ?? []) as Lead[];
+  const linhas = (data ?? []) as Lead[];
+  const temMais = linhas.length > porPagina;
+  const leads = temMais ? linhas.slice(0, porPagina) : linhas;
   const ids = leads.map((l) => l.id);
 
   // Contagem de reuniões em UMA consulta agregada.
@@ -194,12 +209,17 @@ export async function listarLeadsServer(
     ? await nomesVendedores(leads.map((l) => l.vendedor_id))
     : new Map<string, string>();
 
-  return leads.map((l) => ({
-    ...l,
-    valor_estimado: Number(l.valor_estimado ?? 0),
-    reunioes_count: contagem.get(l.id) ?? 0,
-    vendedor_nome: nomes.get(l.vendedor_id) ?? null,
-  }));
+  return {
+    leads: leads.map((l) => ({
+      ...l,
+      valor_estimado: Number(l.valor_estimado ?? 0),
+      reunioes_count: contagem.get(l.id) ?? 0,
+      vendedor_nome: nomes.get(l.vendedor_id) ?? null,
+    })),
+    total: count ?? leads.length,
+    pagina,
+    temMais,
+  };
 }
 
 /** Segmentos já usados pelo vendedor (ou por todos, no caso do admin). */
