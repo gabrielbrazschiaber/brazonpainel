@@ -166,6 +166,9 @@ export function BancoAdminPainel() {
 
   useEffect(() => {
     void carregar();
+    // Atualização "ao vivo" via polling a cada 30 segundos enquanto a aba estiver ativa
+    const interval = setInterval(() => void carregar(), 30000);
+    return () => clearInterval(interval);
   }, [carregar]);
 
   if (carregando) {
