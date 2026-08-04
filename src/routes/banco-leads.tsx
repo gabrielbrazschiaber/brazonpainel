@@ -520,6 +520,16 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
                       ))}
                     </SelectContent>
                   </Select>
+                  <Input
+                    type="date"
+                    value={dataAbertura ?? ""}
+                    onChange={(e) => {
+                      setDataAbertura(e.target.value || null);
+                      setPagina(0);
+                    }}
+                    className="sm:w-44"
+                    title="Data de abertura da empresa"
+                  />
                   <Button
                     variant="outline"
                     onClick={() => {

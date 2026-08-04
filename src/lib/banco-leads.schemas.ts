@@ -100,7 +100,6 @@ export const linhaBancoSchema = z.object({
     .string()
     .trim()
     .regex(/^\d{10,11}$/, "Telefone deve ter DDD + número"),
-  data_abertura: dataSchema,
   empresa: texto(200),
   cargo: texto(120),
   email: texto(200),
