@@ -146,6 +146,8 @@ export function BancoAdminPainel() {
   const [lotes, setLotes] = useState<QualidadeLote[]>([]);
   const [escopos, setEscopos] = useState<EscopoVendedor[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [realtimeStatus, setRealtimeStatus] = useState<"conectado" | "desconectado" | "tentando">("desconectado");
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
