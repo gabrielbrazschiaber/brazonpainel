@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 
 import { formatDate } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
 import {
   definirEscopoVendedor,
   escoposVendedores,
