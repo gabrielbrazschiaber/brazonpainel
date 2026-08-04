@@ -167,9 +167,29 @@ export function BancoAdminPainel() {
 
   useEffect(() => {
     void carregar();
-    // Atualização "ao vivo" via polling a cada 30 segundos enquanto a aba estiver ativa
-    const interval = setInterval(() => void carregar(), 30000);
-    return () => clearInterval(interval);
+
+    // Inscrição em tempo real para atualizações no banco de leads e lotes
+    const channel = supabase
+      .channel("banco-leads-admin-panorama")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "banco_leads" },
+        () => {
+          void carregar();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "banco_leads_lotes" },
+        () => {
+          void carregar();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [carregar]);
 
   if (carregando) {
