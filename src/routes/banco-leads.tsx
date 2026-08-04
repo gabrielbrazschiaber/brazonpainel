@@ -180,6 +180,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
   const [buscaAplicada, setBuscaAplicada] = useState("");
   const [segmento, setSegmento] = useState(TODOS);
   const [estado, setEstado] = useState(TODOS);
+  const [dataAbertura, setDataAbertura] = useState<string | null>(null);
   const [selecionados, setSelecionados] = useState<string[]>([]);
   const [puxando, setPuxando] = useState(false);
   const [formAberto, setFormAberto] = useState(false);
@@ -203,6 +204,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
           ...(buscaAplicada ? { busca: buscaAplicada } : {}),
           ...(segmento !== TODOS ? { segmento } : {}),
           ...(estado !== TODOS ? { estado } : {}),
+          ...(dataAbertura ? { data_abertura: dataAbertura } : {}),
           pagina,
           por_pagina: POR_PAGINA,
         },
@@ -214,7 +216,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
     } finally {
       setCarregando(false);
     }
-  }, [buscar, status, aba, buscaAplicada, segmento, estado, pagina]);
+  }, [buscar, status, aba, buscaAplicada, segmento, estado, dataAbertura, pagina]);
 
   const carregarSaldo = useCallback(async () => {
     if (isAdmin) return;

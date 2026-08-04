@@ -144,6 +144,7 @@ export async function listarBancoLeadsServer(
   if (filtros.cidade) q = q.ilike("cidade", `%${filtros.cidade}%`);
   if (filtros.estado) q = q.eq("estado", filtros.estado.toUpperCase());
   if (filtros.cnae) q = q.eq("cnae_codigo", filtros.cnae.replace(/\D/g, ""));
+  if (filtros.data_abertura) q = q.gte("data_abertura", filtros.data_abertura);
   if (filtros.lote_id) q = q.eq("lote_id", filtros.lote_id);
   if (isAdmin && filtros.vendedor_id) q = q.eq("puxado_por", filtros.vendedor_id);
   if (filtros.meus) {
