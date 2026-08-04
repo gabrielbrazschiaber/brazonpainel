@@ -53,6 +53,7 @@ export const listarBancoLeadsSchema = z.object({
   cidade: z.string().trim().max(120).optional(),
   estado: z.string().trim().max(2).optional(),
   cnae: z.string().trim().max(7).optional(),
+  data_abertura: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida").optional(),
   busca: z.string().trim().max(120).optional(),
   lote_id: z.string().uuid().optional(),
   vendedor_id: z.string().uuid().optional(),
