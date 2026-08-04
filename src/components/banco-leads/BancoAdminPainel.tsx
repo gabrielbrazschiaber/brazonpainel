@@ -170,27 +170,64 @@ export function BancoAdminPainel() {
   useEffect(() => {
     void carregar();
 
-    // Inscrição em tempo real para atualizações no banco de leads e lotes
-    const channel = supabase
-      .channel("banco-leads-admin-panorama")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "banco_leads" },
-        () => {
-          void carregar();
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "banco_leads_lotes" },
-        () => {
-          void carregar();
-        },
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let retryCount = 0;
+    const MAX_RETRIES = 5;
+
+    const setupRealtime = () => {
+      if (channel) {
+        void supabase.removeChannel(channel);
+      }
+
+      setRealtimeStatus("tentando");
+      
+      channel = supabase
+        .channel("banco-leads-admin-panorama")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "banco_leads" },
+          () => void carregar()
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "banco_leads_lotes" },
+          () => void carregar()
+        );
+
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          setRealtimeStatus("conectado");
+          retryCount = 0;
+          // Limpa polling se a conexão foi estabelecida
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+          }
+        } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
+          setRealtimeStatus("desconectado");
+          
+          // Inicia polling como fallback se não estiver rodando
+          if (!pollingRef.current) {
+            pollingRef.current = setInterval(() => void carregar(), 30000);
+          }
+
+          // Tentativa de reconexão com backoff exponencial
+          if (retryCount < MAX_RETRIES) {
+            const delay = Math.pow(2, retryCount) * 2000;
+            setTimeout(() => {
+              retryCount++;
+              setupRealtime();
+            }, delay);
+          }
+        }
+      });
+    };
+
+    setupRealtime();
 
     return () => {
-      void supabase.removeChannel(channel);
+      if (channel) void supabase.removeChannel(channel);
+      if (pollingRef.current) clearInterval(pollingRef.current);
     };
   }, [carregar]);
 
