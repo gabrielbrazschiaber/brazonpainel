@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, Save } from "lucide-react";
+import { Loader2, RefreshCw, Save, Wifi, WifiOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -146,6 +146,8 @@ export function BancoAdminPainel() {
   const [lotes, setLotes] = useState<QualidadeLote[]>([]);
   const [escopos, setEscopos] = useState<EscopoVendedor[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [realtimeStatus, setRealtimeStatus] = useState<"conectado" | "desconectado" | "tentando">("desconectado");
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -168,27 +170,64 @@ export function BancoAdminPainel() {
   useEffect(() => {
     void carregar();
 
-    // Inscrição em tempo real para atualizações no banco de leads e lotes
-    const channel = supabase
-      .channel("banco-leads-admin-panorama")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "banco_leads" },
-        () => {
-          void carregar();
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "banco_leads_lotes" },
-        () => {
-          void carregar();
-        },
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let retryCount = 0;
+    const MAX_RETRIES = 5;
+
+    const setupRealtime = () => {
+      if (channel) {
+        void supabase.removeChannel(channel);
+      }
+
+      setRealtimeStatus("tentando");
+      
+      channel = supabase
+        .channel("banco-leads-admin-panorama")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "banco_leads" },
+          () => void carregar()
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "banco_leads_lotes" },
+          () => void carregar()
+        );
+
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          setRealtimeStatus("conectado");
+          retryCount = 0;
+          // Limpa polling se a conexão foi estabelecida
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+          }
+        } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
+          setRealtimeStatus("desconectado");
+          
+          // Inicia polling como fallback se não estiver rodando
+          if (!pollingRef.current) {
+            pollingRef.current = setInterval(() => void carregar(), 30000);
+          }
+
+          // Tentativa de reconexão com backoff exponencial
+          if (retryCount < MAX_RETRIES) {
+            const delay = Math.pow(2, retryCount) * 2000;
+            setTimeout(() => {
+              retryCount++;
+              setupRealtime();
+            }, delay);
+          }
+        }
+      });
+    };
+
+    setupRealtime();
 
     return () => {
-      void supabase.removeChannel(channel);
+      if (channel) void supabase.removeChannel(channel);
+      if (pollingRef.current) clearInterval(pollingRef.current);
     };
   }, [carregar]);
 
@@ -207,10 +246,27 @@ export function BancoAdminPainel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
-          Panorama do banco central de leads e da qualidade de cada lista importada.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-muted-foreground">
+            Panorama do banco central de leads e da qualidade de cada lista importada.
+          </p>
+          <div className="flex items-center gap-2">
+            {realtimeStatus === "conectado" ? (
+              <Badge variant="outline" className="h-5 gap-1 border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Wifi className="h-3 w-3" /> Realtime Ativo
+              </Badge>
+            ) : realtimeStatus === "tentando" ? (
+              <Badge variant="outline" className="h-5 gap-1 border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <Loader2 className="h-3 w-3 animate-spin" /> Conectando...
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="h-5 gap-1 border-destructive/20 bg-destructive/10 text-destructive">
+                <WifiOff className="h-3 w-3" /> Polling (Fallback)
+              </Badge>
+            )}
+          </div>
+        </div>
         <Button variant="outline" size="sm" onClick={() => void carregar()}>
           <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Atualizar
         </Button>
