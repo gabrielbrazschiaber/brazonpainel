@@ -11,6 +11,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import { formatDate } from "@/lib/format";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -967,12 +968,13 @@ export function ImportarBancoDialog({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="hidden w-16 md:table-cell">Linha</TableHead>
-                      <TableHead>Contato</TableHead>
-                      <TableHead className="hidden sm:table-cell">Telefone</TableHead>
-                      <TableHead>CNPJ</TableHead>
-                      <TableHead className="hidden md:table-cell">CNAE</TableHead>
-                      <TableHead>Avisos</TableHead>
+                       <TableHead className="hidden w-16 md:table-cell">Linha</TableHead>
+                       <TableHead>Contato</TableHead>
+                       <TableHead className="hidden sm:table-cell">Telefone</TableHead>
+                       <TableHead>Abertura</TableHead>
+                       <TableHead>CNPJ</TableHead>
+                       <TableHead className="hidden md:table-cell">CNAE</TableHead>
+                       <TableHead>Avisos</TableHead>
                       <TableHead className="hidden sm:table-cell">Situação</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1005,10 +1007,13 @@ export function ImportarBancoDialog({
                             {l.telefone || "—"}
                           </p>
                         </TableCell>
-                        <TableCell className="hidden whitespace-nowrap sm:table-cell">
-                          {l.telefone || "—"}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
+                         <TableCell className="hidden whitespace-nowrap sm:table-cell">
+                           {l.telefone || "—"}
+                         </TableCell>
+                         <TableCell className="whitespace-nowrap text-xs">
+                           {l.data_abertura ? formatDate(l.data_abertura) : "—"}
+                         </TableCell>
+                         <TableCell className="whitespace-nowrap">
                           <Input
                             aria-label={`CNPJ da linha ${l.linha}`}
                             className="h-8 w-full min-w-[9.5rem] font-mono text-xs sm:w-[10.5rem]"

@@ -43,6 +43,7 @@ interface Form {
   observacoes: string;
   reservado_segmento: string;
   reservado_estado: string;
+  data_abertura: string;
 }
 
 const VAZIO: Form = {
@@ -58,6 +59,7 @@ const VAZIO: Form = {
   observacoes: "",
   reservado_segmento: SEM,
   reservado_estado: SEM,
+  data_abertura: "",
 };
 
 /** Cadastro/edição manual de um lead do banco (só admin). */
@@ -99,6 +101,7 @@ export function BancoLeadFormDialog({
       observacoes: lead.observacoes ?? "",
       reservado_segmento: lead.reservado_segmento ?? SEM,
       reservado_estado: lead.reservado_estado ?? SEM,
+      data_abertura: lead.data_abertura ?? "",
     });
   }, [aberto, lead]);
 
@@ -120,6 +123,7 @@ export function BancoLeadFormDialog({
       observacoes: form.observacoes,
       reservado_segmento: form.reservado_segmento === SEM ? "" : form.reservado_segmento,
       reservado_estado: form.reservado_estado === SEM ? "" : form.reservado_estado,
+      data_abertura: form.data_abertura || null,
     };
     const parsed = salvarBancoLeadSchema.safeParse(bruto);
     if (!parsed.success) {
@@ -244,6 +248,15 @@ export function BancoLeadFormDialog({
               value={form.cidade}
               onChange={(e) => set("cidade", e.target.value)}
               maxLength={120}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="bl-abertura">Data de abertura</Label>
+            <Input
+              id="bl-abertura"
+              type="date"
+              value={form.data_abertura}
+              onChange={(e) => set("data_abertura", e.target.value)}
             />
           </div>
           <div className="space-y-1.5">

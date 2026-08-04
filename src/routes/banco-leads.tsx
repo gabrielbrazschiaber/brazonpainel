@@ -615,6 +615,7 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
                             </TableHead>
                           ) : null}
                           <TableHead>Contato</TableHead>
+                          <TableHead>Abertura</TableHead>
                           <TableHead>Telefone</TableHead>
                           <TableHead>Segmento</TableHead>
                           <TableHead>Local</TableHead>
@@ -644,6 +645,9 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
                                   {l.empresa || ORIGEM_LABEL[l.origem]}
                                   {l.cargo ? ` · ${l.cargo}` : ""}
                                 </p>
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap">
+                                {l.data_abertura ? formatDate(l.data_abertura) : "—"}
                               </TableCell>
                               <TableCell className="whitespace-nowrap">
                                 {l.mascarado ? (
