@@ -325,15 +325,17 @@ export function ClienteFormDialog({
             </summary>
             <ol className="mt-2 list-decimal space-y-1 pl-4">
               <li>
-                Preencha nome, e-mail e CPF/CNPJ — o CPF/CNPJ é exigido pela plataforma de
-                pagamento.
+                Preencha nome, e-mail, CPF/CNPJ e telefone — o telefone e o CPF/CNPJ são exigidos.
               </li>
               <li>
                 Escolha o plano; se houver, descreva o serviço extra e o valor, que soma à
                 mensalidade.
               </li>
+              <li>
+                Defina se é um <strong>Teste de 7 dias</strong>. Se marcado, o vencimento é
+                calculado automaticamente.
+              </li>
               <li>Aplique o cupom de desconto, se tiver um.</li>
-              <li>Defina o primeiro vencimento (não pode ser uma data passada).</li>
               <li>
                 Ao salvar, o cliente é criado na plataforma de pagamento e recebe o e-mail para
                 definir a senha.
