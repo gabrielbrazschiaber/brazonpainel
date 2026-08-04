@@ -246,10 +246,27 @@ export function BancoAdminPainel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
-          Panorama do banco central de leads e da qualidade de cada lista importada.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-muted-foreground">
+            Panorama do banco central de leads e da qualidade de cada lista importada.
+          </p>
+          <div className="flex items-center gap-2">
+            {realtimeStatus === "conectado" ? (
+              <Badge variant="outline" className="h-5 gap-1 border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Wifi className="h-3 w-3" /> Realtime Ativo
+              </Badge>
+            ) : realtimeStatus === "tentando" ? (
+              <Badge variant="outline" className="h-5 gap-1 border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <Loader2 className="h-3 w-3 animate-spin" /> Conectando...
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="h-5 gap-1 border-destructive/20 bg-destructive/10 text-destructive">
+                <WifiOff className="h-3 w-3" /> Polling (Fallback)
+              </Badge>
+            )}
+          </div>
+        </div>
         <Button variant="outline" size="sm" onClick={() => void carregar()}>
           <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Atualizar
         </Button>
