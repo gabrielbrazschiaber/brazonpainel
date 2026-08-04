@@ -42,7 +42,7 @@ export const clienteFormSchema = z
       .email("Informe um e-mail válido.")
       .max(255),
     cpfCnpj: z.string().trim().max(20).default(""),
-    telefone: z.string().trim().max(20).default(""),
+    telefone: z.string().trim().min(1, "O telefone é obrigatório.").max(20).default(""),
     planoId: z.string().trim().default(""),
     servicoExtra: z.string().trim().max(200).default(""),
     servicoValor: z.string().trim().default(""),
@@ -51,6 +51,7 @@ export const clienteFormSchema = z
     anotacoes: z.string().trim().max(2000).default(""),
     senha: z.string().default(""),
     cupom: z.string().trim().max(40).default(""),
+    isTeste: z.boolean().default(false),
   })
   .superRefine((v, ctx) => {
     const erro = (path: string, message: string) =>
@@ -62,7 +63,9 @@ export const clienteFormSchema = z
       erro("cpfCnpj", "CPF deve ter 11 dígitos e CNPJ 14 dígitos.");
     }
 
-    if (v.telefone.trim() && !telefoneValido(v.telefone)) {
+    if (!v.telefone.trim()) {
+      erro("telefone", "Informe o telefone com DDD.");
+    } else if (!telefoneValido(v.telefone)) {
       erro("telefone", "Informe o telefone com DDD (10 ou 11 dígitos).");
     }
 
@@ -124,6 +127,7 @@ export const clienteFormVazio: ClienteFormValues = {
   anotacoes: "",
   senha: "",
   cupom: "",
+  isTeste: false,
 };
 
 /** Campos comuns enviados ao servidor tanto na criação quanto na edição. */
@@ -136,7 +140,6 @@ export function clientePayloadComum(v: ClienteFormValues) {
     servico_extra_valor: parseValorBR(v.servicoValor),
     cpf_cnpj: somenteDigitos(v.cpfCnpj) || null,
     telefone: somenteDigitos(v.telefone) || null,
-
     anotacoes: v.anotacoes || null,
   };
 }
