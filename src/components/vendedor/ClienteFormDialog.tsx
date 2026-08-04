@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CampoComAjuda } from "@/components/onboarding/CampoComAjuda";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -185,7 +186,22 @@ export function ClienteFormDialog({
   const primeiraMensalidade = Math.max(mensalidade - desconto, 0);
 
   function set<K extends keyof ClienteFormValues>(key: K, value: ClienteFormValues[K]) {
-    setValues((v) => ({ ...v, [key]: value }));
+    setValues((v) => {
+      const next = { ...v, [key]: value };
+
+      // Se mudar para teste de 7 dias, calcula o vencimento automático (8 dias: 7 teste + 1 ativação)
+      if (key === "isTeste" && value === true) {
+        const d = new Date();
+        d.setDate(d.getDate() + 8);
+        next.vencimento = d.toISOString().slice(0, 10);
+      } else if (key === "isTeste" && value === false) {
+        // Se desmarcar o teste, volta para o vencimento padrão (30 dias)
+        next.vencimento = defaultVencimento();
+      }
+
+      return next;
+    });
+
     setErros((e) => {
       if (!e[key as string]) return e;
       const { [key as string]: _, ...resto } = e;
@@ -375,7 +391,7 @@ export function ClienteFormDialog({
               </div>
               <div className="grid gap-2">
                 <CampoComAjuda ajuda="cliente.telefone" htmlFor={`${p}tel`}>
-                  Telefone (opcional)
+                  Telefone *
                 </CampoComAjuda>
                 <div className="flex items-center gap-2">
                   <Input
@@ -456,6 +472,39 @@ export function ClienteFormDialog({
                 Esse valor soma ao valor do plano. Mensalidade atual:{" "}
                 <strong>{formatCurrency(mensalidade)}</strong>.
               </p>
+            </div>
+            <div className="grid gap-4 rounded-md border border-border p-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`${p}teste`}
+                  checked={values.isTeste}
+                  onCheckedChange={(checked) => set("isTeste", checked === true)}
+                />
+                <Label
+                  htmlFor={`${p}teste`}
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Teste de 7 dias
+                </Label>
+              </div>
+
+              {values.isTeste && (
+                <p className="text-xs text-muted-foreground">
+                  O vencimento foi ajustado para daqui a 8 dias (7 dias de teste + 1 dia de ativação).
+                </p>
+              )}
+
+              <div className="grid gap-2">
+                <Label htmlFor={`${p}venc`}>Primeiro vencimento *</Label>
+                <Input
+                  id={`${p}venc`}
+                  type="date"
+                  value={values.vencimento}
+                  aria-invalid={invalido("vencimento")}
+                  onChange={(e) => set("vencimento", e.target.value)}
+                />
+                <Erro campo="vencimento" />
+              </div>
             </div>
           </fieldset>
 
