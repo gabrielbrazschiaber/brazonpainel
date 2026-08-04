@@ -43,6 +43,7 @@ interface Form {
   observacoes: string;
   reservado_segmento: string;
   reservado_estado: string;
+  data_abertura: string;
 }
 
 const VAZIO: Form = {
@@ -58,6 +59,7 @@ const VAZIO: Form = {
   observacoes: "",
   reservado_segmento: SEM,
   reservado_estado: SEM,
+  data_abertura: "",
 };
 
 /** Cadastro/edição manual de um lead do banco (só admin). */
