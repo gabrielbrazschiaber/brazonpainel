@@ -123,7 +123,7 @@ export function BancoLeadFormDialog({
       observacoes: form.observacoes,
       reservado_segmento: form.reservado_segmento === SEM ? "" : form.reservado_segmento,
       reservado_estado: form.reservado_estado === SEM ? "" : form.reservado_estado,
-      data_abertura: form.data_abertura || null,
+      data_abertura: (form as any).data_abertura || null,
     };
     const parsed = salvarBancoLeadSchema.safeParse(bruto);
     if (!parsed.success) {
@@ -255,8 +255,8 @@ export function BancoLeadFormDialog({
             <Input
               id="bl-abertura"
               type="date"
-              value={form.data_abertura}
-              onChange={(e) => set("data_abertura", e.target.value)}
+              value={(form as any).data_abertura}
+              onChange={(e) => set("data_abertura" as any, e.target.value)}
             />
           </div>
           <div className="space-y-1.5">
