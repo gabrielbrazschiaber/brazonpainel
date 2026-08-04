@@ -648,32 +648,29 @@ export async function estatisticasBancoServer(
   userId: string,
 ): Promise<EstatisticasBanco> {
   await exigirAdmin(supabase, userId);
-  const { data, error } = await supabase
+  
+  // Queries separadas com { count: "exact", head: true } para obter totais REAIS sem carregar linhas
+  const [resTotal, resDisp, resPux, resArq, resBloq] = await Promise.all([
+    supabase.from("banco_leads").select("id", { count: "exact", head: true }),
+    supabase.from("banco_leads").select("id", { count: "exact", head: true }).eq("status", "disponivel"),
+    supabase.from("banco_leads").select("id", { count: "exact", head: true }).eq("status", "puxado"),
+    supabase.from("banco_leads").select("id", { count: "exact", head: true }).eq("status", "arquivado"),
+    supabase.from("banco_leads").select("id", { count: "exact", head: true }).gt("bloqueado_ate", new Date().toISOString()),
+  ]);
+
+  if (resTotal.error) throw new Error(resTotal.error.message);
+
+  // Para agrupamentos, buscamos as primeiras 2.000 linhas ou usamos uma amostragem
+  // Já que rpc() customizados podem não existir ainda no banco
+  const { data: agrupamentos } = await supabase
     .from("banco_leads")
-    .select("status, segmento, puxado_por, bloqueado_ate")
+    .select("segmento, puxado_por")
     .limit(20000);
-  if (error) throw new Error(error.message);
 
-  const linhas = (data ?? []) as {
-    status: BancoLeadStatus;
-    segmento: string | null;
-    puxado_por: string | null;
-    bloqueado_ate: string | null;
-  }[];
-
-  const agora = Date.now();
   const segmentos = new Map<string, number>();
   const vendedores = new Map<string, number>();
-  let disponiveis = 0;
-  let puxados = 0;
-  let arquivados = 0;
-  let bloqueados = 0;
 
-  for (const l of linhas) {
-    if (l.status === "disponivel") disponiveis += 1;
-    if (l.status === "puxado") puxados += 1;
-    if (l.status === "arquivado") arquivados += 1;
-    if (l.bloqueado_ate && new Date(l.bloqueado_ate).getTime() > agora) bloqueados += 1;
+  for (const l of agrupamentos ?? []) {
     const seg = (l.segmento || "Sem segmento").trim();
     segmentos.set(seg, (segmentos.get(seg) ?? 0) + 1);
     if (l.puxado_por) vendedores.set(l.puxado_por, (vendedores.get(l.puxado_por) ?? 0) + 1);
@@ -682,11 +679,11 @@ export async function estatisticasBancoServer(
   const nomes = await nomesDosVendedores(Array.from(vendedores.keys()));
 
   return {
-    total: linhas.length,
-    disponiveis,
-    puxados,
-    arquivados,
-    bloqueados,
+    total: resTotal.count ?? 0,
+    disponiveis: resDisp.count ?? 0,
+    puxados: resPux.count ?? 0,
+    arquivados: resArq.count ?? 0,
+    bloqueados: resBloq.count ?? 0,
     por_segmento: Array.from(segmentos, ([segmento, total]) => ({ segmento, total })).sort(
       (a, b) => b.total - a.total,
     ),
