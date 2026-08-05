@@ -174,9 +174,12 @@ export function BancoAdminPainel() {
     let retryCount = 0;
     const MAX_RETRIES = 5;
     let isSubscribed = false;
+    let isMounted = true;
 
     const setupRealtime = () => {
-      // Remove o canal existente antes de criar um novo para evitar conflitos
+      if (!isMounted) return;
+
+      // Remove o canal existente antes de criar um novo
       if (channel) {
         void supabase.removeChannel(channel);
         channel = null;
@@ -187,20 +190,21 @@ export function BancoAdminPainel() {
       
       const newChannel = supabase.channel("banco-leads-admin-panorama");
 
-      // Adicionamos os callbacks ANTES do subscribe
       newChannel
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "banco_leads" },
-          () => void carregar()
+          () => isMounted && void carregar()
         )
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "banco_leads_lotes" },
-          () => void carregar()
+          () => isMounted && void carregar()
         );
 
       newChannel.subscribe((status) => {
+        if (!isMounted) return;
+
         if (status === "SUBSCRIBED") {
           isSubscribed = true;
           setRealtimeStatus("conectado");
@@ -214,14 +218,13 @@ export function BancoAdminPainel() {
           isSubscribed = false;
           
           if (!pollingRef.current) {
-            pollingRef.current = setInterval(() => void carregar(), 30000);
+            pollingRef.current = setInterval(() => isMounted && void carregar(), 30000);
           }
 
           if (retryCount < MAX_RETRIES) {
             const delay = Math.pow(2, retryCount) * 2000;
             setTimeout(() => {
-              // Se ainda não estiver inscrito após o delay, tenta novamente
-              if (!isSubscribed) {
+              if (isMounted && !isSubscribed) {
                 retryCount++;
                 setupRealtime();
               }
@@ -236,6 +239,7 @@ export function BancoAdminPainel() {
     setupRealtime();
 
     return () => {
+      isMounted = false;
       if (channel) void supabase.removeChannel(channel);
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
