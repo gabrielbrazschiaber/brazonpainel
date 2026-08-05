@@ -211,6 +211,7 @@ export function BancoAdminPainel() {
           }
         } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
           setRealtimeStatus("desconectado");
+          isSubscribed = false;
           
           if (!pollingRef.current) {
             pollingRef.current = setInterval(() => void carregar(), 30000);
@@ -219,8 +220,11 @@ export function BancoAdminPainel() {
           if (retryCount < MAX_RETRIES) {
             const delay = Math.pow(2, retryCount) * 2000;
             setTimeout(() => {
-              retryCount++;
-              setupRealtime();
+              // Se ainda não estiver inscrito após o delay, tenta novamente
+              if (!isSubscribed) {
+                retryCount++;
+                setupRealtime();
+              }
             }, delay);
           }
         }
