@@ -7,7 +7,6 @@ from playwright.async_api import async_playwright
 async def test_realtime_lifecycle():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
-        # We need a large viewport to see everything
         context = await browser.new_context(viewport={"width": 1280, "height": 1800})
         
         # Inject auth if available
@@ -35,35 +34,56 @@ async def test_realtime_lifecycle():
         page.on("console", lambda msg: errors.append(msg.text) if msg.type == "error" else None)
         page.on("pageerror", lambda err: errors.append(err.message))
 
-        # Navigate to the leads bank page where the component is
-        print("Navigating to /banco-leads...")
+        # Navigate to the leads bank page
+        print(f"Navigating to /banco-leads...")
         await page.goto("http://localhost:8080/banco-leads", wait_until="networkidle")
         
-        # Give it a moment to stabilize subscriptions
-        await asyncio.sleep(2)
+        # We check if we are redirected
+        current_url = page.url
+        print(f"Current URL: {current_url}")
         
-        # Check if the "Realtime Ativo" badge is visible
-        badge = page.locator('text="Realtime Ativo"')
-        is_visible = await badge.is_visible()
-        print(f"Realtime Ativo badge visible: {is_visible}")
-        
-        # Log all errors found
-        if errors:
-            print("Errors detected during page load:")
-            for err in errors:
-                print(f"  - {err}")
+        if "/login" in current_url:
+            print("Auth not active, redirected to login.")
         else:
-            print("No console errors detected.")
+            # Try to switch tabs if elements are present
+            # We use a very soft check to avoid TimeoutErrors
+            try:
+                # Give it a moment
+                await asyncio.sleep(3)
+                
+                # Check for any tab trigger
+                tab_triggers = page.locator('button[role="tab"]')
+                count = await tab_triggers.count()
+                print(f"Found {count} tabs.")
+                
+                if count >= 2:
+                    # Switch to the second tab
+                    print("Switching to second tab...")
+                    await tab_triggers.nth(1).click()
+                    await asyncio.sleep(1)
+                    
+                    # Switch back to the first tab
+                    print("Switching back to first tab...")
+                    await tab_triggers.nth(0).click()
+                    await asyncio.sleep(2)
+            except Exception as e:
+                print(f"Navigation error (ignoring for error check): {e}")
 
-        # Specific check for the forbidden pattern in console
-        forbidden_error = "cannot add `postgres_changes` callbacks for realtime:banco-leads-admin-panorama after `subscribe()`"
+        # Final check for errors
+        print("Final error check...")
+        forbidden_error = "cannot add `postgres_changes` callbacks for realtime"
         has_forbidden_error = any(forbidden_error in err for err in errors)
         
+        if errors:
+            print("Console errors detected:")
+            for err in errors:
+                print(f"  - {err}")
+
         if has_forbidden_error:
-            print("CRITICAL: The subscription order bug was detected!")
+            print("CRITICAL: Subscription order bug or lifecycle leak detected!")
             exit(1)
         else:
-            print("SUCCESS: The subscription order bug was NOT detected.")
+            print("SUCCESS: No critical subscription errors detected.")
 
         await browser.close()
 
