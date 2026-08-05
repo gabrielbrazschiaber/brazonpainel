@@ -42,6 +42,21 @@ async def test_realtime_lifecycle():
         # Give it a moment to stabilize subscriptions
         await asyncio.sleep(2)
         
+        # Test tab switching: Visão Geral -> Disponíveis -> Visão Geral
+        # 1. Start at Visão Geral (default for admin)
+        print("Checking initial Visão Geral tab...")
+        await page.wait_for_selector('text="Visão geral"')
+        
+        # 2. Switch to 'Disponíveis'
+        print("Switching to 'Disponíveis' tab...")
+        await page.click('button[role="tab"]:has-text("Disponíveis")')
+        await asyncio.sleep(1) # Wait for unmount cleanup
+        
+        # 3. Switch back to 'Visão geral'
+        print("Switching back to 'Visão geral' tab...")
+        await page.click('button[role="tab"]:has-text("Visão geral")')
+        await asyncio.sleep(2) # Wait for remount and subscription
+        
         # Check if the "Realtime Ativo" badge is visible
         badge = page.locator('text="Realtime Ativo"')
         is_visible = await badge.is_visible()
@@ -49,21 +64,21 @@ async def test_realtime_lifecycle():
         
         # Log all errors found
         if errors:
-            print("Errors detected during page load:")
+            print("Errors detected during page interaction:")
             for err in errors:
                 print(f"  - {err}")
         else:
-            print("No console errors detected.")
+            print("No console errors detected during tab switching.")
 
         # Specific check for the forbidden pattern in console
-        forbidden_error = "cannot add `postgres_changes` callbacks for realtime:banco-leads-admin-panorama after `subscribe()`"
+        forbidden_error = "cannot add `postgres_changes` callbacks for realtime"
         has_forbidden_error = any(forbidden_error in err for err in errors)
         
         if has_forbidden_error:
-            print("CRITICAL: The subscription order bug was detected!")
+            print("CRITICAL: Subscription order bug or lifecycle leak detected!")
             exit(1)
         else:
-            print("SUCCESS: The subscription order bug was NOT detected.")
+            print("SUCCESS: No subscription errors during navigation.")
 
         await browser.close()
 

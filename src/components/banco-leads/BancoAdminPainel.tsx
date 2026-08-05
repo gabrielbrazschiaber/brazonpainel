@@ -172,12 +172,19 @@ export function BancoAdminPainel() {
 
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let retryCount = 0;
-    const MAX_RETRIES = 5;
+    const MAX_RETRIES = 10; // Aumentado para tolerar instabilidades maiores
     let isSubscribed = false;
     let isMounted = true;
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const setupRealtime = () => {
       if (!isMounted) return;
+
+      // Limpa qualquer tentativa pendente antes de começar
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+        retryTimeout = null;
+      }
 
       // Remove o canal existente antes de criar um novo
       if (channel) {
@@ -188,7 +195,7 @@ export function BancoAdminPainel() {
 
       setRealtimeStatus("tentando");
       
-      const newChannel = supabase.channel("banco-leads-admin-panorama");
+      const newChannel = supabase.channel(`banco-leads-admin-panorama-${Math.random().toString(36).slice(2, 7)}`);
 
       newChannel
         .on(
@@ -202,7 +209,7 @@ export function BancoAdminPainel() {
           () => isMounted && void carregar()
         );
 
-      newChannel.subscribe((status) => {
+      newChannel.subscribe((status, err) => {
         if (!isMounted) return;
 
         if (status === "SUBSCRIBED") {
@@ -221,9 +228,12 @@ export function BancoAdminPainel() {
             pollingRef.current = setInterval(() => isMounted && void carregar(), 30000);
           }
 
+          // Se houve erro ou fechamento, tenta reconectar com backoff exponencial
           if (retryCount < MAX_RETRIES) {
-            const delay = Math.pow(2, retryCount) * 2000;
-            setTimeout(() => {
+            const delay = Math.min(Math.pow(2, retryCount) * 1000 + Math.random() * 1000, 30000);
+            
+            if (retryTimeout) clearTimeout(retryTimeout);
+            retryTimeout = setTimeout(() => {
               if (isMounted && !isSubscribed) {
                 retryCount++;
                 setupRealtime();
@@ -241,6 +251,7 @@ export function BancoAdminPainel() {
     return () => {
       isMounted = false;
       if (channel) void supabase.removeChannel(channel);
+      if (retryTimeout) clearTimeout(retryTimeout);
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
   }, [carregar]);
