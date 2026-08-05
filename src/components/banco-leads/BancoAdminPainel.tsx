@@ -173,17 +173,22 @@ export function BancoAdminPainel() {
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let retryCount = 0;
     const MAX_RETRIES = 5;
+    let isSubscribed = false;
 
     const setupRealtime = () => {
       // Remove o canal existente antes de criar um novo para evitar conflitos
       if (channel) {
         void supabase.removeChannel(channel);
+        channel = null;
       }
+      isSubscribed = false;
 
       setRealtimeStatus("tentando");
       
-      const newChannel = supabase
-        .channel("banco-leads-admin-panorama")
+      const newChannel = supabase.channel("banco-leads-admin-panorama");
+
+      // Adicionamos os callbacks ANTES do subscribe
+      newChannel
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "banco_leads" },
@@ -197,6 +202,7 @@ export function BancoAdminPainel() {
 
       newChannel.subscribe((status) => {
         if (status === "SUBSCRIBED") {
+          isSubscribed = true;
           setRealtimeStatus("conectado");
           retryCount = 0;
           if (pollingRef.current) {
