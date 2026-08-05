@@ -175,13 +175,14 @@ export function BancoAdminPainel() {
     const MAX_RETRIES = 5;
 
     const setupRealtime = () => {
+      // Remove o canal existente antes de criar um novo para evitar conflitos
       if (channel) {
         void supabase.removeChannel(channel);
       }
 
       setRealtimeStatus("tentando");
       
-      channel = supabase
+      const newChannel = supabase
         .channel("banco-leads-admin-panorama")
         .on(
           "postgres_changes",
@@ -194,11 +195,10 @@ export function BancoAdminPainel() {
           () => void carregar()
         );
 
-      channel.subscribe((status) => {
+      newChannel.subscribe((status) => {
         if (status === "SUBSCRIBED") {
           setRealtimeStatus("conectado");
           retryCount = 0;
-          // Limpa polling se a conexão foi estabelecida
           if (pollingRef.current) {
             clearInterval(pollingRef.current);
             pollingRef.current = null;
@@ -206,12 +206,10 @@ export function BancoAdminPainel() {
         } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
           setRealtimeStatus("desconectado");
           
-          // Inicia polling como fallback se não estiver rodando
           if (!pollingRef.current) {
             pollingRef.current = setInterval(() => void carregar(), 30000);
           }
 
-          // Tentativa de reconexão com backoff exponencial
           if (retryCount < MAX_RETRIES) {
             const delay = Math.pow(2, retryCount) * 2000;
             setTimeout(() => {
@@ -221,6 +219,8 @@ export function BancoAdminPainel() {
           }
         }
       });
+
+      channel = newChannel;
     };
 
     setupRealtime();
