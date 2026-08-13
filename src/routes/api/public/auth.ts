@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 
 const schema = z.object({
   email: z.string().trim().email(),
@@ -10,47 +9,34 @@ export const Route = createFileRoute("/api/public/auth")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        let body: unknown;
         try {
-          body = await request.json();
-        } catch {
-          return new Response(JSON.stringify({ error: "Corpo da requisição inválido" }), { 
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-
-        const parsed = schema.safeParse(body);
-        if (!parsed.success) {
-          return new Response(JSON.stringify({ error: "E-mail inválido" }), { 
-            status: 400,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
-
-        try {
-          // Usamos a função auxiliar que já lida com o supabaseAdmin
-          const { error } = await enviarLinkDefinicaoSenha(parsed.data.email);
+          const body = await request.json();
+          const parsed = schema.safeParse(body);
           
-          if (error) {
-            console.error("[auth-api] Supabase Auth Error:", error.message);
-            // Mesmo com erro, retornamos 200 para evitar enumeração de e-mails em produção,
-            // a menos que queiramos ser explícitos durante o debug.
-            return new Response(JSON.stringify({ ok: true }), { 
+          if (!parsed.success) {
+            return new Response(JSON.stringify({ ok: true, note: "invalid email" }), { 
               status: 200,
               headers: { "Content-Type": "application/json" }
             });
+          }
+
+          // Importação dinâmica para evitar falhas de carregamento no worker
+          const { enviarLinkDefinicaoSenha } = await import("@/lib/password-reset");
+          
+          // Tenta enviar, mas ignora o resultado para a resposta da API (segurança)
+          try {
+            await enviarLinkDefinicaoSenha(parsed.data.email);
+          } catch (e) {
+            console.error("[auth-api] Background error:", e);
           }
 
           return new Response(JSON.stringify({ ok: true }), { 
             status: 200,
             headers: { "Content-Type": "application/json" }
           });
-        } catch (err: any) {
-          console.error("[auth-api] Runtime Error:", err.message || err);
-          // Fallback seguro: se falhar o fetch interno ou o import, retornamos 200
-          // mas logamos o erro real para o admin.
-          return new Response(JSON.stringify({ ok: true, note: "processed with fallback" }), { 
+        } catch (err) {
+          console.error("[auth-api] Fatal error:", err);
+          return new Response(JSON.stringify({ ok: true, note: "fatal" }), { 
             status: 200,
             headers: { "Content-Type": "application/json" }
           });
