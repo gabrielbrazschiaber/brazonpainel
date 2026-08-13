@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { cadastroPublico } from "@/lib/vendedor.functions";
 import { validarCupomPublico } from "@/lib/cupons.functions";
-import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
+import { enviarResetEmail } from "@/lib/auth.functions";
 import { Card } from "@/components/ui/card";
 import { BrazonLogo } from "@/components/BrazonLogo";
 import { Button } from "@/components/ui/button";
@@ -74,6 +74,8 @@ function CadastroPage() {
   const navigate = useNavigate();
   const cadastrar = useServerFn(cadastroPublico);
   const validarCupom = useServerFn(validarCupomPublico);
+  const triggerReset = useServerFn(enviarResetEmail);
+
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -214,18 +216,15 @@ function CadastroPage() {
         },
       });
 
-      // Chamamos o endpoint de servidor para o reset, evitando bloqueios no client-side
+      // Chamamos a Server Function para o reset, garantindo execução no backend
       let resetSucesso = false;
       try {
-        const resetResp = await fetch("/api/public/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: emailCliente }),
-        });
-        resetSucesso = resetResp.ok;
+        await triggerReset({ data: { email: emailCliente } });
+        resetSucesso = true;
       } catch (err) {
         console.error("[cadastro-reset-link]", err);
       }
+
 
       setDone({
         email: emailCliente,
