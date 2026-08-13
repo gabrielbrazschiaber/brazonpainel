@@ -134,14 +134,28 @@ function LoginPage() {
       return;
     }
     setSubmitting(true);
-    const { error } = await enviarLinkDefinicaoSenha(email);
-    setSubmitting(false);
-    if (error) {
-      toast.error("Não foi possível enviar o link. Tente novamente.");
-      return;
+    
+    try {
+      // Chamamos o endpoint de servidor para evitar bloqueios de CORS/CSP do Supabase no navegador
+      const response = await fetch("/api/public/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Erro ao enviar e-mail.");
+      }
+      
+      setResetSent(true);
+      toast.success("Link enviado! Verifique seu e-mail.");
+    } catch (err) {
+      console.error("[handleForgot]", err);
+      toast.error("Não foi possível enviar o link agora. Tente novamente mais tarde.");
+    } finally {
+      setSubmitting(false);
     }
-    setResetSent(true);
-    toast.success("Link enviado! Verifique seu e-mail.");
   }
 
   if (fatorPendente) {
