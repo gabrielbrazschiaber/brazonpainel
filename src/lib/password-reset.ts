@@ -6,13 +6,24 @@ import { supabase } from "@/integrations/supabase/client";
  * evitando expor qualquer senha em respostas do servidor.
  */
 export async function enviarLinkDefinicaoSenha(email: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { createClient } = await import("@supabase/supabase-js");
+  const SUPABASE_URL = process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
+  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("[password-reset] Variáveis de ambiente Supabase ausentes");
+    return { error: new Error("Configuração do servidor incompleta") };
+  }
+
+  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    }
+  });
   
-  // No servidor, não temos window.location.origin
-  // Usamos o domínio fixo do projeto para garantir que o redirecionamento funcione.
   const redirectTo = "https://painel.brazoncrm.com.br/redefinir-senha";
-  
-  console.log(`[password-reset] Enviando link para ${email} com redirect ${redirectTo}`);
+  console.log(`[password-reset] Solicitando reset para ${email}`);
   
   return supabaseAdmin.auth.resetPasswordForEmail(email.trim(), { redirectTo });
 }
