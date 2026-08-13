@@ -155,8 +155,8 @@ export function DoisFatoresEquipeCard() {
                 <span className="truncate font-medium text-foreground">{u.nome || u.email}</span>
               </div>
               <p className="mt-0.5 break-all text-xs text-muted-foreground">
-                {u.papeis.join(", ")} · {u.ativo ? "2FA ativo" : "sem 2FA"} ·{" "}
-                {u.codigosDisponiveis} código(s) de recuperação
+                {u.papeis.join(", ")} · {u.ativo ? "2FA ativo" : "sem 2FA"} · {u.codigosDisponiveis}{" "}
+                código(s) de recuperação
                 {u.telefone ? ` · tel. ${u.telefone}` : ""}
               </p>
             </div>

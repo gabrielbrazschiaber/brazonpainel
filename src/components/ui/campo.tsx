@@ -26,14 +26,7 @@ interface CampoProps {
  * visualmente a ajuda para não empilhar mensagens, e é anunciado por leitor de
  * tela via aria-describedby + aria-invalid.
  */
-export function Campo({
-  rotulo,
-  ajuda,
-  erro,
-  obrigatorio,
-  className,
-  children,
-}: CampoProps) {
+export function Campo({ rotulo, ajuda, erro, obrigatorio, className, children }: CampoProps) {
   const base = useId();
   const id = `${base}-campo`;
   const idAjuda = `${base}-ajuda`;
@@ -66,7 +59,11 @@ export function Campo({
         </p>
       )}
       {erro && (
-        <p id={idErro} role="alert" className="text-xs font-medium leading-relaxed text-destructive">
+        <p
+          id={idErro}
+          role="alert"
+          className="text-xs font-medium leading-relaxed text-destructive"
+        >
           {erro}
         </p>
       )}

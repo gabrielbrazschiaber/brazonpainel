@@ -146,7 +146,9 @@ export function BancoAdminPainel() {
   const [lotes, setLotes] = useState<QualidadeLote[]>([]);
   const [escopos, setEscopos] = useState<EscopoVendedor[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [realtimeStatus, setRealtimeStatus] = useState<"conectado" | "desconectado" | "tentando">("desconectado");
+  const [realtimeStatus, setRealtimeStatus] = useState<"conectado" | "desconectado" | "tentando">(
+    "desconectado",
+  );
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const carregar = useCallback(async () => {
@@ -194,19 +196,21 @@ export function BancoAdminPainel() {
       isSubscribed = false;
 
       setRealtimeStatus("tentando");
-      
-      const newChannel = supabase.channel(`banco-leads-admin-panorama-${Math.random().toString(36).slice(2, 7)}`);
+
+      const newChannel = supabase.channel(
+        `banco-leads-admin-panorama-${Math.random().toString(36).slice(2, 7)}`,
+      );
 
       newChannel
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "banco_leads" },
-          () => isMounted && void carregar()
+          () => isMounted && void carregar(),
         )
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "banco_leads_lotes" },
-          () => isMounted && void carregar()
+          () => isMounted && void carregar(),
         );
 
       newChannel.subscribe((status, err) => {
@@ -223,7 +227,7 @@ export function BancoAdminPainel() {
         } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
           setRealtimeStatus("desconectado");
           isSubscribed = false;
-          
+
           if (!pollingRef.current) {
             pollingRef.current = setInterval(() => isMounted && void carregar(), 30000);
           }
@@ -231,7 +235,7 @@ export function BancoAdminPainel() {
           // Se houve erro ou fechamento, tenta reconectar com backoff exponencial
           if (retryCount < MAX_RETRIES) {
             const delay = Math.min(Math.pow(2, retryCount) * 1000 + Math.random() * 1000, 30000);
-            
+
             if (retryTimeout) clearTimeout(retryTimeout);
             retryTimeout = setTimeout(() => {
               if (isMounted && !isSubscribed) {
@@ -278,15 +282,24 @@ export function BancoAdminPainel() {
           </p>
           <div className="flex items-center gap-2">
             {realtimeStatus === "conectado" ? (
-              <Badge variant="outline" className="h-5 gap-1 border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Badge
+                variant="outline"
+                className="h-5 gap-1 border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              >
                 <Wifi className="h-3 w-3" /> Realtime Ativo
               </Badge>
             ) : realtimeStatus === "tentando" ? (
-              <Badge variant="outline" className="h-5 gap-1 border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <Badge
+                variant="outline"
+                className="h-5 gap-1 border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              >
                 <Loader2 className="h-3 w-3 animate-spin" /> Conectando...
               </Badge>
             ) : (
-              <Badge variant="outline" className="h-5 gap-1 border-destructive/20 bg-destructive/10 text-destructive">
+              <Badge
+                variant="outline"
+                className="h-5 gap-1 border-destructive/20 bg-destructive/10 text-destructive"
+              >
                 <WifiOff className="h-3 w-3" /> Polling (Fallback)
               </Badge>
             )}
@@ -358,8 +371,8 @@ export function BancoAdminPainel() {
       <Card className="p-4">
         <h2 className="text-base font-semibold text-foreground">Reserva por segmento</h2>
         <p className="mb-3 text-sm text-muted-foreground">
-          Segmentos, estados e CNAEs de cada vendedor. Leads reservados só ficam liberados para
-          quem tem o segmento, o estado ou o CNAE no escopo durante a janela de reserva definida em
+          Segmentos, estados e CNAEs de cada vendedor. Leads reservados só ficam liberados para quem
+          tem o segmento, o estado ou o CNAE no escopo durante a janela de reserva definida em
           Configurações.
         </p>
         {escopos.length === 0 ? (

@@ -7,9 +7,8 @@ export const obterStatusMfa = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { contarCodigosDisponiveis, lerPoliticaMfa, temFatorVerificado } = await import(
-      "@/lib/mfa.server"
-    );
+    const { contarCodigosDisponiveis, lerPoliticaMfa, temFatorVerificado } =
+      await import("@/lib/mfa.server");
 
     const [{ data: perfil }, { data: papeis }, politica] = await Promise.all([
       supabase.from("profiles").select("telefone").eq("id", userId).maybeSingle(),
@@ -57,9 +56,7 @@ export const gerarCodigosRecuperacaoMfa = createServerFn({ method: "POST" })
 /** Salva o telefone de contato usado pelo suporte para confirmar identidade. */
 export const salvarTelefoneContato = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
-    z.object({ telefone: z.string().trim().max(20) }).parse(data),
-  )
+  .inputValidator((data: unknown) => z.object({ telefone: z.string().trim().max(20) }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const digitos = data.telefone.replace(/\D/g, "");
@@ -84,9 +81,8 @@ export const usarCodigoRecuperacaoMfa = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ codigo: z.string().trim().min(4) }).parse(data))
   .handler(async ({ context, data }) => {
     const { userId } = context;
-    const { consumirCodigo, contarCodigosDisponiveis, removerTodosFatores } = await import(
-      "@/lib/mfa.server"
-    );
+    const { consumirCodigo, contarCodigosDisponiveis, removerTodosFatores } =
+      await import("@/lib/mfa.server");
     const { registrarAuditoria } = await import("@/lib/audit.server");
 
     const ok = await consumirCodigo(userId, data.codigo);
@@ -222,9 +218,7 @@ export const listarStatusMfaEquipe = createServerFn({ method: "POST" })
 export const resetarMfaUsuario = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z
-      .object({ user_id: z.string().uuid(), motivo: z.string().trim().min(5).max(300) })
-      .parse(data),
+    z.object({ user_id: z.string().uuid(), motivo: z.string().trim().min(5).max(300) }).parse(data),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;

@@ -225,7 +225,6 @@ function CadastroPage() {
         console.error("[cadastro-reset-link]", err);
       }
 
-
       setDone({
         email: emailCliente,
         emailEnviado: resetSucesso,

@@ -175,7 +175,6 @@ export const criarCliente = createServerFn({ method: "POST" })
     return { ok: true, integracao, cupom_aplicado: cupomCodigo, cupom_invalido: cupomAviso };
   });
 
-
 const cadastroPublicoSchema = novoClienteSchema
   .omit({ mensagem_vendedor: true, anotacoes: true, data_vencimento: true })
   .extend({
@@ -349,7 +348,6 @@ export const cadastroPublico = createServerFn({ method: "POST" })
     await enviarLinkDefinicaoSenha(email);
 
     return {
-
       ok: true,
       termos_versao: TERMOS_VERSAO,
       cupom: cupomInfo,

@@ -7,7 +7,12 @@ import { useAuth, roleHome } from "@/lib/auth";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
 import { enviarResetEmail } from "@/lib/auth.functions";
 import { usarCodigoRecuperacaoMfa } from "@/lib/mfa.functions";
-import { lerNivelSeguranca, listarFatoresTotp, mensagemErroMfa, verificarCodigoTotp } from "@/lib/mfa";
+import {
+  lerNivelSeguranca,
+  listarFatoresTotp,
+  mensagemErroMfa,
+  verificarCodigoTotp,
+} from "@/lib/mfa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -136,21 +141,20 @@ function LoginPage() {
       return;
     }
     setSubmitting(true);
-    
+
     try {
       // Usamos uma Server Function para garantir que o envio ocorra no backend
       // sem as restrições de CORS/CSP do navegador para o endpoint de auth.
       const res = await triggerReset({ data: { email: email.trim() } });
-      
+
       if (res && "ok" in res && !res.ok) {
         console.error("[handleForgot] Erro retornado:", res.error);
         // Mesmo com erro, mantemos o estado visual de enviado para evitar ataques de enumeração,
         // mas logamos internamente para debug.
       }
-      
+
       setResetSent(true);
       toast.success("Link enviado! Verifique seu e-mail.");
-
     } catch (err) {
       console.error("[handleForgot] Runtime error:", err);
       // Sempre mostramos sucesso por segurança

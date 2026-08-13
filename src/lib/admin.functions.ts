@@ -20,7 +20,15 @@ function gerarSenhaAleatoria(): string {
 const escopoVendedorSchema = {
   segmentos: z.array(z.string().trim().min(1).max(120)).max(40).optional(),
   estados: z.array(z.string().trim().length(2)).max(27).optional(),
-  cnaes: z.array(z.string().trim().regex(/^\d{7}$/)).max(200).optional(),
+  cnaes: z
+    .array(
+      z
+        .string()
+        .trim()
+        .regex(/^\d{7}$/),
+    )
+    .max(200)
+    .optional(),
 };
 
 type EscopoEntrada = {
@@ -135,7 +143,6 @@ export const criarVendedor = createServerFn({ method: "POST" })
 
     return { ok: true, senha_definida: senhaDefinidaPeloAdmin };
   });
-
 
 const novoAdminSchema = z.object({
   nome: z.string().trim().min(2).max(120),

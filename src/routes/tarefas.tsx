@@ -311,7 +311,6 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
         </Suspense>
       }
     >
-
       <PageHeader
         eyebrow={equipe ? "Operação" : "Atendimento"}
         eyebrowIcon={ClipboardList}
@@ -358,7 +357,6 @@ function TarefasConteudo({ home, isAdmin }: { home: string; isAdmin: boolean }) 
         {carregando ? (
           <ListaEsqueleto linhas={5} />
         ) : visiveis.length === 0 ? (
-
           <EmptyState
             icon={ClipboardList}
             titulo="Nenhuma tarefa por aqui"

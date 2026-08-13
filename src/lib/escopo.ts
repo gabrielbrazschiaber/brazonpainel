@@ -46,7 +46,9 @@ export function resumoEscopo(escopo: {
   }
   if (estados.length > 0) {
     partes.push(
-      estados.length <= 4 ? estados.join("/") : `${estados.slice(0, 4).join("/")} +${estados.length - 4}`,
+      estados.length <= 4
+        ? estados.join("/")
+        : `${estados.slice(0, 4).join("/")} +${estados.length - 4}`,
     );
   }
   if (cnaes.length > 0) {

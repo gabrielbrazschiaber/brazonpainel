@@ -247,7 +247,6 @@ export async function salvarBancoLeadServer(
     reservado_estado: campos.reservado_estado ? campos.reservado_estado.toUpperCase() : null,
   };
 
-
   if (id) {
     const { data, error } = await supabase
       .from("banco_leads")
@@ -648,14 +647,26 @@ export async function estatisticasBancoServer(
   userId: string,
 ): Promise<EstatisticasBanco> {
   await exigirAdmin(supabase, userId);
-  
+
   // Queries separadas com { count: "exact", head: true } para obter totais REAIS sem carregar linhas
   const [resTotal, resDisp, resPux, resArq, resBloq] = await Promise.all([
     supabase.from("banco_leads").select("id", { count: "exact", head: true }),
-    supabase.from("banco_leads").select("id", { count: "exact", head: true }).eq("status", "disponivel"),
-    supabase.from("banco_leads").select("id", { count: "exact", head: true }).eq("status", "puxado"),
-    supabase.from("banco_leads").select("id", { count: "exact", head: true }).eq("status", "arquivado"),
-    supabase.from("banco_leads").select("id", { count: "exact", head: true }).gt("bloqueado_ate", new Date().toISOString()),
+    supabase
+      .from("banco_leads")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "disponivel"),
+    supabase
+      .from("banco_leads")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "puxado"),
+    supabase
+      .from("banco_leads")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "arquivado"),
+    supabase
+      .from("banco_leads")
+      .select("id", { count: "exact", head: true })
+      .gt("bloqueado_ate", new Date().toISOString()),
   ]);
 
   if (resTotal.error) throw new Error(resTotal.error.message);

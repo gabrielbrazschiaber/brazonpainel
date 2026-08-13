@@ -80,7 +80,6 @@ export function AppShell({
           </main>
         </div>
       </div>
-
     </SidebarProvider>
   );
 }

@@ -383,7 +383,6 @@ function SolicitacoesConteudo({ home }: { home: string }) {
       area="Solicitações"
       trilha={[{ rotulo: "Painel", para: home }, { rotulo: "Solicitações" }]}
       larguraMax="max-w-5xl"
-
       headerExtra={
         <Suspense fallback={null}>
           <AjudaDaTela chave="tela:solicitacoes" />
@@ -458,7 +457,6 @@ function SolicitacoesConteudo({ home }: { home: string }) {
         {carregando ? (
           <ListaEsqueleto linhas={4} />
         ) : visiveis.length === 0 ? (
-
           <EmptyState
             icon={Inbox}
             titulo="Nenhuma solicitação ainda"

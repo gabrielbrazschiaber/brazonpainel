@@ -30,7 +30,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CardsEsqueleto } from "@/components/ui/loading-state";
 
-
 import { Skeleton } from "@/components/ui/skeleton";
 import { LeadsSkeletonCards, LeadsSkeletonRows } from "@/components/comercial/LeadsSkeleton";
 import { Card } from "@/components/ui/card";
@@ -390,7 +389,6 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       voltarPara={home}
       area="Gestão comercial"
       trilha={[{ rotulo: "Painel", para: home }, { rotulo: "Gestão comercial" }]}
-
       headerExtra={
         <Suspense fallback={null}>
           <AjudaDaTela chave="tela:comercial" />
@@ -476,7 +474,6 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       ) : (
         dados && (
           <Suspense fallback={<CardsEsqueleto quantidade={3} />}>
-
             <ComercialDashboard
               dados={dados}
               onVerIncompletos={() => {

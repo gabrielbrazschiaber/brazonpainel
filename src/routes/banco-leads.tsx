@@ -670,7 +670,9 @@ function BancoLeadsConteudo({ isAdmin }: { isAdmin: boolean }) {
                                   <Badge variant="outline" className={bancoStatusClasse(l.status)}>
                                     {BANCO_STATUS_LABEL[l.status]}
                                   </Badge>
-                                  {l.reservado_segmento || l.reservado_estado || l.reservado_cnae ? (
+                                  {l.reservado_segmento ||
+                                  l.reservado_estado ||
+                                  l.reservado_cnae ? (
                                     <span className="text-[11px] text-muted-foreground">
                                       Reserva:{" "}
                                       {[

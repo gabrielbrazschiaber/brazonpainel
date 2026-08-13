@@ -10,7 +10,6 @@ import {
   normalizarCnpj,
 } from "@/lib/leads-import";
 
-
 describe("normalizarCnpj", () => {
   it("completa zeros à esquerda quando faltam dígitos", () => {
     const r = normalizarCnpj("231947000103");

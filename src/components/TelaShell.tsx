@@ -37,7 +37,6 @@ export function TelaShell({
   larguraMax = "max-w-6xl",
   children,
 }: TelaShellProps) {
-
   return (
     <div className="min-h-dvh bg-background">
       <PularParaConteudo />
@@ -57,9 +56,7 @@ export function TelaShell({
 
         <BrazonLogo className="hidden sm:flex" symbolClassName="h-7 w-7" textClassName="text-lg" />
 
-        {trilha && trilha.length > 0 && (
-          <Trilha itens={trilha} className="hidden md:block" />
-        )}
+        {trilha && trilha.length > 0 && <Trilha itens={trilha} className="hidden md:block" />}
 
         <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1.5">
           {headerExtra}
@@ -80,5 +77,4 @@ export function TelaShell({
       </main>
     </div>
   );
-
 }

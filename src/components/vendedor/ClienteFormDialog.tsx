@@ -492,7 +492,8 @@ export function ClienteFormDialog({
 
               {values.isTeste && (
                 <p className="text-xs text-muted-foreground">
-                  O vencimento foi ajustado para daqui a 8 dias (7 dias de teste + 1 dia de ativação).
+                  O vencimento foi ajustado para daqui a 8 dias (7 dias de teste + 1 dia de
+                  ativação).
                 </p>
               )}
 
