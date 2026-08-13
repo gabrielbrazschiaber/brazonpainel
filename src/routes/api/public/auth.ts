@@ -29,12 +29,29 @@ export const Route = createFileRoute("/api/public/auth")({
         }
 
         try {
-          // O resetPasswordForEmail do Supabase sempre retorna 200/ok mesmo se o e-mail não existir
-          // por razões de segurança (evitar enumeração de e-mails), a menos que configurado o contrário.
-          const { error } = await enviarLinkDefinicaoSenha(parsed.data.email);
+          // Usamos o SDK diretamente aqui para isolar o problema
+          const { createClient } = await import("@supabase/supabase-js");
+          const SUPABASE_URL = process.env.SUPABASE_URL || "https://svdrarqtkfbzmxzivibr.supabase.co";
+          const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+          if (!SUPABASE_SERVICE_ROLE_KEY) {
+            console.error("[auth-api] SUPABASE_SERVICE_ROLE_KEY is missing");
+            return new Response(JSON.stringify({ error: "Configuração do servidor ausente" }), { 
+              status: 500,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
+
+          const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+            auth: { persistSession: false }
+          });
+
+          const { error } = await supabaseAdmin.auth.resetPasswordForEmail(parsed.data.email, {
+            redirectTo: "https://painel.brazoncrm.com.br/redefinir-senha"
+          });
           
           if (error) {
-            console.error("[auth-api] Erro ao enviar link:", error.message);
+            console.error("[auth-api] Supabase Auth Error:", error.message);
             return new Response(JSON.stringify({ error: error.message }), { 
               status: 500,
               headers: { "Content-Type": "application/json" }
@@ -45,9 +62,9 @@ export const Route = createFileRoute("/api/public/auth")({
             status: 200,
             headers: { "Content-Type": "application/json" }
           });
-        } catch (err) {
-          console.error("[auth-api] Erro inesperado:", err);
-          return new Response(JSON.stringify({ error: "Erro interno ao processar a solicitação" }), { 
+        } catch (err: any) {
+          console.error("[auth-api] Runtime Error:", err.message || err);
+          return new Response(JSON.stringify({ error: err.message || "Erro interno" }), { 
             status: 500,
             headers: { "Content-Type": "application/json" }
           });
