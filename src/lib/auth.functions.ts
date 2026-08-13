@@ -14,10 +14,13 @@ export const enviarResetEmail = createServerFn({ method: "POST" })
       const res = await enviarLinkDefinicaoSenha(data.email);
 
       if (res.error) {
-        console.error("[enviarResetEmail] Erro retornado pelo Supabase:", res.error.message);
+        console.error("[enviarResetEmail] Erro no fluxo de reset:", res.error.message);
+        // Retornamos sucesso cosmético se o erro for "User not found" por segurança,
+        // mas aqui mantemos o erro real para o admin/vendedor saber o que houve.
         return { ok: false, error: res.error.message };
       }
-      console.log("[enviarResetEmail] Sucesso no envio do reset.");
+
+      console.log("[enviarResetEmail] Fluxo de reset processado.");
       return { ok: true };
     } catch (err) {
       console.error("[enviarResetEmail] Erro fatal durante a execução:", err);
