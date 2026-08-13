@@ -1,7 +1,7 @@
 export async function enviarLinkDefinicaoSenha(email: string) {
   const emailLimpo = email.trim().toLowerCase();
   const redirectTo = "https://painel.brazoncrm.com.br/redefinir-senha";
-  
+
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   console.log(`[password-reset] Solicitando reset para ${emailLimpo} via supabaseAdmin...`);
@@ -9,7 +9,7 @@ export async function enviarLinkDefinicaoSenha(email: string) {
   try {
     // Usamos resetPasswordForEmail que é o método padrão da lib
     const result = await supabaseAdmin.auth.resetPasswordForEmail(emailLimpo, { redirectTo });
-    
+
     if (result.error) {
       console.error(`[password-reset] Erro ao enviar para ${emailLimpo}:`, result.error.message);
     } else {

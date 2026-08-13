@@ -366,7 +366,6 @@ export function normalizarCnpj(valor: string | null | undefined): CnpjNormalizad
   };
 }
 
-
 /**
  * Aviso CRÍTICO de CNPJ: valor foi preenchido, mas não é aproveitável ou não
  * confere. Usado na validação final do servidor para impedir a gravação da
@@ -381,7 +380,6 @@ export function avisoCriticoCnpj(valor: string | null | undefined): string | nul
   if (n.aviso === AVISO_CNPJ_DIGITO) return AVISO_CNPJ_DIGITO;
   return null;
 }
-
 
 /**
  * Máscara única do CNPJ: 00.000.000/0000-00.
@@ -418,7 +416,6 @@ export function explicacaoCnpj(n: CnpjNormalizado): string | null {
   return null;
 }
 
-
 /** Datas de planilha: "31/12/2020", "2020-12-31" ou serial do Excel. */
 export function normalizarDataBr(valor: string | null | undefined): string | null {
   const bruto = (valor ?? "").toString().trim();
@@ -445,7 +442,6 @@ export function normalizarDataBr(valor: string | null | undefined): string | nul
   }
   return null;
 }
-
 
 // ---------------------------------------------------------------------------
 // Linhas e classificação

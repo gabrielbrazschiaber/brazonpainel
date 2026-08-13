@@ -28,11 +28,16 @@ export function Trilha({ itens, className }: { itens: readonly TrilhaItem[]; cla
                   {item.rotulo}
                 </Link>
               ) : (
-                <span aria-current="page" className="truncate px-1 py-0.5 font-medium text-foreground">
+                <span
+                  aria-current="page"
+                  className="truncate px-1 py-0.5 font-medium text-foreground"
+                >
                   {item.rotulo}
                 </span>
               )}
-              {!ultimo && <ChevronRight aria-hidden="true" className="h-3 w-3 shrink-0 opacity-60" />}
+              {!ultimo && (
+                <ChevronRight aria-hidden="true" className="h-3 w-3 shrink-0 opacity-60" />
+              )}
             </li>
           );
         })}

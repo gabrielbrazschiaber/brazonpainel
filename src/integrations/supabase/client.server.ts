@@ -23,11 +23,11 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
     }
 
     headers.set("apikey", supabaseKey);
-    
+
     // DEBUG: Log the request to help diagnose "fetch failed"
-    console.log(`[Supabase Admin Fetch] ${init?.method || 'GET'} ${input}`);
-    
-    return fetch(input, { ...init, headers }).catch(err => {
+    console.log(`[Supabase Admin Fetch] ${init?.method || "GET"} ${input}`);
+
+    return fetch(input, { ...init, headers }).catch((err) => {
       console.error(`[Supabase Admin Fetch Error] ${input}:`, err.message || err);
       throw err;
     });

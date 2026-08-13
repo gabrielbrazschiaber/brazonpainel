@@ -12,7 +12,7 @@ export const enviarResetEmail = createServerFn({ method: "POST" })
       console.log(`[enviarResetEmail] Solicitando reset para: ${data.email}`);
       const { enviarLinkDefinicaoSenha } = await import("./password-reset");
       const res = await enviarLinkDefinicaoSenha(data.email);
-      
+
       if (res.error) {
         console.error("[enviarResetEmail] Erro retornado pelo Supabase:", res.error.message);
         return { ok: false, error: res.error.message };

@@ -54,11 +54,18 @@ async function abrirComArquivo() {
       onOpenChange={() => {}}
       // Segmentos e CNAEs sujos: vazios, espaços e duplicados vindos do banco.
       segmentos={["Alimentação", "", "   ", "Alimentação"]}
-      cnaes={[
-        { codigo: "4721102", descricao: "Padaria", segmento_sugerido: "Alimentação", ativo: true },
-        { codigo: "", descricao: "Sem código", segmento_sugerido: "", ativo: true },
-        { codigo: "4721102", descricao: "Duplicado", segmento_sugerido: "", ativo: true },
-      ] as never}
+      cnaes={
+        [
+          {
+            codigo: "4721102",
+            descricao: "Padaria",
+            segmento_sugerido: "Alimentação",
+            ativo: true,
+          },
+          { codigo: "", descricao: "Sem código", segmento_sugerido: "", ativo: true },
+          { codigo: "4721102", descricao: "Duplicado", segmento_sugerido: "", ativo: true },
+        ] as never
+      }
       horasReservaPadrao={24}
       onConcluido={() => {}}
     />,

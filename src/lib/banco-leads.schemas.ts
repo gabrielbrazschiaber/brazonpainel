@@ -53,7 +53,11 @@ export const listarBancoLeadsSchema = z.object({
   cidade: z.string().trim().max(120).optional(),
   estado: z.string().trim().max(2).optional(),
   cnae: z.string().trim().max(7).optional(),
-  data_abertura: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida").optional(),
+  data_abertura: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")
+    .optional(),
   busca: z.string().trim().max(120).optional(),
   lote_id: z.string().uuid().optional(),
   vendedor_id: z.string().uuid().optional(),
@@ -146,7 +150,15 @@ export const definirEscopoVendedorSchema = z.object({
   vendedor_id: z.string().uuid(),
   segmentos: z.array(z.string().trim().min(1).max(120)).max(40).default([]),
   estados: z.array(z.string().trim().length(2)).max(27).default([]),
-  cnaes: z.array(z.string().trim().regex(/^\d{7}$/)).max(200).default([]),
+  cnaes: z
+    .array(
+      z
+        .string()
+        .trim()
+        .regex(/^\d{7}$/),
+    )
+    .max(200)
+    .default([]),
 });
 
 export type SalvarBancoLeadInput = z.input<typeof salvarBancoLeadSchema>;

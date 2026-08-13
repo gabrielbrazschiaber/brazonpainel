@@ -9,13 +9,7 @@ import { cn } from "@/lib/utils";
  * o esqueleto reproduz a estrutura final e evita salto de layout.
  */
 
-export function ListaEsqueleto({
-  linhas = 4,
-  className,
-}: {
-  linhas?: number;
-  className?: string;
-}) {
+export function ListaEsqueleto({ linhas = 4, className }: { linhas?: number; className?: string }) {
   return (
     <Card className={cn("space-y-3 p-4 sm:p-5", className)} aria-busy="true" aria-live="polite">
       <span className="sr-only">Carregando…</span>

@@ -120,7 +120,10 @@ export async function registrarCnaesServer(
   supabase: Sb,
   cnaes: { codigo: string; descricao?: string | null; segmento_sugerido?: string | null }[],
 ): Promise<number> {
-  const unicos = new Map<string, { codigo: string; descricao: string | null; segmento: string | null }>();
+  const unicos = new Map<
+    string,
+    { codigo: string; descricao: string | null; segmento: string | null }
+  >();
   for (const c of cnaes) {
     const codigo = normalizarCnae(c.codigo);
     if (!codigo || unicos.has(codigo)) continue;

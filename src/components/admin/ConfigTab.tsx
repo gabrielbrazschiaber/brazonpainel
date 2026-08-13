@@ -136,10 +136,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
           dominio: form.dominio ?? "",
           dias_aviso_vencimento: Number(form.dias_aviso_vencimento) || 0,
           dias_devolver_lead: Math.min(30, Math.max(3, Number(form.dias_devolver_lead) || 7)),
-          horas_reserva_lote: Math.min(
-            720,
-            Math.max(1, Number(form.horas_reserva_lote) || 48),
-          ),
+          horas_reserva_lote: Math.min(720, Math.max(1, Number(form.horas_reserva_lote) || 48)),
           percentual_comissao_padrao: Number(form.percentual_comissao_padrao) || 0,
           asaas_webhook_url: form.asaas_webhook_url ?? "",
           asaas_ambiente: form.asaas_ambiente ?? "sandbox",

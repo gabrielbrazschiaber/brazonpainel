@@ -109,8 +109,9 @@
   /* Elevation & effects */
   --shadow-xs: 0 1px 2px 0 oklch(0.3 0.05 287 / 0.05);
   --shadow-sm: 0 1px 3px 0 oklch(0.3 0.05 287 / 0.08), 0 1px 2px -1px oklch(0.3 0.05 287 / 0.06);
-  --shadow-md: 0 4px 12px -2px oklch(0.3 0.05 287 / 0.10), 0 2px 6px -2px oklch(0.3 0.05 287 / 0.06);
-  --shadow-lg: 0 12px 28px -6px oklch(0.35 0.08 287 / 0.16), 0 4px 10px -4px oklch(0.3 0.05 287 / 0.08);
+  --shadow-md: 0 4px 12px -2px oklch(0.3 0.05 287 / 0.1), 0 2px 6px -2px oklch(0.3 0.05 287 / 0.06);
+  --shadow-lg:
+    0 12px 28px -6px oklch(0.35 0.08 287 / 0.16), 0 4px 10px -4px oklch(0.3 0.05 287 / 0.08);
   --shadow-primary: 0 8px 24px -6px oklch(0.487 0.158 287 / 0.35);
   --gradient-primary: linear-gradient(135deg, oklch(0.52 0.16 287), oklch(0.6 0.17 300));
   --gradient-surface: linear-gradient(180deg, oklch(0.99 0.004 285), oklch(0.965 0.008 285));
@@ -122,7 +123,6 @@
   --gap-secao: 1.5rem;
   --gap-pagina: 2rem;
 }
-
 
 .dark {
   --background: oklch(0.17 0.02 285);
@@ -162,7 +162,6 @@
   --sidebar-border: oklch(1 0 0 / 20%);
   --sidebar-ring: oklch(0.82 0.13 292);
 
-
   --shadow-xs: 0 1px 2px 0 oklch(0 0 0 / 0.3);
   --shadow-sm: 0 1px 3px 0 oklch(0 0 0 / 0.35), 0 1px 2px -1px oklch(0 0 0 / 0.3);
   --shadow-md: 0 4px 12px -2px oklch(0 0 0 / 0.4), 0 2px 6px -2px oklch(0 0 0 / 0.3);
@@ -196,25 +195,35 @@
     font-family: var(--font-sans);
   }
 
-  h1, h2, h3, h4, h5 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
     overflow-wrap: anywhere;
   }
 
   /* Evita que URLs, e-mails e códigos longos estourem a largura no celular */
-  p, span, td, th, li, label {
+  p,
+  span,
+  td,
+  th,
+  li,
+  label {
     overflow-wrap: break-word;
   }
 
   /* Alvos de toque confortáveis em telas pequenas */
   @media (max-width: 480px) {
-    button, [role="button"], a {
+    button,
+    [role="button"],
+    a {
       touch-action: manipulation;
     }
   }
 }
-
 
 /* Suave elevação e destaque em cards interativos */
 @utility card-interactive {
@@ -270,10 +279,12 @@
   h1 {
     line-height: 1.15;
   }
-  h2, h3 {
+  h2,
+  h3 {
     line-height: 1.25;
   }
-  h4, h5 {
+  h4,
+  h5 {
     line-height: 1.35;
   }
 

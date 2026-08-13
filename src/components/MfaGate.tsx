@@ -3,7 +3,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { obterStatusMfa, usarCodigoRecuperacaoMfa } from "@/lib/mfa.functions";
-import { lerNivelSeguranca, listarFatoresTotp, mensagemErroMfa, verificarCodigoTotp } from "@/lib/mfa";
+import {
+  lerNivelSeguranca,
+  listarFatoresTotp,
+  mensagemErroMfa,
+  verificarCodigoTotp,
+} from "@/lib/mfa";
 import { DoisFatoresCard } from "@/components/conta/DoisFatoresCard";
 import { useSair } from "@/lib/use-sair";
 import { useAuth } from "@/lib/auth";
@@ -171,7 +176,11 @@ export function MfaGate({ children }: { children: ReactNode }) {
                 Perdi o acesso ao app — usar código de recuperação
               </button>
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <Button variant="ghost" onClick={() => void sair()} disabled={processando || saindo}>
+                <Button
+                  variant="ghost"
+                  onClick={() => void sair()}
+                  disabled={processando || saindo}
+                >
                   Sair da conta
                 </Button>
                 <Button onClick={confirmarCodigo} disabled={processando}>

@@ -44,6 +44,7 @@ Ao alterar permissões, invalidar as consultas em cache e recarregar o contexto 
 ## Testes de segurança
 
 Novo arquivo de testes cobrindo os cenários de **negativa**:
+
 - vendedor chamando função exclusiva de admin → recusado
 - cliente chamando função de vendedor → recusado
 - usuário não-admin tentando escrever em `role_permissions` → recusado

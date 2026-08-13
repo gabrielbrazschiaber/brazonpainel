@@ -3,8 +3,6 @@ name: audit-code-quality
 description: "Audit: Code Quality — Analisa a qualidade estrutural do código identificando problemas que travam ferramentas de IA: arquivos acima de 300 linhas, God Components com responsabilidades demais, lógica duplicada que deveria ser hook ou utilitário, nomes inconsistentes, valores hardcoded, dead code e imports não utilizados. Refatora automaticamente os casos mais críticos e lista os demais com prioridade de resolução."
 ---
 
-
-
 Audit this project for code quality issues that will slow me down or break my AI tool's ability to help. Check the following in order of severity.
 
 1. FILE SIZE — List every file over 300 lines. What is it doing? Could it be split into smaller, focused files? Files over 500 lines exceed most AI tool context windows.
