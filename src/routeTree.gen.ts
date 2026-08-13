@@ -23,7 +23,6 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as BancoLeadsRouteImport } from './routes/banco-leads'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiPublicResetPasswordRouteImport } from './routes/api/public/reset-password'
 import { Route as ApiPublicRefVisitaRouteImport } from './routes/api/public/ref-visita'
 import { Route as ApiPublicHooksLembretesVencimentoRouteImport } from './routes/api/public/hooks/lembretes-vencimento'
 import { Route as ApiPublicHooksDevolverLeadsAbandonadosRouteImport } from './routes/api/public/hooks/devolver-leads-abandonados'
@@ -99,11 +98,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicResetPasswordRoute = ApiPublicResetPasswordRouteImport.update({
-  id: '/api/public/reset-password',
-  path: '/api/public/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicRefVisitaRoute = ApiPublicRefVisitaRouteImport.update({
   id: '/api/public/ref-visita',
   path: '/api/public/ref-visita',
@@ -144,7 +138,6 @@ export interface FileRoutesByFullPath {
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
-  '/api/public/reset-password': typeof ApiPublicResetPasswordRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
   '/api/public/hooks/devolver-leads-abandonados': typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
@@ -165,7 +158,6 @@ export interface FileRoutesByTo {
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
-  '/api/public/reset-password': typeof ApiPublicResetPasswordRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
   '/api/public/hooks/devolver-leads-abandonados': typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
@@ -187,7 +179,6 @@ export interface FileRoutesById {
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/vendedor': typeof VendedorRoute
   '/api/public/ref-visita': typeof ApiPublicRefVisitaRoute
-  '/api/public/reset-password': typeof ApiPublicResetPasswordRoute
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
   '/api/public/hooks/devolver-leads-abandonados': typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
@@ -210,7 +201,6 @@ export interface FileRouteTypes {
     | '/termos-de-uso'
     | '/vendedor'
     | '/api/public/ref-visita'
-    | '/api/public/reset-password'
     | '/api/public/hooks/asaas-sync-queue'
     | '/api/public/hooks/devolver-leads-abandonados'
     | '/api/public/hooks/lembretes-vencimento'
@@ -231,7 +221,6 @@ export interface FileRouteTypes {
     | '/termos-de-uso'
     | '/vendedor'
     | '/api/public/ref-visita'
-    | '/api/public/reset-password'
     | '/api/public/hooks/asaas-sync-queue'
     | '/api/public/hooks/devolver-leads-abandonados'
     | '/api/public/hooks/lembretes-vencimento'
@@ -252,7 +241,6 @@ export interface FileRouteTypes {
     | '/termos-de-uso'
     | '/vendedor'
     | '/api/public/ref-visita'
-    | '/api/public/reset-password'
     | '/api/public/hooks/asaas-sync-queue'
     | '/api/public/hooks/devolver-leads-abandonados'
     | '/api/public/hooks/lembretes-vencimento'
@@ -274,7 +262,6 @@ export interface RootRouteChildren {
   TermosDeUsoRoute: typeof TermosDeUsoRoute
   VendedorRoute: typeof VendedorRoute
   ApiPublicRefVisitaRoute: typeof ApiPublicRefVisitaRoute
-  ApiPublicResetPasswordRoute: typeof ApiPublicResetPasswordRoute
   ApiPublicHooksAsaasSyncQueueRoute: typeof ApiPublicHooksAsaasSyncQueueRoute
   ApiPublicHooksDevolverLeadsAbandonadosRoute: typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   ApiPublicHooksLembretesVencimentoRoute: typeof ApiPublicHooksLembretesVencimentoRoute
@@ -380,13 +367,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/reset-password': {
-      id: '/api/public/reset-password'
-      path: '/api/public/reset-password'
-      fullPath: '/api/public/reset-password'
-      preLoaderRoute: typeof ApiPublicResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/ref-visita': {
       id: '/api/public/ref-visita'
       path: '/api/public/ref-visita'
@@ -434,7 +414,6 @@ const rootRouteChildren: RootRouteChildren = {
   TermosDeUsoRoute: TermosDeUsoRoute,
   VendedorRoute: VendedorRoute,
   ApiPublicRefVisitaRoute: ApiPublicRefVisitaRoute,
-  ApiPublicResetPasswordRoute: ApiPublicResetPasswordRoute,
   ApiPublicHooksAsaasSyncQueueRoute: ApiPublicHooksAsaasSyncQueueRoute,
   ApiPublicHooksDevolverLeadsAbandonadosRoute:
     ApiPublicHooksDevolverLeadsAbandonadosRoute,
