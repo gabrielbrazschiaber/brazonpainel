@@ -16,7 +16,7 @@ export const Route = createFileRoute('/api/public/reset-password')({
           console.log(`[API/Public/Reset] Solicitando reset para: ${email}`);
 
           // Usamos o password-reset que configuramos para fetch manual ou supabaseAdmin
-          const { enviarLinkDefinicaoSenha } = await import('../../../../lib/password-reset');
+          const { enviarLinkDefinicaoSenha } = await import("@/lib/password-reset");
           const result = await enviarLinkDefinicaoSenha(email);
 
           if (result.error) {
