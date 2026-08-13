@@ -168,8 +168,13 @@ export const criarCliente = createServerFn({ method: "POST" })
       },
     });
 
+    // Dispara o e-mail de definição de senha para o cliente
+    const { enviarLinkDefinicaoSenha } = await import("./password-reset");
+    await enviarLinkDefinicaoSenha(data.email);
+
     return { ok: true, integracao, cupom_aplicado: cupomCodigo, cupom_invalido: cupomAviso };
   });
+
 
 const cadastroPublicoSchema = novoClienteSchema
   .omit({ mensagem_vendedor: true, anotacoes: true, data_vencimento: true })
