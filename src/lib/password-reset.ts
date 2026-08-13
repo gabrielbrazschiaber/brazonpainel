@@ -1,16 +1,11 @@
-/**
- * Envia um e-mail com link para o usuário definir/redefinir a senha.
- * Usado tanto no "Esqueci minha senha" quanto ao criar novos usuários,
- * evitando expor qualquer senha em respostas do servidor.
- * 
- * Executa no SERVIDOR para garantir conectividade direta com o Auth do Supabase.
- */
 export async function enviarLinkDefinicaoSenha(email: string) {
   const emailLimpo = email.trim().toLowerCase();
+  
+  // Usamos uma URL absoluta de redirecionamento que esteja na whitelist do Supabase.
   const redirectTo = "https://painel.brazoncrm.com.br/redefinir-senha";
   
   // No Lovable Cloud, o supabaseAdmin injeta automaticamente 'apikey' e 'Authorization'
-  // via wrapper de fetch (src/integrations/supabase/client.server.ts).
+  // necessários para bypassar RLS e usar a API de Admin via wrapper de fetch.
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   console.log(`[password-reset] Solicitando reset para ${emailLimpo} via supabaseAdmin...`);
@@ -30,9 +25,3 @@ export async function enviarLinkDefinicaoSenha(email: string) {
     throw err;
   }
 }
-
-
-
-
-
-
