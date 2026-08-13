@@ -2,51 +2,23 @@ export async function enviarLinkDefinicaoSenha(email: string) {
   const emailLimpo = email.trim().toLowerCase();
   const redirectTo = "https://painel.brazoncrm.com.br/redefinir-senha";
   
-  // No Lovable Cloud, as chaves de serviço estão disponíveis no process.env
-  const SUPABASE_URL = process.env.SUPABASE_URL || "https://svdrarqtkfbzmxzivibr.supabase.co";
-  const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  if (!SERVICE_ROLE) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY não encontrada no servidor.");
-  }
-
-  console.log(`[password-reset] Solicitando reset via GoTrue Admin API: ${emailLimpo}`);
+  console.log(`[password-reset] Solicitando reset para ${emailLimpo} via supabaseAdmin...`);
 
   try {
-    console.log(`[password-reset] DEBUG: Usando URL ${SUPABASE_URL}`);
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SERVICE_ROLE,
-        "Authorization": `Bearer ${SERVICE_ROLE}`
-      },
-      body: JSON.stringify({ 
-        type: "recovery",
-        email: emailLimpo,
-        new_email: "",
-        password: "",
-        data: {},
-        redirect_to: redirectTo
-      })
-    }).catch(e => {
-      console.error("[password-reset] Erro no fetch:", e.message);
-      throw e;
-    });
-
-
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error(`[password-reset] Erro na API GoTrue (${response.status}):`, errText);
-      return { data: null, error: { message: errText || "Falha ao solicitar reset" } };
+    // Usamos resetPasswordForEmail que é o método padrão da lib
+    const result = await supabaseAdmin.auth.resetPasswordForEmail(emailLimpo, { redirectTo });
+    
+    if (result.error) {
+      console.error(`[password-reset] Erro ao enviar para ${emailLimpo}:`, result.error.message);
+    } else {
+      console.log(`[password-reset] Link enviado com sucesso para ${emailLimpo}`);
     }
 
-    console.log(`[password-reset] Reset processado com sucesso para ${emailLimpo}`);
-    return { data: {}, error: null };
-  } catch (err) {
-    console.error("[password-reset] Erro crítico:", err);
-    throw err;
+    return result;
+  } catch (err: any) {
+    console.error("[password-reset] Erro crítico no envio:", err.message || err);
+    return { data: null, error: { message: err.message || String(err) } };
   }
 }
-
