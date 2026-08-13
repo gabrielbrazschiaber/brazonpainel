@@ -13,8 +13,7 @@ export async function enviarLinkDefinicaoSenha(email: string) {
   console.log(`[password-reset] Solicitando reset via GoTrue Admin API: ${emailLimpo}`);
 
   try {
-    // Chamada direta para o GoTrue (Admin API do Supabase Auth)
-    // O endpoint /recover suporta envio de reset para outros usuários se autenticado como admin.
+    console.log(`[password-reset] DEBUG: Usando URL ${SUPABASE_URL}`);
     const response = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
       method: "POST",
       headers: {
@@ -26,7 +25,11 @@ export async function enviarLinkDefinicaoSenha(email: string) {
         email: emailLimpo,
         gotrue_meta_security: { reauthentication_token: "" }
       })
+    }).catch(e => {
+      console.error("[password-reset] Erro no fetch:", e.message);
+      throw e;
     });
+
 
     if (!response.ok) {
       const errText = await response.text();
