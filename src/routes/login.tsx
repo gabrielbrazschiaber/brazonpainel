@@ -136,24 +136,20 @@ function LoginPage() {
     setSubmitting(true);
     
     try {
-      // Chamamos o endpoint de servidor para o reset, evitando bloqueios no client-side
-      const response = await fetch("/api/public/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
-      });
+      const { enviarLinkDefinicaoSenha } = await import("@/lib/password-reset");
+      const { error } = await enviarLinkDefinicaoSenha(email.trim());
 
-      if (!response.ok) {
-        // O Supabase às vezes retorna 200 mesmo se falhar o envio (por segurança),
-        // mas se o nosso endpoint retornar erro, exibimos uma mensagem genérica.
-        throw new Error("Erro no servidor");
+      if (error) {
+        // Supabase lança erro se o domínio não estiver na whitelist, etc.
+        console.error("[handleForgot] Auth error:", error.message);
       }
       
+      // Sempre mostramos sucesso por segurança e UX
       setResetSent(true);
       toast.success("Link enviado! Verifique seu e-mail.");
     } catch (err) {
-      console.error("[handleForgot]", err);
-      toast.error("Não foi possível enviar o link agora. Tente novamente mais tarde.");
+      console.error("[handleForgot] Runtime error:", err);
+      toast.error("Não foi possível processar a solicitação agora.");
     } finally {
       setSubmitting(false);
     }
