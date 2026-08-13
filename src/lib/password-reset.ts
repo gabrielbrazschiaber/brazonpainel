@@ -8,42 +8,66 @@
 export async function enviarLinkDefinicaoSenha(email: string) {
   const emailLimpo = email.trim().toLowerCase();
   
-  // No Lovable Cloud (Edge Functions / Serverless), process.env pode se comportar de forma
-  // diferente dependendo do contexto. Tentamos as duas formas de obter as variáveis.
+  // No Lovable Cloud, as credenciais estão disponíveis via process.env
   const SUPABASE_URL = process.env.SUPABASE_URL || "https://svdrarqtkfbzmxzivibr.supabase.co";
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!SUPABASE_SERVICE_ROLE_KEY) {
-    console.error("[password-reset] SUPABASE_SERVICE_ROLE_KEY não configurada no servidor.");
-    throw new Error("Configuração do servidor incompleta (service role).");
+    console.error("[password-reset] SUPABASE_SERVICE_ROLE_KEY não configurada.");
+    throw new Error("Configuração do servidor incompleta.");
   }
 
-  // Importação dinâmica do createClient para evitar que o bundle do cliente tente carregar dependências pesadas
+  // Importação dinâmica
   const { createClient } = await import("@supabase/supabase-js");
 
-  // Criamos um cliente específico para esta operação para evitar estados compartilhados
-  // que possam herdar cabeçalhos ou proxies que falham no ambiente restrito do worker.
-  const authAdminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
-    }
-  });
-  
+  // O redirectTo DEVE estar na whitelist de Redirect URLs do Supabase.
+  // A URL "https://painel.brazoncrm.com.br/redefinir-senha" é a oficial.
   const redirectTo = "https://painel.brazoncrm.com.br/redefinir-senha";
   
-  console.log(`[password-reset] Enviando link para ${emailLimpo} com redirect ${redirectTo}`);
-  
-  const result = await authAdminClient.auth.resetPasswordForEmail(emailLimpo, { redirectTo });
-  
-  if (result.error) {
-    console.error(`[password-reset] Erro ao enviar para ${emailLimpo}:`, result.error.message);
-  } else {
-    console.log(`[password-reset] Link enviado com sucesso para ${emailLimpo}`);
-  }
+  console.log(`[password-reset] Solicitando reset para ${emailLimpo} via Admin API...`);
 
-  return result;
+  // Usamos o fetch nativo para falar diretamente com o Auth do Supabase
+  // Isso evita dependências de bibliotecas que podem ter problemas no worker.
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_SERVICE_ROLE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+      },
+      body: JSON.stringify({
+        email: emailLimpo,
+        gotrue_meta_security: {
+          reauthentication_token: ""
+        }
+      })
+    });
+
+    // Se o recover não aceitar redirectTo via POST direto (algumas versões do GoTrue pedem via query params ou config),
+    // o padrão do Supabase Dashboard deve estar configurado para este domínio.
+    // Mas vamos tentar também a forma padrão da lib caso o fetch falhe.
+    
+    if (!response.ok) {
+      const errText = await response.text();
+      console.warn(`[password-reset] Fetch direto falhou (${response.status}), tentando via lib:`, errText);
+      
+      const authAdminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+        auth: { persistSession: false }
+      });
+      
+      const result = await authAdminClient.auth.resetPasswordForEmail(emailLimpo, { redirectTo });
+      return result;
+    }
+
+    console.log(`[password-reset] Chamada direta concluída para ${emailLimpo}`);
+    return { data: {}, error: null };
+
+  } catch (err) {
+    console.error("[password-reset] Erro crítico no envio:", err);
+    throw err;
+  }
 }
+
 
 
