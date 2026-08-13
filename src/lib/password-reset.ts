@@ -1,18 +1,24 @@
-/**
- * Envia um e-mail com link para o usuário definir/redefinir a senha.
- * Usado tanto no "Esqueci minha senha" quanto ao criar novos usuários,
- * evitando expor qualquer senha em respostas do servidor.
- * 
- * Executa no SERVIDOR para garantir conectividade direta com o Auth do Supabase.
- */
 export async function enviarLinkDefinicaoSenha(email: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  
-  // O link de redirecionamento deve ser absoluto e apontar para a rota de redefinição.
+  const emailLimpo = email.trim().toLowerCase();
   const redirectTo = "https://painel.brazoncrm.com.br/redefinir-senha";
   
-  console.log(`[password-reset] Enviando link para ${email} com redirect ${redirectTo}`);
-  
-  return supabaseAdmin.auth.resetPasswordForEmail(email.trim(), { redirectTo });
-}
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+  console.log(`[password-reset] Solicitando reset para ${emailLimpo} via supabaseAdmin...`);
+
+  try {
+    // Usamos resetPasswordForEmail que é o método padrão da lib
+    const result = await supabaseAdmin.auth.resetPasswordForEmail(emailLimpo, { redirectTo });
+    
+    if (result.error) {
+      console.error(`[password-reset] Erro ao enviar para ${emailLimpo}:`, result.error.message);
+    } else {
+      console.log(`[password-reset] Link enviado com sucesso para ${emailLimpo}`);
+    }
+
+    return result;
+  } catch (err: any) {
+    console.error("[password-reset] Erro crítico no envio:", err.message || err);
+    return { data: null, error: { message: err.message || String(err) } };
+  }
+}
