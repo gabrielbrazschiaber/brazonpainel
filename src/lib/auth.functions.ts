@@ -9,19 +9,26 @@ export const enviarResetEmail = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => schema.parse(data))
   .handler(async ({ data }) => {
     try {
-      const { enviarLinkDefinicaoSenha } = await import("./password-reset");
-      const { error } = await enviarLinkDefinicaoSenha(data.email);
+      // DEBUG: Log antes de tentar importar
+      console.log(`[enviarResetEmail] Solicitando reset para: ${data.email}`);
       
-      if (error) {
-        console.error("[enviarResetEmail] Erro do Supabase:", error.message);
-        return { ok: false, error: error.message };
+      const { enviarLinkDefinicaoSenha } = await import("./password-reset");
+      const res = await enviarLinkDefinicaoSenha(data.email);
+      
+      if (res.error) {
+        console.error("[enviarResetEmail] Erro retornado:", res.error.message);
+        return { ok: false, error: res.error.message };
       }
 
+      console.log("[enviarResetEmail] Sucesso!");
       return { ok: true };
-    } catch (err) {
-      console.error("[enviarResetEmail] Erro de execução:", err);
-      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    } catch (err: any) {
+      console.error("[enviarResetEmail] Erro fatal:", err);
+      // Tentamos capturar se é um erro de rede ou algo parecido
+      const errorMsg = err?.message || String(err);
+      return { ok: false, error: `Falha na execução: ${errorMsg}` };
     }
   });
+
 
 
