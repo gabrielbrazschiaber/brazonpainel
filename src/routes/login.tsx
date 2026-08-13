@@ -136,7 +136,7 @@ function LoginPage() {
     setSubmitting(true);
     
     try {
-      // Chamamos o endpoint de servidor para evitar bloqueios de CORS/CSP do Supabase no navegador
+      // Chamamos o endpoint de servidor para o reset, evitando bloqueios no client-side
       const response = await fetch("/api/public/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -144,8 +144,9 @@ function LoginPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Erro ao enviar e-mail.");
+        // O Supabase às vezes retorna 200 mesmo se falhar o envio (por segurança),
+        // mas se o nosso endpoint retornar erro, exibimos uma mensagem genérica.
+        throw new Error("Erro no servidor");
       }
       
       setResetSent(true);
