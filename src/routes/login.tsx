@@ -136,11 +136,13 @@ function LoginPage() {
     setSubmitting(true);
     
     try {
-      const { enviarLinkDefinicaoSenha } = await import("@/lib/password-reset");
-      const { error } = await enviarLinkDefinicaoSenha(email.trim());
+      // O Supabase bloqueia chamadas diretas do navegador para resetPasswordForEmail
+      // se a origem não estiver na lista permitida ou devido a CSP/CORS em ambientes específicos.
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/redefinir-senha`
+      });
 
       if (error) {
-        // Supabase lança erro se o domínio não estiver na whitelist, etc.
         console.error("[handleForgot] Auth error:", error.message);
       }
       
