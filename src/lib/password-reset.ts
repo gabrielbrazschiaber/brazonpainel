@@ -7,10 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function enviarLinkDefinicaoSenha(email: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const redirectTo =
-    typeof window !== "undefined" ? `${window.location.origin}/redefinir-senha` : undefined;
   
-  // No servidor, usamos o cliente admin para garantir que o envio ocorra
-  // mesmo que existam restrições de rede ou CORS no lado do cliente.
+  // No servidor, não temos window.location.origin
+  // Usamos o domínio fixo do projeto para garantir que o redirecionamento funcione.
+  const redirectTo = "https://painel.brazoncrm.com.br/redefinir-senha";
+  
+  console.log(`[password-reset] Enviando link para ${email} com redirect ${redirectTo}`);
+  
   return supabaseAdmin.auth.resetPasswordForEmail(email.trim(), { redirectTo });
 }
