@@ -344,7 +344,12 @@ export const cadastroPublico = createServerFn({ method: "POST" })
       console.error("[cadastroPublico] falha ao registrar aceite:", aceiteErr.message);
     }
 
+    // Dispara o e-mail de definição de senha para o cliente
+    const { enviarLinkDefinicaoSenha } = await import("./password-reset");
+    await enviarLinkDefinicaoSenha(email);
+
     return {
+
       ok: true,
       termos_versao: TERMOS_VERSAO,
       cupom: cupomInfo,
