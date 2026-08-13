@@ -146,14 +146,9 @@ function LoginPage() {
       toast.success("Link enviado! Verifique seu e-mail.");
     } catch (err) {
       console.error("[handleForgot] Runtime error:", err);
-      toast.success("Link enviado! Verifique seu e-mail."); // Fallback UI
-    } finally {
-      setSubmitting(false);
-    }
-  }
-    } catch (err) {
-      console.error("[handleForgot] Runtime error:", err);
-      toast.error("Não foi possível processar a solicitação agora.");
+      // Sempre mostramos sucesso por segurança
+      setResetSent(true);
+      toast.success("Link enviado! Verifique seu e-mail.");
     } finally {
       setSubmitting(false);
     }
