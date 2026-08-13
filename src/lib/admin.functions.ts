@@ -129,8 +129,13 @@ export const criarVendedor = createServerFn({ method: "POST" })
       throw new Error("Falha ao cadastrar o vendedor.");
     }
 
+    // Dispara o e-mail de definição de senha para o vendedor
+    const { enviarLinkDefinicaoSenha } = await import("./password-reset");
+    await enviarLinkDefinicaoSenha(data.email);
+
     return { ok: true, senha_definida: senhaDefinidaPeloAdmin };
   });
+
 
 const novoAdminSchema = z.object({
   nome: z.string().trim().min(2).max(120),
