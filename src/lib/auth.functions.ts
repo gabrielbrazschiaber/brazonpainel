@@ -10,12 +10,18 @@ export const enviarResetEmail = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     try {
       const { enviarLinkDefinicaoSenha } = await import("./password-reset");
-      await enviarLinkDefinicaoSenha(data.email);
+      const { error } = await enviarLinkDefinicaoSenha(data.email);
+      
+      if (error) {
+        console.error("[enviarResetEmail] Erro do Supabase:", error.message);
+        return { ok: false, error: error.message };
+      }
+
       return { ok: true };
     } catch (err) {
-      console.error("[enviarResetEmail] Error:", err);
-      // Sempre retornamos sucesso para o frontend por segurança
-      return { ok: true };
+      console.error("[enviarResetEmail] Erro de execução:", err);
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
     }
   });
+
 
