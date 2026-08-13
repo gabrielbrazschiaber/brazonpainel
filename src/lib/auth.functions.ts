@@ -15,9 +15,14 @@ export const enviarResetEmail = createServerFn({ method: "POST" })
 
       if (res.error) {
         console.error("[enviarResetEmail] Erro no fluxo de reset:", res.error.message);
-        // Retornamos sucesso cosmético se o erro for "User not found" por segurança,
-        // mas aqui mantemos o erro real para o admin/vendedor saber o que houve.
-        return { ok: false, error: res.error.message };
+        // O erro "fetch failed" geralmente significa que o servidor não conseguiu
+        // alcançar o serviço de autenticação do Supabase.
+        return { 
+          ok: false, 
+          error: res.error.message.includes("fetch failed") 
+            ? "Falha na comunicação com o servidor de e-mail. Tente novamente." 
+            : res.error.message 
+        };
       }
 
       console.log("[enviarResetEmail] Fluxo de reset processado.");
