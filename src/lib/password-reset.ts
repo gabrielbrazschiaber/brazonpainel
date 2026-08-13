@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function enviarLinkDefinicaoSenha(email: string) {
   const redirectTo =
-    typeof window !== "undefined" ? `${window.location.origin}/redefinir-senha` : undefined;
+    typeof window !== "undefined" ? `${window.location.origin}/redefinir-senha` : "https://painel.brazoncrm.com.br/redefinir-senha";
+  
+  // Usamos o cliente Supabase padrão importado do arquivo de integração
   return supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
 }

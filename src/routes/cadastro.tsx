@@ -213,10 +213,23 @@ function CadastroPage() {
           termos_versao: TERMOS_VERSAO,
         },
       });
-      const { error: resetErr } = await enviarLinkDefinicaoSenha(emailCliente);
+
+      // Chamamos o endpoint de servidor para o reset, evitando bloqueios no client-side
+      let resetSucesso = false;
+      try {
+        const resetResp = await fetch("/api/public/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: emailCliente }),
+        });
+        resetSucesso = resetResp.ok;
+      } catch (err) {
+        console.error("[cadastro-reset-link]", err);
+      }
+
       setDone({
         email: emailCliente,
-        emailEnviado: !resetErr,
+        emailEnviado: resetSucesso,
         cupom: res?.cupom
           ? {
               codigo: res.cupom.codigo,
