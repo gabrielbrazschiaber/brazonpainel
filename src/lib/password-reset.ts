@@ -14,7 +14,7 @@ export async function enviarLinkDefinicaoSenha(email: string) {
 
   try {
     console.log(`[password-reset] DEBUG: Usando URL ${SUPABASE_URL}`);
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -22,13 +22,18 @@ export async function enviarLinkDefinicaoSenha(email: string) {
         "Authorization": `Bearer ${SERVICE_ROLE}`
       },
       body: JSON.stringify({ 
+        type: "recovery",
         email: emailLimpo,
-        gotrue_meta_security: { reauthentication_token: "" }
+        new_email: "",
+        password: "",
+        data: {},
+        redirect_to: redirectTo
       })
     }).catch(e => {
       console.error("[password-reset] Erro no fetch:", e.message);
       throw e;
     });
+
 
 
     if (!response.ok) {
