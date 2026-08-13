@@ -17,8 +17,9 @@ export async function enviarLinkDefinicaoSenha(email: string) {
     }
 
     return result;
-  } catch (err: any) {
-    console.error("[password-reset] Erro crítico no envio:", err.message || err);
-    return { data: null, error: { message: err.message || String(err) } };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[password-reset] Erro crítico no envio:", message);
+    return { data: { user: null }, error: { message, status: 500 } };
   }
 }
