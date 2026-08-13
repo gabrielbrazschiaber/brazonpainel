@@ -140,10 +140,17 @@ function LoginPage() {
     try {
       // Usamos uma Server Function para garantir que o envio ocorra no backend
       // sem as restrições de CORS/CSP do navegador para o endpoint de auth.
-      await triggerReset({ data: { email: email.trim() } });
+      const res = await triggerReset({ data: { email: email.trim() } });
+      
+      if (res && "ok" in res && !res.ok) {
+        console.error("[handleForgot] Erro retornado:", res.error);
+        // Mesmo com erro, mantemos o estado visual de enviado para evitar ataques de enumeração,
+        // mas logamos internamente para debug.
+      }
       
       setResetSent(true);
       toast.success("Link enviado! Verifique seu e-mail.");
+
     } catch (err) {
       console.error("[handleForgot] Runtime error:", err);
       // Sempre mostramos sucesso por segurança
