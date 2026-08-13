@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome } from "@/lib/auth";
 import { enviarLinkDefinicaoSenha } from "@/lib/password-reset";
+import { enviarResetEmail } from "@/lib/auth.functions";
 import { usarCodigoRecuperacaoMfa } from "@/lib/mfa.functions";
 import { lerNivelSeguranca, listarFatoresTotp, mensagemErroMfa, verificarCodigoTotp } from "@/lib/mfa";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ function LoginPage() {
   const [modoRecuperacao, setModoRecuperacao] = useState(false);
   const [codigoRecuperacao, setCodigoRecuperacao] = useState("");
   const usarCodigo = useServerFn(usarCodigoRecuperacaoMfa);
+  const triggerReset = useServerFn(enviarResetEmail);
 
   useEffect(() => {
     // Aguarda o papel resolver para não mandar o usuário ao painel errado.
@@ -136,19 +138,19 @@ function LoginPage() {
     setSubmitting(true);
     
     try {
-      // O Supabase bloqueia chamadas diretas do navegador para resetPasswordForEmail
-      // se a origem não estiver na lista permitida ou devido a CSP/CORS em ambientes específicos.
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/redefinir-senha`
-      });
-
-      if (error) {
-        console.error("[handleForgot] Auth error:", error.message);
-      }
+      // Usamos uma Server Function para garantir que o envio ocorra no backend
+      // sem as restrições de CORS/CSP do navegador para o endpoint de auth.
+      await triggerReset({ data: { email: email.trim() } });
       
-      // Sempre mostramos sucesso por segurança e UX
       setResetSent(true);
       toast.success("Link enviado! Verifique seu e-mail.");
+    } catch (err) {
+      console.error("[handleForgot] Runtime error:", err);
+      toast.success("Link enviado! Verifique seu e-mail."); // Fallback UI
+    } finally {
+      setSubmitting(false);
+    }
+  }
     } catch (err) {
       console.error("[handleForgot] Runtime error:", err);
       toast.error("Não foi possível processar a solicitação agora.");
