@@ -258,7 +258,10 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const [erroMais, setErroMais] = useState<string | null>(null);
   const sentinela = useRef<HTMLDivElement | null>(null);
 
-  const [fila, setFila] = useState<Fila>("hoje");
+  // Começa em "Todos os leads": leads recém-puxados do Banco de Leads têm o
+  // primeiro follow-up agendado para os próximos dias e ficariam invisíveis
+  // se a tela abrisse já filtrada pela fila de hoje.
+  const [fila, setFila] = useState<Fila>("todos");
   const [busca, setBusca] = useState("");
   const [estagio, setEstagio] = useState<LeadEstagio | "todos">("todos");
   const [segmento, setSegmento] = useState("todos");
