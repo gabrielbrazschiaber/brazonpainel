@@ -806,7 +806,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
               </div>
             )}
           </>
-        ) : null}
+        )}
       </Card>
 
       {/* Desempenho: fica fora do caminho do dia a dia, aberto sob demanda */}
