@@ -716,7 +716,11 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                   </div>
                   <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     {l.telefone}
-                    <WhatsAppIndicator telefone={l.telefone} status={statusZap.get(l.id)} size="sm" />
+                    <WhatsAppIndicator
+                      telefone={l.telefone}
+                      status={statusZap.get(l.id)}
+                      size="sm"
+                    />
                     <span>· {formatCurrency(l.valor_estimado)}</span>
                   </p>
                   <SituacaoContato lead={l} />
