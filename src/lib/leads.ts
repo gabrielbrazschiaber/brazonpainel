@@ -101,7 +101,9 @@ export function apenasDigitos(valor: string | null | undefined): string {
 
 export function linkWhatsApp(telefone: string | null | undefined): string {
   const d = apenasDigitos(telefone);
-  return `https://wa.me/55${d}`;
+  // Se já tem 55 no início, não duplica
+  const numero = d.startsWith("55") ? d : `55${d}`;
+  return `https://api.whatsapp.com/send?phone=${numero}`;
 }
 
 /** Divisão segura: nunca Infinity nem NaN. */

@@ -27,12 +27,16 @@ export function telefoneNacional(telefone: string | null | undefined): string {
 }
 
 /**
- * Heurística: só celular brasileiro válido (DDD + 9 dígitos iniciando em 9)
- * conta como WhatsApp ativo. Fixo fica "incerto"; incompleto, "inválido".
+ * Heurística: considera WhatsApp ativo apenas se for um celular brasileiro válido
+ * (11 dígitos, DDD 11-99 e nono dígito 9).
  */
 export function statusWhatsApp(telefone: string | null | undefined): WhatsAppStatus {
   const nacional = telefoneNacional(telefone);
-  if (nacional.length === 11 && nacional[2] === "9") return "ativo";
+  if (nacional.length === 11) {
+    const ddd = parseInt(nacional.slice(0, 2), 10);
+    // DDDs válidos no Brasil são de 11 a 99. O nono dígito (nacional[2]) deve ser 9.
+    if (ddd >= 11 && ddd <= 99 && nacional[2] === "9") return "ativo";
+  }
   if (nacional.length === 10) return "incerto";
   return "invalido";
 }
