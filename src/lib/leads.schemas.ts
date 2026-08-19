@@ -44,6 +44,8 @@ export const listarLeadsSchema = z.object({
   dias: z.number().int().min(0).max(3650).optional(),
   vendedor_id: z.string().uuid().optional(),
   apenas_follow_up: z.boolean().optional(),
+  /** Só leads com follow-up vencido (antes de hoje). */
+  apenas_atrasados: z.boolean().optional(),
   /** Só leads com dados faltando (completude < 4). */
   apenas_incompletos: z.boolean().optional(),
   /** Filtra por lote de importação. */
