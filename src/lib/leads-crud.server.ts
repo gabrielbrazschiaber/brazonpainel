@@ -61,11 +61,13 @@ export async function listarLeadsServer(
   const limite = dataLimite(filtros.dias);
   if (limite) query = query.gte("contatado_em", limite);
 
-  if (filtros.apenas_follow_up) {
+  if (filtros.apenas_follow_up || filtros.apenas_atrasados) {
     query = query
       .not("proximo_contato", "is", null)
-      .lte("proximo_contato", hojeISO())
       .not("estagio", "in", `(${ESTAGIOS_SEM_FOLLOW_UP.join(",")})`);
+    query = filtros.apenas_atrasados
+      ? query.lt("proximo_contato", hojeISO())
+      : query.lte("proximo_contato", hojeISO());
   }
 
   if (filtros.busca) {
