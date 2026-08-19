@@ -376,11 +376,6 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   /** Status de WhatsApp calculado uma vez por carregamento da lista. */
   const statusZap = useMemo(() => mapaWhatsApp(leads), [leads]);
   /** Filtro local: mostra apenas contatos com WhatsApp ativo. */
-  const leadsVisiveis = useMemo(
-    () => (soZap ? leads.filter((l) => statusZap.get(l.id) === "ativo") : leads),
-    [leads, soZap, statusZap],
-  );
-
   // Renderizamos as linhas visíveis da página atual.
   const leadsVisiveis = useMemo(
     () => (soZap ? leads.filter((l) => statusZap.get(l.id) === "ativo") : leads),
@@ -682,9 +677,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         ) : (
           <>
             {/* Mobile: cards empilhados */}
-            <div className="space-y-3 sm:hidden" ref={janelaCards.ref}>
-              <div style={{ height: janelaCards.antes }} aria-hidden />
-              {cardsVisiveis.map((l) => (
+            <div className="space-y-3 sm:hidden">
+              {leadsVisiveis.map((l) => (
                 <Card key={l.id} className="space-y-2 p-4">
                   <div
                     className="flex cursor-pointer items-start justify-between gap-2"
@@ -721,15 +715,15 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                     onExcluir={setExcluindo}
                   />
                 </Card>
-                ))}
-              </div>
+              ))}
+            </div>
 
-              {/* Desktop: tabela */}
-              <div className="hidden sm:block">
-                <Table>
-                  <CabecalhoLeads />
-                  <TableBody>
-                    {leadsVisiveis.map((l) => (
+            {/* Desktop: tabela */}
+            <div className="hidden sm:block">
+              <Table>
+                <CabecalhoLeads />
+                <TableBody>
+                  {leadsVisiveis.map((l) => (
                     <TableRow key={l.id}>
                       <TableCell className="cursor-pointer" onClick={() => setDetalhe(l)}>
                         <p className="font-medium">{l.nome_contato}</p>
@@ -781,52 +775,38 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                       </TableCell>
                     </TableRow>
                   ))}
-                  {janelaLinhas.depois > 0 && (
-                    <TableRow aria-hidden>
-                      <TableCell colSpan={5} style={{ height: janelaLinhas.depois, padding: 0 }} />
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             </div>
 
-            <div
-              ref={sentinela}
-              className="flex flex-col items-center gap-2 pt-2 text-xs text-muted-foreground"
-            >
-              <span aria-live="polite">
-                Mostrando {leadsVisiveis.length} de {total} lead{total === 1 ? "" : "s"}
-                {soZap ? " (só com WhatsApp ativo)" : ""}
-              </span>
-
-              {carregandoMais && (
-                <div className="w-full space-y-2" aria-hidden="true">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              )}
-
-              {erroMais && !carregandoMais && (
-                <div role="alert" className="flex flex-col items-center gap-2">
-                  <p className="text-destructive">{erroMais}</p>
-                  <Button variant="outline" size="sm" onClick={() => void carregarMais()}>
-                    <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+            {/* Paginação */}
+            {totalPaginas > 1 && (
+              <div className="mt-6 flex items-center justify-between border-t border-border/60 pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Página {pagina + 1} de {totalPaginas} · {total} leads
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pagina === 0 || carregando}
+                    onClick={() => mudarPagina(pagina - 1)}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!temMais || carregando}
+                    onClick={() => mudarPagina(pagina + 1)}
+                  >
+                    Próxima
                   </Button>
                 </div>
-              )}
-
-              {temMais && !carregandoMais && !erroMais && (
-                <Button variant="outline" size="sm" onClick={() => void carregarMais()}>
-                  Carregar mais
-                </Button>
-              )}
-
-              {!temMais && !carregandoMais && !erroMais && leads.length > 0 && (
-                <span>Todos os leads deste filtro foram carregados.</span>
-              )}
-            </div>
+              </div>
+            )}
           </>
-        )}
+        ) : null}
       </Card>
 
       {/* Desempenho: fica fora do caminho do dia a dia, aberto sob demanda */}
