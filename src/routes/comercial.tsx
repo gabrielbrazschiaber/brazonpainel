@@ -335,49 +335,31 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     void painel.buscar();
   }, [recarregar, painel]);
 
-  /** Próxima página: acrescenta ao final da lista já carregada. */
-  const carregarMais = useCallback(async () => {
-    if (carregandoMais || !temMais) return;
-    const proxima = pagina + 1;
-    setCarregandoMais(true);
-    setErroMais(null);
+  /** Troca de página. */
+  const mudarPagina = useCallback(async (nova: number) => {
+    setCarregando(true);
+    setErroLista(null);
     try {
       const l = await carregarLeads({
-        data: { ...filtrosLeads, pagina: proxima, por_pagina: POR_PAGINA },
+        data: { ...filtrosLeads, pagina: nova, por_pagina: POR_PAGINA },
       });
-      setLeads((atuais) => {
-        const vistos = new Set(atuais.map((x) => x.id));
-        return [...atuais, ...l.leads.filter((x) => !vistos.has(x.id))];
-      });
+      setLeads(l.leads);
       setTotal(l.total);
       setTemMais(l.temMais);
-      setPagina(proxima);
+      setPagina(nova);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      setErroMais(err instanceof Error ? err.message : "Não foi possível carregar mais leads.");
+      setErroLista(err instanceof Error ? err.message : "Não foi possível carregar a página.");
     } finally {
-      setCarregandoMais(false);
+      setCarregando(false);
     }
-  }, [carregarLeads, carregandoMais, filtrosLeads, pagina, temMais]);
+  }, [carregarLeads, filtrosLeads]);
 
   useEffect(() => {
     void recarregar();
   }, [recarregar]);
 
-  // Infinite scroll: observa a sentinela no fim da lista.
-  useEffect(() => {
-    const alvo = sentinela.current;
-    // Com erro pendente o carregamento automático para: o usuário decide
-    // quando tentar novamente, evitando loop de requisições que falham.
-    if (!alvo || !temMais || erroMais) return;
-    const obs = new IntersectionObserver(
-      (entradas) => {
-        if (entradas.some((e) => e.isIntersecting)) void carregarMais();
-      },
-      { rootMargin: "200px" },
-    );
-    obs.observe(alvo);
-    return () => obs.disconnect();
-  }, [carregarMais, temMais, erroMais]);
+  // Removido infinite scroll para usar paginação tradicional e evitar bugs de scroll.
 
   useEffect(() => {
     void carregarSegmentos({})
@@ -399,12 +381,13 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     [leads, soZap, statusZap],
   );
 
-  // Com scroll infinito a lista cresce sem limite: renderizamos apenas as
-  // linhas visíveis (mais folga) para não pesar no celular.
-  const janelaCards = useJanelaVirtual({ total: leadsVisiveis.length, altura: 200 });
-  const janelaLinhas = useJanelaVirtual({ total: leadsVisiveis.length, altura: 76 });
-  const cardsVisiveis = leadsVisiveis.slice(janelaCards.inicio, janelaCards.fim);
-  const linhasVisiveis = leadsVisiveis.slice(janelaLinhas.inicio, janelaLinhas.fim);
+  // Renderizamos as linhas visíveis da página atual.
+  const leadsVisiveis = useMemo(
+    () => (soZap ? leads.filter((l) => statusZap.get(l.id) === "ativo") : leads),
+    [leads, soZap, statusZap],
+  );
+
+  const totalPaginas = Math.ceil(total / POR_PAGINA);
 
   async function confirmarExclusao() {
     if (!excluindo) return;
@@ -738,21 +721,15 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                     onExcluir={setExcluindo}
                   />
                 </Card>
-              ))}
-              <div style={{ height: janelaCards.depois }} aria-hidden />
-            </div>
+                ))}
+              </div>
 
-            {/* Desktop: tabela */}
-            <div className="hidden sm:block" ref={janelaLinhas.ref}>
-              <Table>
-                <CabecalhoLeads />
-                <TableBody>
-                  {janelaLinhas.antes > 0 && (
-                    <TableRow aria-hidden>
-                      <TableCell colSpan={5} style={{ height: janelaLinhas.antes, padding: 0 }} />
-                    </TableRow>
-                  )}
-                  {linhasVisiveis.map((l) => (
+              {/* Desktop: tabela */}
+              <div className="hidden sm:block">
+                <Table>
+                  <CabecalhoLeads />
+                  <TableBody>
+                    {leadsVisiveis.map((l) => (
                     <TableRow key={l.id}>
                       <TableCell className="cursor-pointer" onClick={() => setDetalhe(l)}>
                         <p className="font-medium">{l.nome_contato}</p>
