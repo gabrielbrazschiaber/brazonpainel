@@ -1,16 +1,16 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   AlertCircle,
-  ArrowLeft,
+  BarChart3,
+  ChevronDown,
   ListChecks,
-  Loader2,
-  Pencil,
+  PlayCircle,
   RefreshCw,
+  SlidersHorizontal,
   Target,
-  Trash2,
   Upload,
   UserPlus,
 } from "lucide-react";
@@ -38,6 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Select,
   SelectContent,
@@ -73,18 +74,20 @@ const LeadDetalheSheet = lazy(() =>
   import("@/components/comercial/LeadDetalheSheet").then((m) => ({ default: m.LeadDetalheSheet })),
 );
 import { LeadFormDialog } from "@/components/comercial/LeadFormDialog";
-import { FollowUpsPanel } from "@/components/comercial/FollowUpsPanel";
+import { AcoesFollowUpLead } from "@/components/comercial/AcoesFollowUpLead";
+import { FollowUpSequencialDialog } from "@/components/comercial/FollowUpSequencialDialog";
 const ImportarLeadsDialog = lazy(() =>
   import("@/components/comercial/ImportarLeadsDialog").then((m) => ({
     default: m.ImportarLeadsDialog,
   })),
 );
 import { CompletarLeadsDialog } from "@/components/comercial/CompletarLeadsDialog";
-import { Progress } from "@/components/ui/progress";
 
 import { formatCurrency, formatDate } from "@/lib/format";
 import { mapaWhatsApp } from "@/lib/whatsapp";
 import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
+import { usePainelFollowUps } from "@/lib/use-painel-follow-ups";
+import { diasDesde } from "@/lib/follow-up";
 
 import {
   ESTAGIO_LABEL,
@@ -112,13 +115,13 @@ export const Route = createFileRoute("/comercial")({
       {
         name: "description",
         content:
-          "Cadastre leads prospectados, atualize o estágio do funil, registre reuniões e acompanhe a conversão do time comercial.",
+          "Uma lista só: marque se o lead respondeu ou não respondeu, acompanhe a fila do dia e a conversão do time comercial.",
       },
       { property: "og:title", content: "Gestão comercial de leads | Brazon" },
       {
         property: "og:description",
         content:
-          "Funil de vendas, reuniões e taxa de conversão do time comercial em uma única página.",
+          "Listagem única de leads com follow-up em um clique, reuniões e taxa de conversão do time comercial.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -162,51 +165,74 @@ function ComercialPage() {
 
 const POR_PAGINA = 25;
 
+/** Abas da fila: a mesma listagem, recortes diferentes. */
+type Fila = "hoje" | "atrasados" | "todos";
+
 /** Cabeçalho da tabela de leads (compartilhado com o skeleton). */
 function CabecalhoLeads() {
   return (
     <TableHeader>
       <TableRow>
-        <TableHead>Contato</TableHead>
+        <TableHead>Lead</TableHead>
         <TableHead>Telefone</TableHead>
-        <TableHead>Segmento</TableHead>
         <TableHead>Estágio</TableHead>
-        <TableHead className="w-28">Completude</TableHead>
-        <TableHead className="text-right">Valor</TableHead>
-        <TableHead className="text-right">Reuniões</TableHead>
-        <TableHead>Próximo contato</TableHead>
+        <TableHead>Contato</TableHead>
         <TableHead className="text-right">Ações</TableHead>
       </TableRow>
     </TableHeader>
   );
 }
 
-/**
- * Data do próximo contato colorida pela urgência:
- * vermelho atrasado, âmbar hoje, cinza futuro; traço quando a cadência acabou.
- */
-function ProximoContatoCell({ lead }: { lead: Lead }) {
-  if (!lead.proximo_contato) {
-    return (
-      <span
-        className="text-muted-foreground"
-        title={lead.cadencia_encerrada ? "Cadência encerrada" : "Sem follow-up agendado"}
-      >
-        —
-      </span>
-    );
-  }
+function hojeISOLocal(): string {
   const hoje = new Date();
-  const hojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(
+  return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(
     hoje.getDate(),
   ).padStart(2, "0")}`;
-  const cor =
-    lead.proximo_contato < hojeISO
-      ? "text-destructive font-medium"
-      : lead.proximo_contato === hojeISO
-        ? "text-amber-600 dark:text-amber-400 font-medium"
-        : "text-muted-foreground";
-  return <span className={`whitespace-nowrap ${cor}`}>{formatDate(lead.proximo_contato)}</span>;
+}
+
+/**
+ * Situação do contato em uma linha: quando é o próximo toque e em que
+ * tentativa da cadência o lead está.
+ */
+function SituacaoContato({ lead }: { lead: Lead }) {
+  const hojeISO = hojeISOLocal();
+  const atrasado = Boolean(lead.proximo_contato && lead.proximo_contato < hojeISO);
+  const eHoje = lead.proximo_contato === hojeISO;
+
+  const quando = !lead.proximo_contato
+    ? lead.cadencia_encerrada
+      ? "Cadência encerrada"
+      : "Sem follow-up agendado"
+    : atrasado
+      ? `Atrasado desde ${formatDate(lead.proximo_contato)}`
+      : eHoje
+        ? "Contatar hoje"
+        : `Próximo contato ${formatDate(lead.proximo_contato)}`;
+
+  const cor = atrasado
+    ? "text-destructive font-medium"
+    : eHoje
+      ? "text-amber-600 dark:text-amber-400 font-medium"
+      : "text-muted-foreground";
+
+  const dias = diasDesde(lead.ultimo_contato_em);
+  const tentativa =
+    lead.follow_ups_feitos > 0 ? `${lead.follow_ups_feitos}ª tentativa` : "Sem tentativa";
+  const ultimo =
+    dias === null
+      ? "sem contato registrado"
+      : dias === 0
+        ? "último contato hoje"
+        : `último contato há ${dias} dia${dias === 1 ? "" : "s"}`;
+
+  return (
+    <div className="space-y-0.5">
+      <p className={`whitespace-nowrap text-sm ${cor}`}>{quando}</p>
+      <p className="text-xs text-muted-foreground">
+        {tentativa} · {ultimo}
+      </p>
+    </div>
+  );
 }
 
 function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }) {
@@ -232,30 +258,33 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const [erroMais, setErroMais] = useState<string | null>(null);
   const sentinela = useRef<HTMLDivElement | null>(null);
 
+  const [fila, setFila] = useState<Fila>("hoje");
   const [busca, setBusca] = useState("");
   const [estagio, setEstagio] = useState<LeadEstagio | "todos">("todos");
   const [segmento, setSegmento] = useState("todos");
   const [origem, setOrigem] = useState<LeadOrigem | "todas">("todas");
-  const [followUp, setFollowUp] = useState(false);
   const [soZap, setSoZap] = useState(false);
-  /** Aba/filtro de leads com dados faltando. */
+  /** Filtro de leads com dados faltando. */
   const [incompletos, setIncompletos] = useState(false);
-  const [abaFollowUp, setAbaFollowUp] = useState<"atrasados" | "hoje" | "proximos" | undefined>(
-    undefined,
-  );
   const [ordem, setOrdem] = useState<"recentes" | "completude">("recentes");
   /** Filtro por lote de importação (vem do resultado da importação). */
   const [loteId, setLoteId] = useState<string | null>(null);
 
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  const [desempenhoAberto, setDesempenhoAberto] = useState(false);
+
   const [formAberto, setFormAberto] = useState(false);
   const [importarAberto, setImportarAberto] = useState(false);
   const [completarAberto, setCompletarAberto] = useState(false);
+  const [sequencialAberto, setSequencialAberto] = useState(false);
   const [editando, setEditando] = useState<Lead | null>(null);
   const [detalhe, setDetalhe] = useState<Lead | null>(null);
   const [excluindo, setExcluindo] = useState<Lead | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
   const filtroVendedor = isAdmin && vendedorId !== "todos" ? vendedorId : undefined;
+
+  const painel = usePainelFollowUps(filtroVendedor);
 
   const filtrosLeads = useMemo(
     () => ({
@@ -265,12 +294,13 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       ...(origem !== "todas" ? { origem } : {}),
       ...(segmento !== "todos" ? { segmento } : {}),
       ...(busca.trim() ? { busca: busca.trim() } : {}),
-      ...(followUp ? { apenas_follow_up: true } : {}),
+      ...(fila === "hoje" ? { apenas_follow_up: true } : {}),
+      ...(fila === "atrasados" ? { apenas_atrasados: true } : {}),
       ...(incompletos ? { apenas_incompletos: true } : {}),
       ...(loteId ? { importacao_id: loteId } : {}),
       ordem,
     }),
-    [dias, filtroVendedor, estagio, origem, segmento, busca, followUp, incompletos, loteId, ordem],
+    [dias, filtroVendedor, estagio, origem, segmento, busca, fila, incompletos, loteId, ordem],
   );
 
   const recarregar = useCallback(async () => {
@@ -295,6 +325,12 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       setCarregando(false);
     }
   }, [carregarDashboard, carregarLeads, dias, filtroVendedor, filtrosLeads]);
+
+  /** Recarrega lista + contadores da fila depois de registrar um contato. */
+  const atualizarTudo = useCallback(() => {
+    void recarregar();
+    void painel.buscar();
+  }, [recarregar, painel]);
 
   /** Próxima página: acrescenta ao final da lista já carregada. */
   const carregarMais = useCallback(async () => {
@@ -362,8 +398,8 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
 
   // Com scroll infinito a lista cresce sem limite: renderizamos apenas as
   // linhas visíveis (mais folga) para não pesar no celular.
-  const janelaCards = useJanelaVirtual({ total: leadsVisiveis.length, altura: 148 });
-  const janelaLinhas = useJanelaVirtual({ total: leadsVisiveis.length, altura: 64 });
+  const janelaCards = useJanelaVirtual({ total: leadsVisiveis.length, altura: 200 });
+  const janelaLinhas = useJanelaVirtual({ total: leadsVisiveis.length, altura: 76 });
   const cardsVisiveis = leadsVisiveis.slice(janelaCards.inicio, janelaCards.fim);
   const linhasVisiveis = leadsVisiveis.slice(janelaLinhas.inicio, janelaLinhas.fim);
 
@@ -374,7 +410,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       await remover({ data: { id: excluindo.id } });
       toast.success("Lead excluído.");
       setExcluindo(null);
-      await recarregar();
+      atualizarTudo();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível excluir o lead.");
     } finally {
@@ -382,7 +418,22 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     }
   }
 
-  useTourDaTela("tela:comercial", !carregando && Boolean(dados));
+  useTourDaTela("tela:comercial", !carregando);
+
+  const abas: { chave: Fila; label: string; quantidade?: number }[] = [
+    { chave: "hoje", label: "A contatar hoje", quantidade: painel.totalAContatar },
+    { chave: "atrasados", label: "Atrasados", quantidade: painel.totalAtrasados },
+    { chave: "todos", label: "Todos os leads" },
+  ];
+
+  const vazioTitulo =
+    fila === "hoje"
+      ? "Nada para contatar agora. Fila em dia!"
+      : fila === "atrasados"
+        ? "Nenhum follow-up atrasado."
+        : soZap
+          ? "Nenhum lead com WhatsApp ativo nos filtros atuais."
+          : "Nenhum lead ainda. Cadastre o primeiro contato do dia.";
 
   return (
     <TelaShell
@@ -399,7 +450,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         eyebrow="Comercial"
         eyebrowIcon={Target}
         titulo="Gestão comercial"
-        descricao="Cadastre seus leads, registre reuniões e acompanhe sua conversão."
+        descricao="Uma lista só: marque se o lead respondeu ou não respondeu."
         acoes={
           <>
             <Button
@@ -432,154 +483,177 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         }
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        {PERIODOS.map((p) => (
-          <Button
-            key={p.valor}
-            size="sm"
-            variant={dias === p.valor ? "default" : "outline"}
-            onClick={() => setDias(p.valor)}
-          >
-            {p.label}
-          </Button>
-        ))}
-        {isAdmin && (
-          <Select value={vendedorId} onValueChange={setVendedorId}>
-            <SelectTrigger className="w-full sm:w-56">
-              <SelectValue placeholder="Vendedor" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os vendedores</SelectItem>
-              {vendedores.map((v) => (
-                <SelectItem key={v.id} value={v.id}>
-                  {v.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
+      <Card className="space-y-4 p-4 sm:p-5" data-tour="comercial-followups">
+        {/* Abas da fila + busca: o que o vendedor usa todos os dias */}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap gap-2">
+            {abas.map((a) => (
+              <Button
+                key={a.chave}
+                size="sm"
+                variant={fila === a.chave ? "default" : "outline"}
+                onClick={() => setFila(a.chave)}
+              >
+                {a.label}
+                {typeof a.quantidade === "number" ? ` (${a.quantidade})` : ""}
+              </Button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => setSequencialAberto(true)}
+              disabled={painel.filaDoDia.length === 0}
+            >
+              <PlayCircle className="mr-2 h-4 w-4" /> Follow-up do dia
+            </Button>
+            <Button variant="ghost" size="sm" onClick={atualizarTudo} disabled={carregando}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Atualizar
+            </Button>
+          </div>
+        </div>
 
-      <div id="follow-ups" data-tour="comercial-followups">
-        <FollowUpsPanel
-          isAdmin={isAdmin}
-          vendedorId={filtroVendedor}
-          onAtualizado={() => void recarregar()}
-          abaInicial={abaFollowUp}
-        />
-      </div>
-
-      {carregando && !dados ? (
-        <CardsEsqueleto quantidade={3} />
-      ) : (
-        dados && (
-          <Suspense fallback={<CardsEsqueleto quantidade={3} />}>
-            <ComercialDashboard
-              dados={dados}
-              onVerIncompletos={() => {
-                setIncompletos(true);
-                setOrdem("completude");
-              }}
-              onVerFollowUps={() => {
-                setAbaFollowUp("atrasados");
-                document
-                  .getElementById("follow-ups")
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-            />
-          </Suspense>
-        )
-      )}
-
-      <Card className="space-y-4 p-4 sm:p-5">
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
             placeholder="Buscar por nome, empresa ou telefone"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
+            className="sm:max-w-sm"
           />
-          <Select value={estagio} onValueChange={(v) => setEstagio(v as LeadEstagio | "todos")}>
-            <SelectTrigger>
-              <SelectValue placeholder="Estágio" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os estágios</SelectItem>
-              {LEAD_ESTAGIOS.map((e) => (
-                <SelectItem key={e} value={e}>
-                  {ESTAGIO_LABEL[e]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={segmento} onValueChange={setSegmento}>
-            <SelectTrigger>
-              <SelectValue placeholder="Segmento" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os segmentos</SelectItem>
-              {listaSegmentos.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={origem} onValueChange={(v) => setOrigem(v as LeadOrigem | "todas")}>
-            <SelectTrigger>
-              <SelectValue placeholder="Origem" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as origens</SelectItem>
-              {LEAD_ORIGENS.map((o) => (
-                <SelectItem key={o} value={o}>
-                  {ORIGEM_LABEL[o]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setFiltrosAbertos((v) => !v)}>
+              <SlidersHorizontal className="mr-2 h-4 w-4" /> Mais filtros
+              <ChevronDown
+                className={`ml-1.5 h-4 w-4 transition-transform ${filtrosAbertos ? "rotate-180" : ""}`}
+              />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setDesempenhoAberto((v) => !v)}>
+              <BarChart3 className="mr-2 h-4 w-4" /> Ver desempenho
+              <ChevronDown
+                className={`ml-1.5 h-4 w-4 transition-transform ${desempenhoAberto ? "rotate-180" : ""}`}
+              />
+            </Button>
+            {painel.totalEncerrados > 0 && (
+              <Badge
+                variant="outline"
+                className="border-amber-500/40 text-amber-600 dark:text-amber-400"
+              >
+                {painel.totalEncerrados} com cadência encerrada
+              </Badge>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <div className="flex items-center gap-2">
-            <Switch id="follow-up" checked={followUp} onCheckedChange={setFollowUp} />
-            <Label htmlFor="follow-up" className="text-sm">
-              Só follow-up de hoje
-            </Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch id="so-whatsapp" checked={soZap} onCheckedChange={setSoZap} />
-            <Label htmlFor="so-whatsapp" className="text-sm">
-              Só com WhatsApp ativo
-            </Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch
-              id="so-incompletos"
-              checked={incompletos}
-              onCheckedChange={(v) => {
-                setIncompletos(v);
-                setOrdem(v ? "completude" : "recentes");
-              }}
-            />
-            <Label htmlFor="so-incompletos" className="text-sm">
-              Só incompletos
-            </Label>
-          </div>
-          <Select value={ordem} onValueChange={(v) => setOrdem(v as "recentes" | "completude")}>
-            <SelectTrigger className="w-full sm:w-52">
-              <SelectValue placeholder="Ordenar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recentes">Mais recentes primeiro</SelectItem>
-              <SelectItem value="completude">Menos completos primeiro</SelectItem>
-            </SelectContent>
-          </Select>
-          {loteId && (
-            <Button variant="ghost" size="sm" onClick={() => setLoteId(null)}>
-              Limpar filtro de lote
-            </Button>
-          )}
-        </div>
+        <Collapsible open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
+          <CollapsibleTrigger className="sr-only">Mais filtros</CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 rounded-lg border border-border/60 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {PERIODOS.map((p) => (
+                <Button
+                  key={p.valor}
+                  size="sm"
+                  variant={dias === p.valor ? "default" : "outline"}
+                  onClick={() => setDias(p.valor)}
+                >
+                  {p.label}
+                </Button>
+              ))}
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {isAdmin && (
+                <Select value={vendedorId} onValueChange={setVendedorId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Vendedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os vendedores</SelectItem>
+                    {vendedores.map((v) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        {v.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Select value={estagio} onValueChange={(v) => setEstagio(v as LeadEstagio | "todos")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Estágio" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os estágios</SelectItem>
+                  {LEAD_ESTAGIOS.map((e) => (
+                    <SelectItem key={e} value={e}>
+                      {ESTAGIO_LABEL[e]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={segmento} onValueChange={setSegmento}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Segmento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os segmentos</SelectItem>
+                  {listaSegmentos.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={origem} onValueChange={(v) => setOrigem(v as LeadOrigem | "todas")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Origem" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas as origens</SelectItem>
+                  {LEAD_ORIGENS.map((o) => (
+                    <SelectItem key={o} value={o}>
+                      {ORIGEM_LABEL[o]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={ordem} onValueChange={(v) => setOrdem(v as "recentes" | "completude")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recentes">Mais recentes primeiro</SelectItem>
+                  <SelectItem value="completude">Menos completos primeiro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <div className="flex items-center gap-2">
+                <Switch id="so-whatsapp" checked={soZap} onCheckedChange={setSoZap} />
+                <Label htmlFor="so-whatsapp" className="text-sm">
+                  Só com WhatsApp ativo
+                </Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="so-incompletos"
+                  checked={incompletos}
+                  onCheckedChange={(v) => {
+                    setIncompletos(v);
+                    setOrdem(v ? "completude" : "recentes");
+                  }}
+                />
+                <Label htmlFor="so-incompletos" className="text-sm">
+                  Só incompletos
+                </Label>
+              </div>
+              {loteId && (
+                <Button variant="ghost" size="sm" onClick={() => setLoteId(null)}>
+                  Limpar filtro de lote
+                </Button>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {carregando ? (
           <>
@@ -612,15 +686,11 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         ) : leadsVisiveis.length === 0 ? (
           <EmptyState
             icon={Target}
-            titulo={
-              soZap
-                ? "Nenhum lead com WhatsApp ativo nos filtros atuais."
-                : "Nenhum lead ainda. Cadastre o primeiro contato do dia."
-            }
+            titulo={vazioTitulo}
             descricao={
-              soZap
-                ? "Confira se os telefones estão cadastrados com DDD e número de celular."
-                : "Cada lead cadastrado alimenta o funil e as taxas de conversão desta página."
+              fila === "todos"
+                ? "Cada lead cadastrado alimenta o funil e as taxas de conversão desta página."
+                : "Veja tudo em “Todos os leads” ou cadastre novos contatos."
             }
           />
         ) : (
@@ -629,12 +699,11 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
             <div className="space-y-3 sm:hidden" ref={janelaCards.ref}>
               <div style={{ height: janelaCards.antes }} aria-hidden />
               {cardsVisiveis.map((l) => (
-                <Card
-                  key={l.id}
-                  className="cursor-pointer space-y-2 p-4"
-                  onClick={() => setDetalhe(l)}
-                >
-                  <div className="flex items-start justify-between gap-2">
+                <Card key={l.id} className="space-y-2 p-4">
+                  <div
+                    className="flex cursor-pointer items-start justify-between gap-2"
+                    onClick={() => setDetalhe(l)}
+                  >
                     <div className="min-w-0">
                       <p className="truncate font-medium">{l.nome_contato}</p>
                       <p className="truncate text-xs text-muted-foreground">
@@ -645,25 +714,22 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                       {ESTAGIO_LABEL[l.estagio]}
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      {l.telefone}
-                      <WhatsAppIndicator
-                        telefone={l.telefone}
-                        status={statusZap.get(l.id)}
-                        size="sm"
-                      />
-                    </span>
-
-                    <span className="text-right">{formatCurrency(l.valor_estimado)}</span>
-                    <span>{l.segmento || "Sem segmento"}</span>
-                    <span className="text-right">
-                      {l.reunioes_count} reuniã{l.reunioes_count === 1 ? "o" : "es"}
-                    </span>
-                    <span className="col-span-2">
-                      Próximo contato: <ProximoContatoCell lead={l} />
-                    </span>
-                  </div>
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    {l.telefone}
+                    <WhatsAppIndicator telefone={l.telefone} status={statusZap.get(l.id)} size="sm" />
+                    <span>· {formatCurrency(l.valor_estimado)}</span>
+                  </p>
+                  <SituacaoContato lead={l} />
+                  <AcoesFollowUpLead
+                    lead={l}
+                    onAtualizado={atualizarTudo}
+                    onDetalhes={setDetalhe}
+                    onEditar={(lead) => {
+                      setEditando(lead);
+                      setFormAberto(true);
+                    }}
+                    onExcluir={setExcluindo}
+                  />
                 </Card>
               ))}
               <div style={{ height: janelaCards.depois }} aria-hidden />
@@ -676,16 +742,20 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                 <TableBody>
                   {janelaLinhas.antes > 0 && (
                     <TableRow aria-hidden>
-                      <TableCell colSpan={9} style={{ height: janelaLinhas.antes, padding: 0 }} />
+                      <TableCell colSpan={5} style={{ height: janelaLinhas.antes, padding: 0 }} />
                     </TableRow>
                   )}
                   {linhasVisiveis.map((l) => (
-                    <TableRow key={l.id} className="cursor-pointer" onClick={() => setDetalhe(l)}>
-                      <TableCell>
+                    <TableRow key={l.id}>
+                      <TableCell className="cursor-pointer" onClick={() => setDetalhe(l)}>
                         <p className="font-medium">{l.nome_contato}</p>
                         <p className="text-xs text-muted-foreground">
-                          {[l.empresa, l.cargo].filter(Boolean).join(" · ") || "—"}
+                          {[l.empresa, l.segmento].filter(Boolean).join(" · ") || "—"}
                           {isAdmin && l.vendedor_nome ? ` · ${l.vendedor_nome}` : ""}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatCurrency(l.valor_estimado)} · {l.completude}% completo ·{" "}
+                          {l.reunioes_count} reuniã{l.reunioes_count === 1 ? "o" : "es"}
                         </p>
                       </TableCell>
                       <TableCell>
@@ -698,58 +768,38 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
                           />
                         </span>
                       </TableCell>
-
-                      <TableCell>{l.segmento || "—"}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={estagioClasse(l.estagio)}>
                           {ESTAGIO_LABEL[l.estagio]}
                         </Badge>
+                        {l.cadencia_encerrada && (
+                          <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                            Cadência encerrada
+                          </p>
+                        )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Progress value={l.completude} className="h-1.5 w-14" />
-                          <span className="text-xs text-muted-foreground">{l.completude}%</span>
-                        </div>
+                        <SituacaoContato lead={l} />
                       </TableCell>
                       <TableCell className="text-right">
-                        {formatCurrency(l.valor_estimado)}
-                      </TableCell>
-                      <TableCell className="text-right">{l.reunioes_count}</TableCell>
-                      <TableCell>
-                        <ProximoContatoCell lead={l} />
-                      </TableCell>
-
-                      <TableCell className="text-right">
-                        <div
-                          className="flex justify-end gap-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            aria-label="Editar lead"
-                            onClick={() => {
-                              setEditando(l);
+                        <div className="flex justify-end">
+                          <AcoesFollowUpLead
+                            lead={l}
+                            onAtualizado={atualizarTudo}
+                            onDetalhes={setDetalhe}
+                            onEditar={(lead) => {
+                              setEditando(lead);
                               setFormAberto(true);
                             }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            aria-label="Excluir lead"
-                            onClick={() => setExcluindo(l)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                            onExcluir={setExcluindo}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
                   {janelaLinhas.depois > 0 && (
                     <TableRow aria-hidden>
-                      <TableCell colSpan={9} style={{ height: janelaLinhas.depois, padding: 0 }} />
+                      <TableCell colSpan={5} style={{ height: janelaLinhas.depois, padding: 0 }} />
                     </TableRow>
                   )}
                 </TableBody>
@@ -795,6 +845,32 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         )}
       </Card>
 
+      {/* Desempenho: fica fora do caminho do dia a dia, aberto sob demanda */}
+      <Collapsible open={desempenhoAberto} onOpenChange={setDesempenhoAberto}>
+        <CollapsibleTrigger className="sr-only">Ver desempenho</CollapsibleTrigger>
+        <CollapsibleContent className="space-y-4">
+          {dados ? (
+            <Suspense fallback={<CardsEsqueleto quantidade={3} />}>
+              <ComercialDashboard
+                dados={dados}
+                onVerIncompletos={() => {
+                  setFila("todos");
+                  setIncompletos(true);
+                  setOrdem("completude");
+                  setFiltrosAbertos(true);
+                }}
+                onVerFollowUps={() => {
+                  setFila("atrasados");
+                  setDesempenhoAberto(false);
+                }}
+              />
+            </Suspense>
+          ) : (
+            <CardsEsqueleto quantidade={3} />
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+
       <LeadFormDialog
         aberto={formAberto}
         onOpenChange={setFormAberto}
@@ -802,7 +878,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         segmentos={listaSegmentos}
         vendedores={vendedores}
         isAdmin={isAdmin}
-        onSalvo={() => void recarregar()}
+        onSalvo={atualizarTudo}
       />
 
       <MontarQuandoAberto aberto={importarAberto}>
@@ -812,11 +888,13 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
           isAdmin={isAdmin}
           vendedores={vendedores}
           segmentos={listaSegmentos}
-          onConcluido={() => void recarregar()}
+          onConcluido={atualizarTudo}
           onVerLote={(importacaoId) => {
             setLoteId(importacaoId);
+            setFila("todos");
             setIncompletos(true);
             setOrdem("completude");
+            setFiltrosAbertos(true);
           }}
         />
       </MontarQuandoAberto>
@@ -826,8 +904,17 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
         onOpenChange={setCompletarAberto}
         leads={leads.filter((l) => l.completude < 100)}
         segmentos={listaSegmentos}
-        onAtualizado={() => void recarregar()}
+        onAtualizado={atualizarTudo}
       />
+
+      <MontarQuandoAberto aberto={sequencialAberto}>
+        <FollowUpSequencialDialog
+          aberto={sequencialAberto}
+          onOpenChange={setSequencialAberto}
+          itens={painel.filaDoDia}
+          onRegistrado={atualizarTudo}
+        />
+      </MontarQuandoAberto>
 
       <MontarQuandoAberto aberto={Boolean(detalhe)}>
         <LeadDetalheSheet
@@ -836,7 +923,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
           onOpenChange={(v) => {
             if (!v) setDetalhe(null);
           }}
-          onAtualizado={() => void recarregar()}
+          onAtualizado={atualizarTudo}
         />
       </MontarQuandoAberto>
 
