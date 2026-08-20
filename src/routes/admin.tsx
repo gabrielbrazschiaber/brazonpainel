@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { adminPainelQuery } from "@/lib/painel-queries";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeader } from "@/components/ui/page-header";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { ClientesTab } from "@/components/admin/ClientesTab";
 import { VendedoresTab } from "@/components/admin/VendedoresTab";
