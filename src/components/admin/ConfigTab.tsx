@@ -533,7 +533,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
                 <Label htmlFor="iakey">Chave de API</Label>
                 <PasswordInput
                   id="iakey"
-                  value={novaIaIaKey}
+                  value={novaIaKey}
                   onChange={(e) => setNovaIaKey(e.target.value)}
                   placeholder={
                     iaConfig?.temChave
