@@ -93,6 +93,10 @@ export const changelogAiResponseSchema = z.object({
       }))
     })
   })
+  }),
+  resumo_ia: z.object({
+    erro_original: z.string().optional()
+  }).optional().nullable()
 });
 
 export type ChangelogAiResponse = z.infer<typeof changelogAiResponseSchema>;
