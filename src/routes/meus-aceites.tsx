@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/meus-aceites")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Meus aceites do Termo de Uso — Brazon" },

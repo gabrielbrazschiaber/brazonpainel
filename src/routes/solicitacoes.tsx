@@ -90,6 +90,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/solicitacoes")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Solicitações | Brazon" },
