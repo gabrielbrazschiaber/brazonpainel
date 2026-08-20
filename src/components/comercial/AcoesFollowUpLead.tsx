@@ -61,6 +61,9 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
   const [mensagens, setMensagens] = useState<any[]>([]);
   const [carregandoMsgs, setCarregandoMsgs] = useState(false);
   const [nota, setNota] = useState("");
+  const [enviadasLocais, setEnviadasLocais] = useState<string[]>(() =>
+    Array.isArray(lead.mensagens_enviadas) ? (lead.mensagens_enviadas as string[]) : [],
+  );
 
   const digitos = apenasDigitos(lead.telefone);
 
@@ -162,16 +165,16 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
 
       await navigator.clipboard.writeText(textoProcessado);
       toast.success("Mensagem copiada!");
-      // O popover não é mais fechado automaticamente aqui (setMensagensAberto(false) removido)
-      // para que o lead não "suma" da visão imediata do vendedor.
 
-      // Registra que a mensagem foi enviada
+      // Marca localmente como enviada (sem recarregar a listagem, para o lead
+      // não sair da tela). O registro no banco acontece em segundo plano.
+      setEnviadasLocais((atual) => (atual.includes(msg.id) ? atual : [...atual, msg.id]));
       await registrarMensagem({ data: { lead_id: lead.id, mensagem_id: msg.id } });
-      onAtualizado();
     } catch (err) {
       toast.error("Erro ao copiar mensagem");
     }
   }
+
 
   return (
     <div className="flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
@@ -201,7 +204,7 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
             </p>
           )}
           {mensagens.map((msg) => {
-            const jaEnviada = Array.isArray(lead.mensagens_enviadas) && lead.mensagens_enviadas.includes(msg.id);
+            const jaEnviada = enviadasLocais.includes(msg.id);
             return (
               <button
                 key={msg.id}
