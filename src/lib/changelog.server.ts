@@ -14,7 +14,7 @@ export async function gerarChangelogServer(
   // 1. Obter configurações (exclusivamente no servidor)
   const { data: cfg } = await supabaseAdmin
     .from("configuracoes")
-    .select("ia_provedor, ia_modelo, ia_api_key, changelog_ativo, changelog_versao_atual")
+    .select("id, ia_provedor, ia_modelo, ia_api_key, changelog_ativo, changelog_versao_atual")
     .limit(1)
     .maybeSingle();
 
