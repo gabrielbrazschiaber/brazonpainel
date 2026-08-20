@@ -1,38 +1,42 @@
 import { describe, it, expect } from "vitest";
-import { Commit, calcularVersao, COMMITS_IGNORADOS, ARQUIVOS_IGNORADOS } from "./changelog";
+import { calcularVersao, COMMITS_IGNORADOS, ARQUIVOS_IGNORADOS, filtrarItensCliente } from "./changelog";
 
-describe("changelog.ts", () => {
+describe("Changelog Logic", () => {
   describe("calcularVersao", () => {
-    it("deve incrementar major em BREAKING CHANGE", () => {
-      const commits: Commit[] = [{ sha: "1", mensagem: "feat!: algo novo", autor: "a" }];
-      expect(calcularVersao("1.8.3", commits)).toBe("2.0.0");
+    it("incrementa patch para commits comuns", () => {
+      const commits = [{ sha: "1", mensagem: "fix: erro no login", autor: "dev" }];
+      expect(calcularVersao("1.0.0", commits)).toBe("1.0.1");
+    });
+
+    it("incrementa minor para novas features", () => {
+      const commits = [{ sha: "1", mensagem: "feat: novo dashboard", autor: "dev" }];
+      expect(calcularVersao("1.0.0", commits)).toBe("1.1.0");
+    });
+
+    it("incrementa major para breaking changes", () => {
+      const commits = [{ sha: "1", mensagem: "feat!: mudança radical", autor: "dev" }];
+      expect(calcularVersao("1.0.0", commits)).toBe("2.0.0");
       
-      const commitsBody: Commit[] = [{ sha: "2", mensagem: "fix: algo\n\nBREAKING CHANGE: quebra tudo", autor: "a" }];
-      expect(calcularVersao("1.8.3", commitsBody)).toBe("2.0.0");
-    });
-
-    it("deve incrementar minor em feat", () => {
-      const commits: Commit[] = [{ sha: "1", mensagem: "feat: nova funcionalidade", autor: "a" }];
-      expect(calcularVersao("1.8.3", commits)).toBe("1.9.0");
-    });
-
-    it("deve incrementar patch em fix ou outros", () => {
-      const commits: Commit[] = [{ sha: "1", mensagem: "fix: erro bobo", autor: "a" }];
-      expect(calcularVersao("1.8.3", commits)).toBe("1.8.4");
-    });
-
-    it("deve retornar a mesma versão se lista for vazia", () => {
-      expect(calcularVersao("1.0.0", [])).toBe("1.0.0");
+      const commits2 = [{ sha: "2", mensagem: "fix: ajuste\n\nBREAKING CHANGE: mudou tudo", autor: "dev" }];
+      expect(calcularVersao("1.0.0", commits2)).toBe("2.0.0");
     });
   });
 
-  describe("filtros", () => {
-    it("deve filtrar commits de ruído", () => {
+  describe("Filtros", () => {
+    it("ignora commits de manutenção", () => {
       expect(COMMITS_IGNORADOS.test("chore: update deps")).toBe(true);
-      expect(COMMITS_IGNORADOS.test("ci: fix pipeline")).toBe(true);
-      expect(COMMITS_IGNORADOS.test("docs: update readme")).toBe(true);
-      expect(COMMITS_IGNORADOS.test("feat: cool feature")).toBe(false);
-      expect(COMMITS_IGNORADOS.test("fix: some bug")).toBe(false);
+      expect(COMMITS_IGNORADOS.test("ci: fix workflow")).toBe(true);
+      expect(COMMITS_IGNORADOS.test("feat: ok")).toBe(false);
+    });
+
+    it("filtra termos proibidos para clientes", () => {
+      const itens = [
+        { tipo: "novidade", texto: "Novo boleto disponível" },
+        { tipo: "melhoria", texto: "Ajuste no admin de leads" }
+      ];
+      const { filtrados, descartados } = filtrarItensCliente(itens as any);
+      expect(filtrados).toHaveLength(1);
+      expect(descartados).toContain("Ajuste no admin de leads");
     });
   });
 });

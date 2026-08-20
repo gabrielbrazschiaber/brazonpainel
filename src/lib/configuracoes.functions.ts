@@ -9,7 +9,7 @@ import {
 } from "@/lib/leads.schemas";
 
 const configIaSchema = z.object({
-  provedor: z.enum(["openrouter", "deepseek", "groq", "google", "anthropic"]),
+  provedor: z.enum(["openai", "openrouter", "deepseek", "groq", "google", "anthropic"]),
   modelo: z.string().max(120),
   api_key: z.string().min(20).optional().or(z.literal("")),
 });
@@ -124,30 +124,18 @@ export const testarConexaoIa = createServerFn({ method: "POST" })
     let mensagem = "";
 
     try {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${cfg.ia_api_key}`,
-              "HTTP-Referer": "https://brazoncrm.com.br",
-              "X-Title": "Brazon CRM Admin Test"
-          },
-          body: JSON.stringify({
-              model: cfg.ia_modelo,
-              messages: [{ role: "user", content: "responda apenas OK" }],
-              max_tokens: 10
-          })
-      });
-
-      if (response.ok) {
-          ok = true;
-          mensagem = "Conexão estabelecida com sucesso.";
-      } else {
-          const errBody = await response.text();
-          mensagem = errBody.replace(cfg.ia_api_key, "***");
-      }
+      const { gerarChangelogServer } = await import("./changelog.server");
+      // O próprio gerarChangelogServer agora lida com o roteamento e tratamento de erro
+      // Para o teste, passamos um commit dummy
+      const dummyCommit = { sha: "test", mensagem: "feat: teste de conexão", autor: "sistema" };
+      await gerarChangelogServer([dummyCommit], ["src/test.ts"], "1.0.0");
+      
+      ok = true;
+      mensagem = `Conexão ok · ${Date.now() - inicio}ms · modelo ${cfg.ia_modelo}`;
     } catch (e) {
       mensagem = e instanceof Error ? e.message : "Erro desconhecido";
+      // Sanitização básica se a chave vazou na mensagem (embora o handler já deva tratar)
+      mensagem = mensagem.replace(cfg.ia_api_key, "***");
     }
 
     const latenciaMs = Date.now() - inicio;
