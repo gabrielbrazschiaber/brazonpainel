@@ -143,12 +143,17 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
   }
 
   function extrairPrimeiroNome(nomeCompleto: string) {
-    // Remove números e espaços extras, pega a primeira palavra e capitaliza
-    const apenasLetras = nomeCompleto.replace(/[0-9]/g, "").trim();
-    const primeiro = apenasLetras.split(/\s+/)[0];
+    // Pega o primeiro pedaço que realmente parece um nome: ignora números,
+    // pontuação (ex.: "55.182.605") e conectivos soltos.
+    const tokens = (nomeCompleto ?? "")
+      .split(/[\s/|,;-]+/)
+      .map((t) => t.replace(/[^\p{L}]/gu, ""))
+      .filter((t) => t.length >= 2);
+    const primeiro = tokens[0];
     if (!primeiro) return "";
     return primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase();
   }
+
 
   async function copiarMensagem(msg: any) {
     try {
