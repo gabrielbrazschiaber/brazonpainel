@@ -235,12 +235,17 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
       </Card>
       <DoisFatoresEquipeCard />
       <Card className="p-6">
-          <div className="flex items-center justify-between border-t border-border pt-4">
+        <div className="grid gap-4">
+          <div className="flex items-center justify-between border-b border-border pb-4">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
               <div className="grid gap-0.5">
-                <Label htmlFor="cactive" className="text-sm font-semibold">Changelog Automático</Label>
-                <p className="text-xs text-muted-foreground">Publica notas de atualização via IA após cada deploy.</p>
+                <Label htmlFor="cactive" className="text-sm font-semibold">
+                  Changelog Automático
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Publica notas de atualização via IA após cada deploy.
+                </p>
               </div>
             </div>
             <Switch
@@ -249,8 +254,6 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
               onCheckedChange={(v) => set("changelog_ativo", v)}
             />
           </div>
-
-          <div className="grid gap-4">
             <div className="grid gap-2 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="capp">Nome do app</Label>
