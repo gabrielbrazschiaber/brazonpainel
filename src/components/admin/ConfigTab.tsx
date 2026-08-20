@@ -483,6 +483,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
                 <p className="mt-1 text-xs text-muted-foreground">
                   Salve a chave antes de testar. O ambiente correto é detectado automaticamente.
                 </p>
+              </div>
             </div>
           </div>
 
