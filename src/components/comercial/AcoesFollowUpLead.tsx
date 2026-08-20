@@ -142,11 +142,23 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
     }
   }
 
+  function extrairPrimeiroNome(nomeCompleto: string) {
+    // Remove números e espaços extras, pega a primeira palavra e capitaliza
+    const apenasLetras = nomeCompleto.replace(/[0-9]/g, "").trim();
+    const primeiro = apenasLetras.split(/\s+/)[0];
+    if (!primeiro) return "";
+    return primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase();
+  }
+
   async function copiarMensagem(msg: any) {
     try {
-      await navigator.clipboard.writeText(msg.texto);
-      toast.success("Mensagem copiada para a área de transferência!");
-      setMensagensAberto(false);
+      const nome = extrairPrimeiroNome(lead.nome_contato);
+      const textoProcessado = msg.texto.replace(/\[nome\]/gi, nome);
+
+      await navigator.clipboard.writeText(textoProcessado);
+      toast.success("Mensagem copiada!");
+      // O popover não é mais fechado automaticamente aqui (setMensagensAberto(false) removido)
+      // para que o lead não "suma" da visão imediata do vendedor.
 
       // Registra que a mensagem foi enviada
       await registrarMensagem({ data: { lead_id: lead.id, mensagem_id: msg.id } });
