@@ -87,6 +87,7 @@ export function MensagensRapidasTab() {
         <h3 className="text-lg font-medium">Mensagens Rápidas</h3>
         <p className="text-sm text-muted-foreground">
           Configure as mensagens que os vendedores podem copiar rapidamente na gestão comercial.
+          Use <strong>[nome]</strong> para inserir o primeiro nome do lead automaticamente.
         </p>
       </div>
 
