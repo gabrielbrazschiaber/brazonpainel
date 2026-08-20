@@ -40,6 +40,7 @@ export const Route = createFileRoute("/admin")({
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(adminPainelQuery());
   },
+  component: Admin,
 });
 
 export default function Admin() {
