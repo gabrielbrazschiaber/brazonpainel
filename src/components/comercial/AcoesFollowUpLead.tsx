@@ -26,6 +26,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ESTAGIO_LABEL, apenasDigitos, type LeadEstagio } from "@/lib/leads";
 import { ADIAMENTOS, ESTAGIOS_RESPOSTA } from "@/lib/follow-up";
 import {
