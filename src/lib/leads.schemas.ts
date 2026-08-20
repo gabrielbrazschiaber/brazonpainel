@@ -147,6 +147,7 @@ export const reativarCadenciaSchema = z.object({ lead_id: z.string().uuid() });
 export const dashboardSchema = z.object({
   dias: z.number().int().min(0).max(3650).optional(),
   vendedor_id: z.string().uuid().optional(),
+});
 
 export const registrarEnvioMensagemSchema = z.object({
   lead_id: z.string().uuid(),
