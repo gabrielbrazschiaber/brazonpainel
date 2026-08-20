@@ -81,6 +81,10 @@ export const salvarConfigIa = createServerFn({ method: "POST" })
     if (data.api_key) {
       update.ia_api_key = data.api_key;
     }
+    
+    // Se mudou provedor ou modelo, resetamos o status de teste para forçar novo teste
+    update.ia_teste_ok = null;
+    update.ia_testada_em = null;
 
     const { error } = await supabaseAdmin
       .from("configuracoes")

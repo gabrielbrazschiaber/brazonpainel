@@ -191,6 +191,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
           provedor: iaConfig.provedor,
           modelo: iaConfig.modelo,
           api_key: novaIaKey.trim() || undefined,
+          ia_teste_ok: undefined, // Reset state on save to allow fresh test
         },
       });
       setNovaIaKey("");
@@ -508,13 +509,13 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
             <div className="mt-4 space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label>Provedor</Label>
+                  <Label htmlFor="iaprovedor">Provedor</Label>
                   <Select
                     value={iaConfig?.provedor ?? "openrouter"}
-                    onValueChange={(v: any) => iaConfig && setIaConfig({ ...iaConfig, provedor: v })}
+                    onValueChange={(v: any) => setIaConfig(prev => prev ? { ...prev, provedor: v } : { provedor: v, modelo: modelosSugestao[v]?.[0] || "", temChave: false, ultimos4: null, testadaEm: null, testeOk: null })}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
+                    <SelectTrigger id="iaprovedor">
+                      <SelectValue placeholder="Selecione um provedor" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="openai">OpenAI</SelectItem>
@@ -542,7 +543,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
                           <button
                             key={m}
                             type="button"
-                            onClick={() => iaConfig && setIaConfig({ ...iaConfig, modelo: m })}
+                            onClick={() => setIaConfig(prev => prev ? { ...prev, modelo: m } : null)}
                             className="text-[9px] px-1.5 py-0.5 bg-secondary hover:bg-secondary/80 rounded-full transition-colors"
                           >
                             {m.split('/').pop()}
@@ -554,7 +555,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
                   <Input
                     id="iamodelo"
                     value={iaConfig?.modelo ?? ""}
-                    onChange={(e) => iaConfig && setIaConfig({ ...iaConfig, modelo: e.target.value })}
+                    onChange={(e) => setIaConfig(prev => prev ? { ...prev, modelo: e.target.value } : null)}
                     placeholder="ex: gpt-4o-mini"
                   />
                   {iaConfig?.testeOk === false && (
