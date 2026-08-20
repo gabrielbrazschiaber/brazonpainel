@@ -149,4 +149,15 @@ export const dashboardSchema = z.object({
   vendedor_id: z.string().uuid().optional(),
 });
 
+export const registrarEnvioMensagemSchema = z.object({
+  lead_id: z.string().uuid(),
+  mensagem_id: z.string().uuid(),
+});
+
+export const mensagemRapidaSchema = z.object({
+  id: z.string().uuid().optional(),
+  texto: z.string().trim().min(1, "O texto não pode estar vazio").max(2000),
+  ordem: z.number().int().default(0),
+});
+
 export type SalvarLeadInput = z.input<typeof salvarLeadSchema>;

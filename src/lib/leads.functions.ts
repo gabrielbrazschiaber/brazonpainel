@@ -7,6 +7,8 @@ import {
   reagendarFollowUpSchema,
   registrarFollowUpSchema,
   reativarCadenciaSchema,
+  registrarEnvioMensagemSchema,
+  mensagemRapidaSchema,
   idSchema,
   leadIdSchema,
   listarLeadsSchema,
@@ -148,4 +150,19 @@ export const contarFollowUps = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { contarFollowUpsServer } = await import("@/lib/leads.server");
     return contarFollowUpsServer(context.supabase, context.userId);
+  });
+
+export const registrarEnvioMensagem = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => registrarEnvioMensagemSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { registrarEnvioMensagemServer } = await import("@/lib/leads.server");
+    return registrarEnvioMensagemServer(context.supabase, context.userId, data);
+  });
+
+export const listarMensagensRapidas = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { listarMensagensRapidasServer } = await import("@/lib/configuracoes.server");
+    return listarMensagensRapidasServer(context.supabase);
   });
