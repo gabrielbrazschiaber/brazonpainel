@@ -189,7 +189,7 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
 
       <Popover open={mensagensAberto} onOpenChange={setMensagensAberto}>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" onClick={abrirMensagens} disabled={carregandoMsgs}>
+          <Button type="button" variant="outline" size="sm" onClick={abrirMensagens} disabled={carregandoMsgs}>
             <Copy className="h-4 w-4 sm:mr-1.5" />
             <span className="hidden sm:inline">Copiar Mensagem</span>
           </Button>
@@ -208,8 +208,13 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
             return (
               <button
                 key={msg.id}
+                type="button"
                 className="w-full text-left px-3 py-2 rounded-md hover:bg-muted transition-colors relative group"
-                onClick={() => void copiarMensagem(msg)}
+                onClick={(ev) => {
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                  void copiarMensagem(msg);
+                }}
               >
                 <p className="text-sm line-clamp-2 pr-6">{msg.texto}</p>
                 {jaEnviada && (
