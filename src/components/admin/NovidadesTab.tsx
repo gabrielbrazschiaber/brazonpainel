@@ -134,7 +134,10 @@ export function NovidadesTab() {
 
   async function toggleChangelogAtivo(v: boolean) {
     setChangelogAtivo(v);
-    await supabase.from("configuracoes").update({ changelog_ativo: v }).eq("id", (await supabase.from("configuracoes").select("id").limit(1).single()).data?.id);
+    const { data: cfg } = await supabase.from("configuracoes").select("id").limit(1).single();
+    if (cfg?.id) {
+      await supabase.from("configuracoes").update({ changelog_ativo: v }).eq("id", cfg.id);
+    }
     toast.success(v ? "Changelog automático ativado." : "Changelog automático desativado.");
   }
 
