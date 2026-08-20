@@ -191,6 +191,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
           provedor: iaConfig.provedor,
           modelo: iaConfig.modelo,
           api_key: novaIaKey.trim() || undefined,
+          ia_teste_ok: undefined, // Reset state on save to allow fresh test
         },
       });
       setNovaIaKey("");
