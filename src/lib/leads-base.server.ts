@@ -7,6 +7,7 @@ import {
   type LeadEstagio,
   type LeadOrigem,
   type ReuniaoStatus,
+  type LeadSituacao,
 } from "@/lib/leads";
 import type { z } from "zod";
 import type {
@@ -20,6 +21,7 @@ import type {
   registrarFollowUpSchema,
   reativarCadenciaSchema,
 } from "@/lib/leads.schemas";
+import type { Database } from "@/integrations/supabase/types";
 
 // Cliente tipado do usuário logado (RLS ativa). Tipo frouxo de propósito.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,7 +46,7 @@ export interface Lead {
   segmento: string | null;
   origem: LeadOrigem;
   estagio: LeadEstagio;
-  situacao_contato: Database["public"]["Enums"]["lead_situacao_contato"];
+  situacao_contato: LeadSituacao;
   mensagem_enviada_em: string | null;
   aguardando_resposta_ate: string | null;
   motivo_descarte: string | null;
