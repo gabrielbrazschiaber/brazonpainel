@@ -134,6 +134,18 @@ export async function dashboardComercialServer(
     : todasReunioes;
   const metricasReunioes = contarReunioes(reunioesPeriodo);
 
+  // Qualidade da base e Situação do contato.
+  const porSituacao = new Map<string, number>();
+  for (const l of leadsAtuais) {
+    const chave = l.situacao_contato || "nao_contatado";
+    porSituacao.set(chave, (porSituacao.get(chave) ?? 0) + 1);
+  }
+  const situacoes = Array.from(porSituacao.entries()).map(([chave, total]) => ({
+    chave,
+    total,
+    percentual: razao(total, leadsAtuais.length),
+  }));
+
   // Segmentos: conversão por segmento no período.
   const porSegmento = new Map<string, { total: number; ganhos: number }>();
   for (const l of leadsAtuais) {
@@ -249,6 +261,7 @@ export async function dashboardComercialServer(
     anterior: funilAnterior,
     reunioes: metricasReunioes,
     segmentos,
+    situacoes,
     serie: meses,
     ranking,
     follow_ups_atrasados: atrasadosRes.count ?? 0,
