@@ -546,7 +546,10 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
                   }
                 />
                 <div className="flex items-center gap-2">
-                  <Badge variant={iaConfig?.temChave ? "success" : "secondary"}>
+                  <Badge
+                    variant="outline"
+                    className={iaConfig?.temChave ? "bg-success/10 text-success border-success/20" : ""}
+                  >
                     {iaConfig?.temChave ? "Chave configurada" : "Sem chave"}
                   </Badge>
                   {iaConfig?.testadaEm && (
