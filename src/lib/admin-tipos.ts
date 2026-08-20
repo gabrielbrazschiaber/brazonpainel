@@ -66,6 +66,9 @@ export interface Config {
   asaas_ambiente: "producao" | "sandbox" | null;
   asaas_api_key_mascara: string;
   asaas_api_key_definida: boolean;
+  // Changelog & IA
+  changelog_ativo?: boolean;
+  changelog_versao_atual?: string;
 }
 
 /** Configuração usada enquanto o servidor ainda não tem nenhuma salva. */
@@ -80,4 +83,6 @@ export const CONFIG_PADRAO: Config = {
   asaas_ambiente: "sandbox",
   asaas_api_key_mascara: "",
   asaas_api_key_definida: false,
+  changelog_ativo: true,
+  changelog_versao_atual: "1.0.0",
 };

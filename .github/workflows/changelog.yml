@@ -1,0 +1,63 @@
+name: changelog
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+
+concurrency:
+  group: changelog
+  cancel-in-progress: false
+
+jobs:
+  registrar:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Montar Payload
+        id: payload
+        run: |
+          # Pega commits desde a última tag ou os últimos 20
+          ULTIMA_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$ULTIMA_TAG" ]; then
+            COMMITS=$(git log -n 20 --pretty=format:'%H|%s|%an')
+          else
+            COMMITS=$(git log ${ULTIMA_TAG}..HEAD --pretty=format:'%H|%s|%an')
+          fi
+          
+          # Se não houver commits novos, sai
+          if [ -z "$COMMITS" ]; then
+            echo "Nenhum commit novo."
+            exit 0
+          fi
+
+          # Arquivos alterados
+          ARQUIVOS=$(git diff --name-only HEAD~1 HEAD | jq -R . | jq -s .)
+          
+          # Converte commits para JSON
+          COMMITS_JSON=$(echo "$COMMITS" | awk -F'|' '{ printf "{\"sha\":\"%s\",\"mensagem\":\"%s\",\"autor\":\"%s\"},", $1, $2, $3 }' | sed 's/,$//' | jq -s .)
+          
+          echo "payload={\"sha\":\"${{ github.sha }}\",\"branch\":\"main\",\"commits\":$COMMITS_JSON,\"arquivos_alterados\":$ARQUIVOS}" >> $GITHUB_OUTPUT
+
+      - name: Notificar Brazon
+        if: steps.payload.outputs.payload != ''
+        run: |
+          RESPONSE=$(curl -s -X POST "${{ secrets.APP_URL }}/api/public/hooks/registrar-deploy" \
+            -H "Content-Type: application/json" \
+            -H "x-deploy-token: ${{ secrets.CHANGELOG_WEBHOOK_TOKEN }}" \
+            -d '${{ steps.payload.outputs.payload }}')
+          
+          echo "Resposta: $RESPONSE"
+          VERSAO=$(echo $RESPONSE | jq -r '.versao // empty')
+          
+          if [ ! -z "$VERSAO" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag "v$VERSAO"
+            git push origin "v$VERSAO"
+          fi
+        continue-on-error: true

@@ -24,6 +24,7 @@ import { Route as BancoLeadsRouteImport } from './routes/banco-leads'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicRefVisitaRouteImport } from './routes/api/public/ref-visita'
+import { Route as ApiPublicHooksRegistrarDeployRouteImport } from './routes/api/public/hooks/registrar-deploy'
 import { Route as ApiPublicHooksLembretesVencimentoRouteImport } from './routes/api/public/hooks/lembretes-vencimento'
 import { Route as ApiPublicHooksDevolverLeadsAbandonadosRouteImport } from './routes/api/public/hooks/devolver-leads-abandonados'
 import { Route as ApiPublicHooksAsaasSyncQueueRouteImport } from './routes/api/public/hooks/asaas-sync-queue'
@@ -103,6 +104,12 @@ const ApiPublicRefVisitaRoute = ApiPublicRefVisitaRouteImport.update({
   path: '/api/public/ref-visita',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksRegistrarDeployRoute =
+  ApiPublicHooksRegistrarDeployRouteImport.update({
+    id: '/api/public/hooks/registrar-deploy',
+    path: '/api/public/hooks/registrar-deploy',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksLembretesVencimentoRoute =
   ApiPublicHooksLembretesVencimentoRouteImport.update({
     id: '/api/public/hooks/lembretes-vencimento',
@@ -141,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
   '/api/public/hooks/devolver-leads-abandonados': typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
+  '/api/public/hooks/registrar-deploy': typeof ApiPublicHooksRegistrarDeployRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -161,6 +169,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
   '/api/public/hooks/devolver-leads-abandonados': typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
+  '/api/public/hooks/registrar-deploy': typeof ApiPublicHooksRegistrarDeployRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -182,6 +191,7 @@ export interface FileRoutesById {
   '/api/public/hooks/asaas-sync-queue': typeof ApiPublicHooksAsaasSyncQueueRoute
   '/api/public/hooks/devolver-leads-abandonados': typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   '/api/public/hooks/lembretes-vencimento': typeof ApiPublicHooksLembretesVencimentoRoute
+  '/api/public/hooks/registrar-deploy': typeof ApiPublicHooksRegistrarDeployRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/asaas-sync-queue'
     | '/api/public/hooks/devolver-leads-abandonados'
     | '/api/public/hooks/lembretes-vencimento'
+    | '/api/public/hooks/registrar-deploy'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/asaas-sync-queue'
     | '/api/public/hooks/devolver-leads-abandonados'
     | '/api/public/hooks/lembretes-vencimento'
+    | '/api/public/hooks/registrar-deploy'
   id:
     | '__root__'
     | '/'
@@ -244,6 +256,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/asaas-sync-queue'
     | '/api/public/hooks/devolver-leads-abandonados'
     | '/api/public/hooks/lembretes-vencimento'
+    | '/api/public/hooks/registrar-deploy'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -265,6 +278,7 @@ export interface RootRouteChildren {
   ApiPublicHooksAsaasSyncQueueRoute: typeof ApiPublicHooksAsaasSyncQueueRoute
   ApiPublicHooksDevolverLeadsAbandonadosRoute: typeof ApiPublicHooksDevolverLeadsAbandonadosRoute
   ApiPublicHooksLembretesVencimentoRoute: typeof ApiPublicHooksLembretesVencimentoRoute
+  ApiPublicHooksRegistrarDeployRoute: typeof ApiPublicHooksRegistrarDeployRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -374,6 +388,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRefVisitaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/registrar-deploy': {
+      id: '/api/public/hooks/registrar-deploy'
+      path: '/api/public/hooks/registrar-deploy'
+      fullPath: '/api/public/hooks/registrar-deploy'
+      preLoaderRoute: typeof ApiPublicHooksRegistrarDeployRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/lembretes-vencimento': {
       id: '/api/public/hooks/lembretes-vencimento'
       path: '/api/public/hooks/lembretes-vencimento'
@@ -419,6 +440,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksDevolverLeadsAbandonadosRoute,
   ApiPublicHooksLembretesVencimentoRoute:
     ApiPublicHooksLembretesVencimentoRoute,
+  ApiPublicHooksRegistrarDeployRoute: ApiPublicHooksRegistrarDeployRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

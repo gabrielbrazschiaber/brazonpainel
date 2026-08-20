@@ -4,6 +4,7 @@ import { ReverTutoriais } from "@/components/onboarding/ReverTutoriais";
 import { DoisFatoresEquipeCard } from "@/components/admin/DoisFatoresEquipeCard";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
+import { obterConfigIa, salvarConfigIa, testarConexaoIa } from "@/lib/configuracoes.functions";
 import { gerarLembretesAgora, ultimaExecucaoLembretes } from "@/lib/lembretes.functions";
 
 import { Card } from "@/components/ui/card";
@@ -12,8 +13,16 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Save, Copy, Check, KeyRound } from "lucide-react";
+import { Save, Copy, Check, KeyRound, Brain, Sparkles, Activity } from "lucide-react";
 import type { Config } from "@/lib/admin-tipos";
 import { formatDateTime } from "@/lib/format";
 
@@ -30,9 +39,29 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
       asaas_ambiente: "sandbox",
       asaas_api_key_mascara: "",
       asaas_api_key_definida: false,
+      changelog_ativo: true,
+      changelog_versao_atual: "1.0.0",
     },
   );
   const [novaChave, setNovaChave] = useState("");
+  const [iaConfig, setIaConfig] = useState<{
+    provedor: "openrouter" | "deepseek" | "groq" | "google" | "anthropic";
+    modelo: string;
+    temChave: boolean;
+    ultimos4: string | null;
+    testadaEm: string | null;
+    testeOk: boolean | null;
+  } | null>(null);
+  const [novaIaKey, setNovaIaKey] = useState("");
+  const [testandoIa, setTestandoIa] = useState(false);
+  
+  const getIa = useServerFn(obterConfigIa);
+  const setIa = useServerFn(salvarConfigIa);
+  const testIa = useServerFn(testarConexaoIa);
+
+  useEffect(() => {
+    getIa({}).then(setIaConfig).catch(console.error);
+  }, [getIa]);
   const [saving, setSaving] = useState(false);
   const [gerandoLembretes, setGerandoLembretes] = useState(false);
   const gerarLembretes = useServerFn(gerarLembretesAgora);
@@ -153,6 +182,46 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
     }
   }
 
+  async function saveIa() {
+    if (!iaConfig) return;
+    setSaving(true);
+    try {
+      await setIa({
+        data: {
+          provedor: iaConfig.provedor,
+          modelo: iaConfig.modelo,
+          api_key: novaIaKey.trim() || undefined,
+        },
+      });
+      setNovaIaKey("");
+      const updated = await getIa({});
+      setIaConfig(updated);
+      toast.success("Configuração de IA salva.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar IA.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function testarIa() {
+    setTestandoIa(true);
+    try {
+      const r = await testIa({});
+      if (r.ok) {
+        toast.success(`IA conectada! Latência: ${r.latenciaMs}ms`);
+      } else {
+        toast.error(`Falha na IA: ${r.mensagem}`);
+      }
+      const updated = await getIa({});
+      setIaConfig(updated);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro no teste de IA.");
+    } finally {
+      setTestandoIa(false);
+    }
+  }
+
   return (
     <div className="max-w-2xl space-y-4">
       <Card className="p-6">
@@ -167,7 +236,25 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
       <DoisFatoresEquipeCard />
       <Card className="p-6">
         <div className="grid gap-4">
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <div className="grid gap-0.5">
+                <Label htmlFor="cactive" className="text-sm font-semibold">
+                  Changelog Automático
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Publica notas de atualização via IA após cada deploy.
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="cactive"
+              checked={form.changelog_ativo ?? true}
+              onCheckedChange={(v) => set("changelog_ativo", v)}
+            />
+          </div>
+            <div className="grid gap-2 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="capp">Nome do app</Label>
               <Input
@@ -396,6 +483,101 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
                 <p className="mt-1 text-xs text-muted-foreground">
                   Salve a chave antes de testar. O ambiente correto é detectado automaticamente.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-2 border-t border-border pt-4">
+            <div className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">Inteligência Artificial</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Configure a IA para gerar notas de atualização automáticas. O changelog usará o modo simples sem uma chave configurada.
+            </p>
+
+            <div className="mt-4 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label>Provedor</Label>
+                  <Select
+                    value={iaConfig?.provedor ?? "openrouter"}
+                    onValueChange={(v: any) => iaConfig && setIaConfig({ ...iaConfig, provedor: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="openrouter">OpenRouter (Grátis/Pago)</SelectItem>
+                      <SelectItem value="deepseek">DeepSeek</SelectItem>
+                      <SelectItem value="groq">Groq (Rápido)</SelectItem>
+                      <SelectItem value="google">Google Gemini</SelectItem>
+                      <SelectItem value="anthropic">Anthropic Claude</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">
+                    {iaConfig?.provedor === "openrouter" && "OpenRouter — diversos modelos e opções gratuitas."}
+                    {iaConfig?.provedor === "deepseek" && "DeepSeek — excelente custo-benefício."}
+                    {iaConfig?.provedor === "groq" && "Groq — inferência extremamente veloz."}
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="iamodelo">Modelo</Label>
+                  <Input
+                    id="iamodelo"
+                    value={iaConfig?.modelo ?? ""}
+                    onChange={(e) => iaConfig && setIaConfig({ ...iaConfig, modelo: e.target.value })}
+                    placeholder="ex: deepseek/deepseek-chat:free"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="iakey">Chave de API</Label>
+                <PasswordInput
+                  id="iakey"
+                  value={novaIaKey}
+                  onChange={(e) => setNovaIaKey(e.target.value)}
+                  placeholder={
+                    iaConfig?.temChave
+                      ? `•••• ${iaConfig.ultimos4} (Deixe em branco para manter)`
+                      : "Sua chave de API"
+                  }
+                />
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className={iaConfig?.temChave ? "bg-success/10 text-success border-success/20" : ""}
+                  >
+                    {iaConfig?.temChave ? "Chave configurada" : "Sem chave"}
+                  </Badge>
+                  {iaConfig?.testadaEm && (
+                    <span className="text-[10px] text-muted-foreground">
+                      Testado em {formatDateTime(iaConfig.testadaEm)}:{" "}
+                      {iaConfig.testeOk ? (
+                        <span className="text-success">OK</span>
+                      ) : (
+                        <span className="text-destructive">Falhou</span>
+                      )}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={saveIa} disabled={saving}>
+                  <Save className="mr-2 h-3 w-3" /> Salvar IA
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={testarIa}
+                  disabled={testandoIa || !iaConfig?.temChave && !novaIaKey}
+                >
+                  <Activity className="mr-2 h-3 w-3" />
+                  {testandoIa ? "Testando..." : "Testar conexão"}
+                </Button>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { obterWebhookToken } from "@/lib/config.functions";
 import { criarNovidade, atualizarNovidade, excluirNovidade } from "@/lib/novidades.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import {
   Select,
   SelectContent,
@@ -42,10 +47,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDate } from "@/lib/format";
-import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Megaphone, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Plus, Pencil, Trash2, Megaphone, Sparkles, History, RefreshCcw, EyeOff, Globe, KeyRound, Check, Copy } from "lucide-react";
 
 interface Novidade {
   id: string;
@@ -80,6 +82,16 @@ export function NovidadesTab() {
   const [form, setForm] = useState({ ...empty });
   const [saving, setSaving] = useState(false);
   const [confirmDel, setConfirmDel] = useState<Novidade | null>(null);
+  const [deploys, setDeploys] = useState<any[]>([]);
+  const [loadingDeploys, setLoadingDeploys] = useState(false);
+  const [changelogAtivo, setChangelogAtivo] = useState(true);
+  const [webhookToken, setWebhookToken] = useState({ mascara: "", definido: false, token: null as string | null });
+  const [versaoManual, setVersaoManual] = useState("");
+  const [reprocessando, setReprocessando] = useState<string | null>(null);
+  const [revelandoToken, setRevelandoToken] = useState(false);
+  const [copiadoToken, setCopiadoToken] = useState(false);
+
+  const getWebhookToken = useServerFn(obterWebhookToken);
 
   const criar = useServerFn(criarNovidade);
   const atualizar = useServerFn(atualizarNovidade);
@@ -99,7 +111,91 @@ export function NovidadesTab() {
 
   useEffect(() => {
     load();
+    loadDeploys();
+    loadChangelogConfig();
   }, [load]);
+
+  async function loadChangelogConfig() {
+    const { data } = await supabase.from("configuracoes").select("changelog_ativo, changelog_versao_atual").limit(1).single();
+    if (data) {
+      setChangelogAtivo(data.changelog_ativo);
+      setVersaoManual(data.changelog_versao_atual);
+    }
+    const token = await getWebhookToken({ data: {} });
+    setWebhookToken({ ...token, token: null });
+  }
+
+  async function loadDeploys() {
+    setLoadingDeploys(true);
+    const { data } = await supabase.from("deploys").select("*").order("criado_em", { ascending: false }).limit(20);
+    setDeploys(data ?? []);
+    setLoadingDeploys(false);
+  }
+
+  async function toggleChangelogAtivo(v: boolean) {
+    setChangelogAtivo(v);
+    const { data: cfg } = await supabase.from("configuracoes").select("id").limit(1).single();
+    if (cfg?.id) {
+      await supabase.from("configuracoes").update({ changelog_ativo: v }).eq("id", cfg.id);
+    }
+    toast.success(v ? "Changelog automático ativado." : "Changelog automático desativado.");
+  }
+
+  async function atualizarVersaoManual() {
+    const { data: cfg } = await supabase.from("configuracoes").select("id").limit(1).single();
+    if (cfg?.id) {
+      await supabase.from("configuracoes").update({ changelog_versao_atual: versaoManual }).eq("id", cfg.id);
+    }
+    toast.success("Versão atualizada.");
+  }
+
+  async function reprocessarDeploy(d: any) {
+    setReprocessando(d.id);
+    try {
+      const response = await fetch("/api/public/hooks/registrar-deploy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-deploy-token": await obterTokenCompleto() || "" },
+        body: JSON.stringify({ sha: d.sha, branch: "main", commits: d.commits, arquivos_alterados: d.arquivos_alterados })
+      });
+      if (response.ok) {
+        toast.success("Deploy reprocessado.");
+        loadDeploys();
+        load();
+      } else {
+        toast.error("Erro ao reprocessar.");
+      }
+    } catch (e) {
+      toast.error("Falha na comunicação.");
+    } finally {
+      setReprocessando(null);
+    }
+  }
+
+  async function obterTokenCompleto(): Promise<string | null> {
+    if (webhookToken.token) return webhookToken.token;
+    const r = await getWebhookToken({ data: { revelar: true } });
+    if (r.token) {
+      setWebhookToken(prev => ({ ...prev, token: r.token }));
+      return r.token;
+    }
+    return null;
+  }
+
+  async function copiarToken() {
+    const t = await obterTokenCompleto();
+    if (t) {
+      await navigator.clipboard.writeText(t);
+      setCopiadoToken(true);
+      toast.success("Token copiado!");
+      setTimeout(() => setCopiadoToken(false), 2000);
+    }
+  }
+
+  async function despublicarNovidade(id: string) {
+    await supabase.from("novidades").update({ publicado: false }).eq("id", id);
+    toast.success("Novidade despublicada.");
+    load();
+  }
 
   function openNew() {
     setEditing(null);
@@ -452,6 +548,114 @@ export function NovidadesTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <div className="mt-8 space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-6">
+          <div className="flex items-center gap-2">
+            <History className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">Changelog automático</h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Status:</span>
+              <Switch checked={changelogAtivo} onCheckedChange={toggleChangelogAtivo} />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card className="p-4 space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <KeyRound className="h-4 w-4" /> Webhook de Deploy
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Configure este URL e Token no seu repositório Git para automatizar o changelog.
+            </p>
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase text-muted-foreground">URL do Webhook</Label>
+              <div className="flex gap-2">
+                <Input readOnly value={`${window.location.origin}/api/public/hooks/registrar-deploy`} className="text-xs font-mono" />
+              </div>
+              <Label className="text-[10px] uppercase text-muted-foreground">Token</Label>
+              <div className="flex gap-2">
+                <Input readOnly value={revelandoToken ? (webhookToken.token || "...") : (webhookToken.definido ? webhookToken.mascara : "Não definido")} className="text-xs font-mono" />
+                <Button size="icon" variant="outline" onClick={() => revelandoToken ? setRevelandoToken(false) : void obterTokenCompleto().then(() => setRevelandoToken(true))}>
+                   {revelandoToken ? <EyeOff className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+                </Button>
+                <Button size="icon" variant="outline" onClick={copiarToken}>
+                   {copiadoToken ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Sparkles className="h-4 w-4" /> Versão Atual
+            </div>
+            <p className="text-xs text-muted-foreground">A próxima versão automática será baseada neste valor.</p>
+            <div className="flex gap-2">
+              <Input value={versaoManual} onChange={e => setVersaoManual(e.target.value)} placeholder="1.0.0" className="max-w-[120px]" />
+              <Button variant="outline" onClick={atualizarVersaoManual}>Atualizar</Button>
+            </div>
+          </Card>
+        </div>
+
+        <Card className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead>Versão</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="hidden md:table-cell">Públicos</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loadingDeploys ? (
+                <TableRow><TableCell colSpan={5} className="text-center">Carregando histórico...</TableCell></TableRow>
+              ) : deploys.length === 0 ? (
+                <TableRow><TableCell colSpan={5} className="text-center">Nenhum deploy registrado.</TableCell></TableRow>
+              ) : (
+                deploys.map(d => (
+                  <TableRow key={d.id}>
+                    <TableCell className="text-xs">{formatDate(d.criado_em)}</TableCell>
+                    <TableCell><Badge variant="outline">{d.versao}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn(
+                        d.status === 'processado' ? "bg-success/10 text-success border-success/20" :
+                        d.status === 'erro' ? "bg-destructive/10 text-destructive border-destructive/20" : "bg-muted text-muted-foreground"
+                      )}>
+                        {d.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="flex gap-1 text-[10px]">
+                        {d.resumo_ia?.publicos?.cliente?.incluir && <span className="rounded bg-muted px-1" title="Cliente">C</span>}
+                        {d.resumo_ia?.publicos?.vendedor?.incluir && <span className="rounded bg-muted px-1" title="Vendedor">V</span>}
+                        {d.resumo_ia?.publicos?.admin?.incluir && <span className="rounded bg-muted px-1" title="Admin">A</span>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        {d.status === 'erro' && (
+                          <Button size="icon" variant="ghost" onClick={() => reprocessarDeploy(d)} disabled={!!reprocessando}>
+                            <RefreshCcw className={cn("h-3 w-3", reprocessando === d.id && "animate-spin")} />
+                          </Button>
+                        )}
+                        {d.novidade_id && d.status === 'processado' && (
+                          <Button size="sm" variant="ghost" onClick={() => despublicarNovidade(d.novidade_id)}>Despublicar</Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      </div>
     </div>
   );
 }
