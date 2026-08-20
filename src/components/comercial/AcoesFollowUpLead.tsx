@@ -189,7 +189,7 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
 
       <Popover open={mensagensAberto} onOpenChange={setMensagensAberto}>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" onClick={abrirMensagens} disabled={carregandoMsgs}>
+          <Button type="button" variant="outline" size="sm" onClick={abrirMensagens} disabled={carregandoMsgs}>
             <Copy className="h-4 w-4 sm:mr-1.5" />
             <span className="hidden sm:inline">Copiar Mensagem</span>
           </Button>
