@@ -56,3 +56,21 @@ export function formatNumber(value: number | string | null | undefined): string 
   const v = typeof value === "string" ? Number(value) : (value ?? 0);
   return Number.isFinite(v) ? v.toLocaleString("pt-BR") : "—";
 }
+
+export function formatRelativeDate(date: string | Date | null | undefined): string {
+  if (!date) return "—";
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(d.getTime())) return "—";
+
+  const diff = Date.now() - d.getTime();
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 7) return formatDate(d);
+  if (days > 0) return `há ${days} dia${days > 1 ? "s" : ""}`;
+  if (hours > 0) return `há ${hours} hora${hours > 1 ? "s" : ""}`;
+  if (minutes > 0) return `há ${minutes} min`;
+  return "agora mesmo";
+}

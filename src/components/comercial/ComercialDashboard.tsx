@@ -22,7 +22,7 @@ import {
 import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 
 import { formatCurrency } from "@/lib/format";
-import { percentual } from "@/lib/leads";
+import { percentual, SITUACAO_LABEL, situacaoClasse } from "@/lib/leads";
 import type { DashboardComercial } from "@/lib/leads.functions";
 
 function Variacao({ atual, anterior }: { atual: number; anterior: number }) {
@@ -161,7 +161,25 @@ export function ComercialDashboard({
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="space-y-4 p-4 sm:p-5">
+          <p className="section-title">Qualidade da base</p>
+          <div className="space-y-3">
+            {dados.situacoes?.map((s: any) => (
+              <div key={s.chave} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-muted-foreground">{SITUACAO_LABEL[s.chave as keyof typeof SITUACAO_LABEL] || s.chave}</span>
+                  <span className="text-foreground">{s.total} ({percentual(s.percentual)})</span>
+                </div>
+                <Progress value={(s.percentual || 0) * 100} className="h-1.5" />
+              </div>
+            ))}
+            {(!dados.situacoes || dados.situacoes.length === 0) && (
+              <p className="py-8 text-center text-sm text-muted-foreground">Sem dados de situação</p>
+            )}
+          </div>
+        </Card>
+
         <Card data-tour="comercial-funil" className="space-y-4 p-4 sm:p-5">
           <p className="section-title">Funil de vendas</p>
           {etapas.map((e) => (

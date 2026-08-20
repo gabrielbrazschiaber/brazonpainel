@@ -17,6 +17,7 @@ interface LeadAgregado {
   contatado_em: string;
   vendedor_id: string;
   follow_ups_feitos?: number | null;
+  situacao_contato?: string | null;
 }
 
 function contarFunil(leads: LeadAgregado[]) {
@@ -84,7 +85,7 @@ export async function dashboardComercialServer(
   const base = () => {
     let q = supabase
       .from("leads")
-      .select("estagio, segmento, valor_estimado, contatado_em, vendedor_id, follow_ups_feitos")
+      .select("estagio, segmento, valor_estimado, contatado_em, vendedor_id, follow_ups_feitos, situacao_contato")
       .limit(5000);
     if (vendedorFiltro) q = q.eq("vendedor_id", vendedorFiltro);
     return q;
@@ -133,6 +134,18 @@ export async function dashboardComercialServer(
     ? todasReunioes.filter((r) => new Date(r.agendada_para).getTime() >= limiteReuniao)
     : todasReunioes;
   const metricasReunioes = contarReunioes(reunioesPeriodo);
+
+  // Qualidade da base e Situação do contato.
+  const porSituacao = new Map<string, number>();
+  for (const l of leadsAtuais) {
+    const chave = l.situacao_contato || "nao_contatado";
+    porSituacao.set(chave, (porSituacao.get(chave) ?? 0) + 1);
+  }
+  const situacoes = Array.from(porSituacao.entries()).map(([chave, total]) => ({
+    chave,
+    total,
+    percentual: razao(total, leadsAtuais.length),
+  }));
 
   // Segmentos: conversão por segmento no período.
   const porSegmento = new Map<string, { total: number; ganhos: number }>();
@@ -249,6 +262,7 @@ export async function dashboardComercialServer(
     anterior: funilAnterior,
     reunioes: metricasReunioes,
     segmentos,
+    situacoes,
     serie: meses,
     ranking,
     follow_ups_atrasados: atrasadosRes.count ?? 0,

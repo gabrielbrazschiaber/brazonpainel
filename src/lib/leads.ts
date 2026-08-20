@@ -10,6 +10,16 @@ export const LEAD_ESTAGIOS = [
 ] as const;
 export type LeadEstagio = (typeof LEAD_ESTAGIOS)[number];
 
+export const LEAD_SITUACAO = [
+  "nao_contatado",
+  "mensagem_enviada",
+  "respondeu",
+  "nao_respondeu",
+  "sem_whatsapp",
+  "lead_inexistente",
+] as const;
+export type LeadSituacao = (typeof LEAD_SITUACAO)[number];
+
 export const LEAD_ORIGENS = [
   "prospeccao_ativa",
   "indicacao",
@@ -63,6 +73,32 @@ export const ESTAGIOS_SEM_FOLLOW_UP: readonly LeadEstagio[] = ["ganho", "perdido
 
 /** Estágios que exigem motivo da perda. */
 export const ESTAGIOS_COM_MOTIVO: readonly LeadEstagio[] = ["perdido", "nao_interessado"];
+
+export const SITUACAO_LABEL: Record<LeadSituacao, string> = {
+  nao_contatado: "A contatar",
+  mensagem_enviada: "Aguardando resposta",
+  respondeu: "Respondeu",
+  nao_respondeu: "Não respondeu",
+  sem_whatsapp: "Sem WhatsApp",
+  lead_inexistente: "Lead inexistente",
+};
+
+export function situacaoClasse(situacao: LeadSituacao): string {
+  switch (situacao) {
+    case "mensagem_enviada":
+      return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30";
+    case "respondeu":
+      return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30";
+    case "nao_respondeu":
+      return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30";
+    case "sem_whatsapp":
+      return "bg-red-50 text-red-600 border-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20";
+    case "lead_inexistente":
+      return "bg-red-100 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/30 line-through opacity-60";
+    default:
+      return "bg-muted text-muted-foreground border-border";
+  }
+}
 
 export function estagioClasse(estagio: LeadEstagio): string {
   switch (estagio) {

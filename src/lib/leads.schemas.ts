@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LEAD_ESTAGIOS, LEAD_ORIGENS, REUNIAO_STATUS, apenasDigitos } from "@/lib/leads";
+import { LEAD_ESTAGIOS, LEAD_ORIGENS, LEAD_SITUACAO, REUNIAO_STATUS, apenasDigitos } from "@/lib/leads";
 
 const texto = (max: number) =>
   z
@@ -37,9 +37,10 @@ const dataOpcional = z
   .optional();
 
 export const listarLeadsSchema = z.object({
-  estagio: z.enum(LEAD_ESTAGIOS).optional(),
+  estagio: z.union([z.enum(LEAD_ESTAGIOS), z.array(z.enum(LEAD_ESTAGIOS))]).optional(),
+  situacao_contato: z.union([z.enum(LEAD_SITUACAO), z.array(z.enum(LEAD_SITUACAO))]).optional(),
   segmento: z.string().trim().max(120).optional(),
-  origem: z.enum(LEAD_ORIGENS).optional(),
+  origem: z.union([z.enum(LEAD_ORIGENS), z.array(z.enum(LEAD_ORIGENS))]).optional(),
   busca: z.string().trim().max(120).optional(),
   dias: z.number().int().min(0).max(3650).optional(),
   vendedor_id: z.string().uuid().optional(),
@@ -122,7 +123,15 @@ export const reagendarFollowUpSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
 });
 
-export const RESULTADOS_FOLLOW_UP = ["sem_resposta", "respondeu", "adiar"] as const;
+export const RESULTADOS_FOLLOW_UP = [
+  "mensagem_enviada",
+  "respondeu",
+  "nao_respondeu",
+  "sem_whatsapp",
+  "lead_inexistente",
+  "adiar",
+  "reativar",
+] as const;
 export type ResultadoFollowUp = (typeof RESULTADOS_FOLLOW_UP)[number];
 
 export const registrarFollowUpSchema = z
@@ -132,6 +141,9 @@ export const registrarFollowUpSchema = z
     nota: texto(2000),
     novo_estagio: z.enum(LEAD_ESTAGIOS).optional(),
     adiar_dias: z.number().int().min(1).max(180).optional(),
+    mensagem_id: z.string().uuid().optional(),
+    prazo_dias: z.number().int().min(1).max(30).default(2),
+    motivo: texto(500),
   })
   .refine((d) => d.resultado !== "respondeu" || Boolean(d.novo_estagio), {
     message: "Informe o novo estágio do lead",
@@ -140,6 +152,10 @@ export const registrarFollowUpSchema = z
   .refine((d) => d.resultado !== "adiar" || Boolean(d.adiar_dias), {
     message: "Informe em quantos dias adiar",
     path: ["adiar_dias"],
+  })
+  .refine((d) => !(["sem_whatsapp", "lead_inexistente"].includes(d.resultado)) || (d.motivo?.length ?? 0) <= 500, {
+    message: "Motivo deve ter no máximo 500 caracteres",
+    path: ["motivo"],
   });
 
 export const reativarCadenciaSchema = z.object({ lead_id: z.string().uuid() });

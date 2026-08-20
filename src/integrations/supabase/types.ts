@@ -930,6 +930,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          aguardando_resposta_ate: string | null
           banco_lead_id: string | null
           cadencia_encerrada: boolean
           cargo: string | null
@@ -944,13 +945,16 @@ export type Database = {
           follow_ups_feitos: number
           id: string
           importacao_id: string | null
+          mensagem_enviada_em: string | null
           mensagens_enviadas: Json | null
+          motivo_descarte: string | null
           motivo_perda: string | null
           nome_contato: string
           observacoes: string | null
           origem: Database["public"]["Enums"]["lead_origem"]
           proximo_contato: string | null
           segmento: string | null
+          situacao_contato: Database["public"]["Enums"]["lead_situacao_contato"]
           telefone: string
           ultimo_contato_em: string | null
           updated_at: string
@@ -958,6 +962,7 @@ export type Database = {
           vendedor_id: string
         }
         Insert: {
+          aguardando_resposta_ate?: string | null
           banco_lead_id?: string | null
           cadencia_encerrada?: boolean
           cargo?: string | null
@@ -972,13 +977,16 @@ export type Database = {
           follow_ups_feitos?: number
           id?: string
           importacao_id?: string | null
+          mensagem_enviada_em?: string | null
           mensagens_enviadas?: Json | null
+          motivo_descarte?: string | null
           motivo_perda?: string | null
           nome_contato: string
           observacoes?: string | null
           origem?: Database["public"]["Enums"]["lead_origem"]
           proximo_contato?: string | null
           segmento?: string | null
+          situacao_contato?: Database["public"]["Enums"]["lead_situacao_contato"]
           telefone: string
           ultimo_contato_em?: string | null
           updated_at?: string
@@ -986,6 +994,7 @@ export type Database = {
           vendedor_id: string
         }
         Update: {
+          aguardando_resposta_ate?: string | null
           banco_lead_id?: string | null
           cadencia_encerrada?: boolean
           cargo?: string | null
@@ -1000,13 +1009,16 @@ export type Database = {
           follow_ups_feitos?: number
           id?: string
           importacao_id?: string | null
+          mensagem_enviada_em?: string | null
           mensagens_enviadas?: Json | null
+          motivo_descarte?: string | null
           motivo_perda?: string | null
           nome_contato?: string
           observacoes?: string | null
           origem?: Database["public"]["Enums"]["lead_origem"]
           proximo_contato?: string | null
           segmento?: string | null
+          situacao_contato?: Database["public"]["Enums"]["lead_situacao_contato"]
           telefone?: string
           ultimo_contato_em?: string | null
           updated_at?: string
@@ -1848,6 +1860,13 @@ export type Database = {
         | "evento"
         | "rede_social"
         | "outro"
+      lead_situacao_contato:
+        | "nao_contatado"
+        | "mensagem_enviada"
+        | "respondeu"
+        | "nao_respondeu"
+        | "sem_whatsapp"
+        | "lead_inexistente"
       pagamento_status: "pago" | "pendente" | "vencido" | "simulacao"
       reuniao_status:
         | "marcada"
@@ -2028,6 +2047,14 @@ export const Constants = {
         "evento",
         "rede_social",
         "outro",
+      ],
+      lead_situacao_contato: [
+        "nao_contatado",
+        "mensagem_enviada",
+        "respondeu",
+        "nao_respondeu",
+        "sem_whatsapp",
+        "lead_inexistente",
       ],
       pagamento_status: ["pago", "pendente", "vencido", "simulacao"],
       reuniao_status: [

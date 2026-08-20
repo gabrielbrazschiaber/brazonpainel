@@ -7,6 +7,7 @@ import {
   type LeadEstagio,
   type LeadOrigem,
   type ReuniaoStatus,
+  type LeadSituacao,
 } from "@/lib/leads";
 import type { z } from "zod";
 import type {
@@ -20,6 +21,7 @@ import type {
   registrarFollowUpSchema,
   reativarCadenciaSchema,
 } from "@/lib/leads.schemas";
+import type { Database } from "@/integrations/supabase/types";
 
 // Cliente tipado do usuário logado (RLS ativa). Tipo frouxo de propósito.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,7 +33,7 @@ export interface Escopo {
 }
 
 export const CAMPOS_LEAD =
-  "id, vendedor_id, nome_contato, empresa, cargo, telefone, email, segmento, origem, estagio, valor_estimado, motivo_perda, observacoes, proximo_contato, follow_ups_feitos, ultimo_contato_em, cadencia_encerrada, cliente_id, contatado_em, fechado_em, importacao_id, completude, mensagens_enviadas, created_at, updated_at";
+  "id, vendedor_id, nome_contato, empresa, cargo, telefone, email, segmento, origem, estagio, valor_estimado, motivo_perda, observacoes, proximo_contato, follow_ups_feitos, ultimo_contato_em, cadencia_encerrada, cliente_id, contatado_em, fechado_em, importacao_id, completude, mensagens_enviadas, created_at, updated_at, situacao_contato, mensagem_enviada_em, aguardando_resposta_ate, motivo_descarte";
 
 export interface Lead {
   id: string;
@@ -44,6 +46,10 @@ export interface Lead {
   segmento: string | null;
   origem: LeadOrigem;
   estagio: LeadEstagio;
+  situacao_contato: LeadSituacao;
+  mensagem_enviada_em: string | null;
+  aguardando_resposta_ate: string | null;
+  motivo_descarte: string | null;
   valor_estimado: number;
   motivo_perda: string | null;
   observacoes: string | null;

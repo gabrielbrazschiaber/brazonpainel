@@ -83,7 +83,7 @@ const ImportarLeadsDialog = lazy(() =>
 );
 import { CompletarLeadsDialog } from "@/components/comercial/CompletarLeadsDialog";
 
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatRelativeDate } from "@/lib/format";
 import { mapaWhatsApp } from "@/lib/whatsapp";
 import { WhatsAppIndicator } from "@/components/WhatsAppIndicator";
 import { usePainelFollowUps } from "@/lib/use-painel-follow-ups";
@@ -97,6 +97,10 @@ import {
   estagioClasse,
   type LeadEstagio,
   type LeadOrigem,
+  type LeadSituacao,
+  LEAD_SITUACAO,
+  SITUACAO_LABEL,
+  situacaoClasse,
 } from "@/lib/leads";
 import {
   dashboardComercial,
@@ -167,7 +171,7 @@ function ComercialPage() {
 const POR_PAGINA = 25;
 
 /** Abas da fila: a mesma listagem, recortes diferentes. */
-type Fila = "hoje" | "atrasados" | "todos";
+type Fila = "hoje" | "atrasados" | "aguardando" | "todos";
 
 /** Cabeçalho da tabela de leads (compartilhado com o skeleton). */
 function CabecalhoLeads() {
@@ -176,8 +180,8 @@ function CabecalhoLeads() {
       <TableRow>
         <TableHead>Lead</TableHead>
         <TableHead>Telefone</TableHead>
-        <TableHead>Estágio</TableHead>
-        <TableHead>Contato</TableHead>
+        <TableHead>Situação</TableHead>
+        <TableHead>Próximo Contato</TableHead>
         <TableHead className="text-right">Ações</TableHead>
       </TableRow>
     </TableHeader>
@@ -203,12 +207,12 @@ function SituacaoContato({ lead }: { lead: Lead }) {
   const quando = !lead.proximo_contato
     ? lead.cadencia_encerrada
       ? "Cadência encerrada"
-      : "Sem follow-up agendado"
+      : "Sem agendamento"
     : atrasado
       ? `Atrasado desde ${formatDate(lead.proximo_contato)}`
       : eHoje
         ? "Contatar hoje"
-        : `Próximo contato ${formatDate(lead.proximo_contato)}`;
+        : `Próximo: ${formatDate(lead.proximo_contato)}`;
 
   const cor = atrasado
     ? "text-destructive font-medium"
@@ -219,19 +223,34 @@ function SituacaoContato({ lead }: { lead: Lead }) {
   const dias = diasDesde(lead.ultimo_contato_em);
   const tentativa =
     lead.follow_ups_feitos > 0 ? `${lead.follow_ups_feitos}ª tentativa` : "Sem tentativa";
-  const ultimo =
-    dias === null
-      ? "sem contato registrado"
-      : dias === 0
-        ? "último contato hoje"
-        : `último contato há ${dias} dia${dias === 1 ? "" : "s"}`;
 
   return (
     <div className="space-y-0.5">
       <p className={`whitespace-nowrap text-sm ${cor}`}>{quando}</p>
       <p className="text-xs text-muted-foreground">
-        {tentativa} · {ultimo}
+        {tentativa} · {dias === null ? "sem contato" : `há ${dias} dia${dias === 1 ? "" : "s"}`}
       </p>
+    </div>
+  );
+}
+
+function ColunaSituacao({ lead }: { lead: Lead }) {
+  const label = SITUACAO_LABEL[lead.situacao_contato] || lead.situacao_contato;
+  const classe = situacaoClasse(lead.situacao_contato);
+  const dataRef = lead.situacao_contato === "mensagem_enviada" ? lead.aguardando_resposta_ate : lead.mensagem_enviada_em;
+
+  return (
+    <div className="space-y-1">
+      <Badge variant="outline" className={classe}>
+        {label}
+      </Badge>
+      {dataRef && (
+        <p className="text-[10px] text-muted-foreground italic">
+          {lead.situacao_contato === "mensagem_enviada" 
+            ? `Até ${formatDate(dataRef)}` 
+            : formatRelativeDate(dataRef)}
+        </p>
+      )}
     </div>
   );
 }
@@ -262,11 +281,12 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   // Começa em "Todos os leads": leads recém-puxados do Banco de Leads têm o
   // primeiro follow-up agendado para os próximos dias e ficariam invisíveis
   // se a tela abrisse já filtrada pela fila de hoje.
-  const [fila, setFila] = useState<Fila>("todos");
+  const [fila, setFila] = useState<Fila>("hoje");
   const [busca, setBusca] = useState("");
-  const [estagio, setEstagio] = useState<LeadEstagio | "todos">("todos");
+  const [estagio, setEstagio] = useState<LeadEstagio[]>([]);
+  const [situacao, setSituacao] = useState<LeadSituacao[]>([]);
+  const [origem, setOrigem] = useState<LeadOrigem[]>([]);
   const [segmento, setSegmento] = useState("todos");
-  const [origem, setOrigem] = useState<LeadOrigem | "todas">("todas");
   const [soZap, setSoZap] = useState(false);
   /** Filtro de leads com dados faltando. */
   const [incompletos, setIncompletos] = useState(false);
@@ -294,12 +314,14 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     () => ({
       dias,
       ...(filtroVendedor ? { vendedor_id: filtroVendedor } : {}),
-      ...(estagio !== "todos" ? { estagio } : {}),
-      ...(origem !== "todas" ? { origem } : {}),
+      ...(estagio.length > 0 ? { estagio } : {}),
+      ...(situacao.length > 0 ? { situacao_contato: situacao } : {}),
+      ...(origem.length > 0 ? { origem } : {}),
       ...(segmento !== "todos" ? { segmento } : {}),
       ...(busca.trim() ? { busca: busca.trim() } : {}),
-      ...(fila === "hoje" ? { apenas_follow_up: true } : {}),
+      ...(fila === "hoje" ? { situacao_contato: ["nao_contatado", "respondeu", "nao_respondeu"] as LeadSituacao[], apenas_follow_up: true } : {}),
       ...(fila === "atrasados" ? { apenas_atrasados: true } : {}),
+      ...(fila === "aguardando" ? { situacao_contato: "mensagem_enviada" as LeadSituacao } : {}),
       ...(incompletos ? { apenas_incompletos: true } : {}),
       ...(loteId ? { importacao_id: loteId } : {}),
       ordem,
@@ -403,6 +425,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const abas: { chave: Fila; label: string; quantidade?: number }[] = [
     { chave: "hoje", label: "A contatar hoje", quantidade: painel.totalAContatar },
     { chave: "atrasados", label: "Atrasados", quantidade: painel.totalAtrasados },
+    { chave: "aguardando", label: "Aguardando resposta" },
     { chave: "todos", label: "Todos os leads" },
   ];
 
@@ -411,9 +434,11 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       ? "Nada para contatar agora. Fila em dia!"
       : fila === "atrasados"
         ? "Nenhum follow-up atrasado."
-        : soZap
-          ? "Nenhum lead com WhatsApp ativo nos filtros atuais."
-          : "Nenhum lead ainda. Cadastre o primeiro contato do dia.";
+        : fila === "aguardando"
+          ? "Nenhum lead aguardando resposta agora."
+          : soZap
+            ? "Nenhum lead com WhatsApp ativo nos filtros atuais."
+            : "Nenhum lead ainda. Cadastre o primeiro contato do dia.";
 
   return (
     <TelaShell
@@ -524,6 +549,89 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
           </div>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2" data-tour="comercial-filtros-rapidos">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mr-1">Filtros:</p>
+          <div className="flex flex-wrap gap-2">
+            <Select value={estagio.length === 1 ? estagio[0] : "todos"} onValueChange={(v) => setEstagio(v === "todos" ? [] : [v as LeadEstagio])}>
+              <SelectTrigger className="h-8 w-fit min-w-[120px] text-xs">
+                <SelectValue placeholder="Estágio" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Estágio: Todos</SelectItem>
+                {LEAD_ESTAGIOS.map((e) => (
+                  <SelectItem key={e} value={e}>{ESTAGIO_LABEL[e]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={situacao.length === 1 ? situacao[0] : "todos"} onValueChange={(v) => setSituacao(v === "todos" ? [] : [v as LeadSituacao])}>
+              <SelectTrigger className="h-8 w-fit min-w-[120px] text-xs">
+                <SelectValue placeholder="Situação" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Situação: Todos</SelectItem>
+                {LEAD_SITUACAO.map((s) => (
+                  <SelectItem key={s} value={s}>{SITUACAO_LABEL[s]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={origem.length === 1 ? origem[0] : "todas"} onValueChange={(v) => setOrigem(v === "todas" ? [] : [v as LeadOrigem])}>
+              <SelectTrigger className="h-8 w-fit min-w-[120px] text-xs">
+                <SelectValue placeholder="Origem" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Origem: Todas</SelectItem>
+                {LEAD_ORIGENS.map((o) => (
+                  <SelectItem key={o} value={o}>{ORIGEM_LABEL[o]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={segmento} onValueChange={setSegmento}>
+              <SelectTrigger className="h-8 w-fit min-w-[120px] text-xs">
+                <SelectValue placeholder="Segmento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Segmento: Todos</SelectItem>
+                {listaSegmentos.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {isAdmin && (
+              <Select value={vendedorId} onValueChange={setVendedorId}>
+                <SelectTrigger className="h-8 w-fit min-w-[120px] text-xs">
+                  <SelectValue placeholder="Vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Vendedor: Todos</SelectItem>
+                  {vendedores.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setEstagio([]);
+                setSituacao([]);
+                setOrigem([]);
+                setSegmento("todos");
+                setVendedorId("todos");
+                setBusca("");
+              }}
+            >
+              Limpar tudo
+            </Button>
+          </div>
+        </div>
+
         <Collapsible open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
           <CollapsibleTrigger className="sr-only">Mais filtros</CollapsibleTrigger>
           <CollapsibleContent className="space-y-3 rounded-lg border border-border/60 p-3">
@@ -540,61 +648,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
               ))}
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {isAdmin && (
-                <Select value={vendedorId} onValueChange={setVendedorId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Vendedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os vendedores</SelectItem>
-                    {vendedores.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <Select value={estagio} onValueChange={(v) => setEstagio(v as LeadEstagio | "todos")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Estágio" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos os estágios</SelectItem>
-                  {LEAD_ESTAGIOS.map((e) => (
-                    <SelectItem key={e} value={e}>
-                      {ESTAGIO_LABEL[e]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={segmento} onValueChange={setSegmento}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Segmento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos os segmentos</SelectItem>
-                  {listaSegmentos.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={origem} onValueChange={(v) => setOrigem(v as LeadOrigem | "todas")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Origem" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todas">Todas as origens</SelectItem>
-                  {LEAD_ORIGENS.map((o) => (
-                    <SelectItem key={o} value={o}>
-                      {ORIGEM_LABEL[o]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Select value={ordem} onValueChange={(v) => setOrdem(v as "recentes" | "completude")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Ordenar" />
