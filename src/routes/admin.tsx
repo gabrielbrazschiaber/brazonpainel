@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { adminPainelQuery } from "@/lib/painel-queries";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminPainel } from "@/components/admin/AdminPainel";
 import { ClientesTab } from "@/components/admin/ClientesTab";
 import { VendedoresTab } from "@/components/admin/VendedoresTab";
@@ -49,7 +49,7 @@ export default function Admin() {
 
 function AdminContent() {
   const { tab = "dashboard", secao } = useSearch({ from: "/admin" });
-  const { data: dados } = useSuspenseQuery(adminPainelQuery());
+  const { data: dados, recarregar } = useSuspenseQuery(adminPainelQuery());
   const { user } = useAuth();
 
   const secoesConfig: SecaoConfiguracao[] = SECOES_CONFIG_META.map((meta) => ({
@@ -59,9 +59,9 @@ function AdminContent() {
         case "cupons":
           return <CuponsTab />;
         case "planos":
-          return <PlanosTab />;
+          return <PlanosTab planos={dados.planos} onChanged={recarregar} />;
         case "vendedores":
-          return <VendedoresTab />;
+          return <VendedoresTab vendedores={dados.vendedores} onChanged={recarregar} />;
         case "cnaes":
           return <CnaesTab />;
         case "permissoes":
@@ -75,7 +75,7 @@ function AdminContent() {
         case "tutoriais":
           return <TutoriaisAuditoriaTab />;
         case "admins":
-          return <AdminsTab />;
+          return <AdminsTab admins={dados.administradores} onChanged={recarregar} />;
         case "mensagens":
           return <MensagensRapidasTab />;
         default:
@@ -89,7 +89,7 @@ function AdminContent() {
       case "dashboard":
         return <AdminPainel data={dados} />;
       case "clientes":
-        return <ClientesTab />;
+        return <ClientesTab clientes={dados.clientes} vendedores={dados.vendedores} planos={dados.planos} onChanged={recarregar} />;
       case "config":
         return <ConfiguracoesPage secoes={secoesConfig} secaoInicial={secao} />;
       default:
