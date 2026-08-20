@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/table";
 import { formatDate } from "@/lib/format";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Megaphone, Sparkles, History, RefreshCcw, EyeOff, Globe } from "lucide-react";
+import { Plus, Pencil, Trash2, Megaphone, Sparkles, History, RefreshCcw, EyeOff, Globe, KeyRound, Check, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Novidade {
