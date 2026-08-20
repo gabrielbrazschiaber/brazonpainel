@@ -21,6 +21,7 @@ import { TelemetriaAuthTab } from "@/components/admin/TelemetriaAuthTab";
 import { AuditoriaTutoriaisTab } from "@/components/admin/AuditoriaTutoriaisTab";
 import { AdminsTab } from "@/components/admin/AdminsTab";
 import { MensagensRapidasTab } from "@/components/admin/MensagensRapidasTab";
+import { SegurancaTab } from "@/components/admin/SegurancaTab";
 
 import { SECOES_CONFIG_META } from "@/lib/admin-nav";
 import { ConfiguracoesPage, type SecaoConfiguracao } from "@/components/admin/ConfiguracoesPage";
@@ -79,6 +80,8 @@ function AdminContent() {
           return <AdminsTab admins={admins} onChanged={recarregar} />;
         case "mensagens":
           return <MensagensRapidasTab />;
+        case "seguranca":
+          return <SegurancaTab />;
         default:
           return null;
       }

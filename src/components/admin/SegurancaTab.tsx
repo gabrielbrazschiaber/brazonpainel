@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { LoadingState } from "@/components/ui/loading-state";
+import { TabelaEsqueleto } from "@/components/ui/loading-state";
 
 export function SegurancaTab() {
   const { data, isLoading, error } = useQuery({
@@ -13,7 +13,7 @@ export function SegurancaTab() {
     queryFn: () => obterDiagnosticoSeguranca(),
   });
 
-  if (isLoading) return <LoadingState text="Analisando políticas de segurança..." />;
+  if (isLoading) return <TabelaEsqueleto colunas={4} linhas={10} />;
 
   if (error) {
     return (
