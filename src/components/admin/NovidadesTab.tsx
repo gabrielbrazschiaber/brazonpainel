@@ -142,7 +142,10 @@ export function NovidadesTab() {
   }
 
   async function atualizarVersaoManual() {
-    await supabase.from("configuracoes").update({ changelog_versao_atual: versaoManual }).eq("id", (await supabase.from("configuracoes").select("id").limit(1).single()).data?.id);
+    const { data: cfg } = await supabase.from("configuracoes").select("id").limit(1).single();
+    if (cfg?.id) {
+      await supabase.from("configuracoes").update({ changelog_versao_atual: versaoManual }).eq("id", cfg.id);
+    }
     toast.success("Versão atualizada.");
   }
 
