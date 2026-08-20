@@ -1,35 +1,29 @@
-# Plano de Implementação: Mensagens de Copiar e Rastreamento de Leads
+# Plano de Implementação: Melhorias no Sistema de Mensagens Rápidas
 
-Implementar um sistema de mensagens rápidas na Gestão Comercial, permitindo copiar textos predefinidos e rastrear quais mensagens foram enviadas para cada lead. As mensagens serão configuráveis no painel administrativo.
+Implementar a substituição automática do parâmetro `[nome]` pelo primeiro nome do lead nas mensagens rápidas e garantir que a cópia da mensagem não feche o popover ou altere o estado da listagem, mantendo o lead visível até uma ação explícita de "Respondeu" ou "Não respondeu".
 
-## Mudanças
+## Alterações
 
-### Banco de Dados (Supabase)
-- Criar tabela `mensagens_rapidas` para armazenar os modelos de mensagens (id, texto, ordem).
-- Adicionar coluna `mensagens_enviadas` (tipo `text[]` ou `jsonb`) na tabela `leads` para rastrear o histórico de envios.
-- Configurar RLS e Grants para ambas.
+### Frontend
 
-### Backend (Server Functions)
-- Criar funções para CRUD de mensagens rápidas em `src/lib/configuracoes.functions.ts`.
-- Adicionar função para registrar o envio de uma mensagem no lead em `src/lib/leads-crud.functions.ts`.
+- **Ações de Follow-up (`src/components/comercial/AcoesFollowUpLead.tsx`)**
+    - Criar função auxiliar para extrair o primeiro nome do lead (removendo números se houver).
+    - Modificar `copiarMensagem` para realizar a substituição de `[nome]` no texto antes de copiar.
+    - Alterar o comportamento do Popover de mensagens para permanecer aberto após a cópia, permitindo que o usuário veja a confirmação sem que o lead "suma" do contexto visual imediato (embora a listagem já seja paginada, o usuário quer continuidade).
+    - Garantir que `onAtualizado()` seja chamado para registrar o envio, mas sem disparar um recarregamento que mova o scroll ou altere drasticamente a visão do vendedor até ele clicar nos botões de status.
 
-### Painel Administrativo
-- Adicionar nova aba "Mensagens Rápidas" em Configurações (`src/routes/admin.tsx`).
-- Implementar interface para adicionar, editar, excluir e ordenar as mensagens.
+### Backend (Database)
 
-### Gestão Comercial
-- Atualizar `AcoesFollowUpLead.tsx` para incluir um botão "Copiar Mensagem".
-- Ao clicar, abrir um menu (Dropdown ou Popover) com as opções de mensagens configuradas.
-- Ao selecionar uma mensagem, copiar o texto para a área de transferência e chamar a função de registro de envio.
-- Exibir visualmente quais mensagens já foram enviadas para o lead.
+- Não são necessárias alterações no schema ou migrações, pois usaremos a lógica de substituição em tempo de execução no cliente.
 
 ## Detalhes Técnicos
-- Utilizar a API `navigator.clipboard.writeText` para a funcionalidade de cópia.
-- Garantir que o estado do lead seja atualizado via Realtime ou revalidação de query após o registro do envio.
-- Manter o design system (shadcn/ui + Tailwind) consistente com o restante do projeto.
 
-## Verificação
-- Testar a criação de 3 mensagens no admin.
-- Testar a cópia de cada mensagem na gestão comercial.
-- Verificar se o lead é marcado corretamente após o envio.
-- Validar se a interface mobile permanece responsiva.
+- A regex para o primeiro nome deve capturar a primeira sequência de letras, ignorando números iniciais que podem vir de integrações ou erros de digitação.
+- Utilizar `navigator.clipboard.writeText` com o texto processado.
+- Manter o registro de `mensagens_enviadas` via `registrarEnvioMensagem`.
+
+## Validação
+
+- Testar com leads que tenham nomes simples ("João"), compostos ("Maria Aparecida") e com números ("123 Pedro").
+- Verificar se o Popover se comporta conforme esperado (não fechar ao copiar).
+- Confirmar que a listagem de leads na Gestão Comercial permanece estável após a cópia.
