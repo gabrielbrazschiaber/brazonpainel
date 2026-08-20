@@ -7,23 +7,24 @@ import { Loader2 } from "lucide-react";
 import { adminPainelQuery } from "@/lib/painel-queries";
 import { useAuth } from "@/lib/auth";
 import { RequireRole } from "@/components/RequireRole";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { AdminPainel } from "@/components/admin/AdminPainel";
+import { PageHeader } from "@/components/PageHeader";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { ClientesTab } from "@/components/admin/ClientesTab";
 import { VendedoresTab } from "@/components/admin/VendedoresTab";
 import { PlanosTab } from "@/components/admin/PlanosTab";
 import { CuponsTab } from "@/components/admin/CuponsTab";
 import { CnaesTab } from "@/components/admin/CnaesTab";
 import { PermissoesTab } from "@/components/admin/PermissoesTab";
-import { ConfiguracoesGeraisTab } from "@/components/admin/ConfiguracoesGeraisTab";
+import { ConfigTab } from "@/components/admin/ConfigTab";
 import { AuditoriaTab } from "@/components/admin/AuditoriaTab";
 import { TelemetriaAuthTab } from "@/components/admin/TelemetriaAuthTab";
-import { TutoriaisAuditoriaTab } from "@/components/admin/TutoriaisAuditoriaTab";
+import { AuditoriaTutoriaisTab } from "@/components/admin/AuditoriaTutoriaisTab";
 import { AdminsTab } from "@/components/admin/AdminsTab";
 import { MensagensRapidasTab } from "@/components/admin/MensagensRapidasTab";
 
 import { SECOES_CONFIG_META } from "@/lib/admin-nav";
 import { ConfiguracoesPage, type SecaoConfiguracao } from "@/components/admin/ConfiguracoesPage";
+import { useDadosAdmin } from "@/lib/use-dados-admin";
 
 const adminSearchSchema = z.object({
   tab: z.string().optional(),
@@ -49,7 +50,7 @@ export default function Admin() {
 
 function AdminContent() {
   const { tab = "dashboard", secao } = useSearch({ from: "/admin" });
-  const { data: dados, recarregar } = useSuspenseQuery(adminPainelQuery());
+  const { planos, vendedores, clientes, admins, config, recarregar } = useDadosAdmin();
   const { user } = useAuth();
 
   const secoesConfig: SecaoConfiguracao[] = SECOES_CONFIG_META.map((meta) => ({
@@ -59,23 +60,23 @@ function AdminContent() {
         case "cupons":
           return <CuponsTab />;
         case "planos":
-          return <PlanosTab planos={dados.planos} onChanged={recarregar} />;
+          return <PlanosTab planos={planos} onChanged={recarregar} />;
         case "vendedores":
-          return <VendedoresTab vendedores={dados.vendedores} onChanged={recarregar} />;
+          return <VendedoresTab vendedores={vendedores} onChanged={recarregar} />;
         case "cnaes":
           return <CnaesTab />;
         case "permissoes":
           return <PermissoesTab />;
         case "geral":
-          return <ConfiguracoesGeraisTab />;
+          return <ConfigTab config={config} onSaved={recarregar} />;
         case "auditoria":
           return <AuditoriaTab />;
         case "telemetria":
           return <TelemetriaAuthTab />;
         case "tutoriais":
-          return <TutoriaisAuditoriaTab />;
+          return <AuditoriaTutoriaisTab />;
         case "admins":
-          return <AdminsTab admins={dados.administradores} onChanged={recarregar} />;
+          return <AdminsTab admins={admins} onChanged={recarregar} />;
         case "mensagens":
           return <MensagensRapidasTab />;
         default:
@@ -87,13 +88,13 @@ function AdminContent() {
   const renderTab = () => {
     switch (tab) {
       case "dashboard":
-        return <AdminPainel data={dados} />;
+        return <AdminDashboard />;
       case "clientes":
-        return <ClientesTab clientes={dados.clientes} vendedores={dados.vendedores} planos={dados.planos} onChanged={recarregar} />;
+        return <ClientesTab clientes={clientes} vendedores={vendedores} planos={planos} onChanged={recarregar} />;
       case "config":
         return <ConfiguracoesPage secoes={secoesConfig} secaoInicial={secao} />;
       default:
-        return <AdminPainel data={dados} />;
+        return <AdminDashboard />;
     }
   };
 
