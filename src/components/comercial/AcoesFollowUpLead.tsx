@@ -61,6 +61,9 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
   const [mensagens, setMensagens] = useState<any[]>([]);
   const [carregandoMsgs, setCarregandoMsgs] = useState(false);
   const [nota, setNota] = useState("");
+  const [enviadasLocais, setEnviadasLocais] = useState<string[]>(() =>
+    Array.isArray(lead.mensagens_enviadas) ? (lead.mensagens_enviadas as string[]) : [],
+  );
 
   const digitos = apenasDigitos(lead.telefone);
 
