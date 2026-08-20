@@ -19,7 +19,7 @@ export async function gerarChangelogServer(
     .maybeSingle();
 
   const apiKey = cfg?.ia_api_key;
-  const provedor = cfg?.ia_provedor ?? "openrouter";
+  const provedor = (cfg?.ia_provedor as any) ?? "openrouter";
   const modelo = cfg?.ia_modelo ?? "deepseek/deepseek-chat";
 
   // Fallback determinístico se não houver chave ou IA estiver desligada
@@ -98,8 +98,8 @@ JSON Output Format:
 
     console.error(`[changelog] IA falhou (${isConfigError ? 'Config' : 'Temp'}):`, error.message);
 
-    if (isConfigError) {
-      await supabaseAdmin.from("configuracoes").update({ ia_teste_ok: false }).eq("id", cfg!.id);
+    if (isConfigError && cfg?.id) {
+      await supabaseAdmin.from("configuracoes").update({ ia_teste_ok: false }).eq("id", cfg.id);
       
       // Criar comunicado interno para admin
       await supabaseAdmin.from("novidades").insert({
@@ -225,6 +225,6 @@ function fallbackChangelog(versao: string, commits: Commit[], erroIa?: string): 
       vendedor: { incluir: false, itens: [] },
       admin: { incluir: true, itens }
     },
-    resumo_ia: { erro_original: erroIa } as any
+    resumo_ia: { erro_original: erroIa }
   };
 }
