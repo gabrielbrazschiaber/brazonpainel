@@ -509,13 +509,13 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
             <div className="mt-4 space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label>Provedor</Label>
+                  <Label htmlFor="iaprovedor">Provedor</Label>
                   <Select
                     value={iaConfig?.provedor ?? "openrouter"}
                     onValueChange={(v: any) => setIaConfig(prev => prev ? { ...prev, provedor: v } : { provedor: v, modelo: modelosSugestao[v]?.[0] || "", temChave: false, ultimos4: null, testadaEm: null, testeOk: null })}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
+                    <SelectTrigger id="iaprovedor">
+                      <SelectValue placeholder="Selecione um provedor" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="openai">OpenAI</SelectItem>
