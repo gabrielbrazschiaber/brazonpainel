@@ -216,9 +216,13 @@ async function proximaData(
 }
 
 const RESULTADO_LABEL: Record<string, string> = {
-  sem_resposta: "Sem resposta",
+  mensagem_enviada: "Mensagem enviada",
   respondeu: "Respondeu",
+  nao_respondeu: "Não respondeu",
+  sem_whatsapp: "Sem WhatsApp",
+  lead_inexistente: "Lead inexistente",
   adiar: "Adiado",
+  reativar: "Reativado",
 };
 
 /**
@@ -234,7 +238,7 @@ export async function registrarFollowUpServer(
 
   const { data: lead, error: erroLead } = await supabase
     .from("leads")
-    .select("id, estagio, follow_ups_feitos")
+    .select("id, estagio, follow_ups_feitos, situacao_contato")
     .eq("id", dados.lead_id)
     .maybeSingle();
   if (erroLead) throw new Error(erroLead.message);
@@ -245,24 +249,67 @@ export async function registrarFollowUpServer(
 
   if (dados.resultado === "respondeu") {
     if (!dados.novo_estagio) throw new Error("Informe o novo estágio do lead.");
-    // A trigger do banco zera as tentativas e recalcula a próxima data.
     patch.estagio = dados.novo_estagio;
+    patch.situacao_contato = "respondeu";
+    patch.aguardando_resposta_ate = null;
     detalhe = `novo estágio: ${dados.novo_estagio}`;
-  } else if (dados.resultado === "adiar") {
-    if (!dados.adiar_dias) throw new Error("Informe em quantos dias adiar.");
-    // Adiar não gasta tentativa.
-    patch.proximo_contato = somarDias(hojeISO(), dados.adiar_dias);
+  } else if (dados.resultado === "mensagem_enviada") {
+    const prazo = dados.prazo_dias ?? 2;
+    patch.situacao_contato = "mensagem_enviada";
+    patch.mensagem_enviada_em = new Date().toISOString();
+    patch.aguardando_resposta_ate = somarDias(hojeISO(), prazo);
     patch.cadencia_encerrada = false;
-    detalhe = `adiado ${dados.adiar_dias} dia(s)`;
-  } else {
+    
+    // Se for mensagem 1, gasta uma tentativa de follow-up se desejar
+    // ou apenas marca como enviado. O requisito pede "marcar que já foi enviado a mensagem 1"
+    // e "proximo contato sabe que precisa enviar a mensagem 2".
+    // Vamos registrar o ID da mensagem se fornecido.
+    if (dados.mensagem_id) {
+      const { data: l } = await supabase.from("leads").select("mensagens_enviadas").eq("id", dados.lead_id).single();
+      const ids = Array.isArray(l?.mensagens_enviadas) ? l.mensagens_enviadas : [];
+      if (!ids.includes(dados.mensagem_id)) {
+        patch.mensagens_enviadas = [...ids, dados.mensagem_id];
+      }
+    }
+    
+    detalhe = `Mensagem enviada (prazo de ${prazo} dias para resposta)`;
+  } else if (dados.resultado === "nao_respondeu") {
+    // Gastou uma tentativa da cadência
     const tentativas = Number(lead.follow_ups_feitos ?? 0) + 1;
     const proxima = await proximaData(supabase, lead.estagio as LeadEstagio, tentativas);
+    
+    patch.situacao_contato = "nao_respondeu";
     patch.follow_ups_feitos = tentativas;
     patch.proximo_contato = proxima;
     patch.cadencia_encerrada = proxima === null;
+    patch.aguardando_resposta_ate = null;
+    
     detalhe = proxima
-      ? `${tentativas}ª tentativa · próximo contato ${proxima}`
-      : `${tentativas}ª tentativa · cadência encerrada`;
+      ? `${tentativas}ª tentativa s/ resp. · próximo contato ${proxima}`
+      : `${tentativas}ª tentativa s/ resp. · cadência encerrada`;
+  } else if (dados.resultado === "sem_whatsapp" || dados.resultado === "lead_inexistente") {
+    patch.situacao_contato = dados.resultado;
+    patch.estagio = "perdido";
+    patch.motivo_descarte = dados.motivo ?? RESULTADO_LABEL[dados.resultado];
+    patch.motivo_perda = patch.motivo_descarte as string;
+    patch.proximo_contato = null;
+    patch.cadencia_encerrada = true;
+    patch.aguardando_resposta_ate = null;
+    detalhe = `Lead descartado: ${patch.motivo_descarte}`;
+  } else if (dados.resultado === "reativar") {
+    const proxima = await proximaData(supabase, lead.estagio as LeadEstagio, 0);
+    patch.situacao_contato = "nao_contatado";
+    patch.follow_ups_feitos = 0;
+    patch.cadencia_encerrada = false;
+    patch.proximo_contato = proxima;
+    patch.aguardando_resposta_ate = null;
+    detalhe = `Cadência reiniciada · próximo contato ${proxima ?? "—"}`;
+  } else if (dados.resultado === "adiar") {
+    if (!dados.adiar_dias) throw new Error("Informe em quantos dias adiar.");
+    patch.proximo_contato = somarDias(hojeISO(), dados.adiar_dias);
+    patch.cadencia_encerrada = false;
+    patch.aguardando_resposta_ate = null;
+    detalhe = `adiado ${dados.adiar_dias} dia(s)`;
   }
 
   const { data, error } = await supabase

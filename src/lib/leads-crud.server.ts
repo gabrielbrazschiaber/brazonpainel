@@ -52,8 +52,18 @@ export async function listarLeadsServer(
   if (escopo.isAdmin && filtros.vendedor_id) {
     query = query.eq("vendedor_id", filtros.vendedor_id);
   }
-  if (filtros.estagio) query = query.eq("estagio", filtros.estagio);
-  if (filtros.origem) query = query.eq("origem", filtros.origem);
+  if (filtros.estagio) {
+    const estagios = Array.isArray(filtros.estagio) ? filtros.estagio : [filtros.estagio];
+    query = query.in("estagio", estagios);
+  }
+  if (filtros.situacao_contato) {
+    const situacoes = Array.isArray(filtros.situacao_contato) ? filtros.situacao_contato : [filtros.situacao_contato];
+    query = query.in("situacao_contato", situacoes);
+  }
+  if (filtros.origem) {
+    const origens = Array.isArray(filtros.origem) ? filtros.origem : [filtros.origem];
+    query = query.in("origem", origens);
+  }
   if (filtros.segmento) query = query.eq("segmento", filtros.segmento);
   if (filtros.importacao_id) query = query.eq("importacao_id", filtros.importacao_id);
   if (filtros.apenas_incompletos) query = query.lt("completude", 4);
