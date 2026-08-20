@@ -384,3 +384,36 @@ export async function salvarReuniaoServer(
 
   return { ok: true };
 }
+
+export async function registrarEnvioMensagemServer(
+  supabase: Sb,
+  userId: string,
+  dados: { lead_id: string; mensagem_id: string },
+) {
+  await escopoComercial(supabase, userId);
+
+  // Busca o histórico atual
+  const { data: lead, error: leadError } = await supabase
+    .from("leads")
+    .select("mensagens_enviadas")
+    .eq("id", dados.lead_id)
+    .single();
+
+  if (leadError) throw new Error(leadError.message);
+
+  const historico = Array.isArray(lead.mensagens_enviadas) ? lead.mensagens_enviadas : [];
+  
+  // Evita duplicatas no histórico de IDs
+  if (!historico.includes(dados.mensagem_id)) {
+    const novoHistorico = [...historico, dados.mensagem_id];
+    
+    const { error: updateError } = await supabase
+      .from("leads")
+      .update({ mensagens_enviadas: novoHistorico })
+      .eq("id", dados.lead_id);
+
+    if (updateError) throw new Error(updateError.message);
+  }
+
+  return { ok: true };
+}
