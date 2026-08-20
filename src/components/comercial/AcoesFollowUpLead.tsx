@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   CheckCircle2,
+  Copy,
   Eye,
   MessageCircle,
   MoreHorizontal,
@@ -27,7 +28,13 @@ import {
 
 import { ESTAGIO_LABEL, apenasDigitos, type LeadEstagio } from "@/lib/leads";
 import { ADIAMENTOS, ESTAGIOS_RESPOSTA } from "@/lib/follow-up";
-import { registrarFollowUp, reativarCadencia, type Lead } from "@/lib/leads.functions";
+import {
+  registrarFollowUp,
+  reativarCadencia,
+  listarMensagensRapidas,
+  registrarEnvioMensagem,
+  type Lead,
+} from "@/lib/leads.functions";
 
 interface Props {
   lead: Lead;
@@ -45,8 +52,14 @@ interface Props {
 export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onDetalhes }: Props) {
   const registrar = useServerFn(registrarFollowUp);
   const reativar = useServerFn(reativarCadencia);
+  const carregarMensagens = useServerFn(listarMensagensRapidas);
+  const registrarMensagem = useServerFn(registrarEnvioMensagem);
+
   const [ocupado, setOcupado] = useState(false);
   const [respondeuAberto, setRespondeuAberto] = useState(false);
+  const [mensagensAberto, setMensagensAberto] = useState(false);
+  const [mensagens, setMensagens] = useState<any[]>([]);
+  const [carregandoMsgs, setCarregandoMsgs] = useState(false);
   const [nota, setNota] = useState("");
 
   const digitos = apenasDigitos(lead.telefone);
@@ -112,6 +125,37 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
     }
   }
 
+  async function abrirMensagens() {
+    if (mensagens.length > 0) {
+      setMensagensAberto(true);
+      return;
+    }
+    setCarregandoMsgs(true);
+    try {
+      const data = await carregarMensagens();
+      setMensagens(data);
+      setMensagensAberto(true);
+    } catch (err) {
+      toast.error("Erro ao carregar mensagens rápidas");
+    } finally {
+      setCarregandoMsgs(false);
+    }
+  }
+
+  async function copiarMensagem(msg: any) {
+    try {
+      await navigator.clipboard.writeText(msg.texto);
+      toast.success("Mensagem copiada para a área de transferência!");
+      setMensagensAberto(false);
+
+      // Registra que a mensagem foi enviada
+      await registrarMensagem({ data: { lead_id: lead.id, mensagem_id: msg.id } });
+      onAtualizado();
+    } catch (err) {
+      toast.error("Erro ao copiar mensagem");
+    }
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
       {digitos && (
@@ -122,6 +166,40 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
           </a>
         </Button>
       )}
+
+      <Popover open={mensagensAberto} onOpenChange={setMensagensAberto}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" onClick={abrirMensagens} disabled={carregandoMsgs}>
+            <Copy className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Copiar Mensagem</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 p-2 space-y-1" align="start">
+          <p className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Mensagens Rápidas
+          </p>
+          {mensagens.length === 0 && !carregandoMsgs && (
+            <p className="p-4 text-center text-sm text-muted-foreground">
+              Nenhuma mensagem configurada.
+            </p>
+          )}
+          {mensagens.map((msg) => {
+            const jaEnviada = Array.isArray(lead.mensagens_enviadas) && lead.mensagens_enviadas.includes(msg.id);
+            return (
+              <button
+                key={msg.id}
+                className="w-full text-left px-3 py-2 rounded-md hover:bg-muted transition-colors relative group"
+                onClick={() => void copiarMensagem(msg)}
+              >
+                <p className="text-sm line-clamp-2 pr-6">{msg.texto}</p>
+                {jaEnviada && (
+                  <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-green-500" title="Já enviada para este lead" />
+                )}
+              </button>
+            );
+          })}
+        </PopoverContent>
+      </Popover>
 
       <Popover open={respondeuAberto} onOpenChange={setRespondeuAberto}>
         <PopoverTrigger asChild>
