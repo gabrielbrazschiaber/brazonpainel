@@ -60,6 +60,8 @@ export interface Lead {
   completude: number;
   /** IDs das mensagens rápidas já enviadas para este lead. */
   mensagens_enviadas?: string[] | null;
+  /** IDs das mensagens rápidas já enviadas para este lead. */
+  mensagens_enviadas?: string[] | null;
   created_at: string;
   updated_at: string;
   reunioes_count: number;
