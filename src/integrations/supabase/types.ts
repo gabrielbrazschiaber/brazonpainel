@@ -944,6 +944,7 @@ export type Database = {
           follow_ups_feitos: number
           id: string
           importacao_id: string | null
+          mensagens_enviadas: Json | null
           motivo_perda: string | null
           nome_contato: string
           observacoes: string | null
@@ -971,6 +972,7 @@ export type Database = {
           follow_ups_feitos?: number
           id?: string
           importacao_id?: string | null
+          mensagens_enviadas?: Json | null
           motivo_perda?: string | null
           nome_contato: string
           observacoes?: string | null
@@ -998,6 +1000,7 @@ export type Database = {
           follow_ups_feitos?: number
           id?: string
           importacao_id?: string | null
+          mensagens_enviadas?: Json | null
           motivo_perda?: string | null
           nome_contato?: string
           observacoes?: string | null
@@ -1084,6 +1087,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mensagens_rapidas: {
+        Row: {
+          created_at: string | null
+          id: string
+          ordem: number | null
+          texto: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ordem?: number | null
+          texto: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ordem?: number | null
+          texto?: string
+        }
+        Relationships: []
       }
       mfa_codigos_recuperacao: {
         Row: {
