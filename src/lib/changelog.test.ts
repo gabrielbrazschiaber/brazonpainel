@@ -1,3 +1,4 @@
+import { describe, it, expect } from "vitest";
 import { Commit, calcularVersao, COMMITS_IGNORADOS, ARQUIVOS_IGNORADOS } from "./changelog";
 
 describe("changelog.ts", () => {
