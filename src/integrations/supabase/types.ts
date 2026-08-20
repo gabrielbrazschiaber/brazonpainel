@@ -470,12 +470,21 @@ export type Database = {
           asaas_ambiente: Database["public"]["Enums"]["asaas_ambiente"]
           asaas_api_key: string | null
           asaas_webhook_url: string | null
+          changelog_ativo: boolean
+          changelog_token: string | null
+          changelog_versao_atual: string
           created_at: string
           cron_token: string
           dias_aviso_vencimento: number
           dias_devolver_lead: number
           dominio: string | null
           horas_reserva_lote: number
+          ia_api_key: string | null
+          ia_key_ultimos4: string | null
+          ia_modelo: string
+          ia_provedor: string
+          ia_testada_em: string | null
+          ia_teste_ok: boolean | null
           id: string
           mfa_obrigatorio_admin: boolean
           mfa_obrigatorio_vendedor: boolean
@@ -487,12 +496,21 @@ export type Database = {
           asaas_ambiente?: Database["public"]["Enums"]["asaas_ambiente"]
           asaas_api_key?: string | null
           asaas_webhook_url?: string | null
+          changelog_ativo?: boolean
+          changelog_token?: string | null
+          changelog_versao_atual?: string
           created_at?: string
           cron_token?: string
           dias_aviso_vencimento?: number
           dias_devolver_lead?: number
           dominio?: string | null
           horas_reserva_lote?: number
+          ia_api_key?: string | null
+          ia_key_ultimos4?: string | null
+          ia_modelo?: string
+          ia_provedor?: string
+          ia_testada_em?: string | null
+          ia_teste_ok?: boolean | null
           id?: string
           mfa_obrigatorio_admin?: boolean
           mfa_obrigatorio_vendedor?: boolean
@@ -504,12 +522,21 @@ export type Database = {
           asaas_ambiente?: Database["public"]["Enums"]["asaas_ambiente"]
           asaas_api_key?: string | null
           asaas_webhook_url?: string | null
+          changelog_ativo?: boolean
+          changelog_token?: string | null
+          changelog_versao_atual?: string
           created_at?: string
           cron_token?: string
           dias_aviso_vencimento?: number
           dias_devolver_lead?: number
           dominio?: string | null
           horas_reserva_lote?: number
+          ia_api_key?: string | null
+          ia_key_ultimos4?: string | null
+          ia_modelo?: string
+          ia_provedor?: string
+          ia_testada_em?: string | null
+          ia_teste_ok?: boolean | null
           id?: string
           mfa_obrigatorio_admin?: boolean
           mfa_obrigatorio_vendedor?: boolean
@@ -781,6 +808,56 @@ export type Database = {
             columns: ["vendedor_id"]
             isOneToOne: false
             referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deploys: {
+        Row: {
+          arquivos_alterados: string[]
+          commits: Json
+          criado_em: string
+          erro: string | null
+          id: string
+          novidade_id: string | null
+          processado_em: string | null
+          resumo_ia: Json | null
+          sha: string
+          status: string
+          versao: string
+        }
+        Insert: {
+          arquivos_alterados?: string[]
+          commits: Json
+          criado_em?: string
+          erro?: string | null
+          id?: string
+          novidade_id?: string | null
+          processado_em?: string | null
+          resumo_ia?: Json | null
+          sha: string
+          status?: string
+          versao: string
+        }
+        Update: {
+          arquivos_alterados?: string[]
+          commits?: Json
+          criado_em?: string
+          erro?: string | null
+          id?: string
+          novidade_id?: string | null
+          processado_em?: string | null
+          resumo_ia?: Json | null
+          sha?: string
+          status?: string
+          versao?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deploys_novidade_id_fkey"
+            columns: ["novidade_id"]
+            isOneToOne: false
+            referencedRelation: "novidades"
             referencedColumns: ["id"]
           },
         ]
@@ -1705,7 +1782,75 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      configuracoes_publica: {
+        Row: {
+          asaas_ambiente: Database["public"]["Enums"]["asaas_ambiente"] | null
+          asaas_webhook_url: string | null
+          changelog_ativo: boolean | null
+          changelog_versao_atual: string | null
+          created_at: string | null
+          dias_aviso_vencimento: number | null
+          dias_devolver_lead: number | null
+          dominio: string | null
+          horas_reserva_lote: number | null
+          ia_key_ultimos4: string | null
+          ia_modelo: string | null
+          ia_provedor: string | null
+          ia_testada_em: string | null
+          ia_teste_ok: boolean | null
+          id: string | null
+          mfa_obrigatorio_admin: boolean | null
+          mfa_obrigatorio_vendedor: boolean | null
+          nome_app: string | null
+          percentual_comissao_padrao: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          asaas_ambiente?: Database["public"]["Enums"]["asaas_ambiente"] | null
+          asaas_webhook_url?: string | null
+          changelog_ativo?: boolean | null
+          changelog_versao_atual?: string | null
+          created_at?: string | null
+          dias_aviso_vencimento?: number | null
+          dias_devolver_lead?: number | null
+          dominio?: string | null
+          horas_reserva_lote?: number | null
+          ia_key_ultimos4?: string | null
+          ia_modelo?: string | null
+          ia_provedor?: string | null
+          ia_testada_em?: string | null
+          ia_teste_ok?: boolean | null
+          id?: string | null
+          mfa_obrigatorio_admin?: boolean | null
+          mfa_obrigatorio_vendedor?: boolean | null
+          nome_app?: string | null
+          percentual_comissao_padrao?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          asaas_ambiente?: Database["public"]["Enums"]["asaas_ambiente"] | null
+          asaas_webhook_url?: string | null
+          changelog_ativo?: boolean | null
+          changelog_versao_atual?: string | null
+          created_at?: string | null
+          dias_aviso_vencimento?: number | null
+          dias_devolver_lead?: number | null
+          dominio?: string | null
+          horas_reserva_lote?: number | null
+          ia_key_ultimos4?: string | null
+          ia_modelo?: string | null
+          ia_provedor?: string | null
+          ia_testada_em?: string | null
+          ia_teste_ok?: boolean | null
+          id?: string | null
+          mfa_obrigatorio_admin?: boolean | null
+          mfa_obrigatorio_vendedor?: boolean | null
+          nome_app?: string | null
+          percentual_comissao_padrao?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       auth_telemetria_alertas: {
