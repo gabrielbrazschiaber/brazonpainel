@@ -32,9 +32,9 @@ import {
   registrarFollowUp,
   reativarCadencia,
   listarMensagensRapidas,
-  registrarEnvioMensagem,
   type Lead,
 } from "@/lib/leads.functions";
+import { SITUACAO_LABEL, situacaoClasse } from "@/lib/leads";
 
 interface Props {
   lead: Lead;
@@ -53,10 +53,11 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
   const registrar = useServerFn(registrarFollowUp);
   const reativar = useServerFn(reativarCadencia);
   const carregarMensagens = useServerFn(listarMensagensRapidas);
-  const registrarMensagem = useServerFn(registrarEnvioMensagem);
 
   const [ocupado, setOcupado] = useState(false);
   const [respondeuAberto, setRespondeuAberto] = useState(false);
+  const [descarteAberto, setDescarteAberto] = useState(false);
+  const [tipoDescarte, setTipoDescarte] = useState<"sem_whatsapp" | "lead_inexistente" | null>(null);
   const [mensagensAberto, setMensagensAberto] = useState(false);
   const [mensagens, setMensagens] = useState<any[]>([]);
   const [carregandoMsgs, setCarregandoMsgs] = useState(false);
@@ -67,11 +68,33 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
 
   const digitos = apenasDigitos(lead.telefone);
 
-  async function semResposta() {
+  async function registrarMensagemEnviada(msg: any) {
     setOcupado(true);
     try {
-      await registrar({ data: { lead_id: lead.id, resultado: "sem_resposta" } });
-      toast.success("Tentativa registrada. Próximo contato reagendado.");
+      await registrar({
+        data: {
+          lead_id: lead.id,
+          resultado: "mensagem_enviada",
+          mensagem_id: msg.id,
+          prazo_dias: 2,
+        },
+      });
+      setEnviadasLocais((atual) => (atual.includes(msg.id) ? atual : [...atual, msg.id]));
+      toast.success("Mensagem enviada e prazo de 2 dias registrado.");
+      // Não chamamos onAtualizado para não sumir o lead da tela se ele ainda estiver na fila.
+      // O backend marcou como mensagem_enviada.
+    } catch (err) {
+      toast.error("Erro ao registrar envio");
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  async function naoRespondeu() {
+    setOcupado(true);
+    try {
+      await registrar({ data: { lead_id: lead.id, resultado: "nao_respondeu" } });
+      toast.success("Não respondeu registrado. Cadência avançada.");
       onAtualizado();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível registrar o contato.");
@@ -97,6 +120,28 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
       onAtualizado();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível registrar a resposta.");
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  async function descartarLead() {
+    if (!tipoDescarte) return;
+    setOcupado(true);
+    setDescarteAberto(false);
+    try {
+      await registrar({
+        data: {
+          lead_id: lead.id,
+          resultado: tipoDescarte,
+          motivo: nota.trim() || undefined,
+        },
+      });
+      setNota("");
+      toast.success(`Lead descartado por ${SITUACAO_LABEL[tipoDescarte]}.`);
+      onAtualizado();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível descartar o lead.");
     } finally {
       setOcupado(false);
     }
@@ -166,10 +211,9 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
       await navigator.clipboard.writeText(textoProcessado);
       toast.success("Mensagem copiada!");
 
-      // Marca localmente como enviada (sem recarregar a listagem, para o lead
-      // não sair da tela). O registro no banco acontece em segundo plano.
-      setEnviadasLocais((atual) => (atual.includes(msg.id) ? atual : [...atual, msg.id]));
-      await registrarMensagem({ data: { lead_id: lead.id, mensagem_id: msg.id } });
+      // Agora registra como "mensagem_enviada" no backend, o que muda a situação do lead
+      // Mas não remove ele da tela imediatamente a menos que o filtro mude.
+      await registrarMensagemEnviada(msg);
     } catch (err) {
       toast.error("Erro ao copiar mensagem");
     }
@@ -264,7 +308,13 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
         </PopoverContent>
       </Popover>
 
-      <Button variant="outline" size="sm" disabled={ocupado} onClick={() => void semResposta()}>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={ocupado}
+        onClick={() => void naoRespondeu()}
+        className="text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/20"
+      >
         <PhoneOff className="mr-1.5 h-4 w-4" /> Não respondeu
       </Button>
 
@@ -275,20 +325,37 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuLabel className="text-xs">Descartar lead</DropdownMenuLabel>
+          <DropdownMenuItem
+            onSelect={() => {
+              setTipoDescarte("sem_whatsapp");
+              setDescarteAberto(true);
+            }}
+          >
+            <PhoneOff className="mr-2 h-4 w-4" /> Sem WhatsApp
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              setTipoDescarte("lead_inexistente");
+              setDescarteAberto(true);
+            }}
+          >
+            <Trash2 className="mr-2 h-4 w-4" /> Lead inexistente
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
           <DropdownMenuLabel className="text-xs">Adiar follow-up</DropdownMenuLabel>
           {ADIAMENTOS.map((d) => (
             <DropdownMenuItem key={d} onSelect={() => void adiar(d)}>
               +{d} dias
             </DropdownMenuItem>
           ))}
-          {lead.cadencia_encerrada && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => void reativarCadenciaLead()}>
-                <RotateCcw className="mr-2 h-4 w-4" /> Reativar cadência
-              </DropdownMenuItem>
-            </>
-          )}
+          
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => void reativarCadenciaLead()}>
+            <RotateCcw className="mr-2 h-4 w-4" /> Reiniciar cadência
+          </DropdownMenuItem>
+          
           <DropdownMenuSeparator />
           {onDetalhes && (
             <DropdownMenuItem onSelect={() => onDetalhes(lead)}>
@@ -307,6 +374,36 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <AlertDialog open={descarteAberto} onOpenChange={setDescarteAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Descartar lead?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O lead será movido para o estágio <strong>Perdido</strong> e a situação será marcada como{" "}
+              <strong>{tipoDescarte && SITUACAO_LABEL[tipoDescarte]}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-4">
+            <Label htmlFor="motivo-descarte">Motivo (opcional)</Label>
+            <Textarea
+              id="motivo-descarte"
+              placeholder="Ex: Número fixo, número não existe..."
+              value={nota}
+              onChange={(e) => setNota(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setNota("")}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void descartarLead()}
+            >
+              Confirmar descarte
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
