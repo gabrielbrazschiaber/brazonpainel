@@ -4,6 +4,7 @@ import { ReverTutoriais } from "@/components/onboarding/ReverTutoriais";
 import { DoisFatoresEquipeCard } from "@/components/admin/DoisFatoresEquipeCard";
 import { testarChaveAsaas } from "@/lib/asaas.functions";
 import { salvarConfiguracoes, obterWebhookToken } from "@/lib/config.functions";
+import { obterConfigIa, salvarConfigIa, testarConexaoIa } from "@/lib/configuracoes.functions";
 import { gerarLembretesAgora, ultimaExecucaoLembretes } from "@/lib/lembretes.functions";
 
 import { Card } from "@/components/ui/card";
@@ -12,8 +13,16 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Save, Copy, Check, KeyRound } from "lucide-react";
+import { Save, Copy, Check, KeyRound, Brain, Sparkles, Activity } from "lucide-react";
 import type { Config } from "@/lib/admin-tipos";
 import { formatDateTime } from "@/lib/format";
 
