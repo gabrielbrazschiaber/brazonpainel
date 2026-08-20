@@ -33,6 +33,9 @@ const adminSearchSchema = z.object({
 });
 
 export const Route = createFileRoute("/admin")({
+  // A sessão do usuário vive no navegador: sem SSR o loader nunca roda como
+  // anônimo (o que causava "permission denied for table vendedores").
+  ssr: false,
   validateSearch: (search) => adminSearchSchema.parse(search),
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(adminPainelQuery());
