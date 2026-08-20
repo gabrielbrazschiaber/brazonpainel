@@ -74,7 +74,7 @@ JSON Output Format:
     // 4. Filtro de Segurança (Pós-IA)
     if (parsed.publicos.cliente.incluir) {
       const { filtrados, descartados } = filtrarItensCliente(parsed.publicos.cliente.itens);
-      parsed.publicos.cliente.itens = filtrados;
+      parsed.publicos.cliente.itens = filtrados as any;
       if (filtrados.length === 0) parsed.publicos.cliente.incluir = false;
       
       // Log de descarte se necessário (pode ser injetado no deploy resumo_ia depois)
