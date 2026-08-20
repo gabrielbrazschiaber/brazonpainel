@@ -43,7 +43,7 @@ export const Route = createFileRoute("/admin")({
   component: Admin,
 });
 
-export default function Admin() {
+function Admin() {
   return (
     <RequireRole role="admin">
       <Suspense fallback={<AdminSkeleton />}>
