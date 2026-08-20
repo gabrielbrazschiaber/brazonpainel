@@ -303,6 +303,25 @@ export const atualizarVendedor = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Retorna o diagnóstico de RLS e permissões das tabelas do sistema.
+export const obterDiagnosticoSeguranca = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await ensurePermission(supabase, userId, "configuracoes.gerenciar");
+
+    const { data, error } = await supabase.rpc("debug_policies");
+    if (error) throw new Error("Falha ao obter diagnóstico de segurança: " + error.message);
+
+    return data as Array<{
+      tabela: string;
+      rls_ativo: boolean;
+      perm_admin: string[];
+      perm_vendedor: string[];
+      perm_cliente: string[];
+    }>;
+  });
+
 const editarClienteAdminSchema = z.object({
   cliente_id: z.string().uuid(),
   nome: z.string().trim().min(2).max(120),
@@ -832,3 +851,4 @@ export const alternarVendedorAtivo = createServerFn({ method: "POST" })
 
     return { ok: true as const };
   });
+

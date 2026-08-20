@@ -15,6 +15,7 @@ import {
   UserCircle,
   Users,
   Database,
+  Lock,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { AppPermission, AppRole } from "@/lib/permissions";
@@ -136,6 +137,14 @@ export const SECOES_CONFIG_META: readonly SecaoConfigMeta[] = [
     descricao: "Auditoria do onboarding da equipe",
     icon: GraduationCap,
     permissao: "auditoria.ler",
+    roles: ["admin"],
+  },
+  {
+    value: "seguranca",
+    label: "Políticas RLS",
+    descricao: "Validar acesso e segurança das tabelas",
+    icon: Lock,
+    permissao: "configuracoes.gerenciar",
     roles: ["admin"],
   },
 ];

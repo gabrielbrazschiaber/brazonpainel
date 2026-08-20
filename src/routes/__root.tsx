@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { RefreshCw, Home } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
@@ -48,10 +49,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Esta página não carregou
+          Ops! Esta página não pôde ser carregada
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Algo deu errado do nosso lado. Tente recarregar ou volte para o início.
+          Ocorreu um erro inesperado em nosso sistema. Tente recarregar a página ou voltar para o início para continuar navegando.
         </p>
         <code className="mt-4 block break-all rounded bg-muted px-2 py-1 text-xs text-muted-foreground">
           {error.message || error.name}
@@ -61,15 +62,18 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             onClick={() => {
               router.invalidate();
               reset();
+              window.location.reload();
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Tentar novamente
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Recarregar página
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
+            <Home className="mr-2 h-4 w-4" />
             Ir para o início
           </a>
         </div>
