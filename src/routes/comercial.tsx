@@ -97,6 +97,10 @@ import {
   estagioClasse,
   type LeadEstagio,
   type LeadOrigem,
+  type LeadSituacao,
+  LEAD_SITUACAO,
+  SITUACAO_LABEL,
+  situacaoClasse,
 } from "@/lib/leads";
 import {
   dashboardComercial,
@@ -167,7 +171,7 @@ function ComercialPage() {
 const POR_PAGINA = 25;
 
 /** Abas da fila: a mesma listagem, recortes diferentes. */
-type Fila = "hoje" | "atrasados" | "todos";
+type Fila = "hoje" | "atrasados" | "aguardando" | "todos";
 
 /** Cabeçalho da tabela de leads (compartilhado com o skeleton). */
 function CabecalhoLeads() {
@@ -262,11 +266,12 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   // Começa em "Todos os leads": leads recém-puxados do Banco de Leads têm o
   // primeiro follow-up agendado para os próximos dias e ficariam invisíveis
   // se a tela abrisse já filtrada pela fila de hoje.
-  const [fila, setFila] = useState<Fila>("todos");
+  const [fila, setFila] = useState<Fila>("hoje");
   const [busca, setBusca] = useState("");
-  const [estagio, setEstagio] = useState<LeadEstagio | "todos">("todos");
+  const [estagio, setEstagio] = useState<LeadEstagio[]>([]);
+  const [situacao, setSituacao] = useState<LeadSituacao[]>([]);
+  const [origem, setOrigem] = useState<LeadOrigem[]>([]);
   const [segmento, setSegmento] = useState("todos");
-  const [origem, setOrigem] = useState<LeadOrigem | "todas">("todas");
   const [soZap, setSoZap] = useState(false);
   /** Filtro de leads com dados faltando. */
   const [incompletos, setIncompletos] = useState(false);
@@ -294,12 +299,14 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
     () => ({
       dias,
       ...(filtroVendedor ? { vendedor_id: filtroVendedor } : {}),
-      ...(estagio !== "todos" ? { estagio } : {}),
-      ...(origem !== "todas" ? { origem } : {}),
+      ...(estagio.length > 0 ? { estagio } : {}),
+      ...(situacao.length > 0 ? { situacao_contato: situacao } : {}),
+      ...(origem.length > 0 ? { origem } : {}),
       ...(segmento !== "todos" ? { segmento } : {}),
       ...(busca.trim() ? { busca: busca.trim() } : {}),
-      ...(fila === "hoje" ? { apenas_follow_up: true } : {}),
+      ...(fila === "hoje" ? { situacao_contato: ["nao_contatado", "respondeu", "nao_respondeu"] as LeadSituacao[], apenas_follow_up: true } : {}),
       ...(fila === "atrasados" ? { apenas_atrasados: true } : {}),
+      ...(fila === "aguardando" ? { situacao_contato: "mensagem_enviada" as LeadSituacao } : {}),
       ...(incompletos ? { apenas_incompletos: true } : {}),
       ...(loteId ? { importacao_id: loteId } : {}),
       ordem,
@@ -403,6 +410,7 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
   const abas: { chave: Fila; label: string; quantidade?: number }[] = [
     { chave: "hoje", label: "A contatar hoje", quantidade: painel.totalAContatar },
     { chave: "atrasados", label: "Atrasados", quantidade: painel.totalAtrasados },
+    { chave: "aguardando", label: "Aguardando resposta" },
     { chave: "todos", label: "Todos os leads" },
   ];
 
@@ -411,9 +419,11 @@ function ComercialConteudo({ isAdmin, home }: { isAdmin: boolean; home: string }
       ? "Nada para contatar agora. Fila em dia!"
       : fila === "atrasados"
         ? "Nenhum follow-up atrasado."
-        : soZap
-          ? "Nenhum lead com WhatsApp ativo nos filtros atuais."
-          : "Nenhum lead ainda. Cadastre o primeiro contato do dia.";
+        : fila === "aguardando"
+          ? "Nenhum lead aguardando resposta agora."
+          : soZap
+            ? "Nenhum lead com WhatsApp ativo nos filtros atuais."
+            : "Nenhum lead ainda. Cadastre o primeiro contato do dia.";
 
   return (
     <TelaShell
