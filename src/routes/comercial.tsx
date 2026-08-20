@@ -109,6 +109,7 @@ import {
 } from "@/lib/leads.functions";
 
 export const Route = createFileRoute("/comercial")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Gestão comercial de leads | Brazon" },

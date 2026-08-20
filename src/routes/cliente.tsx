@@ -51,6 +51,7 @@ import { gerarCobranca } from "@/lib/asaas.functions";
 import { validarMeuCupom } from "@/lib/cupons.functions";
 
 export const Route = createFileRoute("/cliente")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Minha assinatura | Brazon" },

@@ -106,6 +106,7 @@ import type { Cnae } from "@/lib/cnaes.functions";
 import { HORAS_RESERVA_PADRAO } from "@/lib/banco-leads";
 
 export const Route = createFileRoute("/banco-leads")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Banco de Leads | Brazon" },

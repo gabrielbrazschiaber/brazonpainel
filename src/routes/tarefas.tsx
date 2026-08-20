@@ -63,6 +63,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/tarefas")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Tarefas e solicitações | Brazon" },

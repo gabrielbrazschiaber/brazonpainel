@@ -71,6 +71,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/vendedor")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Painel do vendedor | Brazon" },
