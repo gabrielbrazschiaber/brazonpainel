@@ -69,6 +69,10 @@ export interface Config {
   // Changelog & IA
   changelog_ativo?: boolean;
   changelog_versao_atual?: string;
+  ia_provedor?: "openai" | "openrouter" | "deepseek" | "groq" | "google" | "anthropic";
+  ia_modelo?: string;
+  ia_teste_ok?: boolean | null;
+  ia_testada_em?: string | null;
 }
 
 /** Configuração usada enquanto o servidor ainda não tem nenhuma salva. */

@@ -45,7 +45,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
   );
   const [novaChave, setNovaChave] = useState("");
   const [iaConfig, setIaConfig] = useState<{
-    provedor: "openrouter" | "deepseek" | "groq" | "google" | "anthropic";
+    provedor: "openai" | "openrouter" | "deepseek" | "groq" | "google" | "anthropic";
     modelo: string;
     temChave: boolean;
     ultimos4: string | null;
@@ -209,9 +209,9 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
     try {
       const r = await testIa({});
       if (r.ok) {
-        toast.success(`IA conectada! Latência: ${r.latenciaMs}ms`);
+        toast.success(r.mensagem);
       } else {
-        toast.error(`Falha na IA: ${r.mensagem}`);
+        toast.error(r.mensagem);
       }
       const updated = await getIa({});
       setIaConfig(updated);
@@ -221,6 +221,15 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
       setTestandoIa(false);
     }
   }
+
+  const modelosSugestao: Record<string, string[]> = {
+    openai: ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"],
+    openrouter: ["deepseek/deepseek-chat", "google/gemini-2.0-flash-exp:free", "meta-llama/llama-3.3-70b-instruct"],
+    deepseek: ["deepseek-chat"],
+    groq: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
+    google: ["gemini-2.0-flash", "gemini-1.5-flash"],
+    anthropic: ["claude-3-5-sonnet-20240620", "claude-3-haiku-20240307"],
+  };
 
   return (
     <div className="max-w-2xl space-y-4">

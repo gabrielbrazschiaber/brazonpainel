@@ -20,7 +20,7 @@ export async function gerarChangelogServer(
 
   const apiKey = cfg?.ia_api_key;
   const provedor = cfg?.ia_provedor ?? "openrouter";
-  const modelo = cfg?.ia_modelo ?? "deepseek/deepseek-chat:free";
+  const modelo = cfg?.ia_modelo ?? "deepseek/deepseek-chat";
 
   // Fallback determinístico se não houver chave ou IA estiver desligada
   if (!apiKey || !cfg?.changelog_ativo) {
@@ -84,18 +84,48 @@ JSON Output Format:
     }
 
     return parsed;
-  } catch (error) {
-    console.error("[changelog] IA falhou, usando fallback:", error);
-    return fallbackChangelog(versao, commits);
+  } catch (error: any) {
+    const msg = error.message?.toLowerCase() || "";
+    const isConfigError = 
+      msg.includes("unavailable") || 
+      msg.includes("not found") || 
+      msg.includes("no endpoints") || 
+      msg.includes("invalid model") || 
+      msg.includes("does not exist") ||
+      msg.includes("401") ||
+      msg.includes("403") ||
+      msg.includes("unauthorized");
+
+    console.error(`[changelog] IA falhou (${isConfigError ? 'Config' : 'Temp'}):`, error.message);
+
+    if (isConfigError) {
+      await supabaseAdmin.from("configuracoes").update({ ia_teste_ok: false }).eq("id", cfg!.id);
+      
+      // Criar comunicado interno para admin
+      await supabaseAdmin.from("novidades").insert({
+        titulo: "Geração automática de notas indisponível",
+        conteudo: `O sistema de changelog automático encontrou um erro de configuração:\n\n**Motivo:** ${error.message}\n\nPor favor, verifique a chave de API e o modelo nas configurações.`,
+        tipo: "comunicado",
+        publico_admin: true,
+        publico_cliente: false,
+        publico_vendedor: false,
+        publicado: true,
+        data_publicacao: new Date().toISOString(),
+        versao: versao
+      });
+    }
+
+    return fallbackChangelog(versao, commits, error.message);
   }
 }
 
 async function chamarApiIa(provedor: string, modelo: string, apiKey: string, promptSistema: string, promptUsuario: string): Promise<string> {
   const urls: Record<string, string> = {
+    openai: "https://api.openai.com/v1/chat/completions",
     openrouter: "https://openrouter.ai/api/v1/chat/completions",
     deepseek: "https://api.deepseek.com/chat/completions",
     groq: "https://api.groq.com/openai/v1/chat/completions",
-    google: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", // Gemini OpenAI compat
+    google: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     anthropic: "https://api.anthropic.com/v1/messages"
   };
 
@@ -145,20 +175,28 @@ async function chamarApiIa(provedor: string, modelo: string, apiKey: string, pro
         signal: AbortSignal.timeout(30000)
       });
 
-      if (response.status === 429) {
-        attempts++;
-        await new Promise(r => setTimeout(r, 3000));
-        continue;
-      }
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(`IA API error: ${response.status} ${await response.text()}`);
+        const errorMsg = data.error?.message || data.message || JSON.stringify(data);
+        const sanitizedMsg = errorMsg.replace(apiKey, "***");
+
+        if (response.status === 429 || response.status >= 500) {
+          attempts++;
+          if (attempts < 2) {
+            await new Promise(r => setTimeout(r, 3000));
+            continue;
+          }
+        }
+        
+        // Erros 400, 401, 403, 404 param aqui
+        throw new Error(sanitizedMsg);
       }
 
-      const data = await response.json();
       return isAnthropic ? data.content[0].text : data.choices[0].message.content;
-    } catch (e) {
-      if (attempts >= 1) throw e;
+    } catch (e: any) {
+      if (e.name === 'TimeoutError') throw new Error("O provedor não respondeu em 30 segundos.");
+      if (attempts >= 1 || (e.message && !e.message.includes("429") && !e.message.includes("50"))) throw e;
       attempts++;
       await new Promise(r => setTimeout(r, 3000));
     }
@@ -173,7 +211,7 @@ function extrairJson(text: string): string {
   return match[0];
 }
 
-function fallbackChangelog(versao: string, commits: Commit[]): ChangelogAiResponse {
+function fallbackChangelog(versao: string, commits: Commit[], erroIa?: string): ChangelogAiResponse {
   const itens = commits.map(c => ({
     tipo: "melhoria" as const,
     texto: c.mensagem.replace(/^(feat|fix|perf|docs|style|refactor|test|chore|ci|build)(\(.+\))?!?: /i, "").trim()
@@ -186,6 +224,7 @@ function fallbackChangelog(versao: string, commits: Commit[]): ChangelogAiRespon
       cliente: { incluir: false, itens: [] },
       vendedor: { incluir: false, itens: [] },
       admin: { incluir: true, itens }
-    }
+    },
+    resumo_ia: { erro_original: erroIa } as any
   };
 }
