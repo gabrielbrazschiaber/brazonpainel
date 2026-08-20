@@ -204,7 +204,7 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
             </p>
           )}
           {mensagens.map((msg) => {
-            const jaEnviada = Array.isArray(lead.mensagens_enviadas) && lead.mensagens_enviadas.includes(msg.id);
+            const jaEnviada = enviadasLocais.includes(msg.id);
             return (
               <button
                 key={msg.id}
