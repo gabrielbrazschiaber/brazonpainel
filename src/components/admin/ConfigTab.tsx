@@ -517,6 +517,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="openai">OpenAI</SelectItem>
                       <SelectItem value="openrouter">OpenRouter (Grátis/Pago)</SelectItem>
                       <SelectItem value="deepseek">DeepSeek</SelectItem>
                       <SelectItem value="groq">Groq (Rápido)</SelectItem>
@@ -525,6 +526,7 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
                     </SelectContent>
                   </Select>
                   <p className="text-[10px] text-muted-foreground">
+                    {iaConfig?.provedor === "openai" && "OpenAI — o padrão de mercado (GPT-4o)."}
                     {iaConfig?.provedor === "openrouter" && "OpenRouter — diversos modelos e opções gratuitas."}
                     {iaConfig?.provedor === "deepseek" && "DeepSeek — excelente custo-benefício."}
                     {iaConfig?.provedor === "groq" && "Groq — inferência extremamente veloz."}
@@ -532,13 +534,35 @@ export function ConfigTab({ config, onSaved }: { config: Config | null; onSaved:
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="iamodelo">Modelo</Label>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="iamodelo">Modelo</Label>
+                    {iaConfig?.provedor && modelosSugestao[iaConfig.provedor] && (
+                      <div className="flex gap-1">
+                        {modelosSugestao[iaConfig.provedor].map(m => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => iaConfig && setIaConfig({ ...iaConfig, modelo: m })}
+                            className="text-[9px] px-1.5 py-0.5 bg-secondary hover:bg-secondary/80 rounded-full transition-colors"
+                          >
+                            {m.split('/').pop()}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <Input
                     id="iamodelo"
                     value={iaConfig?.modelo ?? ""}
                     onChange={(e) => iaConfig && setIaConfig({ ...iaConfig, modelo: e.target.value })}
-                    placeholder="ex: deepseek/deepseek-chat:free"
+                    placeholder="ex: gpt-4o-mini"
                   />
+                  {iaConfig?.testeOk === false && (
+                    <p className="text-[9px] text-destructive flex items-center gap-1 mt-0.5">
+                      <AlertCircle className="w-2.5 h-2.5" />
+                      Último teste falhou. Tente uma das sugestões acima.
+                    </p>
+                  )}
                 </div>
               </div>
 
