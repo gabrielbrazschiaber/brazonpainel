@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Save, Copy, Check, KeyRound, Brain, Sparkles, Activity } from "lucide-react";
+import { Save, Copy, Check, KeyRound, Brain, Sparkles, Activity, AlertCircle } from "lucide-react";
 import type { Config } from "@/lib/admin-tipos";
 import { formatDateTime } from "@/lib/format";
 
