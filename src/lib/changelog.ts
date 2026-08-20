@@ -6,7 +6,7 @@ export interface Commit {
   autor: string;
 }
 
-export const COMMITS_IGNORADOS = /^(chore|ci|build|test|docs|style|refactor)(\(.+\))?:|^Merge |^Revert |^bump |^.{0,9}$/i;
+export const COMMITS_IGNORADOS = /^(chore|ci|build|test|docs|style|refactor)(\(.+\))?:|^Merge |^Revert |^bump |^.{0,7}$/i;
 
 export const ARQUIVOS_IGNORADOS = [
   ".github/**",
