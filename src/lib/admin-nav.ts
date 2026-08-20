@@ -87,6 +87,13 @@ export const SECOES_CONFIG_META: readonly SecaoConfigMeta[] = [
     permissao: "vendedores.ler",
   },
   {
+    value: "mensagens",
+    label: "Mensagens",
+    descricao: "Modelos rápidos para vendedores",
+    icon: Megaphone,
+    permissao: "configuracoes.gerenciar",
+  },
+  {
     value: "cnaes",
     label: "CNAEs",
     descricao: "Catálogo e segmento sugerido",
