@@ -92,7 +92,6 @@ export const changelogAiResponseSchema = z.object({
         texto: z.string()
       }))
     })
-  })
   }),
   resumo_ia: z.object({
     erro_original: z.string().optional()
