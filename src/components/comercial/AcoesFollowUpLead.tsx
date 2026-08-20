@@ -208,8 +208,13 @@ export function AcoesFollowUpLead({ lead, onAtualizado, onEditar, onExcluir, onD
             return (
               <button
                 key={msg.id}
+                type="button"
                 className="w-full text-left px-3 py-2 rounded-md hover:bg-muted transition-colors relative group"
-                onClick={() => void copiarMensagem(msg)}
+                onClick={(ev) => {
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                  void copiarMensagem(msg);
+                }}
               >
                 <p className="text-sm line-clamp-2 pr-6">{msg.texto}</p>
                 {jaEnviada && (
