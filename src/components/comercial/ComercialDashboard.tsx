@@ -165,10 +165,10 @@ export function ComercialDashboard({
         <Card className="space-y-4 p-4 sm:p-5">
           <p className="section-title">Qualidade da base</p>
           <div className="space-y-3">
-            {dados.situacoes?.map((s) => (
+            {dados.situacoes?.map((s: any) => (
               <div key={s.chave} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-muted-foreground">{SITUACAO_LABEL[s.chave as any] || s.chave}</span>
+                  <span className="font-medium text-muted-foreground">{SITUACAO_LABEL[s.chave as keyof typeof SITUACAO_LABEL] || s.chave}</span>
                   <span className="text-foreground">{s.total} ({percentual(s.percentual)})</span>
                 </div>
                 <Progress value={(s.percentual || 0) * 100} className="h-1.5" />
