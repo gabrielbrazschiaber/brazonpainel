@@ -1748,6 +1748,16 @@ export type Database = {
       }
       avisar_leads_a_devolver: { Args: { _dias?: number }; Returns: number }
       current_vendedor_id: { Args: never; Returns: string }
+      debug_policies: {
+        Args: never
+        Returns: {
+          perm_admin: string[]
+          perm_cliente: string[]
+          perm_vendedor: string[]
+          rls_ativo: boolean
+          tabela: string
+        }[]
+      }
       devolver_banco_lead: {
         Args: { _automatico?: boolean; _id: string }
         Returns: string
